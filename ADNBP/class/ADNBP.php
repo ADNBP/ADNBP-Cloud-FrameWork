@@ -48,7 +48,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
         var $_userLanguages = array();
         var $_basename = '';
         var $_isAuth = false;
-        var $version = "1.1.2";
+        var $version = "1.1.3";
         /**
         * Constructor
         */
@@ -72,6 +72,8 @@ if (!defined ("_ADNBP_CLASS_") ) {
             if(!is_file("./config/config.php")) {
                 $this->setConf("CloudServiceUrl","/CloudFrameWorkService");
                 $this->pushMenu(array("level"=>0,"path"=>"/","en"=>"Welcome","template"=>"CloudFrameWorkIntro.php","notopbottom"=>1));
+                $this->setConf("GooglePublicAPICredential","AIzaSyARDfk6bgUxrCZbg2n68--f0LL6k8b_mjg"); 
+                $this->setConf("GoogleMapsAPI",true);                 
             } else {
                 include_once("./config/config.php");
             }            
