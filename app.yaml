@@ -1,4 +1,4 @@
-application: adnbp-cloud-framework
+application: GAE-APP
 version: 1
 runtime: php
 api_version: 1
