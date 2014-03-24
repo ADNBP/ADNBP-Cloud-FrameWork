@@ -15,7 +15,7 @@ if(is_file("./logic/CloudFrameWorkService.php")) {
             else echo("template $template not found");     
     		break;
         case 'checkVersion':
-            echo(($this->version == $params)?"OK $params":"ERROR. Your version  ".htmlentities($params)." is different to current Version:".$this->getConf("CloudFrameWorkVersion"));
+            echo(($this->version == $params)?"OK $params":"ERROR. Your version  ".htmlentities($params)." is different of current version:".$this->version);
             break;
     	default:
     		echo "Wrong paramaters";

@@ -48,7 +48,8 @@ if (!defined ("_ADNBP_CLASS_") ) {
         var $_userLanguages = array();
         var $_basename = '';
         var $_isAuth = false;
-        var $version = "1.1.3";
+        var $version = "1.1.4";
+        var $_defaultCFURL="http://cloud.adnbp.com/CloudFrameWorkService";
         /**
         * Constructor
         */
@@ -76,6 +77,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
                 $this->setConf("GoogleMapsAPI",true);                 
             } else {
                 include_once("./config/config.php");
+                if (!$this->getConf("CloudServiceUrl")) $this->setConf("CloudServiceUrl",$this->_defaultCFURL);
             }            
             
             // analyze Default Lang
@@ -116,7 +118,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
         */
         function getCloudServiceResponse($rute) {
             // analyze Default Country
-            if (!$this->getConf("CloudServiceUrl")) $this->setConf("CloudServiceUrl","http://www2.adnbp.com/CloudFrameWorkService");
+            if (!$this->getConf("CloudServiceUrl")) $this->setConf("CloudServiceUrl",$this->_defaultCFURL);
            
             if(strpos($this->getConf("CloudServiceUrl"), "http") === false) 
                $_url = "http://".$_SERVER[HTTP_HOST].$this->getConf("CloudServiceUrl")."/".$rute;
