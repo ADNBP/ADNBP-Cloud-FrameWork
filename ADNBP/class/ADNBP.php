@@ -241,9 +241,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
 
                 if(strpos($this->_url, '/CloudFrameWorkService') === false) {
                     
-                    $this->requireAuth();
-                    $this->setConf("requireAuthLogic",dirname(__FILE__) ."/auth/logic/cloudFrameWorkAuth.php");
-                                    
+                    $this->requireAuth();                                    
                     $this->setConf("top","CloudFrameWorkTop.php");
                     $this->setConf("bottom","CloudFrameWorkBottom.php");
                     
@@ -374,11 +372,10 @@ if (!defined ("_ADNBP_CLASS_") ) {
         function checkAuth() {
             $_ret = $this->isAuth();
             if(strlen($this->getConf("requireAuth")))  {
-                if(strlen($this->getConf("requireAuthLogic")))
-                  if(is_file($this->getConf("requireAuthLogic")))
-                     include($this->getConf("requireAuthLogic"));
+                  if(is_file(dirname(__FILE__) ."/../logic/CloudFrameWorkAuth.php"))
+                     include(dirname(__FILE__) ."/../logic/CloudFrameWorkAuth.php");                  
                   else
-                     die($this->getConf("requireAuthLogic")." NOT FOUND");
+                     die($this->getConf(" CloudFrameWorkAuth NOT FOUND"));
             }
             
         }
