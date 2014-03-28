@@ -6,6 +6,7 @@
  * If you require advanced configuration options, refer to opauth.conf.php.advanced
  */
 
+
 $config = array(
 /**
  * Path where Opauth is accessed.
@@ -18,7 +19,7 @@ $config = array(
 /**
  * Callback URL: redirected to after authentication, successful or otherwise
  */
-	'callback_url' => '/CloudFrameWorkOauth?auth=finished',
+	'callback_url' => ((strlen($this->getConf("OauthCallBack")))?$this->getConf("OauthCallBack"):'/CloudFrameWorkOauth?auth=finished'),
 	
 /**
  * A random string used for signing of $auth response.
