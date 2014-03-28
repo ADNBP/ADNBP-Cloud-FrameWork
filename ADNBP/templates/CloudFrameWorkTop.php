@@ -65,6 +65,7 @@
                   <li <?=($this->getConf("pageCode")=="GeoLocation")?"class='active'":""?>><a href="/CloudFrameWork/GeoLocation">GeoLocation</a></li>
                   <li <?=($this->getConf("pageCode")=="CloudSQL")?"class='active'":""?>><a href="/CloudFrameWork/CloudSQL">CloudSQL/Mysql Access</a></li>
                   <li <?=($this->getConf("pageCode")=="Email")?"class='active'":""?>><a href="/CloudFrameWork/Email">Email Function</a></li>
+                  <li <?=($this->getConf("pageCode")=="SMS")?"class='active'":""?>><a href="/CloudFrameWork/SMS">SMS Function</a></li>
                   <li <?=($this->getConf("pageCode")=="File")?"class='active'":""?>><a href="/CloudFrameWork/File">I/O functions</a></li>
                   <li <?=($this->getConf("pageCode")=="oauth")?"class='active'":""?>><a href="/CloudFrameWorkOauth">Testing Oauth</a></li>
                   </ul>

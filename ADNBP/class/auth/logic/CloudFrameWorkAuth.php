@@ -1,10 +1,13 @@
 <?php
-// It requires $this->getConf("requireAuthLogic") pointing to this logic File
+// This service has to be implemented in your <document_root>/logic/CloudFrameWorkService.php to to a personalization
 
 if($_POST[CloudUser] == "admin" && $_POST[CloudPassword] == "admin" ){
+	
         $this->setAuthUserData("name","User Admin");  
+
 } else if($this->getConf("AllowOauth") && is_array($_SESSION[opauth]) && strlen($_SESSION[opauth][auth][info][name])) {
     
+	
     $_CloudFrameWorkData[DirectoryUsersOauth_Id] = $_SESSION[opauth][auth][uid];
     $_CloudFrameWorkData[DirectoryUsersOauth_Strategy] = $_SESSION[opauth][auth][provider];
     $_CloudFrameWorkData[DirectoryUsersOauth_Domain] = $_SERVER[SERVER_NAME];
@@ -12,9 +15,9 @@ if($_POST[CloudUser] == "admin" && $_POST[CloudPassword] == "admin" ){
     $_CloudFrameWorkData[DirectoryUsersOauth_FullName] = $_SESSION[opauth][auth][info][name];
     $_CloudFrameWorkData[DirectoryUsersOauth_Email] = $_SESSION[opauth][auth][info][email];
     $_CloudFrameWorkData[DirectoryUsersOauth_SerializedData] = serialize($_SESSION[opauth]);
-    
-    $this->loadClass("db/Mysql");
-    $db = new Mysql();
+    /*    
+    $this->loadClass("db/CloudSQL");
+    $db = new CloudSQL();
     
     if($db->connect()) {
         $db->CloudFrameWork("replace",$_CloudFrameWorkData);

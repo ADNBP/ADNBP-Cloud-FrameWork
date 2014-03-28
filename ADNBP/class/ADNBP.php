@@ -48,7 +48,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
         var $_userLanguages = array();
         var $_basename = '';
         var $_isAuth = false;
-        var $version = "1.1.4";
+        var $version = "1.1.5";
         var $_defaultCFURL="http://cloud.adnbp.com/CloudFrameWorkService";
         /**
         * Constructor
@@ -228,8 +228,13 @@ if (!defined ("_ADNBP_CLASS_") ) {
 			
             $this->_basename = basename($this->_url);
             $scriptname = basename($this->_scriptPath);
+			
+			if(strpos($this->_url, '/rest/') !== false) {
+				
+				
+				
             // if previously there is not 'notemplate'=true a read the menu by default.
-            if(strpos($this->_url, '/CloudFrameWork') !== false) {
+			} elseif(strpos($this->_url, '/CloudFrameWork') !== false) {
                 
                 list($foo,$this->_basename,$foo) = explode('/',$this->_url,3);
                 $this->_basename.=".php"; // add .php extension to the basename in order to find logic and templates.

@@ -2,12 +2,12 @@
     <b>config/config.php</b>
     <pre>
     $this->setConf("AllowOauth",true);
-     // GOOGLE CREDENTIALAS: https://console.developers.google.com/project/apps~{YOUR-PROJECT}/apiui/credential
+     // GOOGLE CREDENTIALS: https://console.developers.google.com/project/apps~{YOUR-PROJECT}/apiui/credential
     $this->setConf("GoogleOauth",true); // To allow Google auth 
         $this->setConf("GoogleOauth_CLIENTE_ID",'TAKE FROM CREDENTIALS' ); // CLIENT_ID
         $this->setConf("GoogleOauth_CLIENTE_SECRET",'TAKE FROM CREDENTIALS'); // CLIENTE_SECRET
     
-     // FACEBOOK CREDENTIALAS: https://developers.facebook.com/x/apps/{ID}/dashboard/      
+     // FACEBOOK CREDENTIALS: https://developers.facebook.com/x/apps/{ID}/dashboard/      
     $this->setConf("FacebookOauth",true); // To allow FaceBook auth 
         $this->setConf("FacebookOauth_APP_ID",'TAKE FROM CREDENTIALS' ); // APP_ID
         $this->setConf("FacebookOauth_APP_SECRET",'TAKE FROM CREDENTIALS'); // APP_SECRET

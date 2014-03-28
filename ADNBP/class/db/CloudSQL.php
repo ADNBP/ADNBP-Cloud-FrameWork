@@ -14,7 +14,7 @@ class CloudSQLError extends Exception {
     } 
 } 
 
-// MySQL Class v10
+// CloudSQL Class v10
 if (!defined ("_MYSQLI_CLASS_") ) {
     define ("_MYSQLI_CLASS_", TRUE);
 	
@@ -69,7 +69,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
             
             set_error_handler(create_function( 
                 '$errno, $errstr, $errfile, $errline', 
-                'throw new MysqlError($errno, $errstr, $errfile, $errline);' 
+                'throw new CloudSQLError($errno, $errstr, $errfile, $errline);' 
             ),E_WARNING); 
             
 		}	

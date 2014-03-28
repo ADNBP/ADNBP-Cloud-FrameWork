@@ -67,6 +67,23 @@ switch ($service) {
         $pageContent =  str_replace("{source}", htmlentities(file_get_contents(dirname(__FILE__) ."/../class/email/logic/Email.php")),$pageContent);
        break;
        
+    case 'SMS':
+       $this->setConf("pageCode","SMS");
+       $pageContent = $memcache->get("CFSMS");
+       if(!strlen($pageContent) || $_GET[nocache]) {
+           $pageContent = $this->getCloudServiceResponse("getTemplate/SMS.htm");
+           $memcache->set("CFEmail","$pageContent");
+       }
+	   $_from = $this->getConf("twilioNumber");
+        include_once(dirname(__FILE__) ."/../class/sms/logic/SMS.php");
+        
+        $pageContent =  str_replace("{msg}", htmlentities($_msg), $pageContent);
+        $pageContent =  str_replace("{From}", htmlentities($_from), $pageContent);
+        $pageContent =  str_replace("{To}", htmlentities($_to), $pageContent);
+        $pageContent =  str_replace("{txtMsg}", htmlentities($_txtMsg), $pageContent);
+        $pageContent =  str_replace("{source}", htmlentities(file_get_contents(dirname(__FILE__) ."/../class/sms/logic/SMS.php")),$pageContent);
+       break;
+	   
     case 'File':
        $this->setConf("pageCode","File");
        $pageContent = $memcache->get("CFFile");
