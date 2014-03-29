@@ -149,7 +149,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
              if(!strlen($namespace)) return false;
              
              if($_GET[logout]) {
-                $this->setAuth($namespace,false);
+                $this->setAuth(false,$namespace);
                 Header("Location: $this->_url");
                 exit;
              }
@@ -279,6 +279,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
                 }   
                               
             }
+
             
             // if it is a permilink
             if($scriptname=="adnbppl.php" ){
@@ -316,7 +317,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
                     }
                 }    
             
-                    
+					
             
             if(!$this->getConf("notopbottom") && !$this->getConf("notemplate")) {
               if(!strlen($this->getConf("top"))) {
@@ -327,9 +328,9 @@ if (!defined ("_ADNBP_CLASS_") ) {
                 } else {
                     if(is_file("./templates/".$this->getConf("top")))
                         include("./templates/".$this->getConf("top"));
-                    if(is_file("./ADNBP/templates/".$this->getConf("top")))
+					else if(is_file("./ADNBP/templates/".$this->getConf("top")))
                         include("./ADNBP/templates/".$this->getConf("top"));
-                    else echo "No top file found.";
+                    else echo "No top file found t.";
                     
                 }
             }
@@ -383,7 +384,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
         * Class Loader
         */
         function urlRedirect ($url,$dest) {
-            if($url == $this->_url) {
+            if($url == $this->_url && $url != $dest) {
                 if(strlen($this->_urlParams)) $dest .= "?".$this->_urlParams;
                 Header("Location: $dest");
                 exit;
