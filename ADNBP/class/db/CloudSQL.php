@@ -150,6 +150,12 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                 
         // Scape Query arguments
         function _buildQuery($args) {
+        	
+			if(!$this->_dblink ) {
+				$this->setError("No db connection");
+				return false;
+			}
+			
             $qreturn = "";
             
             $q = array_shift($args);
@@ -187,20 +193,31 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 		function setDB($db) {$this->_dbdatabase = $db;}
         function getQuery() {return( $this->_lastQuery);}
         
-        function cloudFrameWork($action,$data) {
-            
+        function cloudFrameWork($action,$data,$table='') {
+			
+			
             if(!is_array($data)) {
-                $this->error("No fields in \$data in cloudFrameWork function.");
+                $this->setError("No fields in \$data in cloudFrameWork function.");
                 return false;
             } else $allFields = array_keys($data);
+
+            $_requireConnection = !$this->_dblink;
+			if($_requireConnection) $this->connect();
+
+            if($this->error()) return false;
+
 
             for($i=-1,$j=0,$tr2=count($allFields);$j<$tr2;$j++) {
                 $field = $allFields[$j];
                 
                 // Tables finish en 's' allways
-                list($tablename,$foo) = split("_",$field,2);
-                $tablename.="s";
+				if(strlen($table)) $tablename = $table;
+				else {
+	                list($tablename,$foo) = split("_",$field,2);
+	                $tablename.="s";					
+				}
                 
+				
                 if(!is_array($tables[$tablename])) {
                     $i++;                  
                     $tables[$tablename] = array();
@@ -218,12 +235,17 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                     return(false);
                 }
                 
+				
                 $sep = ((strlen($tables[$tablename][insertFields]))?",":"");
+                $and = ((strlen($tables[$tablename][selectWhere]))?" AND ":"");
+
                 $tables[$tablename][insertFields] .= $sep.$field;
                 $tables[$tablename][insertPercents] .= $sep.(($fieldTypes[$field][isNum])?"%s":"'%s'");
                 $tables[$tablename][updateFields] .= $sep.$field."=".(($fieldTypes[$field][isNum])?"%s":"'%s'");
+                $tables[$tablename][selectWhere] .= $and.$field."=".(($fieldTypes[$field][isNum])?"%s":"'%s'");
                 $tables[$tablename][values][] = $data[$field];
             }
+			
 
             foreach ($tables as $key => $value) {
                 switch ($action) {
@@ -232,18 +254,19 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                         //echo($action." into $key (".$value[insertFields].") values  (".$value[insertPercents].")");
                         return($this->command($action." into $key (".$value[insertFields].") values  (".$value[insertPercents].")",$value[values]));
                         break;
-                    
+
+                    case 'getRecords':
+						if(!strlen($table)) $table = $key;
+                        return($this->getDataFromQuery("select * from $table where ".$value[selectWhere],$value[values]));
+						
+                        break;
                     default:
                         
                         break;
                 }
                 
             }
-            
-            
-            
-            
-  
+			if($_requireConnection) $this->close();
         }
 
 	}
