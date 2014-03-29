@@ -193,7 +193,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 		function setDB($db) {$this->_dbdatabase = $db;}
         function getQuery() {return( $this->_lastQuery);}
         
-        function cloudFrameWork($action,$data,$table='') {
+        function cloudFrameWork($action,$data,$table='',$order='') {
 			
 			
             if(!is_array($data)) {
@@ -257,7 +257,8 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 
                     case 'getRecords':
 						if(!strlen($table)) $table = $key;
-                        return($this->getDataFromQuery("select * from $table where ".$value[selectWhere],$value[values]));
+						if(strlen($order)) $order = " ORDER BY ".$order;
+                        return($this->getDataFromQuery("select * from $table where ".$value[selectWhere].$order,$value[values]));
 						
                         break;
                     default:
