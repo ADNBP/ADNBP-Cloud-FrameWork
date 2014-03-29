@@ -263,12 +263,15 @@ if (!defined ("_ADNBP_CLASS_") ) {
                      if(strpos($this->_menu[$i][path],"{lang}"))
                          $this->_menu[$i][path] = str_replace("{lang}",$this->_lang,$this->_menu[$i][path]);
                      
-                     // Finding match
-                     if($this->_menu[$i][path] ==  $this->_url || $this->_menu[$i][$this->getConf("lang")."_path"] == $this->_url) {
-                         $_found = true;
-                         foreach ($this->_menu[$i] as $key => $value) {
-                             $this->setConf($key,$value);
-                         }
+					 if(strpos($this->_menu[$i][path],"{*}")) {
+					 	 $this->_menu[$i][path] = str_replace("{*}",'',$this->_menu[$i][path]);
+					 	 if(strpos($this->_url, $this->_menu[$i][path]) === 0)  $_found = true;
+
+					 } else if($this->_menu[$i][path] ==  $this->_url || $this->_menu[$i][$this->getConf("lang")."_path"] == $this->_url) 
+	                     $_found = true;
+					 
+					 if($_found) foreach ($this->_menu[$i] as $key => $value) {
+                         $this->setConf($key,$value);
                      }
                  }
                  
