@@ -214,7 +214,13 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 				if(strlen($table)) $tablename = $table;
 				else {
 	                list($tablename,$foo) = split("_",$field,2);
-	                $tablename.="s";					
+                    
+                    // I add CF_ prefix to write in tables
+                    if($action == 'insert' || $action == "replace")
+	                    $tablename="CF_".$tablename."s";	
+                    else
+                        $tablename.="s";    
+                        
 				}
                 
 				

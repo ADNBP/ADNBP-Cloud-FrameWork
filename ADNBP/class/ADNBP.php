@@ -129,7 +129,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
                 /**
         * Var confs
         */
-        function setAuth($bool,$namespace='') {
+        function setAuth($bool,$namespace='CloudUser') {
             
              if(!strlen($namespace)) $namespace = $this->getConf("requireAuth");
              if(!strlen($namespace)) return false;
