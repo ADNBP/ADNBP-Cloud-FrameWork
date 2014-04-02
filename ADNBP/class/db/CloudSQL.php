@@ -163,8 +163,12 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                 $this->setError("Function requires at least the query parameter");
             } else {
                 $n_percentsS = substr_count($q,'%s');
-                if(is_array($args[0]) && count($args)==1) $params = $args[0];
-                else $params = $args;
+                if(is_array($args[0]) && count($args)==1) {
+                    $params = $args[0];
+                } else {
+                    if(count($args)==1 && !strlen($args[0])) $params = array();
+                    else $params = $args;
+                }
                 unset($args);
                 
                 if(count($params) != $n_percentsS) {
@@ -193,7 +197,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 		function setDB($db) {$this->_dbdatabase = $db;}
         function getQuery() {return( $this->_lastQuery);}
         
-        function cloudFrameWork($action,$data,$table='',$order='') {
+        function cloudFrameWork($action,$data,$table='',$order='',$selectFields='*') {
 			
 			
             if(!is_array($data)) {
@@ -215,12 +219,18 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 				else {
 	                list($tablename,$foo) = split("_",$field,2);
                     
-                    // I add CF_ prefix to write in tables
-                    if($action == 'insert' || $action == "replace")
-	                    $tablename="CF_".$tablename."s";	
-                    else
-                        $tablename.="s";    
-                        
+                    // They are passing a field name
+                    $_where = '';
+                    if(strlen($foo)) $tablename.="s"; 
+                    else {
+                        // They are passing a table with a Where condition
+                        $_where = $data[$tablename];
+                        if($_where == '%') $_where = '1=1';
+                    }
+                    
+                     // I add CF_ prefix to write in tables
+                    if($action == 'insert' || $action == "replace" || $action == "getRecordsForEdit")
+	                    $tablename="CF_".$tablename;
 				}
                 
 				
@@ -236,7 +246,8 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                     }  
                 }
                 
-                if(!$fieldTypes[$field][type]) {
+                
+                if(!strlen($_where) && !$fieldTypes[$field][type]) {
                     $this->setError("Wrong data array. $field doesn't exist in Cloud FrameWork.");
                     return(false);
                 }
@@ -248,8 +259,13 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                 $tables[$tablename][insertFields] .= $sep.$field;
                 $tables[$tablename][insertPercents] .= $sep.(($fieldTypes[$field][isNum])?"%s":"'%s'");
                 $tables[$tablename][updateFields] .= $sep.$field."=".(($fieldTypes[$field][isNum])?"%s":"'%s'");
-                $tables[$tablename][selectWhere] .= $and.$field."=".(($fieldTypes[$field][isNum])?"%s":"'%s'");
-                $tables[$tablename][values][] = $data[$field];
+                
+                if(strlen($_where)) {
+                    $tables[$tablename][selectWhere] = $_where;
+                } else {
+                    $tables[$tablename][selectWhere] .= $and.$field."=".(($fieldTypes[$field][isNum])?"%s":"'%s'");
+                    $tables[$tablename][values][] = $data[$field];
+                }
             }
 			
 
@@ -262,10 +278,30 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                         break;
 
                     case 'getRecords':
+                    case 'getRecordsForEdit':
 						if(!strlen($table)) $table = $key;
 						if(strlen($order)) $order = " ORDER BY ".$order;
-                        return($this->getDataFromQuery("select * from $table where ".$value[selectWhere].$order,$value[values]));
-						
+                        if($action == "getRecords")
+                           return($this->getDataFromQuery("select $selectFields from $table where ".$value[selectWhere].$order,$value[values]));
+                        else {
+                           $_ret[data] = $this->getDataFromQuery("select $selectFields from $table where ".$value[selectWhere].$order,$value[values]);
+                           // Eplore types
+                           for($k=0,$tr3=count($types);$k<$tr3;$k++) {
+                               $_ret[$types[$k][Field]][type] = "text";
+                               
+                               list($foo,$field,$rels) = explode("_", $types[$k][Field],3);
+                               if($field=="Id" && $rels=="") 
+                                   $_ret[$types[$k][Field]][type] = "key";
+                               else if(strlen($rels)) {
+                                   $_ret[$types[$k][Field]][type] = "rel";
+                                   $reltable=$field."s";
+                                   
+                                   $relData = $this->cloudFrameWork("getRecords", array($reltable=>'%'),'','',$field.'_Id Id,'.$field.'_Name Name');
+                                   $_ret[$types[$k][Field]][relData] =$relData;
+                               }
+                           }
+                           return($_ret);
+                        }
                         break;
                     default:
                         
