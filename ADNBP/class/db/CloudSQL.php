@@ -199,7 +199,6 @@ if (!defined ("_MYSQLI_CLASS_") ) {
         
         function cloudFrameWork($action,$data,$table='',$order='',$selectFields='*') {
 			
-			
             if(!is_array($data)) {
                 $this->setError("No fields in \$data in cloudFrameWork function.");
                 return false;
@@ -229,7 +228,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                     }
                     
                      // I add CF_ prefix to write in tables
-                    if($action == 'insert' || $action == "replace" || $action == "getRecordsForEdit")
+                    if($action == 'insert' || $action == "replace" || $action == "getRecordsForEdit" || $action == "updateRecord")
 	                    $tablename="CF_".$tablename;
 				}
                 
@@ -238,14 +237,18 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                     $i++;                  
                     $tables[$tablename] = array();
                     $keys[$i][table] = $tablename;
-                    $types = $this->getDataFromQuery("SHOW COLUMNS FROM %s",$keys[$i][table] ); //analyze types  
+                    $types = $this->getDataFromQuery("SHOW COLUMNS FROM %s",$keys[$i][table] ); //analyze types                      
                     if($this->error()) return(false);
+
+                    //if($action=="updateRecord")
+                    //    echo "<pre> fields to update ".print_r( $types,true)."</pre>";
+                    
                     for($k=0,$tr3=count($types);$k<$tr3;$k++) {
                            $fieldTypes[$types[$k][Field]][type] = $types[$k][Type];
                            $fieldTypes[$types[$k][Field]][isNum] = (preg_match("/(int|numb|deci)/i", $types[$k][Type]));
+                           $fieldTypes[$types[$k][Field]][isKey] = ($types[$k][Key]=="PRI");
                     }  
                 }
-                
                 
                 if(!strlen($_where) && !$fieldTypes[$field][type]) {
                     $this->setError("Wrong data array. $field doesn't exist in Cloud FrameWork.");
@@ -259,6 +262,13 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                 $tables[$tablename][insertFields] .= $sep.$field;
                 $tables[$tablename][insertPercents] .= $sep.(($fieldTypes[$field][isNum])?"%s":"'%s'");
                 $tables[$tablename][updateFields] .= $sep.$field."=".(($fieldTypes[$field][isNum])?"%s":"'%s'");
+                
+                
+                if($fieldTypes[$field][isKey]) {
+                    if(strlen($tables[$tablename][updateWhereFields])) $tables[$tablename][updateWhereFields].=',';
+                    $tables[$tablename][updateWhereFields] .= $field."=".(($fieldTypes[$field][isNum])?"%s":"'%s'");
+                    $tables[$tablename][updateWhereValues][] = $data[$field];
+                }
                 
                 if(strlen($_where)) {
                     $tables[$tablename][selectWhere] = $_where;
@@ -281,10 +291,19 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                     case 'getRecordsForEdit':
 						if(!strlen($table)) $table = $key;
 						if(strlen($order)) $order = " ORDER BY ".$order;
-                        if($action == "getRecords")
-                           return($this->getDataFromQuery("select $selectFields from $table where ".$value[selectWhere].$order,$value[values]));
-                        else {
-                           $_ret[data] = $this->getDataFromQuery("select $selectFields from $table where ".$value[selectWhere].$order,$value[values]);
+                        if($action == "getRecords") {
+                            $_q = "select $selectFields from $table where ".$value[selectWhere].$order;
+                           return($this->getDataFromQuery($_q,$value[values]));
+                        } else {
+                           
+                           $data = $this->getDataFromQuery("select $selectFields from $table where ".$value[selectWhere].$order,$value[values]);
+                           $_ret[fields] = array_keys($fieldTypes);
+                           for($i=0,$tr=count($data);$i<$tr;$i++) 
+                              $data[$i][_hash] = $this->getHashFromArray($data[$i]);
+
+                           $_ret[data] = $data;
+                           
+                           unset($data);
                            // Eplore types
                            for($k=0,$tr3=count($types);$k<$tr3;$k++) {
                                $_ret[$types[$k][Field]][type] = "text";
@@ -296,12 +315,17 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                                    $_ret[$types[$k][Field]][type] = "rel";
                                    $reltable=$field."s";
                                    
-                                   $relData = $this->cloudFrameWork("getRecords", array($reltable=>'%'),'','',$field.'_Id Id,'.$field.'_Name Name');
+                                   $relData = $this->cloudFrameWork("getRecords", array($reltable=>'%'),'','',$field.'_Id Id,'.$field.'_Name Name');                                   
                                    $_ret[$types[$k][Field]][relData] =$relData;
                                }
                            }
                            return($_ret);
                         }
+                        break;
+                    case 'updateRecord':
+                        $_q = "UPDATE $key SET ".$tables[$tablename][updateFields]." WHERE ".$tables[$tablename][updateWhereFields];
+                        $this->command($_q,array_merge($value[values],$value[updateWhereValues]));
+                        
                         break;
                     default:
                         
@@ -312,6 +336,9 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 			if($_requireConnection) $this->close();
         }
 
+        function getHashFromArray($arr) {
+            return(md5(implode('', $arr)));
+        }
 	}
 }
 ?>
