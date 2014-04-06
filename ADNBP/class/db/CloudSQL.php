@@ -196,16 +196,35 @@ if (!defined ("_MYSQLI_CLASS_") ) {
             return($qreturn);
         }
         
-        function getQueryFromSearch ($search,$fields) {
+        function getQueryFromSearch ($search,$fields=false,$joints="=",$operators="AND") {
            $ret = '1=1'; 
-           if( strlen($search) && strlen($fields) )  {
+           if( strlen($search) && $fields !== false )  {
                if(!is_array($fields)) $fields = explode(",", $fields);
                $q = $fields[0]." = '%s'";
                $data[] = $search;
+               
+               if(is_array($joints)) $last_join = array_shift($joints);
+               else $last_join = $joints;
+               
+               if(is_array($operators)) $last_op = array_shift($operators);
+               else $last_op = $operators;
+               
                for ($i=1,$tr=count($fields); $i < $tr; $i++) {
-                   $q.= " AND ";
-                   $q .= $fields[$i]." = '%s'";
+                   $q .= " $last_op ".$fields[$i]." $last_join '%s'";
                    $data[] = $search;
+                   
+                   //looking if they have sent more operators
+                   if(is_array($operators)) {
+                       $op = array_shift($operators);
+                       if(strlen($op)) $last_op = $op;
+                   }
+                   
+                   //looking if they have sent more operators
+                   if(is_array($joints)) {
+                       $jo= array_shift($joints);
+                       if(strlen($jo)) $last_join = $jo;
+                   }                 
+                   
                }  
                $ret = $this->_buildQuery(array($q,$data));
            }  
@@ -256,6 +275,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                         // They are passing a table with a Where condition
                         $_where = $data[$tablename];
                         if($_where == '%') $_where = '1=1';
+
                     }
                     
                      // I add CF_ prefix to write in tables
@@ -273,12 +293,18 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 
                     //if($action=="updateRecord")
                     //    echo "<pre> fields to update ".print_r( $types,true)."</pre>";
+
                     
                     for($k=0,$tr3=count($types);$k<$tr3;$k++) {
                            $fieldTypes[$types[$k][Field]][type] = $types[$k][Type];
                            $fieldTypes[$types[$k][Field]][isNum] = (preg_match("/(int|numb|deci)/i", $types[$k][Type]));
                            $fieldTypes[$types[$k][Field]][isKey] = ($types[$k][Key]=="PRI");
-                    }  
+                    }
+                    
+                    if(strpos($_where,"_anyfield=")!== false) {
+                        list($_foo,$_search) = explode("_anyfield=", $_where,2);
+                        $_where = $this->getQueryFromSearch("%$_search%", array_keys($fieldTypes),"LIKE","OR");
+                    }                      
                 }
                 
                 if(!strlen($_where) && !$fieldTypes[$field][type]) {
@@ -292,8 +318,13 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 
                 $tables[$tablename][insertFields] .= $sep.$field;
                 $tables[$tablename][insertPercents] .= $sep.(($fieldTypes[$field][isNum])?"%s":"'%s'");
-                $tables[$tablename][updateFields] .= $sep.$field."=".(($fieldTypes[$field][isNum])?"%s":"'%s'");
                 
+                if(strlen($data[$field]) && $data[$field] !='NULL')
+                    $tables[$tablename][updateFields] .= $sep.$field."=".(($fieldTypes[$field][isNum])?"%s":"'%s'");
+                else {
+                    $data[$field] = 'NULL';
+                    $tables[$tablename][updateFields] .= $sep.$field."=%s";
+                }
                 
                 if($fieldTypes[$field][isKey]) {
                     if(strlen($tables[$tablename][updateWhereFields])) $tables[$tablename][updateWhereFields].=',';
@@ -328,8 +359,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                            return($this->getDataFromQuery($_q,$value[values]));
                         } else {
                             
-                           if($action == "getRecordsForEdit") $this->_limit = 50;
-                           
+                           if($action == "getRecordsForEdit") $this->_limit = 50;                           
                            $data = $this->getDataFromQuery("select $selectFields from $table where ".$value[selectWhere].$order." limit ".$this->_limit,$value[values]);
                            $_ret[fields] = array_keys($fieldTypes);
                            for($i=0,$tr=count($data);$i<$tr;$i++) 
