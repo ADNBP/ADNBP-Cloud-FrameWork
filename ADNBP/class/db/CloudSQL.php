@@ -38,6 +38,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
         var $_dbsocket;        // MySQL Database
         var $_dbport = '3306';        // MySQL Database
         var $_dbtype = 'mysql';
+        var $_limit = 1000;
                 
         var $_dblink=false;                // Database Connection Link	
         
@@ -155,16 +156,24 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 				$this->setError("No db connection");
 				return false;
 			}
-			
+            if(!is_array($args)) {
+                $this->setError("_buildQuery requires an array");
+                return(false);
+            }
+
+            
             $qreturn = "";
             
             $q = array_shift($args);
+            
             if(!strlen($q)) {
                 $this->setError("Function requires at least the query parameter");
+                return(false);
             } else {
                 $n_percentsS = substr_count($q,'%s');
                 if(is_array($args[0]) && count($args)==1) {
                     $params = $args[0];
+                    
                 } else {
                     if(count($args)==1 && !strlen($args[0])) $params = array();
                     else $params = $args;
@@ -173,6 +182,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                 
                 if(count($params) != $n_percentsS) {
                     $this->setError("Number of %s doesn't count match with number of arguments");
+                    return(false);
                 } else {
                     if($n_percentsS == 0 ) $qreturn = $q;
                     else {
@@ -181,8 +191,25 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                     }
                 }
             }
+            
             $this->_lastQuery = $qreturn;
             return($qreturn);
+        }
+        
+        function getQueryFromSearch ($search,$fields) {
+           $ret = '1=1'; 
+           if( strlen($search) && strlen($fields) )  {
+               if(!is_array($fields)) $fields = explode(",", $fields);
+               $q = $fields[0]." = '%s'";
+               $data[] = $search;
+               for ($i=1,$tr=count($fields); $i < $tr; $i++) {
+                   $q.= " AND ";
+                   $q .= $fields[$i]." = '%s'";
+                   $data[] = $search;
+               }  
+               $ret = $this->_buildQuery(array($q,$data));
+           }  
+           return($ret);         
         }
         
 		
@@ -193,7 +220,11 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 		
 		function error() {return(strlen($this->_error)>0);}
 		function getError() {return($this->_error);}
-		function setError($err) {if(strlen($this->_error)) $this->_error.="\n\n";$this->_error.=$err;}
+		function setError($err) {
+		    if(strlen($this->_error)) $this->_error.="\n\n";
+		    $this->_error.=$err;
+            syslog(LOG_ERR, $err);
+        }
 		function setDB($db) {$this->_dbdatabase = $db;}
         function getQuery() {return( $this->_lastQuery);}
         
@@ -228,7 +259,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                     }
                     
                      // I add CF_ prefix to write in tables
-                    if($action == 'insert' || $action == "replace" || $action == "getRecordsForEdit" || $action == "updateRecord")
+                    if($action == 'insert' || $action == "replace" || $action == "getRecordsForEdit" ||  $action == "updateRecord")
 	                    $tablename="CF_".$tablename;
 				}
                 
@@ -289,14 +320,17 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 
                     case 'getRecords':
                     case 'getRecordsForEdit':
+                    case 'getRecordsToExplore':
 						if(!strlen($table)) $table = $key;
 						if(strlen($order)) $order = " ORDER BY ".$order;
                         if($action == "getRecords") {
-                            $_q = "select $selectFields from $table where ".$value[selectWhere].$order;
+                            $_q = "select $selectFields from $table where ".$value[selectWhere].$order." limit ".$this->_limit;
                            return($this->getDataFromQuery($_q,$value[values]));
                         } else {
+                            
+                           if($action == "getRecordsForEdit") $this->_limit = 50;
                            
-                           $data = $this->getDataFromQuery("select $selectFields from $table where ".$value[selectWhere].$order,$value[values]);
+                           $data = $this->getDataFromQuery("select $selectFields from $table where ".$value[selectWhere].$order." limit ".$this->_limit,$value[values]);
                            $_ret[fields] = array_keys($fieldTypes);
                            for($i=0,$tr=count($data);$i<$tr;$i++) 
                               $data[$i][_hash] = $this->getHashFromArray($data[$i]);
