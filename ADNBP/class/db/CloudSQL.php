@@ -18,6 +18,21 @@ class CloudSQLError extends Exception {
 if (!defined ("_MYSQLI_CLASS_") ) {
     define ("_MYSQLI_CLASS_", TRUE);
 	
+    
+    class CloudSQLQueryObject {
+        
+        var $data = array();
+        var $table = '';
+        var $selectFields = '';
+        var $order = '';
+        var $extraWhere = '';
+        
+        function CloudSQLQueryObject ($data,$table='') {
+            $this->data = $data;
+            $this->table = $table;
+        }
+    }
+    
 	class CloudSQL {
 		
         // Base variables
@@ -39,6 +54,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
         var $_dbport = '3306';        // MySQL Database
         var $_dbtype = 'mysql';
         var $_limit = 1000;
+        var $_qObject = array();
                 
         var $_dblink=false;                // Database Connection Link	
         
@@ -247,8 +263,55 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 		function setDB($db) {$this->_dbdatabase = $db;}
         function getQuery() {return( $this->_lastQuery);}
         
+        
+        /*
+         *  OBJECT QUERIES
+         */
+         
+        function initQueryObject($id,$data=array(),$table='') {
+            $this->_qObject[$id][data] = $data;
+            $this->_qObject[$id][table] = $table;
+        }
+
+        function getQueryObject($id) {$this->_qObject[$id];}
+        
+        function setQueryObjectSelectFields($id,$value) {
+            if(is_array($value)) $value = implode(",",$value);
+            $this->_qObject[$id][selectFields] = $value;
+        }
+        
+        function setQueryObjectOrder($id,$value) {
+            $this->_qObject[$id][order] = $value;
+        }
+        
+        function setQueryObjectTable($id,$value) {
+            $this->_qObject[$id][table] = $value;
+        }
+        
+        function setQueryObjectData($id,$value) {
+            $this->_qObject[$id][data] = $value;
+        }       
+         
+        function setQueryObjectWhere($id,$q,$v='') {
+            $this->_qObject[$id][where] = array();
+            $this->addQueryObjectWhere($id,$q,$v);
+        }
+        
+        function addQueryObjectWhere($id,$q,$v='') {
+            $this->_qObject[$id][where][] = $q;
+        }
+ 
+                    
         function cloudFrameWork($action,$data,$table='',$order='',$selectFields='*') {
 			
+            if(is_string($data) && is_array($this->_qObject[$data][data])) {
+                $id = $data;
+                $data = $this->_qObject[$id][data];
+                $table = $this->_qObject[$id][table];
+                $order = $this->_qObject[$id][order];
+                $selectFields = $this->_qObject[$id][selectFields];
+            }
+            
             if(!is_array($data)) {
                 $this->setError("No fields in \$data in cloudFrameWork function.");
                 return false;
@@ -334,7 +397,8 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                 
                 if(strlen($_where)) {
                     $tables[$tablename][selectWhere] = $_where;
-                } else {
+                } else if($data[$field] !='%') {
+                    
                     $tables[$tablename][selectWhere] .= $and.$field."=".(($fieldTypes[$field][isNum])?"%s":"'%s'");
                     $tables[$tablename][values][] = $data[$field];
                 }
@@ -343,6 +407,19 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 
             foreach ($tables as $key => $value) {
                 switch ($action) {
+                    case 'getObjectFields':
+                        $_infields = "'".implode("','",array_keys($fieldTypes))."'";
+                        $_q = "SELECT DirectoryObjectField_Name, DirectoryObjectField_DefaultName FROM DirectoryObjectFields WHERE DirectoryObjectField_Name IN ($_infields)";
+                        $_f = $this->getDataFromQuery($_q);
+                        if($this->error()) return false;
+                        
+                        $_ret = array();
+                        for ($i=0,$tr=count($_f); $i <  $tr; $i++) { 
+                            $_ret[$_f[$i][DirectoryObjectField_Name]] = $_f[$i][DirectoryObjectField_DefaultName];
+                        }
+                        unset($_f);
+                        return($_ret);
+                        break;
                     case 'insert':
                     case 'replace':
                         //echo($action." into $key (".$value[insertFields].") values  (".$value[insertPercents].")");
@@ -350,13 +427,21 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                         break;
 
                     case 'getRecords':
+                    case 'getDistinctRecords':
                     case 'getRecordsForEdit':
                     case 'getRecordsToExplore':
+                        if(!strlen($value[selectWhere])) $value[selectWhere] = "1=1";
+                        
 						if(!strlen($table)) $table = $key;
 						if(strlen($order)) $order = " ORDER BY ".$order;
                         if($action == "getRecords") {
                             $_q = "select $selectFields from $table where ".$value[selectWhere].$order." limit ".$this->_limit;
                            return($this->getDataFromQuery($_q,$value[values]));
+                           
+                        } else if($action == "getDistinctRecords") {
+                            $_q = "select distinct $selectFields from $table where ".$value[selectWhere].$order." limit ".$this->_limit;
+                           return($this->getDataFromQuery($_q,$value[values]));
+                           
                         } else {
                             
                            if($action == "getRecordsForEdit") $this->_limit = 50;                           

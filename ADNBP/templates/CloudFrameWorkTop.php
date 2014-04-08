@@ -37,11 +37,11 @@
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="/ADNBP/static/img/ico/apple-touch-icon-iphone4.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="/ADNBP/static/img/ico/apple-touch-icon-ipad.png" /> 
     <link rel="apple-touch-icon-precomposed" href="/ADNBP/static/img/ico/apple-touch-icon-iphone.png" /> 
-    <link rel="shortcut icon" href="/ADNBP/static/img/ico/favicon.ico">  
+    <link rel="shortcut icon" href="<?=((strlen($this->getConf('favicon')))?$this->getConf('favicon'):'/ADNBP/static/img/ico/favicon.ico')?>">  
+    
                                                
     </head>
     <body>
-        
       <div class="navbar navbar-inverse navbar-fixed-top">
       <div class="navbar-inner">
         <div class="container">
