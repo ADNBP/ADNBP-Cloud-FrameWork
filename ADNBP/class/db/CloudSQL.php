@@ -305,11 +305,13 @@ if (!defined ("_MYSQLI_CLASS_") ) {
         function cloudFrameWork($action,$data,$table='',$order='',$selectFields='*') {
 			
             if(is_string($data) && is_array($this->_qObject[$data][data])) {
+            	
                 $id = $data;
                 $data = $this->_qObject[$id][data];
                 $table = $this->_qObject[$id][table];
                 $order = $this->_qObject[$id][order];
                 $selectFields = $this->_qObject[$id][selectFields];
+				
             }
             
             if(!is_array($data)) {
@@ -325,7 +327,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 
             for($i=-1,$j=0,$tr2=count($allFields);$j<$tr2;$j++) {
                 $field = $allFields[$j];
-                
+				 
                 // Tables finish en 's' allways
 				if(strlen($table)) $tablename = $table;
 				else {
@@ -346,7 +348,6 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 	                    $tablename="CF_".$tablename;
 				}
                 
-				
                 if(!is_array($tables[$tablename])) {
                     $i++;                  
                     $tables[$tablename] = array();
@@ -355,7 +356,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                     if($this->error()) return(false);
 
                     //if($action=="updateRecord")
-                    //    echo "<pre> fields to update ".print_r( $types,true)."</pre>";
+                    // echo "<pre> fields to update ".print_r( $types,true)."</pre>";
 
                     
                     for($k=0,$tr3=count($types);$k<$tr3;$k++) {
@@ -371,7 +372,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                 }
                 
                 if(!strlen($_where) && !$fieldTypes[$field][type]) {
-                    $this->setError("Wrong data array. $field doesn't exist in Cloud FrameWork.");
+                    $this->setError("Wrong data array. $field doesn't exist in ".$keys[$i][table]);
                     return(false);
                 }
                 
@@ -399,7 +400,9 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                     $tables[$tablename][selectWhere] = $_where;
                 } else if($data[$field] !='%') {
                     
-                    $tables[$tablename][selectWhere] .= $and.$field."=".(($fieldTypes[$field][isNum])?"%s":"'%s'");
+					if(strpos($data[$field], '%')) $joint = ' LIKE ';
+					else $joint = ' = ';
+                    $tables[$tablename][selectWhere] .= $and.$field.$joint.(($fieldTypes[$field][isNum])?"%s":"'%s'");
                     $tables[$tablename][values][] = $data[$field];
                 }
             }
