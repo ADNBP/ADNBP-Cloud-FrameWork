@@ -10,6 +10,7 @@ list($foo,$script,$service,$params) = split('/',$this->_url,4);
 
 
 $memcache = new Memcache;
+
 switch ($service) {
 	case 'home':
         $pageContent = $memcache->get("CFHome");
@@ -94,7 +95,19 @@ switch ($service) {
         include_once(dirname(__FILE__) ."/../class/io/logic/File.php");
 
         $pageContent =  str_replace("{source}", htmlentities($output),$pageContent);
-       break;                 
+        $pageContent =  str_replace("{msg}", htmlentities($msg),$pageContent);
+       break;  
+    case 'DataStore':
+       $this->setConf("pageCode","DataStore");
+       $pageContent = $memcache->get("CFDataStore");
+       if(!strlen($pageContent) || $_GET[nocache]) {
+           $pageContent = $this->getCloudServiceResponse("getTemplate/DataStore.htm");
+           $memcache->set("CFDataStore","$pageContent");
+       }
+        include_once(dirname(__FILE__) ."/../class/io/logic/DataStore.php");
+
+        $pageContent =  str_replace("{source}", htmlentities($output),$pageContent);
+       break;                        
 	default:
 		 $pageContent = $this->getCloudServiceResponse("getTemplate/".$service.".htm");
 		break;
