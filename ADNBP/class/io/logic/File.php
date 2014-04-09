@@ -9,14 +9,22 @@ if(!strlen($this->getConf("GoogleCloudProjectId")))  {
     $this->setConf("GoogleCloudProjectId",AppIdentityService::getApplicationId());
 }
 
- 
-$_bucket = 'gs://'.CloudStorageTools::getDefaultGoogleStorageBucketName().'/';
+$_defaultBucket=CloudStorageTools::getDefaultGoogleStorageBucketName();
+if(!strlen($_defaultBucket)) $_defaultBucket = $_SERVER[DEFAULT_VERSION_HOSTNAME];
 
-if(file_put_contents($_bucket.'hello.txt', 'Hello') === false) {
-    $msg .=  "ERROR writing  in Default Bucket hello.txt";
+$_bucket = 'gs://'.$_defaultBucket.'/';
+
+if(strlen($_defaultBucket)) {
+    
+    if(file_put_contents($_bucket.'hello.txt', 'Hello') === false) {
+        $msg .=  "ERROR writing  in $_bucket Bucket hello.txt";
+    } else {
+        $msg .=  "OK writing in Default Bucket hello.txt with content: <a href='".CloudStorageTools::getPublicUrl($_bucket.'hello.txt',false)."'>".file_get_contents($_bucket.'hello.txt').'</a>';  
+    }
 } else {
-    $msg .=  "OK writing in Default Bucket hello.txt with content: <a href='".CloudStorageTools::getPublicUrl($_bucket.'hello.txt',false)."'>".file_get_contents($_bucket.'hello.txt').'</a>';  
+        $msg .= "\nERROR Google Cloud Storage not activated";
 }
+    
 
 
 if(strlen($this->getConf("GoogleCloudStoreBucket"))) {
@@ -30,7 +38,7 @@ if(strlen($this->getConf("GoogleCloudStoreBucket"))) {
     }
     
 } else {
-    $msg .= "NO PRIVATE BUCKET CREATED";
+    $msg .= "\nNO PRIVATE BUCKET CREATED in GoogleCloudStoreBucket conf var";
 }
 
 if(strlen($this->getConf("GoogleCloudStorePublicBucket"))) {
@@ -44,7 +52,7 @@ if(strlen($this->getConf("GoogleCloudStorePublicBucket"))) {
     }
     
 } else {
-    $msg .= "NO PUBLIC BUCKET CREATED";
+    $msg .= "\nNO PUBLIC BUCKET CREATED in GoogleCloudStorePublicBucket conf var";
 }
 
 $output .= file_get_contents(__FILE__);
