@@ -300,6 +300,16 @@ if (!defined ("_MYSQLI_CLASS_") ) {
         function addQueryObjectWhere($id,$q,$v='') {
             $this->_qObject[$id][where][] = $q;
         }
+		
+		function getSecuredSqlString($ret) {
+			
+			$ret = str_ireplace("delete ", '', $ret);			
+			$ret = str_ireplace(";", '', $ret);			
+			$ret = str_ireplace("insert ", '', $ret);
+			$ret = str_ireplace("from  ", '', $ret);
+			return($ret);
+						
+		}
  
                     
         function cloudFrameWork($action,$data,$table='',$order='',$selectFields='*') {
@@ -364,6 +374,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                            $fieldTypes[$types[$k][Field]][isNum] = (preg_match("/(int|numb|deci)/i", $types[$k][Type]));
                            $fieldTypes[$types[$k][Field]][isKey] = ($types[$k][Key]=="PRI");
                     }
+					// echo "<pre>".print_r($types,true)."</pre>";
                     
                     if(strpos($_where,"_anyfield=")!== false) {
                         list($_foo,$_search) = explode("_anyfield=", $_where,2);
@@ -400,10 +411,20 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                     $tables[$tablename][selectWhere] = $_where;
                 } else if($data[$field] !='%') {
                     
-					if(strpos($data[$field], '%')) $joint = ' LIKE ';
-					else $joint = ' = ';
-                    $tables[$tablename][selectWhere] .= $and.$field.$joint.(($fieldTypes[$field][isNum])?"%s":"'%s'");
-                    $tables[$tablename][values][] = $data[$field];
+					$joint = ' = ';
+					
+					$_selecWhereFieldError = false;
+					if(strpos($data[$field], '%')!==false) $joint = ' LIKE ';
+					else if($fieldTypes[$field][isNum]) {
+						if(!is_numeric(trim($data[$field]))) {
+							$joint=' ';
+						}
+					}
+					
+					if(!$_selecWhereFieldError ) {
+	                    $tables[$tablename][selectWhere] .= $and.$field.$joint.(($fieldTypes[$field][isNum])?"%s":"'%s'");
+	                    $tables[$tablename][values][] = $data[$field];
+					}
                 }
             }
 			
@@ -458,7 +479,13 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                            unset($data);
                            // Eplore types
                            for($k=0,$tr3=count($types);$k<$tr3;$k++) {
-                               $_ret[$types[$k][Field]][type] = "text";
+                           	   	
+                           	   if(preg_match("/(int|numb|deci)/i", $types[$k][Type]))
+                                   $_ret[$types[$k][Field]][type] = 'text';
+							   else if(preg_match("/(text)/i", $types[$k][Type]))
+							       $_ret[$types[$k][Field]][type] = 'textarea';
+							   else
+							   	   $_ret[$types[$k][Field]][type] = 'text';
                                
                                list($foo,$field,$rels) = explode("_", $types[$k][Field],3);
                                if($field=="Id" && $rels=="") 

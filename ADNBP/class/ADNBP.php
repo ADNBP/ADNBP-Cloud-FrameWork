@@ -18,6 +18,16 @@
 * @package com.adnbp.framework
 */
 
+function _print() {
+	$args = func_get_args();
+	for ($i=0,$tr=count($args); $i < $tr; $i++) {
+		if($args[$i] == "exit") exit;
+		else if(is_array($args[$i])) echo "<pre>".print_r($args[$i])."</pre>"; 
+		else echo "<li>".$args[$i];
+		
+	}
+}
+
 if (!defined ("_ADNBP_CLASS_") ) {
     define ("_ADNBP_CLASS_", TRUE);
     
