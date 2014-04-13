@@ -52,6 +52,18 @@ function create_test_request() {
   return $req;
 }
 
+function create_cf_request() {
+  $entity = create_entity();
+
+  $mutation = new Google_Service_Datastore_Mutation();
+  $mutation->setUpsert([$entity]);
+
+  $req = new Google_Service_Datastore_CommitRequest();
+  $req->setMode('NON_TRANSACTIONAL');
+  $req->setMutation($mutation);
+  return $req;
+}
+
 $scopes = [
     "https://www.googleapis.com/auth/datastore",
     "https://www.googleapis.com/auth/userinfo.email",
@@ -73,7 +85,10 @@ try {
     // test the config and connectivity by creating a test entity, building
     // a commit request for that entity, and creating/updating it in the datastore
     $req = create_test_request();
-  $service_dataset->commit($dataset_id, $req, []);
+    $service_dataset->commit($dataset_id, $req, []);
+    
+    $req = create_cf_request();
+    //$service_dataset->commit($dataset_id, $req, []);
 }
 catch (Google_Exception $ex) {
  syslog(LOG_WARNING, 'Commit to Cloud Datastore exception: ' . $ex->getMessage());

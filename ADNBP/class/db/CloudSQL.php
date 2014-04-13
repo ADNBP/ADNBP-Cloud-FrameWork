@@ -197,7 +197,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                 unset($args);
                 
                 if(count($params) != $n_percentsS) {
-                    $this->setError("Number of %s doesn't count match with number of arguments");
+                    $this->setError("Number of %s doesn't count match with number of arguments. Query: $q -> ".print_r($params,true));
                     return(false);
                 } else {
                     if($n_percentsS == 0 ) $qreturn = $q;
@@ -216,7 +216,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
            $ret = '1=1'; 
            if( strlen($search) && $fields !== false )  {
                if(!is_array($fields)) $fields = explode(",", $fields);
-               $q = $fields[0]." = '%s'";
+               $q = $fields[0]." $joints '%s'";
                $data[] = $search;
                
                if(is_array($joints)) $last_join = array_shift($joints);
@@ -312,8 +312,9 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 		}
  
                     
-        function cloudFrameWork($action,$data,$table='',$order='',$selectFields='*') {
+        function cloudFrameWork($action,$data='',$table='',$order='',$selectFields='*') {
 			
+            // Analyze de possibles params
             if(is_string($data) && is_array($this->_qObject[$data][data])) {
             	
                 $id = $data;
@@ -324,113 +325,127 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 				
             }
             
-            if(!is_array($data)) {
+            if(!is_array($data) && !strlen($table)) {
                 $this->setError("No fields in \$data in cloudFrameWork function.");
                 return false;
-            } else $allFields = array_keys($data);
+            } elseif(is_array($data)) {
+                $allFields = array_keys($data);
+            } 
 
             $_requireConnection = !$this->_dblink;
 			if($_requireConnection) $this->connect();
 
             if($this->error()) return false;
+            
+            // figuring out the table to work with
+            $_where = '';
+            if(!strlen($table)) {
+                list($table,$foo) = split("_",$allFields[0],2);
+                
+                if(!strlen($foo) && count($allFields) > 1) {
+                    $this->setError("I can not figure out the name of the table to query.");
+                    return false;                    
+                } else if(strlen($foo)) {
+                    $table.="s";
+                    $_q = "SELECT count(*) TOT FROM INFORMATION_SCHEMA.TABLES t WHERE t.TABLE_SCHEMA='%s' AND TABLE_NAME = '%s' ";
+                    $tmp = $this->getDataFromQuery($_q,$this->_dbdatabase,$table );
+                    if($tmp[0][TOT]==0) $table = $allFields[0];
+                } 
+            } 
+            
+            $_tableInFirstField = false;
+            if( count($allFields) == 1 && $allFields[0] == $table ) {
+                $_where = $data[$table];
+                $_tableInFirstField =true;
+            }
+            
+            if(strpos($table, "Rel_") !== false) 
+               $_relTable = true;
+            
+            if($action == 'insert' || $action == "replace" || $action == "getRecordsForEdit" ||  $action == "updateRecord" || $action =="getFieldTypes")
+                $table ="CF_".$table;
 
-
-            for($i=-1,$j=0,$tr2=count($allFields);$j<$tr2;$j++) {
+            // Field Types of the table
+            $types = $this->getDataFromQuery("SHOW COLUMNS FROM %s",$table ); //analyze types                      
+            if($this->error()) return(false);
+            
+            for($k=0,$tr3=count($types);$k<$tr3;$k++) {
+                   $fieldTypes[$types[$k][Field]][type] = $types[$k][Type];
+                   $fieldTypes[$types[$k][Field]][isNum] = (preg_match("/(int|numb|deci)/i", $types[$k][Type]));
+                   $fieldTypes[$types[$k][Field]][isKey] = ($types[$k][Key]=="PRI");
+            }  
+            
+            // analyze if the Where has _anyfield
+            if(strpos($_where,"_anyfield=")!== false) {
+                
+                list($_foo,$_search) = explode("_anyfield=", $_where,2);
+                $_where = "(".$this->getQueryFromSearch("%$_search%", array_keys($fieldTypes),"LIKE","OR").")";
+            }
+            if($_where == '%') $_where = '1=1'; 
+            
+            if(strlen($_where)) $tables[$table][selectWhere] = $_where;
+              
+                               
+            $tables[$table][init] = 1;
+            
+            if(!$_tableInFirstField)
+            for($i=-1,$j=0,$tr2=count($allFields);$j<$tr2;$j++) if($allFields[$j] != $table) {
+                
                 $field = $allFields[$j];
-				 
-                // Tables finish en 's' allways
-				if(strlen($table)) $tablename = $table;
-				else {
-	                list($tablename,$foo) = split("_",$field,2);
-                    
-                    // They are passing a field name
-                    $_where = '';
-                    if(strlen($foo)) $tablename.="s"; 
-                    else {
-                        // They are passing a table with a Where condition
-                        $_where = $data[$tablename];
-                        if($_where == '%') $_where = '1=1';
-
-                    }
-                    
-                     // I add CF_ prefix to write in tables
-                    if($action == 'insert' || $action == "replace" || $action == "getRecordsForEdit" ||  $action == "updateRecord")
-	                    $tablename="CF_".$tablename;
-				}
                 
-                if(!is_array($tables[$tablename])) {
-                    $i++;                  
-                    $tables[$tablename] = array();
-                    $keys[$i][table] = $tablename;
-                    $types = $this->getDataFromQuery("SHOW COLUMNS FROM %s",$keys[$i][table] ); //analyze types                      
-                    if($this->error()) return(false);
-
-                    //if($action=="updateRecord")
-                    // echo "<pre> fields to update ".print_r( $types,true)."</pre>";
-
-                    
-                    for($k=0,$tr3=count($types);$k<$tr3;$k++) {
-                           $fieldTypes[$types[$k][Field]][type] = $types[$k][Type];
-                           $fieldTypes[$types[$k][Field]][isNum] = (preg_match("/(int|numb|deci)/i", $types[$k][Type]));
-                           $fieldTypes[$types[$k][Field]][isKey] = ($types[$k][Key]=="PRI");
-                    }
-					// echo "<pre>".print_r($types,true)."</pre>";
-                    
-                    if(strpos($_where,"_anyfield=")!== false) {
-                        list($_foo,$_search) = explode("_anyfield=", $_where,2);
-                        $_where = $this->getQueryFromSearch("%$_search%", array_keys($fieldTypes),"LIKE","OR");
-                    }                      
-                }
-                
-                if(!strlen($_where) && !$fieldTypes[$field][type]) {
+                if(!$fieldTypes[$field][type]) {
                     $this->setError("Wrong data array. $field doesn't exist in ".$keys[$i][table]);
                     return(false);
                 }
-                
 				
-                $sep = ((strlen($tables[$tablename][insertFields]))?",":"");
-                $and = ((strlen($tables[$tablename][selectWhere]))?" AND ":"");
+                $sep = ((strlen($tables[$table][insertFields]))?",":"");
+                $and = ((strlen($tables[$table][selectWhere]))?" AND ":"");
 
-                $tables[$tablename][insertFields] .= $sep.$field;
-                $tables[$tablename][insertPercents] .= $sep.(($fieldTypes[$field][isNum])?"%s":"'%s'");
+                $tables[$table][insertFields] .= $sep.$field;
+                $tables[$table][insertPercents] .= $sep.(($fieldTypes[$field][isNum])?"%s":"'%s'");
                 
                 if(strlen($data[$field]) && $data[$field] !='NULL')
-                    $tables[$tablename][updateFields] .= $sep.$field."=".(($fieldTypes[$field][isNum])?"%s":"'%s'");
+                    $tables[$table][updateFields] .= $sep.$field."=".(($fieldTypes[$field][isNum])?"%s":"'%s'");
                 else {
                     $data[$field] = 'NULL';
-                    $tables[$tablename][updateFields] .= $sep.$field."=%s";
+                    $tables[$table][updateFields] .= $sep.$field."=%s";
                 }
                 
                 if($fieldTypes[$field][isKey]) {
-                    if(strlen($tables[$tablename][updateWhereFields])) $tables[$tablename][updateWhereFields].=',';
-                    $tables[$tablename][updateWhereFields] .= $field."=".(($fieldTypes[$field][isNum])?"%s":"'%s'");
-                    $tables[$tablename][updateWhereValues][] = $data[$field];
+                    if(strlen($tables[$table][updateWhereFields])) $tables[$table][updateWhereFields].=',';
+                    $tables[$table][updateWhereFields] .= $field."=".(($fieldTypes[$field][isNum])?"%s":"'%s'");
+                    $tables[$table][updateWhereValues][] = $data[$field];
                 }
                 
-                if(strlen($_where)) {
-                    $tables[$tablename][selectWhere] = $_where;
-                } else if($data[$field] !='%') {
-                    
-					$joint = ' = ';
-					
-					$_selecWhereFieldError = false;
-					if(strpos($data[$field], '%')!==false) $joint = ' LIKE ';
-					else if($fieldTypes[$field][isNum]) {
-						if(!is_numeric(trim($data[$field]))) {
-							$joint=' ';
-						}
-					}
-					
-					if(!$_selecWhereFieldError ) {
-	                    $tables[$tablename][selectWhere] .= $and.$field.$joint.(($fieldTypes[$field][isNum])?"%s":"'%s'");
-	                    $tables[$tablename][values][] = $data[$field];
-					}
+                if($data[$field] !='%') {
+                    if($data[$field]=="_empty_") {
+                        $tables[$table][selectWhere] .= $and." ($field IS NULL OR LENGTH($field)=0) ";
+                    } else if($data[$field]=="_noempty_") {
+                        $tables[$table][selectWhere] .= $and." ($field IS NOT NULL AND LENGTH($field)>0) ";
+                    } else {
+    					$joint = ' = ';
+    					$_selecWhereFieldError = false;
+    					if(strpos($data[$field], '%')!==false) $joint = ' LIKE ';
+    					else if($fieldTypes[$field][isNum]) {
+    						if(!is_numeric(trim($data[$field]))) {
+    							$joint=' ';
+    						}
+    					}
+                        
+                        if(!$_selecWhereFieldError ) {
+                            $tables[$table][selectWhere] .= $and.$field.$joint.(($fieldTypes[$field][isNum])?"%s":"'%s'");
+                            $tables[$table][values][] = $data[$field];
+                        }
+                    }
                 }
             }
 			
 
             foreach ($tables as $key => $value) {
                 switch ($action) {
+                    case 'getFieldTypes':
+                        return($fieldTypes);
+                        break;
                     case 'getObjectFields':
                         $_infields = "'".implode("','",array_keys($fieldTypes))."'";
                         $_q = "SELECT DirectoryObjectField_Name, DirectoryObjectField_DefaultName FROM DirectoryObjectFields WHERE DirectoryObjectField_Name IN ($_infields)";
@@ -467,16 +482,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                            return($this->getDataFromQuery($_q,$value[values]));
                            
                         } else {
-                            
-                           if($action == "getRecordsForEdit") $this->_limit = 50;                           
-                           $data = $this->getDataFromQuery("select $selectFields from $table where ".$value[selectWhere].$order." limit ".$this->_limit,$value[values]);
-                           $_ret[fields] = array_keys($fieldTypes);
-                           for($i=0,$tr=count($data);$i<$tr;$i++) 
-                              $data[$i][_hash] = $this->getHashFromArray($data[$i]);
 
-                           $_ret[data] = $data;
-                           
-                           unset($data);
                            // Eplore types
                            for($k=0,$tr3=count($types);$k<$tr3;$k++) {
                            	   	
@@ -488,21 +494,39 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 							   	   $_ret[$types[$k][Field]][type] = 'text';
                                
                                list($foo,$field,$rels) = explode("_", $types[$k][Field],3);
-                               if($field=="Id" && $rels=="") 
+                               
+                               if(($field=="Id" && $rels=="" && !$_relTable) || ($_relTable && $foo=="Id")) 
                                    $_ret[$types[$k][Field]][type] = "key";
-                               else if(strlen($rels)) {
+                               else if(strlen($rels) || ($_relTable && strlen($field))) {
                                    $_ret[$types[$k][Field]][type] = "rel";
-                                   $reltable=$field."s";
                                    
-                                   $relData = $this->cloudFrameWork("getRecords", array($reltable=>'%'),'','',$field.'_Id Id,'.$field.'_Name Name');                                   
+                                   if($_relTable) {
+                                       $reltable=$foo."s";
+                                       $relData = $this->cloudFrameWork("getRecords", array($reltable=>'%'),'','',$foo.'_Id Id,'.$foo.'_Name Name');                                   
+                                       
+                                   } else {
+                                       $reltable=$field."s";
+                                       $relData = $this->cloudFrameWork("getRecords", array($reltable=>'%'),'','',$field.'_Id Id,'.$field.'_Name Name');                                   
+                                   }
                                    $_ret[$types[$k][Field]][relData] =$relData;
                                }
                            }
+                            
+                           if($action == "getRecordsForEdit") $this->_limit = 50;                           
+                           $data = $this->getDataFromQuery("select $selectFields from $table where ".$value[selectWhere].$order." limit ".$this->_limit,$value[values]);
+                           $_ret[fields] = array_keys($fieldTypes);
+                           for($i=0,$tr=count($data);$i<$tr;$i++) 
+                              $data[$i][_hash] = $this->getHashFromArray($data[$i]);
+
+                           $_ret[data] = $data;
+                           
+                           unset($data);
+                           
                            return($_ret);
                         }
                         break;
                     case 'updateRecord':
-                        $_q = "UPDATE $key SET ".$tables[$tablename][updateFields]." WHERE ".$tables[$tablename][updateWhereFields];
+                        $_q = "UPDATE $key SET ".$tables[$table][updateFields]." WHERE ".$tables[$table][updateWhereFields];
                         $this->command($_q,array_merge($value[values],$value[updateWhereValues]));
                         
                         break;
