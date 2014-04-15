@@ -57,6 +57,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
         var $_qObject = array();
                 
         var $_dblink=false;                // Database Connection Link	
+        var $_debug=false;
         
         Function CloudSQL ($h='',$u='',$p='',$db='',$port='3306',$socket='') {
             
@@ -134,6 +135,9 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                 return(false);
             } else {
                 $ret=array();
+				
+				if($this->_debug) _print($_q);
+				
                 if( ($this->_lastRes = $this->_db->query($_q)) ) {
                     while ($fila = $this->_lastRes->fetch_array( MYSQL_ASSOC)) $ret[] = $fila;
                     if(is_object($this->_lastRes))
@@ -152,6 +156,8 @@ if (!defined ("_MYSQLI_CLASS_") ) {
             if($this->error()) {
                 return(false);
             } else {
+            	
+            	if($this->_debug) _print($_q);
                 if( ($this->_lastRes = $this->_db->query($_q)) ) {
                     $_ok=true;
                     if(is_object($this->_lastRes))
@@ -256,6 +262,8 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 		function error() {return(strlen($this->_error)>0);}
 		function getError() {return($this->_error);}
 		function setError($err) {
+			if($this->_debug) _print($err);
+			
 		    if(strlen($this->_error)) $this->_error.="\n\n";
 		    $this->_error.=$err;
             syslog(LOG_ERR, $err);
