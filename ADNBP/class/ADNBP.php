@@ -404,5 +404,13 @@ if (!defined ("_ADNBP_CLASS_") ) {
             }
 
         }
+		
+		/*
+		 * String replace KeyCodes
+		 */
+		 function strReplace($str) {
+		 	$str = str_replace('{DirectoryOrganization_Id}', $this->getAuthUserData("currentOrganizationId"), $str);
+		 	return($str);
+		 }
     }
 }
