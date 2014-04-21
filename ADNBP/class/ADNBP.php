@@ -48,6 +48,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
         var $_lang = "es";
         var $_parseDic = "";  // String to parse a dictionary
         var $_dic = array();
+        var $_pageContent = array();
         var $_charset = "UTF-8";
         var $_url = ''; 
         var $_urlParams = ''; 
@@ -230,6 +231,12 @@ if (!defined ("_ADNBP_CLASS_") ) {
             if(!strlen($lang)) $lang = $this->_lang; 
             return((strlen($this->_dic[$key][$lang]))?str_replace("\n","<br />",htmlentities($this->_dic[$key][$lang],ENT_COMPAT | ENT_HTML401,$this->_charset)):htmlentities($key));
         }
+		
+		function setPageContent($key,$content) { $this->_pageContent[$key] = $content;}
+		function addPageContent($key,$content) { $this->_pageContent[$key] .= $content;}
+		function getPageContent($key) { return(htmlentities($this->_pageContent[$key],ENT_SUBSTITUTE));}
+		function getRawPageContent($key) { return($this->_pageContent[$key]);}
+		
         /**
         * Run method
         */
