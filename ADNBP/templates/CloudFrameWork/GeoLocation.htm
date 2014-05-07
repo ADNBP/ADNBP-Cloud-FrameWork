@@ -1,4 +1,4 @@
-        <div class="hero-unit">
+        <div class="jumbotron">
         <h1>GeoLocation API</h1>
         <p>You can allow users can share their locations to interact with your services.</p>
            <h2>For JavaScript API include:</h2>
@@ -18,6 +18,7 @@
            </small>
            </p>
         </div>
+        
        <pre>
         <li> IN HE HTML HEAD and BODY Section:</li>
         &lt;?php if(strlen($this->getConf("GooglePublicAPICredential")) && $this->getConf("GoogleMapsAPI")) {?>
@@ -34,7 +35,7 @@
          &lt;div id="map-canvas"/>
          &lt;a href='#' onclick='showGeoLocationByBrowserInGoogleMaps("map-canvas");'>showGeoLocationByBrowserInGoogleMaps("map-canvas");&lt;/a>
          </pre>
-         <div class="hero-unit">
+         <div class="jumbotron">
         <a href='#' onclick='setGeoLocationByBrowser();return false;'>setGeoLocationByBrowser();</a> 
         <br/>
         <a href='#' onclick='showGeoLocationByBrowserInGoogleMaps("map-canvas");return false;'>showGeoLocationByBrowserInGoogleMaps("map-canvas");</a>
@@ -43,7 +44,7 @@
             </td></tr></table>
          </div>
          
-        <div class="hero-unit">
+        <div class="jumbotron">
         <h2>For PHP GeoPluggin based on IP with external services: http://www.geoplugin.net</h2>
         <li>Use for example: print_r($this->getGeoPlugin());</li>
          </div>

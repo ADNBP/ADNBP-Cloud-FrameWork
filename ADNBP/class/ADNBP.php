@@ -59,7 +59,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
         var $_userLanguages = array();
         var $_basename = '';
         var $_isAuth = false;
-        var $version = "1.1.5";
+        var $version = "1.1.6";
         var $_defaultCFURL="http://cloud.adnbp.com/CloudFrameWorkService";
         /**
         * Constructor

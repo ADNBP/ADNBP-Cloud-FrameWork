@@ -7,20 +7,33 @@
     <meta name="description" content="Cloud Framwork to develop Cloud Solutions.">
     <meta name="author" content="ADNBP Business & IT Solutions.">
 
-    <link href="/ADNBP/static/css/bootstrap.css" rel="stylesheet" media="screen">
+    <link href="/ADNBP/static/bootstrap311/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    
+    <!-- Bootstrap theme -->
+    <link href="/ADNBP/static/bootstrap311/bootstrap-theme.min.css" rel="stylesheet">
+    
     <style type="text/css">
-      body {
-        padding-top: 60px;
-        padding-bottom: 40px;
-      }
+		body {
+		  padding-top: 60px;
+		  padding-bottom: 40px;
+		}
+		
+		.theme-dropdown .dropdown-menu {
+		  position: static;
+		  display: block;
+		  margin-bottom: 20px;
+		}
+		
+		.theme-showcase > p > .btn {
+		  margin: 5px 0;
+		}
     </style>
 
-    <link href="/ADNBP/static/css/bootstrap-responsive.css" rel="stylesheet">
-
-    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
-      <script src="/ADNBP/static/js/html5shiv.js"></script>
-    <![endif]-->      
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->    
          
     <script src="/ADNBP/static/js/adnbpcloudframework.js"></script>
 
@@ -41,23 +54,27 @@
     
                                                
     </head>
-    <body>
-      <div class="navbar navbar-inverse navbar-fixed-top">
-      <div class="navbar-inner">
-        <div class="container">
-          <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+    <body role="document">
+     <!-- Fixed navbar -->
+    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="brand" href="#">Cloud Framework <?=date("Y")?></a>
-          <div class="nav-collapse collapse">
+          <a class="active navbar-brand" href="#">Cloud Framework <?=date("Y")?></a>
+        </div>
+        <div class="navbar-collapse collapse">
+        	
            <?php if($this->isAuth()) { ?>
             <p class="navbar-text pull-right">
               Logged in as <?=$this->getAuthUserData("name")?> <a href="?logout=1" class="navbar-link">[log-out]</a>
             </p>
             <?php } ?>
-              <ul class="nav">
+              <ul class="nav navbar-nav">
               <li <?=($this->getConf("pageCode")=="home")?"class='active'":""?>><a href="/CloudFrameWork">Home</a></li>
               <li class="dropdown">
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown">Services <b class="caret"></b></a>
@@ -71,14 +88,15 @@
                   </ul>
             </ul>
             <?php if(!$this->isAuth()) { ?>
-           <form class="navbar-form pull-right" method=post>
-              <input class="span2" type="text" placeholder="Email" name='CloudUser'>
-              <input class="span2" type="password" placeholder="Password" name='CloudPassword'>
-              <button type="submit" class="btn">Sign in</button>
+           <form class="navbar-form navbar-right" role="form"  method=post>
+              <input class="form-control" type="text" placeholder="Email" name='CloudUser'>
+              <input class="form-control" type="password" placeholder="Password" name='CloudPassword'>
+              <button type="submit" class="btn btn-success">Sign in</button>
             </form>
             <?php } ?>
-          </div><!--/.nav-collapse -->
-        </div>
+          
+        </div><!--/.nav-collapse -->
       </div>
     </div>
-    <div class="container">
+
+     <div class="container theme-showcase" role="main">
