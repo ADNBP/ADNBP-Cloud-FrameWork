@@ -7,10 +7,8 @@
     <meta name="description" content="Cloud Framwork to develop Cloud Solutions.">
     <meta name="author" content="ADNBP Business & IT Solutions.">
 
-    <link href="/ADNBP/static/bootstrap311/css/bootstrap.min.css" rel="stylesheet" media="screen">
-    
     <!-- Bootstrap theme -->
-    <link href="/ADNBP/static/bootstrap311/bootstrap-theme.min.css" rel="stylesheet">
+    <link href="/ADNBP/static/bootstrap311/css/bootstrap.min.css" rel="stylesheet" media="screen">    
     
     <style type="text/css">
 		body {
@@ -65,7 +63,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="active navbar-brand" href="#">Cloud Framework <?=date("Y")?></a>
+          <a class="navbar-brand" href="#">Cloud Framework <?=date("Y")?></a>
         </div>
         <div class="navbar-collapse collapse">
         	

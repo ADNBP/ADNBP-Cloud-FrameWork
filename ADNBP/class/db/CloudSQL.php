@@ -510,11 +510,11 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                                    
                                    if($_relTable) {
                                        $reltable=$foo."s";
-                                       $relData = $this->cloudFrameWork("getRecords", array($reltable=>'%'),'','',$foo.'_Id Id,'.$foo.'_Name Name');                                   
+                                       $relData = $this->cloudFrameWork("getDistinctRecords", array($reltable=>'%'),'','',$foo.'_Id Id,'.$foo.'_Name Name');                                   
                                        
                                    } else {
                                        $reltable=$field."s";
-                                       $relData = $this->cloudFrameWork("getRecords", array($reltable=>'%'),'','',$field.'_Id Id,'.$field.'_Name Name');                                   
+                                       $relData = $this->cloudFrameWork("getDistinctRecords", array($reltable=>'%'),'','',$field.'_Id Id,'.$field.'_Name Name');                                   
                                    }
                                    $_ret[$types[$k][Field]][relData] =$relData;
                                }
