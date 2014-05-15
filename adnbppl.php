@@ -2,7 +2,7 @@
 // Copy this file in the upper folder of ADNBP framework folder
 // v1.0 Sep 2013
 
-require_once("./ADNBP/class/ADNBP.php");
+require_once("ADNBP/class/ADNBP.php");
 $adnbp = new ADNBP();
 $adnbp->run();
 

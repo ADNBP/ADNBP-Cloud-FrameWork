@@ -1,12 +1,6 @@
 <?php
 
-if(is_file("./logic/CloudFrameWorkAuth.php")) {
-	    
-    include("./logic/CloudFrameWorkAuth.php");  
-	
-}  else {
 	// This service has to be implemented in your <document_root>/logic/CloudFrameWorkAuth.php to autenticate
-	
 	if($_POST[CloudUser] == "admin" && $_POST[CloudPassword] == "admin" ) {
 	        $this->setAuthUserData("name","User Admin");  
 	} else if($this->getConf("AllowOauth") && is_array($_SESSION[opauth]) && strlen($_SESSION[opauth][auth][info][name])) {  
@@ -41,5 +35,4 @@ if(is_file("./logic/CloudFrameWorkAuth.php")) {
 	     * 
 	     */    
 	     }
-}
 ?>

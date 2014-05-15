@@ -55,7 +55,7 @@ switch ($service) {
            $pageContent = $this->getCloudServiceResponse("getTemplate/Email.htm");
            $memcache->set("CFEmail","$pageContent");
        }
-        include_once(dirname(__FILE__) ."/../class/email/logic/Email.php");
+        include_once($this->_rootpath."/ADNBP/class/email/logic/Email.php");
         
         $pageContent =  str_replace("{msg}", htmlentities($_msg), $pageContent);
         $pageContent =  str_replace("{From}", htmlentities($_from), $pageContent);
@@ -65,7 +65,7 @@ switch ($service) {
         $pageContent =  str_replace("{htmlMsg}", htmlentities($_htmlMsg), $pageContent);
         $pageContent =  str_replace("{sendGridUser}", htmlentities($_sendgridUser), $pageContent);
         $pageContent =  str_replace("{sendGridPassword}", htmlentities($_sendgridPassword), $pageContent);
-        $pageContent =  str_replace("{source}", htmlentities(file_get_contents(dirname(__FILE__) ."/../class/email/logic/Email.php")),$pageContent);
+        $pageContent =  str_replace("{source}", htmlentities(file_get_contents($this->_rootpath."/ADNBP/class/email/logic/Email.php")),$pageContent);
        break;
        
     case 'SMS':
@@ -76,13 +76,13 @@ switch ($service) {
            $memcache->set("CFEmail","$pageContent");
        }
 	   $_from = $this->getConf("twilioNumber");
-        include_once(dirname(__FILE__) ."/../class/sms/logic/SMS.php");
+        include_once($this->_rootpath."/ADNBP/class/sms/logic/SMS.php");
         
         $pageContent =  str_replace("{msg}", htmlentities($_msg), $pageContent);
         $pageContent =  str_replace("{From}", htmlentities($_from), $pageContent);
         $pageContent =  str_replace("{To}", htmlentities($_to), $pageContent);
         $pageContent =  str_replace("{txtMsg}", htmlentities($_txtMsg), $pageContent);
-        $pageContent =  str_replace("{source}", htmlentities(file_get_contents(dirname(__FILE__) ."/../class/sms/logic/SMS.php")),$pageContent);
+        $pageContent =  str_replace("{source}", htmlentities(file_get_contents($this->_rootpath."/ADNBP/class/sms/logic/SMS.php")),$pageContent);
        break;
 	   
     case 'File':
@@ -92,7 +92,7 @@ switch ($service) {
            $pageContent = $this->getCloudServiceResponse("getTemplate/File.htm");
            $memcache->set("CFEmail","$pageContent");
        }
-        include_once(dirname(__FILE__) ."/../class/io/logic/File.php");
+        include_once($this->_rootpath."/ADNBP/class/io/logic/File.php");
 
         $pageContent =  str_replace("{source}", htmlentities($output),$pageContent);
         $pageContent =  str_replace("{msg}", htmlentities($msg),$pageContent);
@@ -104,7 +104,7 @@ switch ($service) {
            $pageContent = $this->getCloudServiceResponse("getTemplate/DataStore.htm");
            $memcache->set("CFDataStore","$pageContent");
        }
-        include_once(dirname(__FILE__) ."/../class/io/logic/DataStore.php");
+        include_once($this->_rootpath."/ADNBP/class/io/logic/DataStore.php");
 
         $pageContent =  str_replace("{source}", htmlentities($output),$pageContent);
        break;                        

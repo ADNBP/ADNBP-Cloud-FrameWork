@@ -59,17 +59,29 @@ if (!defined ("_ADNBP_CLASS_") ) {
         var $_userLanguages = array();
         var $_basename = '';
         var $_isAuth = false;
-        var $version = "1.1.6";
+        var $version = "2014May.1";
         var $_defaultCFURL="http://cloud.adnbp.com/CloudFrameWorkService";
+        var $_webapp = '';
+        var $_rootpath = '';
         /**
         * Constructor
         */
         function ADNBP ($session=true,$sessionId='') {
+            
             if($session) {
                 if(strlen($sessionId))
                     session_id($sessionId);
                 session_start();
             }
+            
+            $this->_webapp = dirname(dirname(__FILE__))."/webapp";
+            $this->_rootpath = dirname(dirname(dirname(__FILE__)));
+
+            // Change with $this->setWebApp("");
+            // if(is_file(dirname(__FILE__)."/../../adnbp_framework_config.php"))
+            
+            if(is_file($this->_rootpath."/adnbp_framework_config.php"))
+               include_once($this->_rootpath."/adnbp_framework_config.php");
 
             // Paths
             // note: in Google Apps Engine PHP doen't work $_SERVER: PATH_INFO or PHP_SELF
@@ -81,13 +93,9 @@ if (!defined ("_ADNBP_CLASS_") ) {
             // CONFIG BASIC
             $this->setConf("CloudFrameWorkVersion",$this->_version);
             
-            if(!is_file("./config/config.php")) {
-                $this->setConf("CloudServiceUrl","/CloudFrameWorkService");
-                $this->pushMenu(array("level"=>0,"path"=>"/","en"=>"Welcome","template"=>"CloudFrameWorkIntro.php","notopbottom"=>1));
-                $this->setConf("GooglePublicAPICredential","AIzaSyARDfk6bgUxrCZbg2n68--f0LL6k8b_mjg"); 
-                $this->setConf("GoogleMapsAPI",true);                 
-            } else {
-                include_once("./config/config.php");
+            
+            if(is_file($this->_webapp."/config/config.php")) {
+                include_once($this->_webapp."/config/config.php");
                 if (!$this->getConf("CloudServiceUrl")) $this->setConf("CloudServiceUrl",$this->_defaultCFURL);
             }            
             
@@ -101,7 +109,14 @@ if (!defined ("_ADNBP_CLASS_") ) {
             $this->setConf("lang",$this->_lang);
             
         }
+
         function version() {return($this->version);}
+        function getRootPath() {return($this->_rootpath);}
+        function setWebApp($dir) {
+            if(!is_dir($this->_rootpath.$dir))
+               die($dir." doesn't exist. The path has to begin with /");
+            else $this->_webapp=$this->_rootpath.$dir;
+        }
 
         function readGeoPlugin() {
             // analyze Default Country
@@ -241,17 +256,11 @@ if (!defined ("_ADNBP_CLASS_") ) {
         * Run method
         */
         function run () {
-            
-			
+                
             $this->_basename = basename($this->_url);
             $scriptname = basename($this->_scriptPath);
 			
-			if(strpos($this->_url, '/rest/') !== false) {
-				
-				
-				
-            // if previously there is not 'notemplate'=true a read the menu by default.
-			} elseif(strpos($this->_url, '/CloudFrameWork') !== false) {
+			if(strpos($this->_url, '/CloudFrameWork') !== false) {
                 
                 list($foo,$this->_basename,$foo) = explode('/',$this->_url,3);
                 $this->_basename.=".php"; // add .php extension to the basename in order to find logic and templates.
@@ -262,7 +271,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
                     $this->setConf("top","CloudFrameWorkTop.php");
                     $this->setConf("bottom","CloudFrameWorkBottom.php");
                     
-                    if(is_file("./ADNBP/templates/".$this->_basename)) {
+                    if(is_file($this->_rootpath."/ADNBP/templates/".$this->_basename)) {
                         $this->setConf("template",$this->_basename);
                     }
                     
@@ -270,9 +279,11 @@ if (!defined ("_ADNBP_CLASS_") ) {
                     $this->setConf("notemplate",true);
                 }
                 
-            } else if(!$this->getConf("notemplate")) { 
-                 if(is_file("./config/menu.php")) 
-                     include("./config/menu.php");
+                
+            } else if(!$this->getConf("notemplate")) {
+                 
+                 if(is_file($this->_webapp."/config/menu.php")) 
+                     include($this->_webapp."/config/menu.php");
                  
                  // looking for a match
                  for($i=0,$_found=false,$tr=count($this->_menu);$i<$tr && !$_found;$i++) {
@@ -294,7 +305,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
                  
                 // If not found in the menu and it doens't have a local template desactive topbottom
                 
-                if(!$_found && is_file("./templates/".$this->_basename.".php")) {
+                if(!$_found && is_file($this->_webapp."/templates/".$this->_basename.".php")) {
                     $this->_basename.=".php";
                 }   
                               
@@ -304,34 +315,39 @@ if (!defined ("_ADNBP_CLASS_") ) {
             // if it is a permilink
             if($scriptname=="adnbppl.php" ){
                  if(!strlen($this->getConf("template")) && !$this->getConf("notemplate")) {
-                 	if(is_file("./templates/".$this->_basename) || is_file("./ADNBP/templates/".$this->_basename))
+                     
+                 	if(is_file($this->_webapp."/templates/".$this->_basename) || is_file($this->_rootpath."/ADNBP/templates/".$this->_basename))
 					   $this->setConf("template",$this->_basename);
-					elseif(is_file("./logic/".$this->_basename) || is_file("./ADNBP/logic/".$this->_basename))
+					elseif(is_file($this->_webapp."/logic/".$this->_basename) || is_file($this->_rootpath."/ADNBP/logic/".$this->_basename))
                         $this->setConf("template","CloudFrameWorkBasic.php");
-                    elseif(is_file("./templates/404.php") && strpos($this->_url, '/CloudFrameWork') === false)
+                    elseif(is_file($this->_webapp."/templates/404.php") && strpos($this->_url, '/CloudFrameWork') === false)
                         $this->setConf("template","404.php");
                     else
                         $this->setConf("template","CloudFrameWork404.php");
                  }
             }
             
+            
            if(strlen($this->getConf("dictionary")))
-           if(is_file("./localize/".$this->getConf("dictionary").".txt")) {
-               $this->_parseDic = file_get_contents("./localize/".$this->getConf("dictionary").".txt");
+           if(is_file($this->_webapp."/localize/".$this->getConf("dictionary").".txt")) {
+               $this->_parseDic = file_get_contents($this->_webapp."/localize/".$this->getConf("dictionary").".txt");
                $this->_parseDic();
                // die(print_r($this->_dic));
            }
-  
+           
            $this->checkAuth();
-                if(!$this->getConf("logic")) {
-                    if(is_file("./logic/".$this->_basename)) 
-                         include("./logic/".$this->_basename);
-                    elseif(is_file("./ADNBP/logic/".$this->_basename)) 
-                         include("./ADNBP/logic/".$this->_basename);
+                if(!strlen($this->getConf("logic"))) {
+                    if(is_file($this->_webapp."/logic/".$this->_basename)) 
+                         include($this->_webapp."/logic/".$this->_basename);
+                    elseif(is_file($this->_rootpath."/ADNBP/logic/".$this->_basename)) {
+                         
+                         include($this->_rootpath."/ADNBP/logic/".$this->_basename);
+                    }
+                    
     
                 } else {
-                    if(is_file("./logic/".$this->getConf("logic")))
-                        include("./logic/".$this->getConf("logic"));
+                    if(is_file($this->_webapp."/logic/".$this->getConf("logic")))
+                        include($this->_webapp."/logic/".$this->getConf("logic"));
                     else {
                         $output = "No logic Found";
                     }
@@ -341,15 +357,15 @@ if (!defined ("_ADNBP_CLASS_") ) {
             
             if(!$this->getConf("notopbottom") && !$this->getConf("notemplate")) {
               if(!strlen($this->getConf("top"))) {
-                    if(is_file("./templates/top.php"))
-                        include("./templates/top.php");
+                    if(is_file($this->_webapp."/templates/top.php"))
+                        include($this->_webapp."/templates/top.php");
                     elseif(is_file("./ADNBP/templates/top.php"))
                         include("./ADNBP/templates/top.php");
                 } else {
-                    if(is_file("./templates/".$this->getConf("top")))
-                        include("./templates/".$this->getConf("top"));
-					else if(is_file("./ADNBP/templates/".$this->getConf("top")))
-                        include("./ADNBP/templates/".$this->getConf("top"));
+                    if(is_file($this->_webapp."/templates/".$this->getConf("top")))
+                        include($this->_webapp."/templates/".$this->getConf("top"));
+					else if(is_file($this->_rootpath."/ADNBP/templates/".$this->getConf("top")))
+                        include($this->_rootpath."/ADNBP/templates/".$this->getConf("top"));
                     else echo "No top file found t.";
                     
                 }
@@ -359,31 +375,31 @@ if (!defined ("_ADNBP_CLASS_") ) {
                 if(!$this->getConf("template")) {
                     if(is_file("./templates/".$this->_basename))
                         include("./templates/".$this->_basename);
-                    elseif(is_file("./ADNBP/templates/".$this->_basename))
-                        include("./ADNBP/templates/".$this->_basename);
+                    elseif(is_file($this->_rootpath."/ADNBP/templates/".$this->_basename))
+                        include($this->_rootpath."/ADNBP/templates/".$this->_basename);
                     elseif ($this->getConf("logic")=="nologic") {
                         
                     }
                 } else {
-                    if(is_file("./templates/".$this->getConf("template")))
-                        include("./templates/".$this->getConf("template"));
-                    elseif(is_file("./ADNBP/templates/".$this->getConf("template")))
-                        include("./ADNBP/templates/".$this->getConf("template"));
+                    if(is_file($this->_webapp."/templates/".$this->getConf("template")))
+                        include($this->_webapp."/templates/".$this->getConf("template"));
+                    elseif(is_file($this->_rootpath."/ADNBP/templates/".$this->getConf("template")))
+                        include($this->_rootpath."/ADNBP/templates/".$this->getConf("template"));
                     else echo "No template found.";
                 }
             } 
                         
             if(!$this->getConf("notopbottom") && !$this->getConf("notemplate")) {
                 if(!strlen($this->getConf("bottom"))) {
-                    if(is_file("./templates/bottom.php"))
-                        include("./templates/bottom.php");
-                    elseif(is_file("./ADNBP/templates/bottom.php"))
-                        include("./ADNBP/templates/bottom.php");
+                    if(is_file($this->_webapp."/templates/bottom.php"))
+                        include($this->_webapp."/templates/bottom.php");
+                    elseif(is_file($this->_rootpath."/ADNBP/templates/bottom.php"))
+                        include($this->_rootpath."/ADNBP/templates/bottom.php");
                 } else {
-                    if(is_file("./templates/".$this->getConf("bottom")))
-                        include("./templates/".$this->getConf("bottom"));
-                    elseif(is_file("./ADNBP/templates/".$this->getConf("bottom")))
-                        include("./ADNBP/templates/".$this->getConf("bottom"));
+                    if(is_file($this->_webapp."/templates/".$this->getConf("bottom")))
+                        include($this->_webapp."/templates/".$this->getConf("bottom"));
+                    elseif(is_file($this->_rootpath."/ADNBP/templates/".$this->getConf("bottom")))
+                        include($this->_rootpath."/ADNBP/templates/".$this->getConf("bottom"));
                     else echo "No bottom file found.";
                     
                 }
@@ -393,10 +409,11 @@ if (!defined ("_ADNBP_CLASS_") ) {
         function checkAuth() {
             $_ret = $this->isAuth();
             if(strlen($this->getConf("requireAuth")))  {
-                  if(is_file(dirname(__FILE__) ."/../logic/CloudFrameWorkAuth.php"))
-                     include(dirname(__FILE__) ."/../logic/CloudFrameWorkAuth.php");                  
-                  else
-                     die($this->getConf(" CloudFrameWorkAuth NOT FOUND"));
+                  if(is_file($this->_webapp."/logic/CloudFrameWorkAuth.php"))
+                     include($this->_webapp."/logic/CloudFrameWorkAuth.php");                  
+                  else {
+                     die(" CloudFrameWorkAuth NOT FOUND");
+                  }
             }
             
         }

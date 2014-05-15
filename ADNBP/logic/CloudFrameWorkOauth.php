@@ -12,8 +12,8 @@
  */
  $this->setConf("pageCode","oauth");
  
-define('CONF_FILE', dirname(__FILE__).'/../class/auth/opauth/'.'opauth.conf.php');
-define('OPAUTH_LIB_DIR', dirname(__FILE__).'/../class/auth/opauth/lib/Opauth/');
+define('CONF_FILE', $this->_rootpath.'/ADNBP/class/auth/opauth/'.'opauth.conf.php');
+define('OPAUTH_LIB_DIR', $this->_rootpath.'/ADNBP/class/auth/opauth/lib/Opauth/');
  
 
 /**
