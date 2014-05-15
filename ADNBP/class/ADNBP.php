@@ -112,6 +112,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
 
         function version() {return($this->version);}
         function getRootPath() {return($this->_rootpath);}
+        function getWebAppPath() {return($this->_webapp);}
         function setWebApp($dir) {
             if(!is_dir($this->_rootpath.$dir))
                die($dir." doesn't exist. The path has to begin with /");
