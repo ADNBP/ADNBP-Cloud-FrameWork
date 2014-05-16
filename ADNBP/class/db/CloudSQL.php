@@ -340,9 +340,9 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                 $allFields = array_keys($data);
             } 
 
+            //verify we have a db connection ready
             $_requireConnection = !$this->_dblink;
 			if($_requireConnection) $this->connect();
-
             if($this->error()) return false;
             
             // figuring out the table to work with
