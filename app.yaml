@@ -4,31 +4,28 @@ runtime: php
 api_version: 1
 
 handlers:
+# All Under CloudFrameWork is a ADNBP FrameWorkScript  
+- url: /CloudFrameWork(.+)$
+  script: ADNBP/adnbppl.php
+
+- url: /$
+  script: ADNBP/adnbppl.php
+  
+# Serve html & php  as script and /
+- url: /(.+\.(html|php))$
+  script: \1
+  
 # Serve images as static resources.
 - url: /(.+\.(gif|png|jpg|css|ico|txt|htm|js))$
   static_files: \1
   upload: .+\.(gif|png|jpg|css|ico|txt|htm|js)$
   application_readable: true
-  
-- url: /$
-  script: ADNBP/adnbppl.php
-
-- url: /(.+\.(php))$
-  script: ADNBP/adnbppl.php
     
-- url: /(.+\.(html))$
-  script: \1
-
-- url: /CloudFrameWork(.+)$
-  script: ADNBP/adnbppl.php
-  
-# Serve images as static resources.
 - url: /(.+\..+)$
   static_files: \1
   upload: .+\..+$
   application_readable: true
   
-# Serve php scripts.
+# Friendly Links as ADNBP FrameWorkScript  
 - url: /(.+)$
   script: ADNBP/adnbppl.php
-  
