@@ -4,6 +4,8 @@
     switch ($service) {
         case "SABADELL":
             
+
+            
             if(!strlen($params)) {
                 
                 $_data = $_POST;
@@ -21,44 +23,82 @@
                 if(strlen($this->getConf("Ds_Merchant_Order"))) $_data[Ds_Merchant_Order] = $this->getConf("Ds_Merchant_Order");
                 if(strlen($this->getConf("Ds_Merchant_MerchantData"))) $_data[Ds_Merchant_MerchantData] = $this->getConf("Ds_Merchant_MerchantData");
                 if(strlen($this->getConf("Ds_Merchant_MerchantName"))) $_data[Ds_Merchant_MerchantName] = $this->getConf("Ds_Merchant_MerchantName");
+                //Optional
+                if(strlen($this->getConf("Ds_Merchant_ConsumerLanguage"))) $_data[Ds_Merchant_ConsumerLanguage] = $this->getConf("Ds_Merchant_ConsumerLanguage");
                                                 
                 // Allowing _GET params
                 if(!strlen($_data[Ds_Merchant_Amount])) $_data[Ds_Merchant_Amount] = $_GET[Ds_Merchant_Amount];
                 if(!strlen($_data[Ds_Merchant_Order])) $_data[Ds_Merchant_Order] = $_GET[Ds_Merchant_Order];
+                if(!strlen($_data[Ds_Merchant_ConsumerLanguage])) $_data[Ds_Merchant_ConsumerLanguage] = $_GET[Ds_Merchant_ConsumerLanguage];
+    
 
+                // Call to external Service to get an IdTransaction
+                $data = array('field1' => 'value', 'field2' => 'value');
 
-                $_ready = true;
-                if(!strlen($_data[TPV_URL])) $_ready = false;
-                if(!strlen($_data[TPV_Secret])) $_ready = false;
-                if(!strlen($_data[Ds_Merchant_MerchantCode])) $_ready = false;
-                if(!strlen($_data[Ds_Merchant_MerchantName])) $_ready = false;
-                if(!strlen($_data[Ds_Merchant_Titular])) $_ready = false;
-                if(!strlen($_data[Ds_Merchant_ProductDescription])) $_ready = false;
-                if(!strlen($_data[Ds_Merchant_Amount])) $_ready = false;
-                if(!strlen($_data[Ds_Merchant_TransactionType])) $_ready = false;
-                if(!strlen($_data[Ds_Merchant_Currency])) $_ready = false;
-                if(!strlen($_data[Ds_Merchant_Terminal])) $_ready = false;
-                if(!strlen($_data[Ds_Merchant_MerchantURL])) $_ready = false;
-                if(!strlen($_data[Ds_Merchant_UrlOK])) $_ready = false;
-                if(!strlen($_data[Ds_Merchant_UrlKO])) $_ready = false;
-                if(!strlen($_data[Ds_Merchant_Amount])) $_ready = false;
-                if(!strlen($_data[Ds_Merchant_Order])) $_ready = false;
+                 
 
-                //To add information in the URLOK AND KO
-                if($_ready) {
-                    $_data[Ds_Merchant_UrlOK] .= '?Ds_Order='.urlencode($_data[Ds_Merchant_Order]);
-                    $_data[Ds_Merchant_UrlKO] .= '?Ds_Order='.urlencode($_data[Ds_Merchant_Order]);
-                }
                 
-            $Ds_Merchant_MerchantSignature = strtoupper(sha1(
-                $_data[Ds_Merchant_Amount]
-               .$_data[Ds_Merchant_Order]
-               .$_data[Ds_Merchant_MerchantCode]
-               .$_data[Ds_Merchant_Currency]
-               .$_data[Ds_Merchant_TransactionType]
-               .$_data[Ds_Merchant_MerchantURL]
-               .$_data[TPV_Secret]
-               ));
+                 
+                if($_GET[initTransaction]=='1') {
+                        
+                     $result = unserialize($this->getCloudServiceResponse("TPVTransaction/init",$data));
+                     if($result[response]!="OK")
+                     _print($result);                        
+                    
+                    $_ready = true;
+                    if(!strlen($_data[TPV_URL])) $_ready = false;
+                    if(!strlen($_data[TPV_Secret])) $_ready = false;
+                    if(!strlen($_data[Ds_Merchant_MerchantCode])) $_ready = false;
+                    if(!strlen($_data[Ds_Merchant_MerchantName])) $_ready = false;
+                    if(!strlen($_data[Ds_Merchant_Titular])) $_ready = false;
+                    if(!strlen($_data[Ds_Merchant_ProductDescription])) $_ready = false;
+                    if(!strlen($_data[Ds_Merchant_Amount])) $_ready = false;
+                    if(!strlen($_data[Ds_Merchant_TransactionType])) $_ready = false;
+                    if(!strlen($_data[Ds_Merchant_Currency])) $_ready = false;
+                    if(!strlen($_data[Ds_Merchant_Terminal])) $_ready = false;
+                    if(!strlen($_data[Ds_Merchant_MerchantURL])) $_ready = false;
+                    if(!strlen($_data[Ds_Merchant_UrlOK])) $_ready = false;
+                    if(!strlen($_data[Ds_Merchant_UrlKO])) $_ready = false;
+                    if(!strlen($_data[Ds_Merchant_Amount])) $_ready = false;
+                    if(!strlen($_data[Ds_Merchant_Order])) $_ready = false;
+    
+                    //To add information in the URLOK AND KO
+                    if($_ready) {
+                        $_data[Ds_Merchant_UrlOK] .= '?Ds_Order='.urlencode($_data[Ds_Merchant_Order]);
+                        $_data[Ds_Merchant_UrlKO] .= '?Ds_Order='.urlencode($_data[Ds_Merchant_Order]);
+                    }
+                    
+                    $Ds_Merchant_MerchantSignature = strtoupper(sha1(
+                    $_data[Ds_Merchant_Amount]
+                   .$_data[Ds_Merchant_Order]
+                   .$_data[Ds_Merchant_MerchantCode]
+                   .$_data[Ds_Merchant_Currency]
+                   .$_data[Ds_Merchant_TransactionType]
+                   .$_data[Ds_Merchant_MerchantURL]
+                   .$_data[TPV_Secret]
+                   ));
+                   
+                   /*
+                   if($_ready) {
+                        // Insert Log
+                        $_CloudFrameWorkData[TPVLog_DirectoryOrganization_Id] = $this->getConf("setOrganizationId");
+                        $_CloudFrameWorkData[TPVLog_TPV_Id] = 1; // Sabadell will have 1
+                        $_CloudFrameWorkData[TPVLog_Order] = $_data[Ds_Merchant_Order]; // Sabadell will have 1
+                                            
+                        $_CloudFrameWorkData[TPVLog_Name] = 'Init Log Sabadell TPV'; // Sabadell will have 1
+                        $_CloudFrameWorkData[TPVLog_Date] = date("Y-m-d H:i:s"); // Sabadell will have 1
+                        $_CloudFrameWorkData[TPVLog_Info] = print_r($_data,true); // Sabadell will have 1
+                        if(!$db->cloudFrameWork("insert",$_CloudFrameWorkData,'TPVLogs')) 
+                          $msgerror.= 'DBINSERT_ERROR: '.$db->getError();
+                                                                                                    
+                        if(strlen($msgerror)) {
+                             echo "<pre>$msgerror<pre>";
+                             $_ready=false;
+                        }           
+                   } 
+                   */
+               }
+
             } else if($params=='response' || $params=='OK' || $params=='KO') {
                 
                 if(!is_object($db)){
@@ -66,7 +106,7 @@
                     $db = new CloudSQL();
                 }
                 if(!$db->connect()) die('- Error connection DB: '.$db->getError());
-                
+                            
                 if($params=='OK' || $params=='KO') {
                    
                    if(!strlen($_GET[Ds_Order])) $msgerror.="-Missing Ds_Order\n"; 
@@ -91,6 +131,7 @@
                    
                     
                 } if($params=='response') {
+
                     $msgerror='';
                     if(!strlen($_POST[Ds_Date])) $msgerror.="-Missing Ds_Date\n";
                     if(!strlen($_POST[Ds_Hour])) $msgerror.="-Missing Ds_Hour\n";
@@ -133,8 +174,38 @@
             } else {
                 die("unknown action");
             }
+            
             break;
         default:
             break;
     }
+
+// Data Arrays
+        $Ds_Merchant_ConsumerLanguage['0'] = 'Cliente';
+        $Ds_Merchant_ConsumerLanguage['1'] = 'Castellano';
+        $Ds_Merchant_ConsumerLanguage['2'] = 'Inglés';
+        $Ds_Merchant_ConsumerLanguage['3'] = 'Catalán';
+        $Ds_Merchant_ConsumerLanguage['4'] = 'Francés';
+        $Ds_Merchant_ConsumerLanguage['5'] = 'Alemán';
+        $Ds_Merchant_ConsumerLanguage['6'] = 'Holandés';
+        $Ds_Merchant_ConsumerLanguage['7'] = 'Italiano';
+        $Ds_Merchant_ConsumerLanguage['8'] = 'Sueco';
+        $Ds_Merchant_ConsumerLanguage['9'] = 'Portugués';
+        $Ds_Merchant_ConsumerLanguage['10'] = 'Valenciano';
+        $Ds_Merchant_ConsumerLanguage['11'] = 'Polaco';
+        $Ds_Merchant_ConsumerLanguage['12'] = 'Gallego';
+        $Ds_Merchant_ConsumerLanguage['13'] = 'Euskera';
+
+        $Ds_Merchant_TransactionType['0'] = 'Normal';
+        $Ds_Merchant_TransactionType['1'] = 'Preautorización (sólo Hoteles, Agencia y Alquiler vehículos)';
+        $Ds_Merchant_TransactionType['2'] = 'Conformación de Preautorización (sólo Hoteles, Agencia y Alquiler vehículos)';
+        $Ds_Merchant_TransactionType['9'] = 'Conformación de Preautorización (sólo Hoteles, Agencia y Alquiler vehículos)';
+        $Ds_Merchant_TransactionType['L'] = 'Pago por subscripciones. Pago inicial';
+        $Ds_Merchant_TransactionType['M'] = 'Pago por subscripciones. Siguientes cargos';
+
+        $Ds_Merchant_Currency['978'] = 'EUR';
+        $Ds_Merchant_Currency['840'] = 'USD';
+        $Ds_Merchant_Currency['392'] = 'YEN';
+
+
 ?>

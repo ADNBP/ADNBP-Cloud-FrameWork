@@ -143,7 +143,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
         /**
         * Call External Cloud Service
         */
-        function getCloudServiceResponse($rute) {
+        function getCloudServiceResponse($rute,$data=null) {
             // analyze Default Country
             if (!$this->getConf("CloudServiceUrl")) $this->setConf("CloudServiceUrl",$this->_defaultCFURL);
            
@@ -151,9 +151,29 @@ if (!defined ("_ADNBP_CLASS_") ) {
                $_url = "http://".$_SERVER[HTTP_HOST].$this->getConf("CloudServiceUrl")."/".$rute;
             else 
                 $_url = $this->getConf("CloudServiceUrl")."/".$rute;
-            return(file_get_contents($_url));
+            
+            if($data !== null && is_array($data)) {
+                $options = array(
+                    'http' => array(
+                    'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+                    'method'  => 'POST',
+                    'content' => http_build_query($data),
+                        )
+                 );
+                 $context  = stream_context_create($options);
+                 return(file_get_contents($_url,false,$context));
+            }
+            else return(file_get_contents($_url));
         }
-                /**
+        
+        /**
+        * Create a POST context to send variables to an URL
+        */  
+        function getPostContext($data) {
+            
+        }      
+        
+         /**
         * Var confs
         */
         function setAuth($bool,$namespace='CloudUser') {
