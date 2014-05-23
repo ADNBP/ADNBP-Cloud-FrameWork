@@ -220,7 +220,13 @@ if (!defined ("_ADNBP_CLASS_") ) {
 
              return($this->_isAuth[$namespace][data][$key]);
         }
-        
+
+        function getAuthUserNameSpace($namespace='') {
+             if(!strlen($namespace)) $namespace = $this->getConf("requireAuth");
+             if(!strlen($namespace)) return false;
+
+             return($this->_isAuth[$namespace][data]);
+        }        
         
         function setConf ($var,$val) {$this->_conf[$var] = $val;}        
         function getConf ($var) { return((isset($this->_conf[$var]))?$this->_conf[$var]:false);} 

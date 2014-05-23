@@ -9,6 +9,11 @@
             if(!strlen($params)) {
                 
                 $_data = $_POST;
+                
+                if(strlen($this->getAuthUserData("name"))) $_data[UserName] = $this->getAuthUserData("name");
+                if(strlen($this->getAuthUserData("email"))) $_data[UserEmail] = $this->getAuthUserData("email");
+                if(strlen($this->getAuthUserData("id"))) $_data[UserId] = $this->getAuthUserData("id");
+                
                 if(strlen($this->getConf("TPV_URL"))) $_data[TPV_URL] = $this->getConf("TPV_URL");
                 if(strlen($this->getConf("TPV_Secret"))) $_data[TPV_Secret] = $this->getConf("TPV_Secret");
                 if(strlen($this->getConf("Ds_Merchant_Amount"))) $_data[Ds_Merchant_Amount] = $this->getConf("Ds_Merchant_Amount");
@@ -30,8 +35,10 @@
                 if(!strlen($_data[Ds_Merchant_Amount])) $_data[Ds_Merchant_Amount] = $_GET[Ds_Merchant_Amount];
                 if(!strlen($_data[Ds_Merchant_Order])) $_data[Ds_Merchant_Order] = $_GET[Ds_Merchant_Order];
                 if(!strlen($_data[Ds_Merchant_ConsumerLanguage])) $_data[Ds_Merchant_ConsumerLanguage] = $_GET[Ds_Merchant_ConsumerLanguage];
-    
 
+                    
+
+                   
                 // Call to external Service to get an IdTransaction
                 $data = array('field1' => 'value', 'field2' => 'value');
 
@@ -40,8 +47,18 @@
                 
                  
                 if($_GET[initTransaction]=='1') {
-                        
-                     $result = unserialize($this->getCloudServiceResponse("TPVTransaction/init",$data));
+
+                    $Ds_Merchant_MerchantSignature = strtoupper(sha1(
+                    $_data[Ds_Merchant_Amount]
+                   .$_data[Ds_Merchant_Order]
+                   .$_data[Ds_Merchant_MerchantCode]
+                   .$_data[Ds_Merchant_Currency]
+                   .$_data[Ds_Merchant_TransactionType]
+                   .$_data[Ds_Merchant_MerchantURL]
+                   .$_data[TPV_Secret]
+                   ));
+                   $_data[Ds_Merchant_MerchantSignature] =   $Ds_Merchant_MerchantSignature; 
+                     $result = unserialize($this->getCloudServiceResponse("TPVTransaction/init",$_data));
                      if($result[response]!="OK")
                      _print($result);                        
                     
@@ -68,15 +85,7 @@
                         $_data[Ds_Merchant_UrlKO] .= '?Ds_Order='.urlencode($_data[Ds_Merchant_Order]);
                     }
                     
-                    $Ds_Merchant_MerchantSignature = strtoupper(sha1(
-                    $_data[Ds_Merchant_Amount]
-                   .$_data[Ds_Merchant_Order]
-                   .$_data[Ds_Merchant_MerchantCode]
-                   .$_data[Ds_Merchant_Currency]
-                   .$_data[Ds_Merchant_TransactionType]
-                   .$_data[Ds_Merchant_MerchantURL]
-                   .$_data[TPV_Secret]
-                   ));
+
                    
                    /*
                    if($_ready) {

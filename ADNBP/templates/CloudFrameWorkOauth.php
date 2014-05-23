@@ -37,8 +37,8 @@
         <?php } ?>
     </ul>
     <?php } ?>
-    <b>$this->getAuthUserData("opauth")</b>
+    <b>$this->getAuthUserNameSpace()</b>
     <pre>
-        <?=print_r($this->getAuthUserData("opauth"))?>
+        <?=print_r($this->getAuthUserNameSpace())?>
         <?=print_r($_SESSION["opauth"])?>
     </pre>
