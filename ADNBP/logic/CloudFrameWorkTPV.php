@@ -16,6 +16,8 @@
                 
                 if(strlen($this->getConf("TPV_URL"))) $_data[TPV_URL] = $this->getConf("TPV_URL");
                 if(strlen($this->getConf("TPV_Secret"))) $_data[TPV_Secret] = $this->getConf("TPV_Secret");
+				
+				
                 if(strlen($this->getConf("Ds_Merchant_Amount"))) $_data[Ds_Merchant_Amount] = $this->getConf("Ds_Merchant_Amount");
                 if(strlen($this->getConf("Ds_Merchant_TransactionType"))) $_data[Ds_Merchant_TransactionType] = $this->getConf("Ds_Merchant_TransactionType");
                 if(strlen($this->getConf("Ds_Merchant_Currency"))) $_data[Ds_Merchant_Currency] = $this->getConf("Ds_Merchant_Currency");
