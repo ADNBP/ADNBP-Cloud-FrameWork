@@ -14,14 +14,30 @@
 			die();  
             break;
         case 'checkVersion':
-            echo(($this->version == $params)?"OK $params":"ERROR. Your version  ".htmlentities($params)." is different of current version:".$this->version);
+            if(!strlen($params)) echo "Your current version is: ".$this->version;
+            else echo(($this->version == $params)?"OK $params":"Warning. Your version  ".htmlentities($params)." is different of current version:".$this->version);
+            die();
+            break;
+        case 'getMyIP':
+            echo "Your IP is: ".$_SERVER[REMOTE_ADDR];
             die();
 		    break;
+        case 'fetchURL':
+            if(strpos($_GET[url], 'http') !== false) {
+                echo @file_get_contents($_GET[url]);
+            } else {
+                echo "You have to provide an URL";
+            }
+
+            die();
+            break;
         default:
 			// This allow to create own services in each WebServer
             if(is_file($this->_webapp."/logic/CloudFrameWorkService/".$service.".php"))
                 include_once $this->_webapp."/logic/CloudFrameWorkService/".$service.".php";
-            else echo "The Service <b>".htmlentities($service)."</b> is not installed";
+            else { echo "You have select at least one valid service. Example: <a href=/CloudFrameWorkService/checkVersion>/CloudFrameWorkService/checkVersion</a>";
+                if(strlen($service)) echo '<li><b>'.htmlentities($service)."</b> is not installed";
+            }
             break;
     }
 

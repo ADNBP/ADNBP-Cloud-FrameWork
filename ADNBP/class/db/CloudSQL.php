@@ -39,6 +39,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
         var $_error='';                                       // Holds the last error
         var $_lastRes=false;                                        // Holds the last result set
         var $_lastQuery='';                                        // Holds the last result set
+        var $_lastInsertId='';                                        // Holds the last result set
         var $result;                                                // Holds the MySQL query result
         var $records;                                                // Holds the total number of records returned
         var $affected;                                        // Holds the total number of records affected
@@ -160,8 +161,10 @@ if (!defined ("_MYSQLI_CLASS_") ) {
             	if($this->_debug) _print($_q);
                 if( ($this->_lastRes = $this->_db->query($_q)) ) {
                     $_ok=true;
-                    if(is_object($this->_lastRes))
+                    $this->_lastInsertId = $this->_db->insert_id;
+                    if(is_object($this->_lastRes)) {
                         $this->_lastRes->close();
+                    }
                     $this->_lastRes = false;
                 } else {
                     $_ok = false;
@@ -270,6 +273,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
         }
 		function setDB($db) {$this->_dbdatabase = $db;}
         function getQuery() {return( $this->_lastQuery);}
+        function getInsertId() {return( $this->_lastInsertId);}
         
         
         /*
@@ -539,7 +543,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                         
                         break;
                     default:
-                        
+                        $this->setError('Unknown action: '.$action);
                         break;
                 }
                 

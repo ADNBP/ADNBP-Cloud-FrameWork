@@ -1,15 +1,23 @@
 <?php
 // This service has to be implemented in your <document_root>/logic/CloudFrameWorkService.php
     list($foo,$script,$service,$params) = split('/',$this->_url,4);
+    
+    // Read CRM Products if there is a conf Val.
+    if(strlen($service) && !strlen($_POST[Ds_Merchant_ProductDescription]) && strlen($this->getConf("TPV_CloudServiceProducts"))) {
+        $result = unserialize($this->getCloudServiceResponse($this->getConf("TPV_CloudServiceProducts")));
+        if(is_array($result[data])) {
+            $TPV_products = $result[data];
+            unset($result);
+        }
+    }    
+    
     switch ($service) {
         case "SABADELL":
-            
-
+            $this->setConf("pageCode","TPVSabadell");
             
             if(!strlen($params)) {
                 
                 $_data = $_POST;
-                
                 if(strlen($this->getAuthUserData("name"))) $_data[UserName] = $this->getAuthUserData("name");
                 if(strlen($this->getAuthUserData("email"))) $_data[UserEmail] = $this->getAuthUserData("email");
                 if(strlen($this->getAuthUserData("id"))) $_data[UserId] = $this->getAuthUserData("id");
@@ -38,17 +46,34 @@
                 if(!strlen($_data[Ds_Merchant_Order])) $_data[Ds_Merchant_Order] = $_GET[Ds_Merchant_Order];
                 if(!strlen($_data[Ds_Merchant_ConsumerLanguage])) $_data[Ds_Merchant_ConsumerLanguage] = $_GET[Ds_Merchant_ConsumerLanguage];
 
+                if(is_array($TPV_products) && strlen($_POST[TPV_product]) && strlen($_POST[TPV_productUnits])
+                    && !strlen($_data[Ds_Merchant_Amount]) && is_numeric($_POST[TPV_productUnits]) 
+                ) {
+                    $_data[CRMProduct_Id] = $TPV_products[$_POST[TPV_product]][CRMProduct_Id    ];
+                    $_data[Ds_Merchant_Amount] = $TPV_products[$_POST[TPV_product]][CRMProduct_Price] * $_POST[TPV_productUnits]*100;
+                    $_data[Ds_Merchant_ProductDescription] = $_POST[TPV_productUnits].' x '.$TPV_products[$_POST[TPV_product]][CRMProduct_Name].' - '.$TPV_products[$_POST[TPV_product]][CRMProduct_Price].' '.$TPV_products[$_POST[TPV_product]][CRMProduct_Currency] ;
+                }
+
+
+                if($_GET[initTransaction]=='1' 
+                   && strlen($_data[Ds_Merchant_Amount])
+                   && strlen($_data[Ds_Merchant_MerchantCode])
+                   && strlen($_data[Ds_Merchant_Currency])
+                   && strlen($_data[Ds_Merchant_TransactionType])
+                   && strlen($_data[Ds_Merchant_MerchantURL])
+                   && strlen($_data[TPV_Secret])
+                ) {
                     
-
+                   // We have to Get an Order Name.
                    
-                // Call to external Service to get an IdTransaction
-                $data = array('field1' => 'value', 'field2' => 'value');
-
-                 
-
-                
-                 
-                if($_GET[initTransaction]=='1') {
+                   if(!strlen($_data[Ds_Merchant_Order])) {
+                     $result = unserialize($this->getCloudServiceResponse("TPVTransaction/init",$_data));
+                     if($result[response]=="OK") {
+                         $_data[Ds_Merchant_Order] =   $result[TPVTransaction_Order];
+                           
+                     }
+                   } 
+                     // _print($result);                       
 
                     $Ds_Merchant_MerchantSignature = strtoupper(sha1(
                     $_data[Ds_Merchant_Amount]
@@ -60,26 +85,25 @@
                    .$_data[TPV_Secret]
                    ));
                    $_data[Ds_Merchant_MerchantSignature] =   $Ds_Merchant_MerchantSignature; 
-                     $result = unserialize($this->getCloudServiceResponse("TPVTransaction/init",$_data));
-                     if($result[response]!="OK")
-                     _print($result);                        
+                   
+                     
                     
                     $_ready = true;
-                    if(!strlen($_data[TPV_URL])) $_ready = false;
-                    if(!strlen($_data[TPV_Secret])) $_ready = false;
-                    if(!strlen($_data[Ds_Merchant_MerchantCode])) $_ready = false;
-                    if(!strlen($_data[Ds_Merchant_MerchantName])) $_ready = false;
-                    if(!strlen($_data[Ds_Merchant_Titular])) $_ready = false;
-                    if(!strlen($_data[Ds_Merchant_ProductDescription])) $_ready = false;
-                    if(!strlen($_data[Ds_Merchant_Amount])) $_ready = false;
-                    if(!strlen($_data[Ds_Merchant_TransactionType])) $_ready = false;
-                    if(!strlen($_data[Ds_Merchant_Currency])) $_ready = false;
-                    if(!strlen($_data[Ds_Merchant_Terminal])) $_ready = false;
-                    if(!strlen($_data[Ds_Merchant_MerchantURL])) $_ready = false;
-                    if(!strlen($_data[Ds_Merchant_UrlOK])) $_ready = false;
-                    if(!strlen($_data[Ds_Merchant_UrlKO])) $_ready = false;
-                    if(!strlen($_data[Ds_Merchant_Amount])) $_ready = false;
-                    if(!strlen($_data[Ds_Merchant_Order])) $_ready = false;
+                    if(!strlen($_data[TPV_URL])) { $_ready = false; $msgError.='Missing TPV_URL';}
+                    if(!strlen($_data[TPV_Secret])) { $_ready = false; $msgError.='Missing TPV_Secret';}
+                    if(!strlen($_data[Ds_Merchant_MerchantCode])) { $_ready = false; $msgError.='Missing Ds_Merchant_MerchantCode';}
+                    if(!strlen($_data[Ds_Merchant_MerchantName])) { $_ready = false; $msgError.='Missing Ds_Merchant_MerchantName';}
+                    if(!strlen($_data[Ds_Merchant_Titular])) { $_ready = false; $msgError.='Missing Ds_Merchant_Titular';}
+                    if(!strlen($_data[Ds_Merchant_ProductDescription])) { $_ready = false; $msgError.='Missing Ds_Merchant_ProductDescription';}
+                    if(!strlen($_data[Ds_Merchant_Amount])) { $_ready = false; $msgError.='Missing Ds_Merchant_Amount';}
+                    if(!strlen($_data[Ds_Merchant_TransactionType])) { $_ready = false; $msgError.='Missing Ds_Merchant_TransactionType';}
+                    if(!strlen($_data[Ds_Merchant_Currency])) { $_ready = false; $msgError.='Missing Ds_Merchant_Currency';}
+                    if(!strlen($_data[Ds_Merchant_Terminal])) { $_ready = false; $msgError.='Missing Ds_Merchant_Terminal';}
+                    if(!strlen($_data[Ds_Merchant_MerchantURL])) { $_ready = false; $msgError.='Missing Ds_Merchant_MerchantURL';}
+                    if(!strlen($_data[Ds_Merchant_UrlOK])) { $_ready = false; $msgError.='Missing Ds_Merchant_UrlOK';}
+                    if(!strlen($_data[Ds_Merchant_UrlKO])) { $_ready = false; $msgError.='Missing Ds_Merchant_UrlKO';}
+                    if(!strlen($_data[Ds_Merchant_Amount])) { $_ready = false; $msgError.='Missing Ds_Merchant_Amount';}
+                    if(!strlen($_data[Ds_Merchant_Order])) { $_ready = false; $msgError.='Missing Ds_Merchant_Order';}
     
                     //To add information in the URLOK AND KO
                     if($_ready) {
@@ -110,76 +134,14 @@
                    */
                }
 
-            } else if($params=='response' || $params=='OK' || $params=='KO') {
+            } else if($params=='OK' || $params=='KO') {
                 
-                if(!is_object($db)){
-                    $this->loadClass("db/CloudSQL");
-                    $db = new CloudSQL();
-                }
-                if(!$db->connect()) die('- Error connection DB: '.$db->getError());
-                            
-                if($params=='OK' || $params=='KO') {
+               // What to show in the screen
+               if($params=='OK') $output = 'Transaction OK';
+               else if($params=='KO') $output = 'Transaction FAILED';
+               echo $output;
                    
-                   if(!strlen($_GET[Ds_Order])) $msgerror.="-Missing Ds_Order\n"; 
-                   
-                   
-                   // What to show in the screen
-                   if($params=='OK') $output = 'Transaction OK';
-                   else if($params=='KO') $output = 'Transaction FAILED';
-                   echo $output;
-                   
-                      // Insert Log
-                    $_CloudFrameWorkData[TPVLog_DirectoryOrganization_Id] = $this->getConf("setOrganizationId");
-                    $_CloudFrameWorkData[TPVLog_TPV_Id] = 1; // Sabadell will have 1
-                    $_CloudFrameWorkData[TPVLog_Order] = $_GET[Ds_Order]; // Sabadell will have 1
-                    $_CloudFrameWorkData[TPVLog_Name] = ((strlen($msgerror) || $params=='KO')?'Error ':'OK ').'Log Sabadell TPV '.$params; // Sabadell will have 1
-                    $_CloudFrameWorkData[TPVLog_Date] = date("Y-m-d H:i:s"); // Sabadell will have 1
-                    $_CloudFrameWorkData[TPVLog_Info] = $msgerror." -> ".print_r($_GET,true); // Sabadell will have 1
-                    if(!$db->cloudFrameWork("insert",$_CloudFrameWorkData,'TPVLogs')) 
-                      $msgerror.= 'DBINSERT_ERROR: '.$db->getError();
-                                                                                                
-                    if(strlen($msgerror)) echo "<pre>$msgerror<pre>";                 
-                   
-                    
-                } if($params=='response') {
-
-                    $msgerror='';
-                    if(!strlen($_POST[Ds_Date])) $msgerror.="-Missing Ds_Date\n";
-                    if(!strlen($_POST[Ds_Hour])) $msgerror.="-Missing Ds_Hour\n";
-                    if(!strlen($_POST[Ds_Amount])) $msgerror.="-Missing Ds_Amount\n";
-                    if(!strlen($_POST[Ds_Currency])) $msgerror.="-Missing Ds_Currency\n";
-                    if(!strlen($_POST[Ds_Order])) $msgerror.="-Missing Ds_Order\n";
-                    if(!strlen($_POST[Ds_MerchantCode])) $msgerror.="-Missing Ds_MerchantCode\n";
-                    if(!strlen($_POST[Ds_Terminal])) $msgerror.="-Missing Ds_Terminal\n";
-                    if(!strlen($_POST[Ds_Signature])) $msgerror.="-Missing Ds_Signature\n";
-                    if(!strlen($_POST[Ds_Response])) $msgerror.="-Missing Ds_Response\n";
-                    if(!strlen($_POST[Ds_TransactionType])) $msgerror.="-Missing Ds_TransactionType\n";
-                    if(!strlen($_POST[Ds_SecurePayment])) $msgerror.="-Missing Ds_SecurePayment\n";
-                    // Optional
-                    // if(!strlen($_POST[Ds_MerchantData])) $msgerror.="-Missing Ds_MerchantData\n";
-                    if(!strlen($_POST[Ds_Card_Country])) $msgerror.="-Missing Ds_Card_Country\n";
-                    if(!strlen($_POST[Ds_AuthorisationCode])) $msgerror.="-Missing Ds_AuthorisationCode\n";
-                    if(!strlen($_POST[Ds_ConsumerLanguage])) $msgerror.="-Missing Ds_ConsumerLanguage\n";
-                    //Optional
-                    //if(!strlen($_POST[Ds_Card_Type])) $msgerror.="-Missing Ds_Card_Type\n";
-                    
-                    // Insert Log
-                    $_CloudFrameWorkData[TPVLog_DirectoryOrganization_Id] = $this->getConf("setOrganizationId");
-                    $_CloudFrameWorkData[TPVLog_TPV_Id] = 1; // Sabadell will have 1
-                    $_CloudFrameWorkData[TPVLog_Order] = $_POST[Ds_Order]; // Sabadell will have 1
-                                        
-                    $_CloudFrameWorkData[TPVLog_Name] = ((strlen($msgerror))?'Error ':'OK ').'Log Sabadell TPV response'; // Sabadell will have 1
-                    $_CloudFrameWorkData[TPVLog_Date] = date("Y-m-d H:i:s"); // Sabadell will have 1
-                    $_CloudFrameWorkData[TPVLog_Info] = $msgerror." -> ".print_r($_POST,true); // Sabadell will have 1
-                    if(!$db->cloudFrameWork("insert",$_CloudFrameWorkData,'TPVLogs')) 
-                      $msgerror.= 'DBINSERT_ERROR: '.$db->getError();
-                                                                                                
-                    if(!strlen($msgerror)) echo "OK";
-                    else echo "<pre>$msgerror<pre>";
-                }
-
-                $db->close();
-                exit;
+               exit;
                                 
                                 
             } else {
@@ -217,6 +179,7 @@
         $Ds_Merchant_Currency['978'] = 'EUR';
         $Ds_Merchant_Currency['840'] = 'USD';
         $Ds_Merchant_Currency['392'] = 'YEN';
+        
 
 
 ?>

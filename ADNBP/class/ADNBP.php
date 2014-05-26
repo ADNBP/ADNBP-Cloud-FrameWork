@@ -59,7 +59,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
         var $_userLanguages = array();
         var $_basename = '';
         var $_isAuth = false;
-        var $version = "2014May.1";
+        var $version = "2014May.25";
         var $_defaultCFURL="http://cloud.adnbp.com/CloudFrameWorkService";
         var $_webapp = '';
         var $_rootpath = '';
@@ -139,18 +139,24 @@ if (!defined ("_ADNBP_CLASS_") ) {
             else die("$class not found");
         }
         
+        function getCloudServicesURL(){
+            // analyze Default Country
+            if (!$this->getConf("CloudServiceUrl")) $this->setConf("CloudServiceUrl",$this->_defaultCFURL);
+           
+            if(strpos($this->getConf("CloudServiceUrl"), "http") === false) 
+               $_url = "http://".$_SERVER[HTTP_HOST].$this->getConf("CloudServiceUrl");
+            else 
+                $_url = $this->getConf("CloudServiceUrl");    
+            
+            return($_url);        
+        }
         
         /**
         * Call External Cloud Service
         */
         function getCloudServiceResponse($rute,$data=null) {
-            // analyze Default Country
-            if (!$this->getConf("CloudServiceUrl")) $this->setConf("CloudServiceUrl",$this->_defaultCFURL);
-           
-            if(strpos($this->getConf("CloudServiceUrl"), "http") === false) 
-               $_url = "http://".$_SERVER[HTTP_HOST].$this->getConf("CloudServiceUrl")."/".$rute;
-            else 
-                $_url = $this->getConf("CloudServiceUrl")."/".$rute;
+            
+            $_url = $this->getCloudServicesURL()."/".$rute;
             
             if($data !== null && is_array($data)) {
                 $options = array(

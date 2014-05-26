@@ -83,7 +83,7 @@
                   <li <?=($this->getConf("pageCode")=="SMS")?"class='active'":""?>><a href="/CloudFrameWork/SMS">SMS Function</a></li>
                   <li <?=($this->getConf("pageCode")=="File")?"class='active'":""?>><a href="/CloudFrameWork/File">I/O functions</a></li>
                   <li <?=($this->getConf("pageCode")=="oauth")?"class='active'":""?>><a href="/CloudFrameWorkOauth">Testing Oauth</a></li>
-                  <li <?=($this->getConf("pageCode")=="TPV")?"class='active'":""?>><a href="/CloudFrameWork/TPV">TPV Sabadell</a></li>
+                  <li <?=($this->getConf("pageCode")=="TPVSabadell")?"class='active'":""?>><a href="/CloudFrameWorkTPV/SABADELL">TPV Sabadell</a></li>
                   </ul>
             </ul>
             <?php if(!$this->isAuth()) { ?>
