@@ -118,6 +118,32 @@ if (!defined ("_ADNBP_CLASS_") ) {
                die($dir." doesn't exist. The path has to begin with /");
             else $this->_webapp=$this->_rootpath.$dir;
         }
+		
+	    function _checkParameter(&$_data,$var,$saveInSession=false,$resetIfEmpty=false,$method='request') {
+
+	            if(strlen($this->getConf($var))) $_data[$var] = $this->getConf($var);
+				else  {
+		    	    if($method=='request') $val = $_REQUEST[$var];
+					else if($method=='get') $val = $_GET[$var];
+					else if($method=='post') $val = $_POST[$var];
+					
+					if($resetIfEmpty || strlen($val)) $_data[$var] = $val;  //Force to get empty values
+					
+					if($saveInSession)
+					if($resetIfEmpty) {
+						$this->setSessionVar($var,$_data[$var]);
+					} else {
+						if(!strlen($_data[$var])) $_data[$var] =  $this->getSessionVar($var);
+						else {
+							$this->setSessionVar($var,$_data[$var]);
+						}
+					}
+				} 
+	    }
+		
+		function checkGetParameter(&$_data,$var,$saveInSession=false,$resetIfEmpty=false) {$this->_checkParameter($_data,$var,$saveInSession,$resetIfEmpty,'get');}
+		function checkPostParameter(&$_data,$var,$saveInSession=false,$resetIfEmpty=false) {$this->_checkParameter($_data,$var,$saveInSession,$resetIfEmpty,'post');}
+		function checkRequestParameter(&$_data,$var,$saveInSession=false,$resetIfEmpty=false) {$this->_checkParameter($_data,$var,$saveInSession,$resetIfEmpty,'request');}
 
         function readGeoPlugin() {
             // analyze Default Country
@@ -139,7 +165,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
             else die("$class not found");
         }
         
-        function getCloudServicesURL(){
+        function getCloudServiceURL($add=''){
             // analyze Default Country
             if (!$this->getConf("CloudServiceUrl")) $this->setConf("CloudServiceUrl",$this->_defaultCFURL);
            
@@ -148,7 +174,8 @@ if (!defined ("_ADNBP_CLASS_") ) {
             else 
                 $_url = $this->getConf("CloudServiceUrl");    
             
-            return($_url);        
+			if(strlen($add)) $add = '/'.$add;
+            return($_url.$add);        
         }
         
         /**
@@ -156,7 +183,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
         */
         function getCloudServiceResponse($rute,$data=null) {
             
-            $_url = $this->getCloudServicesURL()."/".$rute;
+            $_url = $this->getCloudServiceURL($rute);
             
             if($data !== null && is_array($data)) {
                 $options = array(
@@ -172,12 +199,6 @@ if (!defined ("_ADNBP_CLASS_") ) {
             else return(file_get_contents($_url));
         }
         
-        /**
-        * Create a POST context to send variables to an URL
-        */  
-        function getPostContext($data) {
-            
-        }      
         
          /**
         * Var confs

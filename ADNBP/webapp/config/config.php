@@ -8,5 +8,7 @@
 // Comment this line and add your own config Vars
 
 include_once($this->getRootPath()."/ADNBP/config/config.php");
+$this->setConf("CloudServiceUrl","http://localhost:9080/CloudFrameWorkService");     
+
 
 ?>
