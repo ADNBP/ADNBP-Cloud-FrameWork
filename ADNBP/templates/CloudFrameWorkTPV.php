@@ -8,6 +8,10 @@
     </div>
         
 <?php } else if($service=='SABADELL') {?>
+	<?php if( !strlen($this->getConf("ADNBPTPV_MerchantId"))
+	         || !strlen($this->getConf("ADNBPTPV_MerchantSecret"))
+	         || !strlen($this->getConf("ADNBPTPV_ProductCurrency"))
+	         || !strlen($this->getConf("ADNBPTPV_Production")) ) { ?>
 
     <div class="jumbotron">
     <h1>BancSabadell Integration</h1>
@@ -44,19 +48,31 @@
           <p>
           <div class="input-group">
            <input type='hidden' name='type' value='ADNBPTPV'>
+           <?php if(strlen($this->getConf("ADNBPTPV_MerchantId"))) echo "ADNBPTPV_MerchantId configured";
+				 else {?>
            <input type="text" name='ADNBPTPV_MerchantId' class="form-control" placeholder="ADNBPTPV_MerchantId" value='<?=htmlentities($_data[ADNBPTPV_MerchantId])?>'>    
+           <?php } ?>
+           <?php if(strlen($this->getConf("ADNBPTPV_MerchantSecret"))) echo "ADNBPTPV_MerchantSecret configured";
+				 else {?>
            <input type="text" name='ADNBPTPV_MerchantSecret' class="form-control" placeholder="ADNBPTPV_MerchantSecret"  value='<?=htmlentities($_data[ADNBPTPV_MerchantSecret])?>'>    
+           <?php } ?>
+           <?php if(strlen($this->getConf("ADNBPTPV_ProductCurrency"))) echo "ADNBPTPV_ProductCurrency configured";
+				 else {?>
           	 	<select  class="form-control" id='ADNBPTPV_ProductCurrency' name='ADNBPTPV_ProductCurrency'>
             	<?php foreach ($ADNBPTPV_ProductCurrency as $key => $value) {?>
                   <option  value='<?=$key?>' <?=($_data[ADNBPTPV_ProductCurrency]==$key)?'selected':''?>><?=$key?> = <?=$value?></option>
             	<?php } ?>
              	</select>
+           <?php } ?>
+           <?php if(strlen($this->getConf("ADNBPTPV_Production"))) echo "ADNBPTPV_Production configured";
+				 else {?>
           </div>
           <div class="radio">
            <label  class="checkbox-inline">
            <input type="checkbox" name='ADNBPTPV_Production' id='ADNBPTPV_Production'  value='1' <?=($_data[ADNBPTPV_Production]=='1')?'checked':''?>>  
            Use Production
            </label> 
+           <?php } ?>
           </div>    
 
           </p>
@@ -93,6 +109,8 @@
      <pre>$this->setConfig("TPV_URL","https://sis-t.redsys.es:25443/sis/realizarPago");
      </div>
      
+     <?php } ?>
+    
      <a name='init'></a>
      <?php if($_data[type] == 'ADNBPTPV') include dirname(__FILE__).'/CloudFrameWorkTPV/ADNBPTPV.php';
            else  if($_data[type] == 'BANCSABADELLTPV') include dirname(__FILE__).'/CloudFrameWorkTPV/BancSabadell.php';

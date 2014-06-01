@@ -21,21 +21,36 @@
 	          <p>
 	          	<h3>About who is going to pay (client)</h3>
 	         <div class="input-group">
-	          <label for="TPV_ClientName" >TPV_ClientName: </label>
+       <?php if($this->getConf("TPV_requireAuth") && !strlen($this->getConf("TPV_ClientId"))) {?>
+       <a href='/CloudFrameWorkOauth/google?ret=<?=urlencode($_SERVER['REQUEST_URI'])?>'><img src ='/ADNBP/static/img/sign-in-with-google.png' alt='Google Auth' width=220 ></a>	
+	   <?php } else { ?>
+	       	
+           <?php if(!strlen($this->getConf("TPV_ClientId")))  {?>
               <input type=hidden  class="form-control" id=TPV_ClientId name=TPV_ClientId placeholder='Client Id' value='<?=htmlentities($_data[TPV_ClientId])?>'>	
+		   <?php } ?>
+	          <label for="TPV_ClientName" >TPV_ClientName: </label>
+           <?php if(strlen($this->getConf("TPV_ClientName"))) echo htmlentities($_data[TPV_ClientName]);
+				 else {?>
               <input type=text  class="form-control" id=TPV_ClientName name=TPV_ClientName placeholder='Client Name' value='<?=htmlentities($_data[TPV_ClientName])?>'>	
+		   <?php } ?>
 	          </div><br/>
 	         <div class="input-group">
 	          <label for="TPV_ClientName" >TPV_ClientEmail: </label>
+           <?php if(strlen($this->getConf("TPV_ClientEmail"))) echo htmlentities($_data[TPV_ClientEmail]);
+				 else {?>
               <input type=text  class="form-control" id=TPV_ClientEmail name=TPV_ClientEmail placeholder='Client Email' value='<?=htmlentities($_data[TPV_ClientEmail])?>'>	
+		   <?php } ?>
 	          </div><br/>
 	         <div class="input-group">
 	         <label for="TPV_ConsumerLanguage" >TPV_ConsumerLanguage: </label>
+           <?php if(strlen($this->getConf("TPV_ConsumerLanguage"))) echo $Ds_Merchant_ConsumerLanguage[$_data[TPV_ConsumerLanguage]];
+				 else {?>          	 		
           	 	<select  class="form-control" id='TPV_ConsumerLanguage' name='TPV_ConsumerLanguage'>
             	<?php foreach ($Ds_Merchant_ConsumerLanguage as $key => $value) {?>
                   <option  value='<?=$key?>' <?=($_data[TPV_ConsumerLanguage]==$key)?'selected':''?>><?=$key?> = <?=$value?></option>
             	<?php } ?>
              	</select>
+            	<?php } ?>
               </div>
               <br/>
              <h3>About the Product</h3>
@@ -44,14 +59,16 @@
 	          <label for="TPV_ProductId" >TPV_ProductId: </label>
             <select class="form-control" name='TPV_ProductId'>
             <?php foreach ($TPV_products as $key => $value) {?>
-                  <option  value='<?=$value[CRMProduct_Id]?>' <?=($_POST[TPV_ProductId]==$value[CRMProduct_Id])?'selected':''?>><?=$value[CRMProduct_Name]?> - <?=$value[CRMProduct_Price]?> <?=$value[CRMProduct_Currency]?></option>
+                  <option  value='<?=$value[CRMProduct_Id]?>' <?=($_data[TPV_ProductId]==$value[CRMProduct_Id])?'selected':''?>><?=$value[CRMProduct_Name]?> - <?=$value[CRMProduct_Price]?> <?=$value[CRMProduct_Currency]?></option>
             <?php } ?>        
             </select>
-            <br>TPV_ProductUnits:  <input size='3' class="form-control" type=text name=TPV_ProductUnits value='<?=(strlen($_POST[TPV_ProductUnits]))?htmlentities($_POST[TPV_ProductUnits]):1?>'>
+            <br>TPV_ProductUnits:  <input size='3' class="form-control" type=text name=TPV_ProductUnits value='<?=(strlen($_data[TPV_ProductUnits]))?htmlentities($_data[TPV_ProductUnits]):1?>'>
 
 	          </div><br/>
             
 	          <p><input type="submit" class="btn btn-lg btn-primary" value='Go to step 2' /></p>
+	   <?php } ?>
+	          
 	          </form>
           </div>
           <div class="col-lg-5">

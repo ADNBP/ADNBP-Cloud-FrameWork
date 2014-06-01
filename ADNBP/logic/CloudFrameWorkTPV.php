@@ -2,16 +2,7 @@
 // local Functions
 // This service has to be implemented in your <document_root>/logic/CloudFrameWorkService.php
     list($foo,$script,$service,$params) = split('/',$this->_url,4);
-	
-    // Read CRM Products if there is a conf Val.
-    if(strlen($service) && !strlen($_POST[Ds_Merchant_ProductDescription]) && strlen($this->getConf("TPV_CloudServiceProducts"))) {
-        $result = unserialize($this->getCloudServiceResponse($this->getConf("TPV_CloudServiceProducts")));
-		if($result=== false) $warning = "Error getting products from ".$this->getCloudServiceURL().'/'.$this->getConf("TPV_CloudServiceProducts");
-		else if(is_array($result[data])) {
-            $TPV_products = $result[data];
-            unset($result);
-        }
-    }    
+	  
     
     switch ($service) {
         case "SABADELL":
@@ -30,6 +21,10 @@
 				$this->checkRequestParameter($_data,'ADNBPTPV_Production',true,$_data[type]=='ADNBPTPV');	
 				$this->checkRequestParameter($_data,'initTransaction');				
 
+				if( strlen($this->getConf("ADNBPTPV_MerchantId"))
+		         && strlen($this->getConf("ADNBPTPV_MerchantSecret"))
+		         && strlen($this->getConf("ADNBPTPV_ProductCurrency"))
+		         && strlen($this->getConf("ADNBPTPV_Production")) ) $_data[type] = 'ADNBPTPV';
                 // If I am going to use ADNBPTPV
 				if($_data[type]=='ADNBPTPV') {
 					
