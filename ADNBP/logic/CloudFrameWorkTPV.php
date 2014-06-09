@@ -11,7 +11,6 @@
             $this->checkRequestParameter($_data,'type');
 			
 			
-            
             if(!strlen($params)) {
                 
                 // $_data = $_POST;
@@ -25,6 +24,7 @@
 		         && strlen($this->getConf("ADNBPTPV_MerchantSecret"))
 		         && strlen($this->getConf("ADNBPTPV_ProductCurrency"))
 		         && strlen($this->getConf("ADNBPTPV_Production")) ) $_data[type] = 'ADNBPTPV';
+				 
                 // If I am going to use ADNBPTPV
 				if($_data[type]=='ADNBPTPV') {
 					
@@ -43,7 +43,13 @@
                     				
 					// Getting products from service
 					if(!strlen($errMsg)) {
-						
+						$serviceData[ADNBPTPV_MerchantId] = $_data[ADNBPTPV_MerchantId];
+	                    $serviceData[ADNBPTPV_Signature] = strtoupper(sha1(
+									                    $_data[ADNBPTPV_MerchantId]
+									                   .$_data[ADNBPTPV_MerchantSecret]
+									                   ));	
+					    $merchantInfo = unserialize($this->getCloudServiceResponse('TPV/getMerchantInfo',$serviceData));
+								
 						$serviceData[ADNBPTPV_MerchantId] = $_data[ADNBPTPV_MerchantId];
 						$serviceData[ADNBPTPV_ProductCurrency] = $_data[ADNBPTPV_ProductCurrency];
 	                    $serviceData[ADNBPTPV_Signature] = strtoupper(sha1(
@@ -55,12 +61,27 @@
 					
 					    $products = unserialize($this->getCloudServiceResponse('TPV/getProducts',$serviceData));
 						if($result[error]) $errForm = 'Error retreiving Products from: '.$this->getCloudServiceURL('/TPV/getProducts');
-						else $TPV_products = $products[data];
+						else {
+							$TPV_products = $products[data];
+							$TPV_merchant = $products[merchant];
+						}
 						
 						unset($products);
 					
 					}
 
+					// Force init transaction if we have all the data 
+				    if(!strlen($errMsg) && $_data[initTransaction] != '1'
+						&& strlen($_data[ADNBPTPV_MerchantId])
+						&& strlen($_data[ADNBPTPV_ProductCurrency])
+						&& strlen($_data[TPV_ClientName])
+						&& strlen($_data[TPV_ClientEmail])
+						&& strlen($_data[TPV_ProductId])
+						&& strlen($_data[TPV_ProductUnits])
+						&& strlen($_data[ADNBPTPV_MerchantSecret])
+                        && strlen($_data[TPV_ConsumerLanguage])
+					) $_data[initTransaction] = '1';
+					
                     // Preparing information if initTrasaction is sent
 				    if(!strlen($errMsg) && $_data[initTransaction] == '1') {
 						if(!strlen($_data[ADNBPTPV_MerchantId])) $errMsg .= "Missing ADNBPTPV_MerchantId field\n";
