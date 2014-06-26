@@ -23,6 +23,8 @@ function _print() {
 	for ($i=0,$tr=count($args); $i < $tr; $i++) {
 		if($args[$i] == "exit") exit;
 		else if(is_array($args[$i])) echo "<pre>".print_r($args[$i],true)."</pre>"; 
+		else if(is_bool($args[$i])) echo '<li>'.($args[$i])?'true':'false';
+		else if(is_null($args[$i])) echo '<li>NULL';
 		else echo "<li>".$args[$i];
 		
 	}
@@ -181,11 +183,11 @@ if (!defined ("_ADNBP_CLASS_") ) {
         /**
         * Call External Cloud Service
         */
-        function getCloudServiceResponse($rute,$data=null) {
+        function getCloudServiceResponse($rute,$data=null,$verb=null) {
             
             $_url = $this->getCloudServiceURL($rute);
             
-            if($data !== null && is_array($data)) {
+            if($data !== null && is_array($data) && $verb===null or $verb=='POST') {
                 $options = array(
                     'http' => array(
                     'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
@@ -193,12 +195,41 @@ if (!defined ("_ADNBP_CLASS_") ) {
                     'content' => http_build_query($data),
                         )
                  );
-                 $context  = stream_context_create($options);
-                 return(file_get_contents($_url,false,$context));
+            } else {
+            	if($verb===null) $verb='GET';
+                $options = array(
+                    'http' => array(
+                    'method'  => $verb,
+                        )
+                 );
             }
-            else return(file_get_contents($_url));
+			
+			if(strlen($this->getConf("CloudServiceId")) && strlen($this->getConf("CloudServiceToken"))) {
+				$_date = time();
+				$options['http']['header'] .= 'X-Cloudservice-Date: '.$_date."\r\n";
+				$options['http']['header'] .= 'X-Cloudservice-Id: '.$this->getConf("CloudServiceId")."\r\n";
+				$options['http']['header'] .= 'X-Cloudservice-Signature: '
+				                              .strtoupper(sha1($this->getConf("CloudServiceId").$_date.$this->getConf("CloudServiceToken")))."\r\n";
+			}
+	        $context  = stream_context_create($options);
+	        return(file_get_contents($_url,false,$context));
+			
         }
-        
+
+		function checkAPIAuth(&$msg) {
+			include_once(dirname(__FILE__).'/ADNBP/checkAPIAuth.php');
+			if(strlen($msgerror)) { $msg.=$msgerror;return(false); }
+			else return(true);		
+		}
+		
+		function getAPIMethod() {
+		    return((strlen($_SERVER['REQUEST_METHOD']))?$_SERVER['REQUEST_METHOD']:'GET');	
+		}
+
+        function getDataFromAPI($rute,$data=null,$verb='GET',$format='json',$headers=null) {
+			include_once(dirname(__FILE__).'/ADNBP/getDataFromAPI.php');
+		    return $res;			
+        }        
         
          /**
         * Var confs
@@ -472,7 +503,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
             
         }
         /**
-        * Class Loader
+        * Redirect to other URL
         */
         function urlRedirect ($url,$dest) {
             if($url == $this->_url && $url != $dest) {
@@ -488,7 +519,23 @@ if (!defined ("_ADNBP_CLASS_") ) {
 
         }
 		
-		/*
+        /**
+        * Password checking
+        */
+	    function crypt($input, $rounds = 7) {
+		    $salt = "";
+		    $salt_chars = array_merge(range('A','Z'), range('a','z'), range(0,9));
+		    for($i=0; $i < 22; $i++) {
+		      $salt .= $salt_chars[array_rand($salt_chars)];
+		    }
+		    return crypt($input, sprintf('$2a$%02d$', $rounds) . $salt);
+		}    
+		      
+        
+        function checkPassword($passw,$compare) {
+   		 	return(crypt($passw,$compare) == $compare);
+		}
+		 		/*
 		 * String replace KeyCodes
 		 */
 		 function strCFReplace($str) {
