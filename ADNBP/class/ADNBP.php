@@ -542,5 +542,15 @@ if (!defined ("_ADNBP_CLASS_") ) {
 		 	$str = str_replace('{DirectoryOrganization_Id}', $this->getAuthUserData("currentOrganizationId"), $str);
 		 	return($str);
 		 }
+		 
+		 /*
+		  * The function getAllHeaders doesnt exist
+		  * Then use the following function to check a header
+		  */
+		  function getHeader($str) {
+		  	$str = strtoupper($str);
+			$str = str_replace('-', '_', $str);
+			return($_SERVER['HTTP_'.$str]);
+		  }
     }
 }

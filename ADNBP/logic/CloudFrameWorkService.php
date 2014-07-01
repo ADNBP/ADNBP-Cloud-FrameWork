@@ -1,7 +1,9 @@
 <?php
 
-    $headers = getallheaders(); // Store all headers
-    $isSuperAdmin = (strlen($headers['X-Adnbp-Superuser']))?$this->checkPassword($headers['X-Adnbp-Superuser'],$this->getConf("adminPassword")):false;
+    //$headers = apache_request_headers(); // Store all headers
+    
+    $isSuperAdmin = (strlen($this->getHeader('X-Adnbp-Superuser')))?$this->checkPassword($this->getHeader('X-Adnbp-Superuser'),$this->getConf("adminPassword")):false;
+	
 	$apiMethod = $this->getAPIMethod(); // GET , PUT, UPDATE, DELETE, COPY...
     
 // This service has to be implemented in your <document_root>/logic/CloudFrameWorkService.php
@@ -27,9 +29,9 @@
 				echo '<h1>Server Side</h1>';
 				echo '<li>conf-var: CloudServiceToken-'.$params.': '.(strlen($this->getConf("CloudServiceToken-".$params))?'exist. OK':'missing. ERROR').'</li>';
 				echo '<h1>Client Side</h1>';
-				echo '<li>header: X-Cloudservice-Id '.(strlen($headers['X-Cloudservice-Id'])?'exist. OK':'missing. ERROR').'</li>';
-				echo '<li>header: X-Cloudservice-Date '.(strlen($headers['X-Cloudservice-Date'])?'exist. OK':'missing. ERROR').'</li>';
-				echo '<li>header: X-Cloudservice-Signature '.(strlen($headers['X-Cloudservice-Signature'])?'exist. OK':'missing. ERROR').'</li>';
+				echo '<li>header: X-Cloudservice-Id '.(strlen($this->getHeader('X-Cloudservice-Id'))?'exist. OK':'missing. ERROR').'</li>';
+				echo '<li>header: X-Cloudservice-Date '.(strlen($this->getHeader('X-Cloudservice-Date'))?'exist. OK':'missing. ERROR').'</li>';
+				echo '<li>header: X-Cloudservice-Signature '.(strlen($this->getHeader('X-Cloudservice-Signature'))?'exist. OK':'missing. ERROR').'</li>';
 				$msg = '';
 				if(strlen($this->getConf("CloudServiceToken-".$params)))
 				if($this->checkAPIAuth($msg)){
@@ -37,7 +39,7 @@
 				} else echo "<li>API Auth Error: ".$msg;
 				
 			} else {
-				echo "A Id param is required: ../getTemplate/{Id}";
+				echo "A Id param is required: ../checkAPIAuth/{Id}";
 			}
 			die();
             break;
