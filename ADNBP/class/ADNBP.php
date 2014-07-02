@@ -185,7 +185,9 @@ if (!defined ("_ADNBP_CLASS_") ) {
         */
         function getCloudServiceResponse($rute,$data=null,$verb=null) {
             
-            $_url = $this->getCloudServiceURL($rute);
+            if(strpos($rute, 'http')!==false) $_url = $rute;
+            else $_url = $this->getCloudServiceURL($rute);
+            
             
             if($data !== null && is_array($data) && $verb===null or $verb=='POST') {
                 $options = array(
@@ -203,6 +205,8 @@ if (!defined ("_ADNBP_CLASS_") ) {
                         )
                  );
             }
+            
+            
 			
 			if(strlen($this->getConf("CloudServiceId")) && strlen($this->getConf("CloudServiceToken"))) {
 				$_date = time();
