@@ -74,16 +74,12 @@ if (!defined ("_ADNBP_CLASS_") ) {
                 if(strlen($sessionId))
                     session_id($sessionId);
                 session_start();
+                
             }
             
             $this->_webapp = dirname(dirname(__FILE__))."/webapp";
             $this->_rootpath = dirname(dirname(dirname(__FILE__)));
 
-            // Change with $this->setWebApp("");
-            // if(is_file(dirname(__FILE__)."/../../adnbp_framework_config.php"))
-            
-            if(is_file($this->_rootpath."/adnbp_framework_config.php"))
-               include_once($this->_rootpath."/adnbp_framework_config.php");
 
             // Paths
             // note: in Google Apps Engine PHP doen't work $_SERVER: PATH_INFO or PHP_SELF
@@ -91,6 +87,22 @@ if (!defined ("_ADNBP_CLASS_") ) {
             $this->_scriptPath = $_SERVER['SCRIPT_NAME'];
             $this->_ip = $_SERVER['REMOTE_ADDR'];
             $this->_userAgent = $_SERVER['HTTP_USER_AGENT'];
+
+
+
+            // If the call is just to KeepSession
+            if(strpos($this->_url, '/CloudFrameWorkService/keepSession') !== false) {
+                header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
+                header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Fecha en el pasado                
+                $bg = (strlen($_GET[bg]))?$_GET[bg]:'FFFFFF';
+                die('<html><head><title>ADNBP Cloud FrameWork KeepSession '.time().'</title><meta name="robots" content="noindex"></head><body bgcolor="#'.$bg.'"></body></html>');
+            }
+
+            // Change with $this->setWebApp("");
+            // if(is_file(dirname(__FILE__)."/../../adnbp_framework_config.php"))
+            if(is_file($this->_rootpath."/adnbp_framework_config.php"))
+               include_once($this->_rootpath."/adnbp_framework_config.php");
+
 
             // CONFIG BASIC
             $this->setConf("CloudFrameWorkVersion",$this->_version);

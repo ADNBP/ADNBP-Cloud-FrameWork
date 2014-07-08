@@ -34,6 +34,10 @@
     <![endif]-->    
          
     <script src="/ADNBP/static/js/adnbpcloudframework.js"></script>
+    <script>
+        _adnbpKeepSession=0;  // Change this milliseconds value >0 to activate keepSession
+        keepSession();
+    </script>
 
         <?php if(strlen($this->getConf("GooglePublicAPICredential")) && $this->getConf("GoogleMapsAPI")) {?>
             <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />

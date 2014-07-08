@@ -10,6 +10,9 @@
     list($foo,$script,$service,$params) = split('/',$this->_url,4);
     
     switch ($service) {
+        case 'keepSession':
+            // This method will never exist because it is implemented in ADNBP.class
+            break;
         case 'template':
         case 'getTemplate':
 			if(strlen($params)) {

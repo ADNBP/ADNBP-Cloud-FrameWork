@@ -4,6 +4,8 @@ var _adnbpCurrentGeoLocationByBrowser = 'did not get yet. Use: setGeoLocationByB
 var _adnbpCurrentGeoLocationByBrowserStatus = 'no init'; //
 var _adnbpCurrentGeoLocationByBrowserLat = 0; //
 var _adnbpCurrentGeoLocationByBrowserLong = 0; //
+var _adnbpKeepSession=0;  // each 5 seconds
+
 
 function setGeoLocationByBrowser() {
    if(_adnbpCurrentGeoLocationByBrowserStatus == 'no init') {
@@ -19,6 +21,20 @@ function setGeoLocationByBrowser() {
            _adnbpCurrentGeoLocationByBrowserStatus='not supported';
       }
    }
+}
+
+
+function keepSession() {
+    if(_adnbpKeepSession>0) {
+        setInterval (calTokeepSession, _adnbpKeepSession);
+    }
+}
+
+function calTokeepSession() {
+    http_request = new XMLHttpRequest();
+    http_request.open('GET', "/CloudFrameWorkService/keepSession");
+    http_request.send(null);
+    
 }
   
 function recordGeoLocationByBrowser(position) {
