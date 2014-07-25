@@ -56,6 +56,10 @@ if (!defined ("_MYSQLI_CLASS_") ) {
         var $_dbtype = 'mysql';
         var $_limit = 1000;
         var $_qObject = array();
+        var $_cloudDependences = array();
+		var $_cloudReferalFields = array();
+		var $_cloudWhereFields = array();
+		var $_cloudFilterWhereFields = array();
                 
         var $_dblink=false;                // Database Connection Link	
         var $_debug=false;
@@ -105,6 +109,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
         	}
             
 			if($this->_dblink)  $this->close();
+			$this->_dblink = false;
             
 			if(strlen($this->_dbserver) || strlen($this->_dbsocket)) {
 			    try {
@@ -119,11 +124,8 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                 } catch (Exception $e) {
                     $this->setError('Connect Error to: '.$this->_dbserver.$this->_dbsocket.' (' . $this->_db->connect_errno . ') '. $mysqli->connect_error);
                 }
-                
 			} else {
-			    
 				$this->setError("No DB server or DB name provided. ");
-                
 			}
 			return($this->_dblink);
 		}
@@ -292,39 +294,78 @@ if (!defined ("_MYSQLI_CLASS_") ) {
             $this->_qObject[$id][selectFields] = $value;
         }
         
-        function setQueryObjectOrder($id,$value) {
-            $this->_qObject[$id][order] = $value;
-        }
-        
-        function setQueryObjectTable($id,$value) {
-            $this->_qObject[$id][table] = $value;
-        }
-        
-        function setQueryObjectData($id,$value) {
-            $this->_qObject[$id][data] = $value;
-        }       
+        function setQueryObjectOrder($id,$value) { $this->_qObject[$id][order] = $value; }
+        function setQueryObjectTable($id,$value) { $this->_qObject[$id][table] = $value; }
+        function setQueryObjectData($id,$value) { $this->_qObject[$id][data] = $value;  }       
          
         function setQueryObjectWhere($id,$q,$v='') {
             $this->_qObject[$id][where] = array();
             $this->addQueryObjectWhere($id,$q,$v);
         }
         
-        function addQueryObjectWhere($id,$q,$v='') {
-            $this->_qObject[$id][where][] = $q;
-        }
+        function addQueryObjectWhere($id,$q,$v='') { $this->_qObject[$id][where][] = $q; }
 		
+        function addFieldDependence($field,$dependence) { $this->_cloudDependences[$field] .= $dependence; }
+        function setFieldDependence($field,$dependence) {
+        	unset($this->_cloudDependences[$field]);
+			$this->addFieldDependence($field,$dependence);
+		}
+		function getFieldDependence($field) {
+			if(is_string($this->_cloudDependences[$field])) return $this->_cloudDependences[$field];
+			else return(false);
+		}
+		
+        function addReferalField($field,$referal) { $this->_cloudReferalFields[$field] .= $referal; }
+        function setReferalField($field,$referal) {
+        	unset($this->_cloudReferalFields[$field]);
+			$this->addReferalField($field,$referal);
+		}
+		function getReferalField($field) {
+				if( isset($this->_cloudReferalFields[$field]) && strlen($this->_cloudReferalFields[$field])) return $this->_cloudReferalFields[$field];
+			else return(false);
+		}
+		
+        function addWhereField($field,$where) { $this->_cloudWhereFields[$field] .= $where; }
+        function setWhereField($field,$where) {
+        	unset($this->_cloudWhereFields[$field]);
+			$this->addWhereField($field,$where);
+		}
+		function getWhereField($field) {
+			if(is_string($this->_cloudWhereFields[$field])) return $this->_cloudWhereFields[$field];
+			else return(false);
+		}		
+		
+        function addFilterWhereField($field,$where) { if(strlen(trim($where))) $this->_cloudFilterWhereFields[$field] .= $where; }
+        function setFilterWhereField($field,$where) {
+        	if(strlen(trim($where))) {
+	        	unset($this->_clouFilterWhereFields[$field]);
+				$this->addFilterWhereField($field,$where);
+			}
+		}
+		function getFilterWhereField($field) {
+			if(is_string($this->_cloudFilterWhereFields[$field])) return $this->_cloudFilterWhereFields[$field];
+			else return(false);
+		}		
+
+
+
 		function getSecuredSqlString($ret) {
-			
 			$ret = str_ireplace("delete ", '', $ret);			
 			$ret = str_ireplace(";", '', $ret);			
 			$ret = str_ireplace("insert ", '', $ret);
 			$ret = str_ireplace("from  ", '', $ret);
+			$ret = str_ireplace("replace  ", '', $ret);
+			$ret = str_ireplace("truncate  ", '', $ret);
+			$ret = str_ireplace("truncate  ", '', $ret);
 			return($ret);
 						
 		}
  
                     
-        function cloudFrameWork($action,$data='',$table='',$order='',$selectFields='*') {
+        function cloudFrameWork($action,$data='',$table='',$order='',$selectFields='*',$page=0) {
+        	
+			if(!strlen($selectFields)) $selectFields='*';
+			if(!is_numeric($page)) $page=0;
 			
             // Analyze de possibles params
             if(is_string($data) && is_array($this->_qObject[$data][data])) {
@@ -333,6 +374,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                 $data = $this->_qObject[$id][data];
                 $table = $this->_qObject[$id][table];
                 $order = $this->_qObject[$id][order];
+                $page = $this->_qObject[$id][page];
                 $selectFields = $this->_qObject[$id][selectFields];
 				
             }
@@ -355,6 +397,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                 list($table,$foo) = split("_",$allFields[0],2);
                 
                 if(!strlen($foo) && count($allFields) > 1) {
+                	
                     $this->setError("I can not figure out the name of the table to query.");
                     return false;                    
                 } else if(strlen($foo)) {
@@ -364,7 +407,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                     if($tmp[0][TOT]==0) $table = $allFields[0];
                 } 
             } 
-            
+			
             $_tableInFirstField = false;
             if( count($allFields) == 1 && $allFields[0] == $table ) {
                 $_where = $data[$table];
@@ -374,7 +417,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
             if(strpos($table, "Rel_") !== false) 
                $_relTable = true;
             
-            if($action == 'insert' || $action == "replace" || $action == "getRecordsForEdit" ||  $action == "updateRecord" || $action =="getFieldTypes")
+            if($action == 'insert' || $action == "replace" || $action == 'insertRecord' || $action == "replaceRecord" || $action == "getRecordsForEdit" ||  $action == "updateRecord" || $action =="getFieldTypes")
                 $table ="CF_".$table;
 
             // Field Types of the table
@@ -413,8 +456,6 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                 $sep = ((strlen($tables[$table][insertFields]))?",":"");
                 $and = ((strlen($tables[$table][selectWhere]))?" AND ":"");
 
-                $tables[$table][insertFields] .= $sep.$field;
-                $tables[$table][insertPercents] .= $sep.(($fieldTypes[$field][isNum])?"%s":"'%s'");
                 
                 if(strlen($data[$field]) && $data[$field] !='NULL')
                     $tables[$table][updateFields] .= $sep.$field."=".(($fieldTypes[$field][isNum])?"%s":"'%s'");
@@ -422,6 +463,9 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                     $data[$field] = 'NULL';
                     $tables[$table][updateFields] .= $sep.$field."=%s";
                 }
+				
+                $tables[$table][insertFields] .= $sep.$field;
+                $tables[$table][insertPercents] .= $sep.(($fieldTypes[$field][isNum])?"%s":(($data[$field] == 'NULL')?"%s":"'%s'"));
                 
                 if($fieldTypes[$field][isKey]) {
                     if(strlen($tables[$table][updateWhereFields])) $tables[$table][updateWhereFields].=',';
@@ -471,10 +515,14 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                         unset($_f);
                         return($_ret);
                         break;
+                    case 'insertRecord':
                     case 'insert':
+                    case 'replaceRecord':
                     case 'replace':
+						if($action == 'insertRecord' || $action == 'insert') $act = "insert";
+						else $act = 'replace';
                         //echo($action." into $key (".$value[insertFields].") values  (".$value[insertPercents].")");
-                        return($this->command($action." into $key (".$value[insertFields].") values  (".$value[insertPercents].")",$value[values]));
+                        return($this->command($act." into $key (".$value[insertFields].") values  (".$value[insertPercents].")",$value[values]));
                         break;
 
                     case 'getRecords':
@@ -495,6 +543,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                            
                         } else {
 
+							
                            // Eplore types
                            for($k=0,$tr3=count($types);$k<$tr3;$k++) {
                            	   	
@@ -510,22 +559,73 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                                if(($field=="Id" && $rels=="" && !$_relTable) || ($_relTable && $foo=="Id")) 
                                    $_ret[$types[$k][Field]][type] = "key";
                                else if(strlen($rels) || ($_relTable && strlen($field))) {
+                               	
+							   // Getting Rel data to this field                               	
                                    $_ret[$types[$k][Field]][type] = "rel";
-                                   
+								   
                                    if($_relTable) {
                                        $reltable=$foo."s";
-                                       $relData = $this->cloudFrameWork("getDistinctRecords", array($reltable=>'%'),'','',$foo.'_Id Id,'.$foo.'_Name Name');                                   
-                                       
+									   $_f= $foo;
                                    } else {
                                        $reltable=$field."s";
-                                       $relData = $this->cloudFrameWork("getDistinctRecords", array($reltable=>'%'),'','',$field.'_Id Id,'.$field.'_Name Name');                                   
+                                   	   $_f= $field;
                                    }
+								   
+								   // Fields dependences and WhereConditions
+								   $_fqWhere = '';
+								   if(($dependences = $this->getFieldDependence($types[$k][Field])) !== false)  $_fqWhere .=  ' ('.$dependences.')';
+								   
+								   if(($fieldwheres = $this->getWhereField($types[$k][Field])) !== false) {
+								   	if(strlen($_fqWhere)) $_fqWhere .= ' AND ';
+								   	$_fqWhere .=  ' ('.$fieldwheres.')';
+								   }
+
+								   if(($fieldwheres = $this->getFilterWhereField($types[$k][Field])) !== false) {
+								   	if(strlen($_fqWhere)) $_fqWhere .= ' AND ';
+								   	$_fqWhere .=  ' ('.$fieldwheres.')';
+								   }
+								   
+								   
+								   $_fn = 'R.'.$_f.'_Id Id,'.(($this->getReferalField($types[$k][Field]) !==false )?"CONCAT_WS(' - ',R.".$this->getReferalField($types[$k][Field]).') Name':'R.'.$_f.'_Name Name');
+								   if(!strlen($_fqWhere )) $_fqWhere .=  '1=1';
+								   $_fq = " SELECT DISTINCT $_fn FROM  $reltable R LEFT JOIN  $table P ON (R.".$_f."_Id = P.".$types[$k][Field].") WHERE $_fqWhere ";
+								   
+                                   $relData = $this->getDataFromQuery($_fq); 
+								   
+								   if($this->_debug) _print($_fq);	
+								   		
+								   if($this->error()) return false;
+								                                    
                                    $_ret[$types[$k][Field]][relData] =$relData;
+								   
                                }
-                           }
-                            
-                           if($action == "getRecordsForEdit") $this->_limit = 50;                           
-                           $data = $this->getDataFromQuery("select $selectFields from $table where ".$value[selectWhere].$order." limit ".$this->_limit,$value[values]);
+	
+	                           // add where to Global Query: 
+							   if(($fieldwheres = $this->getWhereField($types[$k][Field])) !== false) {
+									$value[selectWhere] .= ' AND   ('.$fieldwheres.')';
+							   }						   
+    
+	                       } // if field is rel
+
+							
+                           $nrows = $this->getDataFromQuery("select count(1) TOT from $table where ".$value[selectWhere],$value[values]);
+						   if($this->error()) return false;
+					 	   $_ret[totRows] = $nrows[0][TOT];
+						 
+						   
+                           if($action == "getRecordsForEdit") $this->_limit = 50;  
+						   
+					 	   $_ret[totPages] = round($nrows[0][TOT]/$this->_limit,0);
+						   
+						   if($page >= $_ret[totPages] ) $page = $_ret[totPages]-1 ;
+						   if($page < 0 ) $page=0;
+						   
+						   $_ret[currentPage] = $page;
+						   $_ret[totRowsInPage] = ($this->_limit < $_ret[totRows])?$this->_limit:$_ret[totRows];
+						   $_ret[offset] = $page * $this->_limit;
+						                            
+                           $data = $this->getDataFromQuery("select $selectFields from $table where ".$value[selectWhere].$order." limit ".$_ret[offset].','.$this->_limit,$value[values]);
+						   if($this->error()) return false;
                            $_ret[fields] = array_keys($fieldTypes);
                            for($i=0,$tr=count($data);$i<$tr;$i++) 
                               $data[$i][_hash] = $this->getHashFromArray($data[$i]);
@@ -533,13 +633,13 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                            $_ret[data] = $data;
                            
                            unset($data);
-                           
                            return($_ret);
                         }
                         break;
                     case 'updateRecord':
                         $_q = "UPDATE $key SET ".$tables[$table][updateFields]." WHERE ".$tables[$table][updateWhereFields];
                         $this->command($_q,array_merge($value[values],$value[updateWhereValues]));
+						if($this->error()) return false;
                         
                         break;
                     default:
@@ -552,6 +652,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
         }
 
         function getHashFromArray($arr) {
+        	if(!isset($arr)) $arr=array();
             return(md5(implode('', $arr)));
         }
 	}

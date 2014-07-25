@@ -23,6 +23,13 @@ function setGeoLocationByBrowser() {
    }
 }
 
+function autoSizeTextArea(ele,w,h)
+{
+   ele.style.height = 'auto';
+   //var newHeight = (ele.scrollHeight > 32 ? ele.scrollHeight : 32);
+   ele.style.height = h ;
+   ele.style.width = w ;
+}
 
 function keepSession() {
     if(_adnbpKeepSession>0) {

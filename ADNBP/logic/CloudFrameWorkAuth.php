@@ -1,9 +1,9 @@
 <?php
 
 	// This service has to be implemented in your <document_root>/logic/CloudFrameWorkAuth.php to autenticate
-	if($_POST[CloudUser] == "admin" && $_POST[CloudPassword] == "admin" ) {
+	if($_POST['CloudUser'] == "admin" && $_POST['CloudPassword'] == "admin" ) {
 	        $this->setAuthUserData("name","User Admin");  
-	} else if($this->getConf("AllowOauth") && is_array($_SESSION[opauth]) && strlen($_SESSION[opauth][auth][info][name])) {  
+	} else if($this->getConf("AllowOauth") && is_array($_SESSION['opauth']) && strlen($_SESSION['opauth']['auth']['info']['name'])) {  
 	    /*   		
 		// You have to use 	$this->setAuthUserData() to tell the system the user is autenticated.	
 	    $_CloudFrameWorkData[DirectoryUsersOauth_Id] = $_SESSION[opauth][auth][uid];

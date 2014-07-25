@@ -61,7 +61,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
         var $_userLanguages = array();
         var $_basename = '';
         var $_isAuth = false;
-        var $version = "2014May.25";
+        var $_version = "2014Jun.17";
         var $_defaultCFURL="http://cloud.adnbp.com/CloudFrameWorkService";
         var $_webapp = '';
         var $_rootpath = '';
@@ -94,7 +94,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
             if(strpos($this->_url, '/CloudFrameWorkService/keepSession') !== false) {
                 header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
                 header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Fecha en el pasado                
-                $bg = (strlen($_GET[bg]))?$_GET[bg]:'FFFFFF';
+                $bg = (isset($_GET['bg']) && strlen($_GET['bg']))?$_GET['bg']:'FFFFFF';
                 die('<html><head><title>ADNBP Cloud FrameWork KeepSession '.time().'</title><meta name="robots" content="noindex"></head><body bgcolor="#'.$bg.'"></body></html>');
             }
 
@@ -118,13 +118,13 @@ if (!defined ("_ADNBP_CLASS_") ) {
             
             if($this->getConf("setLanguageByPath")) {
                 $elems = explode("/",$this->_url);
-                if(strlen($elems[1]) && strlen($elems[2])) $this->_lang = $elems[1];
+                if(isset($elems[1]) && strlen($elems[1]) && isset($elems[2]) && strlen($elems[2])) $this->_lang = $elems[1];
             } elseif( strlen($_GET['adnbplang'])) $this->_lang = $_GET['adnbplang'];
             $this->setConf("lang",$this->_lang);
             
         }
 
-        function version() {return($this->version);}
+        function version() {return($this->_version);}
         function getRootPath() {return($this->_rootpath);}
         function getWebAppPath() {return($this->_webapp);}
         function setWebApp($dir) {
@@ -184,7 +184,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
             if (!$this->getConf("CloudServiceUrl")) $this->setConf("CloudServiceUrl",$this->_defaultCFURL);
            
             if(strpos($this->getConf("CloudServiceUrl"), "http") === false) 
-               $_url = "http://".$_SERVER[HTTP_HOST].$this->getConf("CloudServiceUrl");
+               $_url = "http://".$_SERVER['HTTP_HOST'].$this->getConf("CloudServiceUrl");
             else 
                 $_url = $this->getConf("CloudServiceUrl");    
             
@@ -255,8 +255,8 @@ if (!defined ("_ADNBP_CLASS_") ) {
              if(!strlen($namespace)) $namespace = $this->getConf("requireAuth");
              if(!strlen($namespace)) return false;
 
-             $this->_isAuth[$namespace][auth] = ($bool === true); 
-             if(!$this->_isAuth[$namespace][auth] ) unset ($this->_isAuth[$namespace][data]);
+             $this->_isAuth[$namespace]['auth'] = ($bool === true); 
+             if(!$this->_isAuth[$namespace]['auth'] ) unset ($this->_isAuth[$namespace]['data']);
              $this->setSessionVar("CloudAuth",$this->_isAuth);
         }
         
@@ -269,7 +269,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
              if(!strlen($namespace)) $namespace = $this->getConf("requireAuth");
              if(!strlen($namespace)) return false;
              
-             if($_GET[logout]) {
+			 if(isset($_GET['logout']) && strlen($_GET['logout'])>0 ) {
                 $this->setAuth(false,$namespace);
                 Header("Location: $this->_url");
                 exit;
@@ -278,35 +278,35 @@ if (!defined ("_ADNBP_CLASS_") ) {
              if($this->_isAuth === false && strlen($this->getConf("requireAuth") ) ) {
                  $this->_isAuth = $this->getSessionVar("CloudAuth");
              }
-             return($this->_isAuth[$namespace][auth] === true);
+             return($this->_isAuth[$namespace]['auth'] === true);
         }
 
         function setAuthUserData($key,$value,$namespace='') {
              if(!strlen($namespace)) $namespace = $this->getConf("requireAuth");
              if(!strlen($namespace)) return false;
 
-            $this->_isAuth[$namespace][data][$key] = $value;
+            $this->_isAuth[$namespace]['data'][$key] = $value;
             $this->setAuth(true,$namespace);
         }
         function getAuthUserData($key,$namespace='') {
              if(!strlen($namespace)) $namespace = $this->getConf("requireAuth");
              if(!strlen($namespace)) return false;
 
-             return($this->_isAuth[$namespace][data][$key]);
+             return($this->_isAuth[$namespace]['data'][$key]);
         }
 
         function getAuthUserNameSpace($namespace='') {
              if(!strlen($namespace)) $namespace = $this->getConf("requireAuth");
              if(!strlen($namespace)) return false;
 
-             return($this->_isAuth[$namespace][data]);
+             return($this->_isAuth[$namespace]['data']);
         }        
         
         function setConf ($var,$val) {$this->_conf[$var] = $val;}        
         function getConf ($var) { return((isset($this->_conf[$var]))?$this->_conf[$var]:false);} 
         function pushMenu ($var) { $this->_menu[] = $var;}    
         function setSessionVar ($var,$value) { $_SESSION['adnbpSessionVar_'.$var] = $value;}      
-        function getSessionVar ($var) { return($_SESSION['adnbpSessionVar_'.$var]); }
+        function getSessionVar ($var) { return( (isset($_SESSION['adnbpSessionVar_'.$var]))?$_SESSION['adnbpSessionVar_'.$var]:null ); }
         function getGeoPluginInfo($var) {return((isset($_country['geoplugin_'.$var]))?$_country['geoplugin_'.$var]:false);}
         function getURLBasename () {return(basename($this->_url));}        
 
@@ -389,14 +389,14 @@ if (!defined ("_ADNBP_CLASS_") ) {
                  // looking for a match
                  for($i=0,$_found=false,$tr=count($this->_menu);$i<$tr && !$_found;$i++) {
                      // Support for /{lang}/perm-link path
-                     if(strpos($this->_menu[$i][path],"{lang}"))
-                         $this->_menu[$i][path] = str_replace("{lang}",$this->_lang,$this->_menu[$i][path]);
+                     if(strpos($this->_menu[$i]['path'],"{lang}"))
+                         $this->_menu[$i]['path'] = str_replace("{lang}",$this->_lang,$this->_menu[$i]['path']);
                      
-					 if(strpos($this->_menu[$i][path],"{*}")) {
-					 	 $this->_menu[$i][path] = str_replace("{*}",'',$this->_menu[$i][path]);
-					 	 if(strpos($this->_url, $this->_menu[$i][path]) === 0)  $_found = true;
+					 if(strpos($this->_menu[$i]['path'],"{*}")) {
+					 	 $this->_menu[$i]['path'] = str_replace("{*}",'',$this->_menu[$i]['path']);
+					 	 if(strpos($this->_url, $this->_menu[$i]['path']) === 0)  $_found = true;
 
-					 } else if($this->_menu[$i][path] ==  $this->_url || $this->_menu[$i][$this->getConf("lang")."_path"] == $this->_url) 
+					 } else if($this->_menu[$i]['path'] ==  $this->_url || $this->_menu[$i][$this->getConf("lang")."_path"] == $this->_url) 
 	                     $_found = true;
 					 
 					 if($_found) foreach ($this->_menu[$i] as $key => $value) {
@@ -556,6 +556,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
 		 */
 		 function strCFReplace($str) {
 		 	$str = str_replace('{DirectoryOrganization_Id}', $this->getAuthUserData("currentOrganizationId"), $str);
+		 	$str = str_replace('{OrganizationsInGroupId}', (strlen($this->getAuthUserData("currentOrganizationsInGroupId")))?$this->getAuthUserData("currentOrganizationsInGroupId"):$this->getAuthUserData("currentOrganizationId"), $str);
 		 	return($str);
 		 }
 		 
@@ -566,7 +567,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
 		  function getHeader($str) {
 		  	$str = strtoupper($str);
 			$str = str_replace('-', '_', $str);
-			return($_SERVER['HTTP_'.$str]);
+			return((isset($_SERVER['HTTP_'.$str]))?$_SERVER['HTTP_'.$str]:'');
 		  }
     }
 }
