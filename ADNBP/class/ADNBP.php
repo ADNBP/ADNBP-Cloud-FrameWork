@@ -312,6 +312,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
         function getSessionVar ($var) { return( (isset($_SESSION['adnbpSessionVar_'.$var]))?$_SESSION['adnbpSessionVar_'.$var]:null ); }
         function getGeoPluginInfo($var) {return((isset($_country['geoplugin_'.$var]))?$_country['geoplugin_'.$var]:false);}
         function getURLBasename () {return(basename($this->_url));}        
+        function getURL () {return($this->_url);}        
 
 
         /**
