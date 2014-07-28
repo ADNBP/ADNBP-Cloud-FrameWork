@@ -47,8 +47,8 @@
 			die();
             break;
         case 'checkVersion':
-            if(!strlen($params)) echo "Your current version is: ".$this->version;
-            else echo(($this->version == $params)?"OK $params":"Warning. Your version  ".htmlentities($params)." is different of current version:".$this->version);
+            if(!strlen($params)) echo "Your current version is: ".$this->version();
+            else echo(($this->version() == $params)?"OK $params":"Warning. Your version  ".htmlentities($params)." is different of current version:".$this->version);
             die();
             break;
         case 'myIP':

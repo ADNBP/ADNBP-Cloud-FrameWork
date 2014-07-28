@@ -77,8 +77,11 @@ if (!defined ("_ADNBP_CLASS_") ) {
                 
             }
             
-            $this->_webapp = dirname(dirname(__FILE__))."/webapp";
-            $this->_rootpath = dirname(dirname(dirname(__FILE__)));
+            // $this->_webapp = dirname(dirname(__FILE__))."/webapp";
+            // $this->_rootpath = dirname(dirname(dirname(__FILE__)));
+			$this->_rootpath = $_SERVER['DOCUMENT_ROOT'];
+            $this->_webapp = $_SERVER['DOCUMENT_ROOT']."/webapp";
+			
 
 
             // Paths

@@ -95,6 +95,36 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                 'throw new CloudSQLError($errno, $errstr, $errfile, $errline);' 
             ),E_WARNING); 
             
+		}
+
+		function setConf($var,$value) {
+			switch ($var) {
+				case 'dbServer':$this->_dbserver = $value; break;
+				case 'dbUer':$this->_dbuser = $value; break;
+				case 'dbPassword':$this->_dbpassword = $value; break;
+				case 'dbName':$this->_dbdatabase = $value; break;
+				case 'dbSocket':$this->_dbsocket = $value; break;
+				case 'dbPort':$this->_dbport = $value; break;
+				default:
+					$this->setError('Unknown "confVar". Please use: dbServer, dbUer, dbPassword, dbName, dbSocket, dbPort');
+					break;
+			}
+		}
+		
+		function getConf($var) {
+			$ret ='';
+			switch ($var) {
+				case 'dbServer':$ret = $this->_dbserver; break;
+				case 'dbUer':$ret = $this->_dbuser; break;
+				case 'dbPassword':$ret = $this->_dbpassword; break;
+				case 'dbName':$ret = $this->_dbdatabase; break;
+				case 'dbSocket':$ret = $this->_dbsocket; break;
+				case 'dbPort':$ret = $this->_dbport; break;
+				default:
+					$ret = 'Unknown "confVar". Please use: dbServer, dbUer, dbPassword, dbName, dbSocket, dbPort';
+					break;
+			}
+			return($ret);
 		}	
 		
 		function connect($h='',$u='',$p='',$db='',$port="3306",$socket='') {
