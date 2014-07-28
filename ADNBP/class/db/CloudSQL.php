@@ -591,11 +591,8 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 								   $_fq = " SELECT DISTINCT $_fn FROM  $reltable R LEFT JOIN  $table P ON (R.".$_f."_Id = P.".$types[$k][Field].") WHERE $_fqWhere ";
 								   
                                    $relData = $this->getDataFromQuery($_fq); 
-								   
 								   if($this->_debug) _print($_fq);	
-								   		
 								   if($this->error()) return false;
-								                                    
                                    $_ret[$types[$k][Field]][relData] =$relData;
 								   
                                }
