@@ -125,6 +125,8 @@ if (!defined ("_ADNBP_CLASS_") ) {
             } elseif( strlen($_GET['adnbplang'])) $this->_lang = $_GET['adnbplang'];
             $this->setConf("lang",$this->_lang);
             
+			
+            
         }
 
         function version() {return($this->_version);}
@@ -306,7 +308,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
         }        
         
         function setConf ($var,$val) {$this->_conf[$var] = $val;}        
-        function getConf ($var) { return((isset($this->_conf[$var]))?$this->_conf[$var]:false);} 
+        function getConf ($var) { return( ((isset($this->_conf[$var]))?$this->_conf[$var]:false));} 
         function pushMenu ($var) { $this->_menu[] = $var;}    
         function setSessionVar ($var,$value) { $_SESSION['adnbpSessionVar_'.$var] = $value;}      
         function getSessionVar ($var) { return( (isset($_SESSION['adnbpSessionVar_'.$var]))?$_SESSION['adnbpSessionVar_'.$var]:null ); }
@@ -517,7 +519,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
                   if(is_file($this->_webapp."/logic/CloudFrameWorkAuth.php"))
                      include($this->_webapp."/logic/CloudFrameWorkAuth.php");                  
                   else {
-                     die(" CloudFrameWorkAuth NOT FOUND");
+                     include($this->_rootpath."/ADNBP/logic/CloudFrameWorkAuth.php");   
                   }
             }
             

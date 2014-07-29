@@ -1,5 +1,4 @@
 <?php
-
 $this->urlRedirect("/CloudFrameWork","/CloudFrameWork/home");
 
 if(!strlen($this->getSessionVar("version")) || isset($_GET[nocache])) {
