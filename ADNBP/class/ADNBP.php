@@ -331,7 +331,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
             do {
                 list($content,$this->_parseDic) = explode("adnbp_dic_var=",$this->_parseDic,2);
                 $translates = explode("<=>",$content); 
-                $var = $translates[0];
+                $var = trim($translates[0]);
                 if(strlen($var)) for($i=1,$tr=count($translates);$i<$tr;$i++) {
                       list($lang,$translate) = explode(",",$translates[$i],2);
                       $this->setDicContent($var,trim($translate),$lang);
@@ -434,8 +434,14 @@ if (!defined ("_ADNBP_CLASS_") ) {
                  }
             }
             
-            
-           if(strlen($this->getConf("dictionary")))
+           
+		   // Insert global dictionary 
+		   if(is_file($this->_webapp."/localize/global.txt")) {
+               $this->_parseDic = file_get_contents($this->_webapp."/localize/global.txt");
+               $this->_parseDic();		
+		   }
+		   
+		   if(strlen($this->getConf("dictionary")))
            if(is_file($this->_webapp."/localize/".$this->getConf("dictionary").".txt")) {
                $this->_parseDic = file_get_contents($this->_webapp."/localize/".$this->getConf("dictionary").".txt");
                $this->_parseDic();
