@@ -58,6 +58,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
         var $_qObject = array();
         var $_cloudDependences = array();
 		var $_cloudReferalFields = array();
+		var $_cloudAutoSelectFields = array();
 		var $_cloudWhereFields = array();
 		var $_cloudFilterWhereFields = array();
                 
@@ -355,6 +356,13 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 			else return(false);
 		}
 		
+        function setAutoSelectField($field) { $this->_cloudAutoSelectFields[$field]= true; }
+        function unsetAutoSelectField($field) { unset($this->_cloudAutoSelectFields[$field]);}
+		function isAutoSelectField($field) {
+			if( isset($this->_cloudAutoSelectFields[$field]) && $this->_cloudAutoSelectFields[$field]) return true;
+			else return(false);
+		}
+
         function addWhereField($field,$where) { $this->_cloudWhereFields[$field] .= $where; }
         function setWhereField($field,$where) {
         	unset($this->_cloudWhereFields[$field]);

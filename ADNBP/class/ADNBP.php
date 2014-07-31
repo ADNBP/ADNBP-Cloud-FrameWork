@@ -567,6 +567,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
 		 * String replace KeyCodes
 		 */
 		 function strCFReplace($str) {
+		 	$str = str_replace('CURRENT_DATE', date('Y-m-d'), $str);
 		 	$str = str_replace('{DirectoryOrganization_Id}', $this->getAuthUserData("currentOrganizationId"), $str);
 		 	$str = str_replace('{OrganizationsInGroupId}', (strlen($this->getAuthUserData("currentOrganizationsInGroupId")))?$this->getAuthUserData("currentOrganizationsInGroupId"):$this->getAuthUserData("currentOrganizationId"), $str);
 		 	return($str);
