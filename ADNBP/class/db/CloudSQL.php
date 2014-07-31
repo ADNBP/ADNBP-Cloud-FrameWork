@@ -633,6 +633,18 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 								   if($this->error()) return false;
                                    $_ret[$types[$k][Field]][relData] =$relData;
 								   
+                               } else if($this->isAutoSelectField($types[$k][Field])) {
+                               	   $_fqWhere = '';
+								   if(($dependences = $this->getFieldDependence($types[$k][Field])) !== false)  $_fqWhere .=  ' ('.$dependences.')';
+                               	   $_fn = $types[$k][Field].' AS Id,'.$types[$k][Field].' AS Name';
+                               	   if(!strlen($_fqWhere )) $_fqWhere .=  '1=1';
+                               	   
+                               	   $_fq = " SELECT DISTINCT $_fn FROM  $table  WHERE $_fqWhere ";
+                                   $relData = $this->getDataFromQuery($_fq); 
+								   if($this->_debug) _print($_fq);	
+								   if($this->error()) return false;
+                                   $_ret[$types[$k][Field]][relData] =$relData;
+                               	
                                }
 	
 	                           // add where to Global Query: 
@@ -640,7 +652,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 									$value[selectWhere] .= ' AND   ('.$fieldwheres.')';
 							   }						   
     
-	                       } // if field is rel
+	                       } 
 
 							
                            $nrows = $this->getDataFromQuery("select count(1) TOT from $table where ".$value[selectWhere],$value[values]);
