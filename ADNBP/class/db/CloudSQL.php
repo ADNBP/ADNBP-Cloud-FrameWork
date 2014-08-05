@@ -267,7 +267,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                if(is_array($operators)) $last_op = array_shift($operators);
                else $last_op = $operators;
                
-               for ($i=1,$tr=count($fields); $i < $tr; $i++) {
+               for ($i=1,$tr=count($fields); $i < $tr; $i++) if(strlen($fields[$i])) {
                    $q .= " $last_op ".$fields[$i]." $last_join '%s'";
                    $data[] = $search;
                    
@@ -663,6 +663,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                            if($action == "getRecordsForEdit") $this->_limit = 50;  
 						   
 					 	   $_ret[totPages] = round($nrows[0][TOT]/$this->_limit,0);
+					 	   if($_ret[totPages]*$this->_limit < $nrows[0][TOT]) $_ret[totPages]++;
 						   
 						   if($page >= $_ret[totPages] ) $page = $_ret[totPages]-1 ;
 						   if($page < 0 ) $page=0;
@@ -685,7 +686,10 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                         break;
                     case 'updateRecord':
                         $_q = "UPDATE $key SET ".$tables[$table][updateFields]." WHERE ".$tables[$table][updateWhereFields];
-                        $this->command($_q,array_merge($value[values],$value[updateWhereValues]));
+						if(!is_array($value[updateWhereValues])) $this->setError("No UPDATE condition in $_q");
+						else {
+	                        $this->command($_q,array_merge($value[values],$value[updateWhereValues]));
+                        }
 						if($this->error()) return false;
                         
                         break;
