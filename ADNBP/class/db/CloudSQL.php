@@ -61,6 +61,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 		var $_cloudAutoSelectFields = array();
 		var $_cloudWhereFields = array();
 		var $_cloudFilterWhereFields = array();
+		var $_queryFieldTypes = array();
                 
         var $_dblink=false;                // Database Connection Link	
         var $_debug=false;
@@ -373,7 +374,12 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 			else return(false);
 		}		
 		
-        function addFilterWhereField($field,$where) { if(strlen(trim($where))) $this->_cloudFilterWhereFields[$field] .= $where; }
+        function addFilterWhereField($field,$where) {
+        	 if(!strlen(trim($where))) return;
+			 
+        	 if(strlen(trim($this->_cloudFilterWhereFields[$field]))) $this->_cloudFilterWhereFields[$field] .= ' AND '; 
+        	 $this->_cloudFilterWhereFields[$field] .= $where; 
+		}
         function setFilterWhereField($field,$where) {
         	if(strlen(trim($where))) {
 	        	unset($this->_clouFilterWhereFields[$field]);
@@ -459,8 +465,9 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                 $table ="CF_".$table;
 
             // Field Types of the table
-            $types = $this->getDataFromQuery("SHOW COLUMNS FROM %s",$table ); //analyze types                      
+            if(!isset($this->_queryFieldTypes[$table])) $this->_queryFieldTypes[$table] = $this->getDataFromQuery("SHOW COLUMNS FROM %s",$table );
             if($this->error()) return(false);
+            $types = $this->_queryFieldTypes[$table];                     
             
             for($k=0,$tr3=count($types);$k<$tr3;$k++) {
                    $fieldTypes[$types[$k][Field]][type] = $types[$k][Type];
@@ -567,21 +574,21 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                     case 'getDistinctRecords':
                     case 'getRecordsForEdit':
                     case 'getRecordsToExplore':
+						
                         if(!strlen($value[selectWhere])) $value[selectWhere] = "1=1";
                         
 						if(!strlen($table)) $table = $key;
 						if(strlen($order)) $order = " ORDER BY ".$order;
                         if($action == "getRecords") {
-                            $_q = "select $selectFields from $table where ".$value[selectWhere].$order." limit ".$this->_limit;
+                            $_q = "select $selectFields from $table main where ".$value[selectWhere].$order." limit ".$this->_limit;
                            return($this->getDataFromQuery($_q,$value[values]));
                            
                         } else if($action == "getDistinctRecords") {
-                            $_q = "select distinct $selectFields from $table where ".$value[selectWhere].$order." limit ".$this->_limit;
+                            $_q = "select distinct $selectFields from $table main where ".$value[selectWhere].$order." limit ".$this->_limit;
                            return($this->getDataFromQuery($_q,$value[values]));
                            
                         } else {
 
-							
                            // Eplore types
                            for($k=0,$tr3=count($types);$k<$tr3;$k++) {
                            	   	
@@ -628,8 +635,8 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 								   if(!strlen($_fqWhere )) $_fqWhere .=  '1=1';
 								   $_fq = " SELECT DISTINCT $_fn FROM  $reltable R LEFT JOIN  $table P ON (R.".$_f."_Id = P.".$types[$k][Field].") WHERE $_fqWhere ";
 								   
+								   
                                    $relData = $this->getDataFromQuery($_fq); 
-								   if($this->_debug) _print($_fq);	
 								   if($this->error()) return false;
                                    $_ret[$types[$k][Field]][relData] =$relData;
 								   
@@ -641,7 +648,6 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                                	   
                                	   $_fq = " SELECT DISTINCT $_fn FROM  $table  WHERE $_fqWhere ";
                                    $relData = $this->getDataFromQuery($_fq); 
-								   if($this->_debug) _print($_fq);	
 								   if($this->error()) return false;
                                    $_ret[$types[$k][Field]][relData] =$relData;
                                	
@@ -650,12 +656,11 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 	                           // add where to Global Query: 
 							   if(($fieldwheres = $this->getWhereField($types[$k][Field])) !== false) {
 									$value[selectWhere] .= ' AND   ('.$fieldwheres.')';
-							   }						   
+							   }	
     
 	                       } 
-
-							
-                           $nrows = $this->getDataFromQuery("select count(1) TOT from $table where ".$value[selectWhere],$value[values]);
+						   // Let see how many rows it has
+                           $nrows = $this->getDataFromQuery("select count(1) TOT from $table main where ".$value[selectWhere],$value[values]);
 						   if($this->error()) return false;
 					 	   $_ret[totRows] = $nrows[0][TOT];
 						 
@@ -672,7 +677,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 						   $_ret[totRowsInPage] = ($this->_limit < $_ret[totRows])?$this->_limit:$_ret[totRows];
 						   $_ret[offset] = $page * $this->_limit;
 						                            
-                           $data = $this->getDataFromQuery("select $selectFields from $table where ".$value[selectWhere].$order." limit ".$_ret[offset].','.$this->_limit,$value[values]);
+                           $data = $this->getDataFromQuery("select $selectFields from $table main where ".$value[selectWhere].$order." limit ".$_ret[offset].','.$this->_limit,$value[values]);
 						   if($this->error()) return false;
                            $_ret[fields] = array_keys($fieldTypes);
                            for($i=0,$tr=count($data);$i<$tr;$i++) 
