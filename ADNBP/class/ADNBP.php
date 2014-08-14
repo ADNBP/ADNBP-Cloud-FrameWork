@@ -533,8 +533,13 @@ if (!defined ("_ADNBP_CLASS_") ) {
         /**
         * Redirect to other URL
         */
-        function urlRedirect ($url,$dest) {
-            if($url == $this->_url && $url != $dest) {
+        function urlRedirect ($url,$dest='') {
+            if(!strlen($dest)) {
+                if($url != $this->_url) {
+                    Header("Location: $url");
+                    exit;
+                }
+            } else if($url == $this->_url && $url != $dest) {
                 if(strlen($this->_urlParams)) {
                 	if(strpos($dest, '?') === false)
                 	   $dest .= "?".$this->_urlParams;

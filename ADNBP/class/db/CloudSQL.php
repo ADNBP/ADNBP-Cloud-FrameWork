@@ -471,7 +471,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
             
             for($k=0,$tr3=count($types);$k<$tr3;$k++) {
                    $fieldTypes[$types[$k][Field]][type] = $types[$k][Type];
-                   $fieldTypes[$types[$k][Field]][isNum] = (preg_match("/(int|numb|deci)/i", $types[$k][Type]));
+                   $fieldTypes[$types[$k][Field]][isNum] = (preg_match("/(int|numb|deci|bit)/i", $types[$k][Type]));
                    $fieldTypes[$types[$k][Field]][isKey] = ($types[$k][Key]=="PRI");
             }  
             
