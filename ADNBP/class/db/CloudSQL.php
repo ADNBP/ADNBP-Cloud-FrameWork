@@ -245,8 +245,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                 } else {
                     if($n_percentsS == 0 ) $qreturn = $q;
                     else {
-                        for($i=0;$i<$n_percentsS;$i++) $params[$i] = $this->_db->real_escape_string($params[$i]);
-                        $qreturn = vsprintf($q, $params);
+                        $qreturn = $this->joinQueryValues($q, $params);
                     }
                 }
             }
@@ -254,6 +253,15 @@ if (!defined ("_MYSQLI_CLASS_") ) {
             $this->_lastQuery = $qreturn;
             return($qreturn);
         }
+
+		// substitue %s by values in a string
+		function joinQueryValues($q,$values) {
+			if(!is_array($values)) $values = array($values);
+			$tr=count($values);
+			if($tr==0) return($q);
+			else for($i=0;$i<$tr;$i++) $values[$i] = $this->_db->real_escape_string($values[$i]);
+			return(vsprintf($q, $values));
+		}
         
         function getQueryFromSearch ($search,$fields=false,$joints="=",$operators="AND") {
            $ret = '1=1'; 
@@ -374,16 +382,16 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 			else return(false);
 		}		
 		
-        function addFilterWhereField($field,$where) {
+        function addFilterWhereField($field,$where,$values=array()) {
         	 if(!strlen(trim($where))) return;
 			 
         	 if(strlen(trim($this->_cloudFilterWhereFields[$field]))) $this->_cloudFilterWhereFields[$field] .= ' AND '; 
-        	 $this->_cloudFilterWhereFields[$field] .= $where; 
+        	 $this->_cloudFilterWhereFields[$field] .= $this->joinQueryValues($where,$values); 
 		}
-        function setFilterWhereField($field,$where) {
+        function setFilterWhereField($field,$where,$values=array()) {
         	if(strlen(trim($where))) {
 	        	unset($this->_clouFilterWhereFields[$field]);
-				$this->addFilterWhereField($field,$where);
+				$this->addFilterWhereField($field,$where,$values);
 			}
 		}
 		function getFilterWhereField($field) {
@@ -470,9 +478,15 @@ if (!defined ("_MYSQLI_CLASS_") ) {
             $types = $this->_queryFieldTypes[$table];                     
             
             for($k=0,$tr3=count($types);$k<$tr3;$k++) {
-                   $fieldTypes[$types[$k][Field]][type] = $types[$k][Type];
-                   $fieldTypes[$types[$k][Field]][isNum] = (preg_match("/(int|numb|deci|bit)/i", $types[$k][Type]));
-                   $fieldTypes[$types[$k][Field]][isKey] = ($types[$k][Key]=="PRI");
+                   $fieldTypes[$types[$k]['Field']]['type'] = $types[$k]['type'];
+                   $fieldTypes[$types[$k]['Field']]['isNum'] = (preg_match("/(int|numb|deci|bit)/i", $types[$k]['type']));
+                   $fieldTypes[$types[$k]['Field']]['isKey'] = ($types[$k][Key]=="PRI");
+				   
+				   list($foo,$field,$rels) = explode("_", $types[$k]['Field'],3);
+				   if(strlen($rels) && $rels=='Id') {
+				   		$fieldTypes[$types[$k]['Field']][isRel] = true;
+				   		$fieldTypes[$types[$k]['Field']][relField] = $field.'_'.$rels;
+				   } else $fieldTypes[$types[$k]['Field']][isRel] = false;
             }  
             
             // analyze if the Where has _anyfield
@@ -483,7 +497,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
             }
             if($_where == '%') $_where = '1=1'; 
             
-            if(strlen($_where)) $tables[$table][selectWhere] = $_where;
+            if(strlen($_where)) $tables[$table]['selectWhere'] = $_where;
               
                                
             $tables[$table][init] = 1;
@@ -493,49 +507,49 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                 
                 $field = $allFields[$j];
                 
-                if(!$fieldTypes[$field][type]) {
+                if(!$fieldTypes[$field]['type']) {
                     $this->setError("Wrong data array. $field doesn't exist in ".$keys[$i][table]);
                     return(false);
                 }
 				
-                $sep = ((strlen($tables[$table][insertFields]))?",":"");
-                $and = ((strlen($tables[$table][selectWhere]))?" AND ":"");
+                $sep = ((strlen($tables[$table]['insertFields']))?",":"");
+                $and = ((strlen($tables[$table]['selectWhere']))?" AND ":"");
 
                 
                 if(strlen($data[$field]) && $data[$field] !='NULL')
-                    $tables[$table][updateFields] .= $sep.$field."=".(($fieldTypes[$field][isNum])?"%s":"'%s'");
+                    $tables[$table]['updateFields'] .= $sep.$field."=".(($fieldTypes[$field]['isNum'])?"%s":"'%s'");
                 else {
                     $data[$field] = 'NULL';
-                    $tables[$table][updateFields] .= $sep.$field."=%s";
+                    $tables[$table]['updateFields'] .= $sep.$field."=%s";
                 }
 				
-                $tables[$table][insertFields] .= $sep.$field;
-                $tables[$table][insertPercents] .= $sep.(($fieldTypes[$field][isNum])?"%s":(($data[$field] == 'NULL')?"%s":"'%s'"));
+                $tables[$table]['insertFields'] .= $sep.$field;
+                $tables[$table]['insertPercents'] .= $sep.(($fieldTypes[$field]['isNum'])?"%s":(($data[$field] == 'NULL')?"%s":"'%s'"));
                 
-                if($fieldTypes[$field][isKey]) {
-                    if(strlen($tables[$table][updateWhereFields])) $tables[$table][updateWhereFields].=',';
-                    $tables[$table][updateWhereFields] .= $field."=".(($fieldTypes[$field][isNum])?"%s":"'%s'");
-                    $tables[$table][updateWhereValues][] = $data[$field];
+                if($fieldTypes[$field]['isKey']) {
+                    if(strlen($tables[$table]['updateWhereFields'])) $tables[$table]['updateWhereFields'].=',';
+                    $tables[$table]['updateWhereFields'] .= $field."=".(($fieldTypes[$field]['isNum'])?"%s":"'%s'");
+                    $tables[$table]['updateWhereValues'][] = $data[$field];
                 }
                 
                 if($data[$field] !='%') {
                     if($data[$field]=="_empty_") {
-                        $tables[$table][selectWhere] .= $and." ($field IS NULL OR LENGTH($field)=0) ";
+                        $tables[$table]['selectWhere'] .= $and." ($field IS NULL OR LENGTH($field)=0) ";
                     } else if($data[$field]=="_noempty_") {
-                        $tables[$table][selectWhere] .= $and." ($field IS NOT NULL AND LENGTH($field)>0) ";
+                        $tables[$table]['selectWhere'] .= $and." ($field IS NOT NULL AND LENGTH($field)>0) ";
                     } else {
     					$joint = ' = ';
     					$_selecWhereFieldError = false;
     					if(strpos($data[$field], '%')!==false) $joint = ' LIKE ';
-    					else if($fieldTypes[$field][isNum]) {
+    					else if($fieldTypes[$field]['isNum']) {
     						if(!is_numeric(trim($data[$field]))) {
     							$joint=' ';
     						}
     					}
                         
                         if(!$_selecWhereFieldError ) {
-                            $tables[$table][selectWhere] .= $and.$field.$joint.(($fieldTypes[$field][isNum])?"%s":"'%s'");
-                            $tables[$table][values][] = $data[$field];
+                            $tables[$table]['selectWhere'] .= $and.$field.$joint.(($fieldTypes[$field]['isNum'])?"%s":"'%s'");
+                            $tables[$table]['values'][] = $data[$field];
                         }
                     }
                 }
@@ -555,7 +569,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                         
                         $_ret = array();
                         for ($i=0,$tr=count($_f); $i <  $tr; $i++) { 
-                            $_ret[$_f[$i][DirectoryObjectField_Name]] = $_f[$i][DirectoryObjectField_DefaultName];
+                            $_ret[$_f[$i]['DirectoryObjectField_Name']] = $_f[$i]['DirectoryObjectField_DefaultName'];
                         }
                         unset($_f);
                         return($_ret);
@@ -566,8 +580,8 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                     case 'replace':
 						if($action == 'insertRecord' || $action == 'insert') $act = "insert";
 						else $act = 'replace';
-                        //echo($action." into $key (".$value[insertFields].") values  (".$value[insertPercents].")");
-                        return($this->command($act." into $key (".$value[insertFields].") values  (".$value[insertPercents].")",$value[values]));
+                        //echo($action." into $key (".$value['insertFields'].") values  (".$value['insertPercents'].")");
+                        return($this->command($act." into $key (".$value['insertFields'].") values  (".$value['insertPercents'].")",$value['values']));
                         break;
 
                     case 'getRecords':
@@ -575,38 +589,38 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                     case 'getRecordsForEdit':
                     case 'getRecordsToExplore':
 						
-                        if(!strlen($value[selectWhere])) $value[selectWhere] = "1=1";
+                        if(!strlen($value['selectWhere'])) $value['selectWhere'] = "1=1";
                         
 						if(!strlen($table)) $table = $key;
 						if(strlen($order)) $order = " ORDER BY ".$order;
                         if($action == "getRecords") {
-                            $_q = "select $selectFields from $table main where ".$value[selectWhere].$order." limit ".$this->_limit;
-                           return($this->getDataFromQuery($_q,$value[values]));
+                            $_q = "select $selectFields from $table main where ".$value['selectWhere'].$order." limit ".$this->_limit;
+                           return($this->getDataFromQuery($_q,$value['values']));
                            
                         } else if($action == "getDistinctRecords") {
-                            $_q = "select distinct $selectFields from $table main where ".$value[selectWhere].$order." limit ".$this->_limit;
-                           return($this->getDataFromQuery($_q,$value[values]));
+                            $_q = "select distinct $selectFields from $table main where ".$value['selectWhere'].$order." limit ".$this->_limit;
+                           return($this->getDataFromQuery($_q,$value['values']));
                            
                         } else {
 
                            // Eplore types
                            for($k=0,$tr3=count($types);$k<$tr3;$k++) {
                            	   	
-                           	   if(preg_match("/(int|numb|deci)/i", $types[$k][Type]))
-                                   $_ret[$types[$k][Field]][type] = 'text';
-							   else if(preg_match("/(text)/i", $types[$k][Type]))
-							       $_ret[$types[$k][Field]][type] = 'textarea';
+                           	   if(preg_match("/(int|numb|deci)/i", $types[$k]['type']))
+                                   $_ret[$types[$k]['Field']]['type'] = 'text';
+							   else if(preg_match("/(text)/i", $types[$k]['type']))
+							       $_ret[$types[$k]['Field']]['type'] = 'textarea';
 							   else
-							   	   $_ret[$types[$k][Field]][type] = 'text';
+							   	   $_ret[$types[$k]['Field']]['type'] = 'text';
                                
-                               list($foo,$field,$rels) = explode("_", $types[$k][Field],3);
+                               list($foo,$field,$rels) = explode("_", $types[$k]['Field'],3);
                                
                                if(($field=="Id" && $rels=="" && !$_relTable) || ($_relTable && $foo=="Id")) 
-                                   $_ret[$types[$k][Field]][type] = "key";
+                                   $_ret[$types[$k]['Field']]['type'] = "key";
                                else if(strlen($rels) || ($_relTable && strlen($field))) {
                                	
 							   // Getting Rel data to this field                               	
-                                   $_ret[$types[$k][Field]][type] = "rel";
+                                   $_ret[$types[$k]['Field']]['type'] = "rel";
 								   
                                    if($_relTable) {
                                        $reltable=$foo."s";
@@ -618,82 +632,82 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 								   
 								   // Fields dependences and WhereConditions
 								   $_fqWhere = '';
-								   if(($dependences = $this->getFieldDependence($types[$k][Field])) !== false)  $_fqWhere .=  ' ('.$dependences.')';
+								   if(($dependences = $this->getFieldDependence($types[$k]['Field'])) !== false)  $_fqWhere .=  ' ('.$dependences.')';
 								   
-								   if(($fieldwheres = $this->getWhereField($types[$k][Field])) !== false) {
+								   if(($fieldwheres = $this->getWhereField($types[$k]['Field'])) !== false) {
 								   	if(strlen($_fqWhere)) $_fqWhere .= ' AND ';
 								   	$_fqWhere .=  ' ('.$fieldwheres.')';
 								   }
 
-								   if(($fieldwheres = $this->getFilterWhereField($types[$k][Field])) !== false) {
+								   if(($fieldwheres = $this->getFilterWhereField($types[$k]['Field'])) !== false) {
 								   	if(strlen($_fqWhere)) $_fqWhere .= ' AND ';
 								   	$_fqWhere .=  ' ('.$fieldwheres.')';
 								   }
 								   
 								   
-								   $_fn = 'R.'.$_f.'_Id Id,'.(($this->getReferalField($types[$k][Field]) !==false )?"CONCAT_WS(' - ',R.".$this->getReferalField($types[$k][Field]).') Name':'R.'.$_f.'_Name Name');
+								   $_fn = 'R.'.$_f.'_Id Id,'.(($this->getReferalField($types[$k]['Field']) !==false )?"CONCAT_WS(' - ',R.".$this->getReferalField($types[$k]['Field']).') Name':'R.'.$_f.'_Name Name');
 								   if(!strlen($_fqWhere )) $_fqWhere .=  '1=1';
-								   $_fq = " SELECT DISTINCT $_fn FROM  $reltable R LEFT JOIN  $table P ON (R.".$_f."_Id = P.".$types[$k][Field].") WHERE $_fqWhere ";
+								   $_fq = " SELECT DISTINCT $_fn FROM  $reltable R LEFT JOIN  $table P ON (R.".$_f."_Id = P.".$types[$k]['Field'].") WHERE $_fqWhere ";
 								   
 								   
                                    $relData = $this->getDataFromQuery($_fq); 
 								   if($this->error()) return false;
-                                   $_ret[$types[$k][Field]][relData] =$relData;
+                                   $_ret[$types[$k]['Field']]['relData'] =$relData;
 								   
-                               } else if($this->isAutoSelectField($types[$k][Field])) {
+                               } else if($this->isAutoSelectField($types[$k]['Field'])) {
                                	   $_fqWhere = '';
-								   if(($dependences = $this->getFieldDependence($types[$k][Field])) !== false)  $_fqWhere .=  ' ('.$dependences.')';
-                               	   $_fn = $types[$k][Field].' AS Id,'.$types[$k][Field].' AS Name';
+								   if(($dependences = $this->getFieldDependence($types[$k]['Field'])) !== false)  $_fqWhere .=  ' ('.$dependences.')';
+                               	   $_fn = $types[$k]['Field'].' AS Id,'.$types[$k]['Field'].' AS Name';
                                	   if(!strlen($_fqWhere )) $_fqWhere .=  '1=1';
                                	   
                                	   $_fq = " SELECT DISTINCT $_fn FROM  $table  WHERE $_fqWhere ";
                                    $relData = $this->getDataFromQuery($_fq); 
 								   if($this->error()) return false;
-                                   $_ret[$types[$k][Field]][relData] =$relData;
+                                   $_ret[$types[$k]['Field']]['relData'] =$relData;
                                	
                                }
 	
 	                           // add where to Global Query: 
-							   if(($fieldwheres = $this->getWhereField($types[$k][Field])) !== false) {
-									$value[selectWhere] .= ' AND   ('.$fieldwheres.')';
+							   if(($fieldwheres = $this->getWhereField($types[$k]['Field'])) !== false) {
+									$value['selectWhere'] .= ' AND   ('.$fieldwheres.')';
 							   }	
     
 	                       } 
 						   // Let see how many rows it has
-                           $nrows = $this->getDataFromQuery("select count(1) TOT from $table main where ".$value[selectWhere],$value[values]);
+                           $nrows = $this->getDataFromQuery("select count(1) TOT from $table main where ".$value['selectWhere'],$value['values']);
 						   if($this->error()) return false;
-					 	   $_ret[totRows] = $nrows[0][TOT];
+					 	   $_ret['totRows'] = $nrows[0]['TOT'];
 						 
 						   
                            if($action == "getRecordsForEdit") $this->_limit = 50;  
 						   
-					 	   $_ret[totPages] = round($nrows[0][TOT]/$this->_limit,0);
-					 	   if($_ret[totPages]*$this->_limit < $nrows[0][TOT]) $_ret[totPages]++;
+					 	   $_ret['totPages'] = round($nrows[0]['TOT']/$this->_limit,0);
+					 	   if($_ret['totPages']*$this->_limit < $nrows[0]['TOT']) $_ret['totPages']++;
 						   
-						   if($page >= $_ret[totPages] ) $page = $_ret[totPages]-1 ;
+						   if($page >= $_ret['totPages'] ) $page = $_ret['totPages']-1 ;
 						   if($page < 0 ) $page=0;
 						   
-						   $_ret[currentPage] = $page;
-						   $_ret[totRowsInPage] = ($this->_limit < $_ret[totRows])?$this->_limit:$_ret[totRows];
-						   $_ret[offset] = $page * $this->_limit;
+						   $_ret['currentPage'] = $page;
+						   $_ret['totRowsInPage'] = ($this->_limit < $_ret['totRows'])?$this->_limit:$_ret['totRows'];
+						   $_ret['offset'] = $page * $this->_limit;
 						                            
-                           $data = $this->getDataFromQuery("select $selectFields from $table main where ".$value[selectWhere].$order." limit ".$_ret[offset].','.$this->_limit,$value[values]);
+                           $data = $this->getDataFromQuery("select $selectFields from $table main where ".$value['selectWhere'].$order." limit ".$_ret['offset'].','.$this->_limit,$value['values']);
 						   if($this->error()) return false;
-                           $_ret[fields] = array_keys($fieldTypes);
+                           $_ret['fields'] = array_keys($fieldTypes);
                            for($i=0,$tr=count($data);$i<$tr;$i++) 
-                              $data[$i][_hash] = $this->getHashFromArray($data[$i]);
+                              $data[$i]['_hash'] = $this->getHashFromArray($data[$i]);
 
-                           $_ret[data] = $data;
+                           $_ret['data'] = $data;
                            
                            unset($data);
                            return($_ret);
                         }
                         break;
                     case 'updateRecord':
-                        $_q = "UPDATE $key SET ".$tables[$table][updateFields]." WHERE ".$tables[$table][updateWhereFields];
-						if(!is_array($value[updateWhereValues])) $this->setError("No UPDATE condition in $_q");
+                        $_q = "UPDATE $key SET ".$tables[$table]['updateFields']." WHERE ".$tables[$table]['updateWhereFields'];
+						if(!is_array($value['updateWhereValues'])) $this->setError("No UPDATE condition in $_q");
 						else {
-	                        $this->command($_q,array_merge($value[values],$value[updateWhereValues]));
+	                        $this->command($_q,array_merge($value['values'],$value['updateWhereValues']));
                         }
 						if($this->error()) return false;
                         
