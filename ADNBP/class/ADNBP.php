@@ -21,11 +21,13 @@
 function _print() {
 	$args = func_get_args();
 	for ($i=0,$tr=count($args); $i < $tr; $i++) {
+		echo "<pre>";
 		if($args[$i] == "exit") exit;
-		else if(is_array($args[$i])) echo "<pre>".print_r($args[$i],true)."</pre>"; 
+		else if(is_array($args[$i])) echo print_r($args[$i],true); 
 		else if(is_bool($args[$i])) echo '<li>'.($args[$i])?'true':'false';
 		else if(is_null($args[$i])) echo '<li>NULL';
 		else echo "<li>".$args[$i];
+		echo "</pre>";
 		
 	}
 }

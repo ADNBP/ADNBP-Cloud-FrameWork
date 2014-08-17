@@ -61,6 +61,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 		var $_cloudAutoSelectFields = array();
 		var $_cloudWhereFields = array();
 		var $_cloudFilterWhereFields = array();
+		var $_cloudFilterToAvoidCalculation = array();
 		var $_queryFieldTypes = array();
                 
         var $_dblink=false;                // Database Connection Link	
@@ -386,7 +387,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
         	 if(!strlen(trim($where))) return;
 			 
         	 if(strlen(trim($this->_cloudFilterWhereFields[$field]))) $this->_cloudFilterWhereFields[$field] .= ' AND '; 
-        	 $this->_cloudFilterWhereFields[$field] .= $this->joinQueryValues($where,$values); 
+        	 $this->_cloudFilterWhereFields[$field] .= $this->joinQueryValues('R.'.$where,$values); 
 		}
         function setFilterWhereField($field,$where,$values=array()) {
         	if(strlen(trim($where))) {
@@ -397,7 +398,18 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 		function getFilterWhereField($field) {
 			if(is_string($this->_cloudFilterWhereFields[$field])) return $this->_cloudFilterWhereFields[$field];
 			else return(false);
-		}		
+		}	
+		
+		function avoidFilterCalculation($field) {
+			$this->_cloudFilterToAvoidCalculation[$field] = true;
+		}
+		
+		function isAvoidFilterCalculation($field) {
+			return(isset($this->_cloudFilterToAvoidCalculation[$field]));
+		}
+		
+		
+			
 
 
 
@@ -469,7 +481,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
             if(strpos($table, "Rel_") !== false) 
                $_relTable = true;
             
-            if($action == 'insert' || $action == "replace" || $action == 'insertRecord' || $action == "replaceRecord" || $action == "getRecordsForEdit" ||  $action == "updateRecord" || $action =="getFieldTypes")
+            if($action == 'insert' || $action == "replace" || $action == 'insertRecord' || $action == "replaceRecord" || $action == "ggetRecordsForEdit" ||  $action == "updateRecord" || $action =="getFieldTypes")
                 $table ="CF_".$table;
 
             // Field Types of the table
@@ -478,14 +490,16 @@ if (!defined ("_MYSQLI_CLASS_") ) {
             $types = $this->_queryFieldTypes[$table];                     
             
             for($k=0,$tr3=count($types);$k<$tr3;$k++) {
-                   $fieldTypes[$types[$k]['Field']]['type'] = $types[$k]['type'];
-                   $fieldTypes[$types[$k]['Field']]['isNum'] = (preg_match("/(int|numb|deci|bit)/i", $types[$k]['type']));
+                   $fieldTypes[$types[$k]['Field']]['type'] = $types[$k]['Type'];
+                   $fieldTypes[$types[$k]['Field']]['isNum'] = (preg_match("/(int|numb|deci|bit)/i", $types[$k]['Type']));
                    $fieldTypes[$types[$k]['Field']]['isKey'] = ($types[$k][Key]=="PRI");
 				   
-				   list($foo,$field,$rels) = explode("_", $types[$k]['Field'],3);
-				   if(strlen($rels) && $rels=='Id') {
+				   $foo = explode("_", $types[$k]['Field'],3);
+				   if(strlen($foo[2]) && $foo[2]=='Id') {
+				   	
 				   		$fieldTypes[$types[$k]['Field']][isRel] = true;
-				   		$fieldTypes[$types[$k]['Field']][relField] = $field.'_'.$rels;
+				   		$fieldTypes[$types[$k]['Field']][relField] = $foo[1].'_'.$foo[2];
+						
 				   } else $fieldTypes[$types[$k]['Field']][isRel] = false;
             }  
             
@@ -606,9 +620,9 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                            // Eplore types
                            for($k=0,$tr3=count($types);$k<$tr3;$k++) {
                            	   	
-                           	   if(preg_match("/(int|numb|deci)/i", $types[$k]['type']))
+                           	   if(preg_match("/(int|numb|deci)/i", $types[$k]['Type']))
                                    $_ret[$types[$k]['Field']]['type'] = 'text';
-							   else if(preg_match("/(text)/i", $types[$k]['type']))
+							   else if(preg_match("/(text)/i", $types[$k]['Type']))
 							       $_ret[$types[$k]['Field']]['type'] = 'textarea';
 							   else
 							   	   $_ret[$types[$k]['Field']]['type'] = 'text';
@@ -617,7 +631,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                                
                                if(($field=="Id" && $rels=="" && !$_relTable) || ($_relTable && $foo=="Id")) 
                                    $_ret[$types[$k]['Field']]['type'] = "key";
-                               else if(strlen($rels) || ($_relTable && strlen($field))) {
+                               else if($rels=='Id'   || ($_relTable && strlen($field))) {
                                	
 							   // Getting Rel data to this field                               	
                                    $_ret[$types[$k]['Field']]['type'] = "rel";
@@ -632,7 +646,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 								   
 								   // Fields dependences and WhereConditions
 								   $_fqWhere = '';
-								   if(($dependences = $this->getFieldDependence($types[$k]['Field'])) !== false)  $_fqWhere .=  ' ('.$dependences.')';
+								   if(($dependences = $this->getFieldDependence($types[$k]['Field'])) !== false)  $_fqWhere .=  ' (R.'.$dependences.')';
 								   
 								   if(($fieldwheres = $this->getWhereField($types[$k]['Field'])) !== false) {
 								   	if(strlen($_fqWhere)) $_fqWhere .= ' AND ';
@@ -644,15 +658,31 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 								   	$_fqWhere .=  ' ('.$fieldwheres.')';
 								   }
 								   
+								   $_refField = str_replace('_Id', '_Name', $types[$k]['Field']);
+								   if($this->getReferalField($types[$k]['Field']) !==false ) {
+								   	   $selectFields .=',CONCAT_WS(" - ",'.$this->getReferalField($types[$k]['Field']).') '.$_refField;
+								       $_refFields = 'CONCAT_WS(" - ",R.'.str_replace(',', ',R.', $this->getReferalField($types[$k]['Field'])).') Name';
+								   } else {
+								   	   $selectFields .=','.$_f.'_Name '.$_refField;
+								   	   $_refFields = 'R.'.$_f.'_Name Name';
+								   }
+								   // include all referal Fields in the query.
+								   //$_refFields = 'R.'.str_replace(',', ',R.', $this->getReferalField($types[$k]['Field']));
 								   
-								   $_fn = 'R.'.$_f.'_Id Id,'.(($this->getReferalField($types[$k]['Field']) !==false )?"CONCAT_WS(' - ',R.".$this->getReferalField($types[$k]['Field']).') Name':'R.'.$_f.'_Name Name');
+								   
+								   
+								   $_fn = 'R.'.$_f.'_Id Id,'.$_refFields;
 								   if(!strlen($_fqWhere )) $_fqWhere .=  '1=1';
+								   // $_fq = " SELECT DISTINCT $_fn FROM  $table R  WHERE $_fqWhere ";
 								   $_fq = " SELECT DISTINCT $_fn FROM  $reltable R LEFT JOIN  $table P ON (R.".$_f."_Id = P.".$types[$k]['Field'].") WHERE $_fqWhere ";
 								   
-								   
-                                   $relData = $this->getDataFromQuery($_fq); 
-								   if($this->error()) return false;
-                                   $_ret[$types[$k]['Field']]['relData'] =$relData;
+								   if($this->isAvoidFilterCalculation($types[$k]['Field'])) {
+								   		$_ret[$types[$k]['Field']]['relData'] = array();
+								   } else {
+	                                   $relData = $this->getDataFromQuery($_fq); 
+									   if($this->error()) return false;
+	                                   $_ret[$types[$k]['Field']]['relData'] =$relData;
+                                   }
 								   
                                } else if($this->isAutoSelectField($types[$k]['Field'])) {
                                	   $_fqWhere = '';
