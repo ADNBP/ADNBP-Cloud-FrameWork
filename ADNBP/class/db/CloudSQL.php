@@ -724,8 +724,9 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                            $data = $this->getDataFromQuery("select $selectFields from $table main where ".$value['selectWhere'].$order." limit ".$_ret['offset'].','.$this->_limit,$value['values']);
 						   if($this->error()) return false;
                            $_ret['fields'] = array_keys($fieldTypes);
-                           for($i=0,$tr=count($data);$i<$tr;$i++) 
+                           for($i=0,$tr=count($data);$i<$tr;$i++)
                               $data[$i]['_hash'] = $this->getHashFromArray($data[$i]);
+							
 
                            $_ret['data'] = $data;
                            
