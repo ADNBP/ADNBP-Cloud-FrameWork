@@ -294,11 +294,14 @@ if (!defined ("_ADNBP_CLASS_") ) {
             $this->_isAuth[$namespace]['data'][$key] = $value;
             $this->setAuth(true,$namespace);
         }
-        function getAuthUserData($key,$namespace='') {
+        function getAuthUserData($key='',$namespace='') {
              if(!strlen($namespace)) $namespace = $this->getConf("requireAuth");
              if(!strlen($namespace)) return false;
 
-             return($this->_isAuth[$namespace]['data'][$key]);
+			 if(strlen($key))
+             	return($this->_isAuth[$namespace]['data'][$key]);
+			 else
+			 	return($this->_isAuth[$namespace]['data']);
         }
 
         function getAuthUserNameSpace($namespace='') {
