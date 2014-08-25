@@ -9,11 +9,13 @@
 // This service has to be implemented in your <document_root>/logic/CloudFrameWorkService.php
     list($foo,$script,$service,$params) = split('/',$this->_url,4);
     
+	
     switch ($service) {
         case 'keepSession':
             // This method will never exist because it is implemented in ADNBP.class
             break;
         case 'template':
+        case 'templates':
         case 'getTemplate':
 			if(strlen($params)) {
 	            $template = $params;
@@ -73,8 +75,15 @@
 			// This allow to create own services in each WebServer
             if(is_file($this->_webapp."/logic/CloudFrameWorkService/".$service.".php"))
                 include_once $this->_webapp."/logic/CloudFrameWorkService/".$service.".php";
-            else { echo "You have select at least one valid service. Example: <a href=/CloudFrameWorkService/checkVersion>/CloudFrameWorkService/checkVersion</a>";
-                if(strlen($service)) echo '<li><b>'.htmlentities($service)."</b> is not installed";
+            else {
+            	$this->setConf("notemplate",false);
+            	$this->setConf("top","CloudFrameWorkTop.php");
+                $this->setConf("bottom","CloudFrameWorkBottom.php");
+            	
+            	include_once $this->_rootpath."/ADNBP/logic/apiDoc.php";
+            	if(is_file($this->_webapp."/logic/CloudFrameWorkService/apiDoc.php"))  include_once $this->_webapp."/logic/CloudFrameWorkService/apiDoc.php";
+				
+
             }
             break;
     }
