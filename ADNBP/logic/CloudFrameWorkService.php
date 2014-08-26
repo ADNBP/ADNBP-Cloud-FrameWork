@@ -1,15 +1,11 @@
 <?php
 
     //$headers = apache_request_headers(); // Store all headers
-    
     $isSuperAdmin = (strlen($this->getHeader('X-Adnbp-Superuser')))?$this->checkPassword($this->getHeader('X-Adnbp-Superuser'),$this->getConf("adminPassword")):false;
-	
 	$apiMethod = $this->getAPIMethod(); // GET , PUT, UPDATE, DELETE, COPY...
     
 // This service has to be implemented in your <document_root>/logic/CloudFrameWorkService.php
     list($foo,$script,$service,$params) = split('/',$this->_url,4);
-    
-	
     switch ($service) {
         case 'keepSession':
             // This method will never exist because it is implemented in ADNBP.class
@@ -18,19 +14,31 @@
         case 'templates':
         case 'getTemplate':
 			if(strlen($params)) {
+				header("Content-type: text/html");
 	            $template = $params;
-	            if(is_file($this->_rootpath."/ADNBP/templates/CloudFrameWork/".$params)) {
-	               echo(file_get_contents ( $this->_rootpath."/ADNBP/templates/CloudFrameWork/".$params ));
-	            } else if(is_file($this->_webapp."/templates/CloudFrameWork/".$params)) {
-	               echo(file_get_contents ( $this->_webapp."/templates/CloudFrameWork/".$params ));
-	            } else echo("template $params not found");   
+				if(strpos($template,'.') === false) $template.='.htm';
+	            if(is_file($this->_rootpath."/ADNBP/templates/CloudFrameWork/".$template)) {
+	               echo(file_get_contents ( $this->_rootpath."/ADNBP/templates/CloudFrameWork/".$template ));
+	            } else if(is_file($this->_webapp."/templates/CloudFrameWork/".$template)) {
+	               echo(file_get_contents ( $this->_webapp."/templates/CloudFrameWork/".$template ));
+	            } else echo("<html><body>template not found</body></html>");   
 			} else {
-				echo "A string param is required: ../getTemplate/{templateName}";
+				$ret=array();
+				if(is_dir($this->_webapp."/templates/CloudFrameWork")) {
+					$files = scandir($this->_webapp."/templates/CloudFrameWork");
+					foreach ($files as $key => $value) if(strpos($value,'.htm')) $ret[] = str_replace( '.htm' ,  '', $value);
+				}
+				$files = scandir($this->_rootpath."/ADNBP/templates/CloudFrameWork");
+				foreach ($files as $key => $value) if(strpos($value,'.htm')) $ret[] = str_replace( '.htm' ,  '', $value);
+				
+				
+				header("Content-type: application/json");
+				die(json_encode($ret));
 			}
 			die();  
             break;
         case 'checkAPIAuth':
-			if(strlen($params)) {
+        			if(strlen($params)) {
 				echo '<h1>Server Side</h1>';
 				echo '<li>conf-var: CloudServiceToken-'.$params.': '.(strlen($this->getConf("CloudServiceToken-".$params))?'exist. OK':'missing. ERROR').'</li>';
 				echo '<h1>Client Side</h1>';
@@ -49,12 +57,14 @@
 			die();
             break;
         case 'checkVersion':
+		case 'version':
             if(!strlen($params)) echo "Your current version is: ".$this->version();
             else echo(($this->version() == $params)?"OK $params":"Warning. Your version  ".htmlentities($params)." is different of current version:".$this->version);
             die();
             break;
         case 'myIP':
-            echo "Your IP is: ".$_SERVER[REMOTE_ADDR];
+        case 'myip':
+            echo $_SERVER[REMOTE_ADDR];
             die();
 		    break;
 		case 'genPassword':
