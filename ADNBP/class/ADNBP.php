@@ -247,6 +247,9 @@ if (!defined ("_ADNBP_CLASS_") ) {
 		function getAPIMethod() {
 		    return((strlen($_SERVER['REQUEST_METHOD']))?$_SERVER['REQUEST_METHOD']:'GET');	
 		}
+		function getAPIRawData() {
+			return(file_get_contents("php://input"));
+		}
 
         function getDataFromAPI($rute,$data=null,$verb='GET',$format='json',$headers=null) {
 			include_once(dirname(__FILE__).'/ADNBP/getDataFromAPI.php');

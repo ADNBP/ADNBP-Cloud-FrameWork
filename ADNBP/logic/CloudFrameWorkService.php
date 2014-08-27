@@ -38,6 +38,7 @@
 			die();  
             break;
         case 'checkAPIAuth':
+		case 'auth':
         			if(strlen($params)) {
 				echo '<h1>Server Side</h1>';
 				echo '<li>conf-var: CloudServiceToken-'.$params.': '.(strlen($this->getConf("CloudServiceToken-".$params))?'exist. OK':'missing. ERROR').'</li>';

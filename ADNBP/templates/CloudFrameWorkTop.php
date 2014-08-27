@@ -8,7 +8,7 @@
     <meta name="author" content="ADNBP Business & IT Solutions.">
 
     <!-- Bootstrap theme -->
-    <link href="/ADNBP/static/bootstrap311/css/bootstrap.min.css" rel="stylesheet" media="screen">    
+    <link href="/ADNBP/static/css/bootstrap.min.css" rel="stylesheet" media="screen">    
     
     <style type="text/css">
 		body {

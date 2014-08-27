@@ -1,8 +1,9 @@
+    <div class="jumbotron">
     <h1>CloudFrameWorkServices RESTful Web Service APIs</h1>
-    <b>The following public RESTful Web Service APIs are accesible:</b>
+    <b>The following public RESTfull APIs are accesible:</b>
     <h2><?=$docServicesTitle?></h2>
     <p><?=$docServicesSubtitle?></p>
-    
+    </div>
     
     
       <div class="panel-group" id="accordion">
