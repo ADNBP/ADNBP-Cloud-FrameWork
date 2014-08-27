@@ -1,5 +1,5 @@
 .project
 app.yaml
 README.md
-.DS_Store
+**/.DS_Store
 .git/*
