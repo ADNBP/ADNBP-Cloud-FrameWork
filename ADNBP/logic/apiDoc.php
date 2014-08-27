@@ -7,7 +7,7 @@
 
 
 		$docServicesTitle = "API";
-		$docServicesSubtitle = "Write the descriptions of your API using ADNBP/logic/apiDoc.php as a template and write it in: <webapp>/logic/CloudFrameWorkService/apiDoc.php";
+		$docServicesSubtitle = "Write the descriptions of your API using ADNBP/logic/apiDoc.php as a template and write it in: <webapp>/logic/api/apiDoc.php";
 		
 
 		

@@ -96,6 +96,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
 
             // If the call is just to KeepSession
             if(strpos($this->_url, '/CloudFrameWorkService/keepSession') !== false) {
+                
                 header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
                 header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Fecha en el pasado                
                 $bg = (isset($_GET['bg']) && strlen($_GET['bg']))?$_GET['bg']:'FFFFFF';
@@ -374,12 +375,12 @@ if (!defined ("_ADNBP_CLASS_") ) {
             $this->_basename = basename($this->_url);
             $scriptname = basename($this->_scriptPath);
 			
-			if(strpos($this->_url, '/CloudFrameWork') !== false) {
+			if(strpos($this->_url, '/CloudFrameWork') !== false  || $this->_basename == 'api' || strpos($this->_url, '/api/') !== false ) {
                 
                 list($foo,$this->_basename,$foo) = explode('/',$this->_url,3);
                 $this->_basename.=".php"; // add .php extension to the basename in order to find logic and templates.
 
-                if(strpos($this->_url, '/CloudFrameWorkService') === false) {
+                if(strpos($this->_url, '/CloudFrameWorkService') === false || strpos($this->_url, '/api/') !== false) {
                     
                     $this->requireAuth();                                    
                     $this->setConf("top","CloudFrameWorkTop.php");
