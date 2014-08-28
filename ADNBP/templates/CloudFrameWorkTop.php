@@ -2,9 +2,9 @@
 <html lang="en">
     <head>
     <meta charset="utf-8">
-    <title>ADNBP Cloud FrameWork <?=date("Y")?></title>
+    <title><?=(strlen($title))?htmlentities($title).' - ':''?><?=$this->getConf("portalTitle")?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Cloud Framwork to develop Cloud Solutions.">
+    <meta name="description" content="<?=$this->getConf("portalDescription")?>">
     <meta name="author" content="ADNBP Business & IT Solutions.">
 
     <!-- Bootstrap theme -->
@@ -58,7 +58,7 @@
     </head>
     <body role="document">
      <!-- Fixed navbar -->
-    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="navbar navbar-inverse <?=$this->getConf("portalNavColor")?> navbar-fixed-top" role="navigation">
       <div class="container">
         <div class="navbar-header">
           <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">

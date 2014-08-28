@@ -10,4 +10,10 @@
 // $this->setConf("GooglePublicAPICredential","AIzaSyARDfk6bgUxrCZbg2n68--f0LL6k8b_mjg"); 
 
 
+$this->setConf("portalHTMLTop",'CloudFrameWorkTop.php');
+$this->setConf("portalHTMLBottom",'CloudFrameWorkBottom.php');
+$this->setConf("portalTitle",'ADNBP Cloud FrameWork '.date("Y"));
+$this->setConf("portalDescription",'Cloud Framwork to develop Cloud Solutions.');
+$this->setConf("portalNavColor",'navbar-inverse');
+
 ?>

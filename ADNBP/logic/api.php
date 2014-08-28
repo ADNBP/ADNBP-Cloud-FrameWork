@@ -79,12 +79,12 @@
             if(is_file($this->_webapp."/logic/api/".$service.".php"))
                 include_once $this->_webapp."/logic/api/".$service.".php";
             else {
-                //$this->setConf("notemplate",false);
+                
+                 $this->setConf("notemplate",false);
                 //$this->setConf("top","CloudFrameWorkTop.php");
                 //$this->setConf("bottom","CloudFrameWorkBottom.php");
-                
-                include_once $this->_rootpath."/ADNBP/logic/apiDoc.php";
-                if(is_file($this->_webapp."/logic/api/apiDoc.php"))  include_once $this->_webapp."/logic/api/apiDoc.php";
+                include_once $this->_rootpath."/ADNBP/logic/api/apiDoc.php";
+                if(is_file($this->_webapp."/logic/api/api/apiDoc.php"))  include_once $this->_webapp."/logic/api/apiDoc.php";
             }
             break;
     }

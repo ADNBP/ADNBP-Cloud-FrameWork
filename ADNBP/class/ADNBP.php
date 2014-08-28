@@ -382,9 +382,10 @@ if (!defined ("_ADNBP_CLASS_") ) {
 
                 if(strpos($this->_url, '/CloudFrameWorkService') === false || strpos($this->_url, '/api/') !== false) {
                     
-                    $this->requireAuth();                                    
-                    $this->setConf("top","CloudFrameWorkTop.php");
-                    $this->setConf("bottom","CloudFrameWorkBottom.php");
+                    $this->requireAuth();   
+                                                     
+                    $this->setConf("top",(strlen($this->getConf("portalHTMLTop")))?$this->getConf("portalHTMLTop"):"CloudFrameWorkTop.php");
+                    $this->setConf("bottom",(strlen($this->getConf("portalHTMLTop")))?$this->getConf("portalHTMLTop"):"CloudFrameWorkBottom.php");
                     
                     if(is_file($this->_rootpath."/ADNBP/templates/".$this->_basename)) {
                         $this->setConf("template",$this->_basename);
