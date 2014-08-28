@@ -380,7 +380,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
                 list($foo,$this->_basename,$foo) = explode('/',$this->_url,3);
                 $this->_basename.=".php"; // add .php extension to the basename in order to find logic and templates.
 
-                if(strpos($this->_url, '/CloudFrameWorkService/') === false || strpos($this->_url, '/api/') !== false) {
+                if(strpos($this->_url, '/CloudFrameWorkService') !== false || strpos($this->_url, '/api/') !== false) {
                     
                     $this->requireAuth();   
                                                      
