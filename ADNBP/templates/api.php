@@ -29,7 +29,7 @@
         Panel content
       </div>
     </div>   
-    <?php if(false) {?>
+    <?php if(true) {?>
     <div class="panel-group" id="accordion">
     <?php if(is_array($docServices)) foreach ($docServices as $key => $value) {?>
         <div class="panel panel-default">
@@ -39,7 +39,7 @@
         </h4>
         <p><?=(isset($value['description']))?$value['description']:''?></p>
         </div>
-        <div id="collapse<?=$key?>" class="panel-collapse collapse in">
+        <div id="collapse<?=$key?>" class="panel-collapse collapse ">
         <div class="panel-body">
             <?php if(isset($value['api']))  foreach ($value['api'] as $index => $value2) {?>
             <b><?=$value2['title']?></b>

@@ -380,13 +380,14 @@ if (!defined ("_ADNBP_CLASS_") ) {
                 list($foo,$this->_basename,$foo) = explode('/',$this->_url,3);
                 $this->_basename.=".php"; // add .php extension to the basename in order to find logic and templates.
 
-                if(strpos($this->_url, '/CloudFrameWorkService') === false || strpos($this->_url, '/api/') !== false) {
+                if(strpos($this->_url, '/CloudFrameWorkService/') === false || strpos($this->_url, '/api/') !== false) {
                     
                     $this->requireAuth();   
                                                      
                     $this->setConf("top",(strlen($this->getConf("portalHTMLTop")))?$this->getConf("portalHTMLTop"):"CloudFrameWorkTop.php");
-                    $this->setConf("bottom",(strlen($this->getConf("portalHTMLTop")))?$this->getConf("portalHTMLTop"):"CloudFrameWorkBottom.php");
+                    $this->setConf("bottom",(strlen($this->getConf("portalHTMLBottom")))?$this->getConf("portalHTMLBottom"):"CloudFrameWorkBottom.php");
                     
+
                     if(is_file($this->_rootpath."/ADNBP/templates/".$this->_basename)) {
                         $this->setConf("template",$this->_basename);
                     }
@@ -417,6 +418,11 @@ if (!defined ("_ADNBP_CLASS_") ) {
 					 if($_found) foreach ($this->_menu[$i] as $key => $value) {
                          $this->setConf($key,$value);
                      }
+                     
+                     if(!$this->getConf("notemplate") && !strlen($this->getConf("top"))) {
+                        $this->setConf("top",(strlen($this->getConf("portalHTMLTop")))?$this->getConf("portalHTMLTop"):"CloudFrameWorkTop.php");
+                        $this->setConf("bottom",(strlen($this->getConf("portalHTMLBottom")))?$this->getConf("portalHTMLBottom"):"CloudFrameWorkBottom.php");
+                    }
                  }
                  
                 // If not found in the menu and it doens't have a local template desactive topbottom
@@ -476,7 +482,6 @@ if (!defined ("_ADNBP_CLASS_") ) {
                 }    
             
 					
-            
             if(!$this->getConf("notopbottom") && !$this->getConf("notemplate")) {
               if(!strlen($this->getConf("top"))) {
                     if(is_file($this->_webapp."/templates/top.php"))
@@ -488,7 +493,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
                         include($this->_webapp."/templates/".$this->getConf("top"));
 					else if(is_file($this->_rootpath."/ADNBP/templates/".$this->getConf("top")))
                         include($this->_rootpath."/ADNBP/templates/".$this->getConf("top"));
-                    else echo "No top file found t.";
+                    else echo "No top file found: ".$this->getConf("top");
                     
                 }
             }
@@ -507,9 +512,10 @@ if (!defined ("_ADNBP_CLASS_") ) {
                         include($this->_webapp."/templates/".$this->getConf("template"));
                     elseif(is_file($this->_rootpath."/ADNBP/templates/".$this->getConf("template")))
                         include($this->_rootpath."/ADNBP/templates/".$this->getConf("template"));
-                    else echo "No template found.";
+                    else echo "No template found: ".$this->getConf("template");
                 }
             } 
+            
                         
             if(!$this->getConf("notopbottom") && !$this->getConf("notemplate")) {
                 if(!strlen($this->getConf("bottom"))) {
@@ -522,7 +528,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
                         include($this->_webapp."/templates/".$this->getConf("bottom"));
                     elseif(is_file($this->_rootpath."/ADNBP/templates/".$this->getConf("bottom")))
                         include($this->_rootpath."/ADNBP/templates/".$this->getConf("bottom"));
-                    else echo "No bottom file found.";
+                    else echo "No bottom file found: ".$this->getConf("bottom");
                     
                 }
             }

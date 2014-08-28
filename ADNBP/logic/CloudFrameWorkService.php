@@ -84,16 +84,15 @@
             break;
         default:
 			// This allow to create own services in each WebServer
-            if(is_file($this->_webapp."/logic/CloudFrameWorkService/".$service.".php"))
+            if(strlen($service) && is_file($this->_webapp."/logic/CloudFrameWorkService/".$service.".php"))
                 include_once $this->_webapp."/logic/CloudFrameWorkService/".$service.".php";
             else {
+                // Show the APIs of the portal
+                
             	$this->setConf("notemplate",false);
-            	$this->setConf("top","CloudFrameWorkTop.php");
-                $this->setConf("bottom","CloudFrameWorkBottom.php");
-            	
-            	include_once $this->_rootpath."/ADNBP/logic/apiDoc.php";
-            	if(is_file($this->_webapp."/logic/CloudFrameWorkService/apiDoc.php"))  include_once $this->_webapp."/logic/CloudFrameWorkService/apiDoc.php";
-				
+            	include_once $this->_rootpath."/ADNBP/logic/api/apiDoc.php";
+            	if(is_file($this->_webapp."/logic/api/apiDoc.php"))  include_once $this->_webapp."/logic/api/apiDoc.php";
+				$this->setConf("template","api.php");
 
             }
             break;
