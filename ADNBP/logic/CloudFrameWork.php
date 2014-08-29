@@ -107,7 +107,41 @@ switch ($service) {
 
         $pageContent =  str_replace("{source}", htmlentities($output),$pageContent);
        break;                        
-	default:
+    case 'Translate':
+       $this->setConf("pageCode","Translate");
+       $pageContent = $memcache->get("CFTranslate");
+       if(!strlen($pageContent) || isset($_GET[nocache])) {
+           $pageContent = $this->getCloudServiceResponse("getTemplate/Translate.htm");
+           $memcache->set("CFDataStore","$pageContent");
+       }
+       $pageContent =  str_replace("{key}", htmlentities($_GET['key']), $pageContent);
+       $pageContent =  str_replace("{msgSource}", htmlentities($_GET['msgSource']), $pageContent);
+	   
+       $sourceLangs = "<option value='es,en' ".(($_GET['langs']=="es,en")?'selected':'').">Español a English
+            				<option  value='es,ru' ".(($_GET['langs']=="es,ru")?'selected':'').">Español to Русский
+            				<option  value='en,es' ".(($_GET['langs']=="en,es")?'selected':'').">English to Español            					
+            				<option  value='en,ru' ".(($_GET['langs']=="en,ru")?'selected':'').">English to Русский
+            				<option  value='ru,es' ".(($_GET['langs']=="ru,es")?'selected':'').">Русский to Español
+            				<option  value='ru,en' ".(($_GET['langs']=="ru,en")?'selected':'').">Русский to English";
+        $pageContent =  str_replace("{sourceLangs}", $sourceLangs, $pageContent);
+		
+		if(strlen($_GET['langs']))
+			list($source,$target) = explode(',',$_GET['langs'],2);
+		
+		if(strlen($source) && strlen($target) && strlen($_GET['msgSource']) && strlen($_GET['key']) && $source!=$target) {
+			
+			$data['q'] = $_GET['msgSource'];
+			$data['source'] = $source;
+			$data['target'] = $target;
+			$data['key'] = $_GET['key'];
+			
+			$ret = json_decode($this->getCloudServiceResponse('https://www.googleapis.com/language/translate/v2',$data,'GET'));
+			$pageContent =  str_replace("{msgTranslated}", htmlentities($ret->data->translations[0]->translatedText), $pageContent);
+			
+		}
+		
+            				
+       break;  	default:
 		 $pageContent = $this->getCloudServiceResponse("getTemplate/".$service.".htm");
 		break;
 }

@@ -209,6 +209,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
             
             
             if($data !== null && is_array($data) && $verb===null or $verb=='POST') {
+            	$verb='POST';
                 $options = array(
                     'http' => array(
                     'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
@@ -216,27 +217,29 @@ if (!defined ("_ADNBP_CLASS_") ) {
                     'content' => http_build_query($data),
                         )
                  );
+
+				if(strlen($this->getConf("CloudServiceId")) && strlen($this->getConf("CloudServiceToken"))) {
+					$_date = time();
+					$options['http']['header'] .= 'X-Cloudservice-Date: '.$_date."\r\n";
+					$options['http']['header'] .= 'X-Cloudservice-Id: '.$this->getConf("CloudServiceId")."\r\n";
+					$options['http']['header'] .= 'X-Cloudservice-Signature: '
+					                              .strtoupper(sha1($this->getConf("CloudServiceId").$_date.$this->getConf("CloudServiceToken")))."\r\n";
+				}
+		        $context  = stream_context_create($options);
+		        return(file_get_contents($_url,false,$context));
+				
             } else {
             	if($verb===null) $verb='GET';
-                $options = array(
-                    'http' => array(
-                    'method'  => $verb,
-                        )
-                 );
+				 $_extraGET='?';
+				 if(is_array($data)) {
+				 	$_url.='?';
+				 	foreach ($data as $key => $value) $_url.=$key.'='.urlencode($value).'&';
+				 }
+				 return(file_get_contents($_url));
+				 
             }
             
-            
-			
-			if(strlen($this->getConf("CloudServiceId")) && strlen($this->getConf("CloudServiceToken"))) {
-				$_date = time();
-				$options['http']['header'] .= 'X-Cloudservice-Date: '.$_date."\r\n";
-				$options['http']['header'] .= 'X-Cloudservice-Id: '.$this->getConf("CloudServiceId")."\r\n";
-				$options['http']['header'] .= 'X-Cloudservice-Signature: '
-				                              .strtoupper(sha1($this->getConf("CloudServiceId").$_date.$this->getConf("CloudServiceToken")))."\r\n";
-			}
-	        $context  = stream_context_create($options);
-	        return(file_get_contents($_url,false,$context));
-			
+
         }
 
 		function checkAPIAuth(&$msg) {
@@ -316,7 +319,12 @@ if (!defined ("_ADNBP_CLASS_") ) {
         }        
         
         function setConf ($var,$val) {$this->_conf[$var] = $val;}        
-        function getConf ($var) { return( ((isset($this->_conf[$var]))?$this->_conf[$var]:false));} 
+        function getConf ($var='') {
+        	if(strlen($var)) return( ((isset($this->_conf[$var]))?$this->_conf[$var]:false));
+			else return($this->_conf);
+        } 
+		
+		
         function pushMenu ($var) { $this->_menu[] = $var;}    
         function setSessionVar ($var,$value) { $_SESSION['adnbpSessionVar_'.$var] = $value;}      
         function getSessionVar ($var) { return( (isset($_SESSION['adnbpSessionVar_'.$var]))?$_SESSION['adnbpSessionVar_'.$var]:null ); }
@@ -375,26 +383,23 @@ if (!defined ("_ADNBP_CLASS_") ) {
             $this->_basename = basename($this->_url);
             $scriptname = basename($this->_scriptPath);
 			
-			if(strpos($this->_url, '/CloudFrameWork') !== false  || $this->_basename == 'api' || strpos($this->_url, '/api/') !== false ) {
+			//if(strpos($this->_url, '/CloudFrameWork') !== false  || $this->_basename == 'api' || strpos($this->_url, '/api/') !== false ) {
+			if(strpos($this->_url, '/CloudFrameWork') !== false  || strpos($this->_url, '/api') !== false ) {
                 
                 list($foo,$this->_basename,$foo) = explode('/',$this->_url,3);
                 $this->_basename.=".php"; // add .php extension to the basename in order to find logic and templates.
 
-                if(strpos($this->_url, '/CloudFrameWorkService') !== false || strpos($this->_url, '/api/') !== false) {
-                    
+                if(strpos($this->_url, '/api/') !== false && $this->_url != '/api/') {
+                    $this->setConf("notemplate",true);
+				} else{
                     $this->requireAuth();   
-                                                     
                     $this->setConf("top",(strlen($this->getConf("portalHTMLTop")))?$this->getConf("portalHTMLTop"):"CloudFrameWorkTop.php");
                     $this->setConf("bottom",(strlen($this->getConf("portalHTMLBottom")))?$this->getConf("portalHTMLBottom"):"CloudFrameWorkBottom.php");
-                    
-
                     if(is_file($this->_rootpath."/ADNBP/templates/".$this->_basename)) {
                         $this->setConf("template",$this->_basename);
                     }
                     
-                } else {
-                    $this->setConf("notemplate",true);
-                }
+                } 
                 
                 
             } else if(!$this->getConf("notemplate")) {
