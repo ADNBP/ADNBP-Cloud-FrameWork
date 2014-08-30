@@ -16,4 +16,11 @@ $this->setConf("portalTitle",'ADNBP Cloud FrameWork '.date("Y"));
 $this->setConf("portalDescription",'Cloud Framwork to develop Cloud Solutions.');
 $this->setConf("portalNavColor",'navbar-inverse');
 
+// VERSION
+$this->setConf("CloudFrameWorkVersion",$this->_version);
+
+// AUTH API KEYs
+$this->setConf("API_KEY_APIKEYTEST",array('organization'=>'Test Organization','allowed_domains'=>array('localhost*')));
+
+
 ?>

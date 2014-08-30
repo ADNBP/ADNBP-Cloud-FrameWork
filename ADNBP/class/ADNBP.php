@@ -110,8 +110,8 @@ if (!defined ("_ADNBP_CLASS_") ) {
 
 
             // CONFIG BASIC
-            $this->setConf("CloudFrameWorkVersion",$this->_version);
             
+            include_once($this->getRootPath()."/ADNBP/config/config.php");
             
             if(is_file($this->_webapp."/config/config.php")) {
                 include_once($this->_webapp."/config/config.php");
@@ -318,7 +318,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
              return($this->_isAuth[$namespace]['data']);
         }        
         
-        function setConf ($var,$val) {$this->_conf[$var] = $val;}        
+        function setConf ($var,$val) {$this->_conf[$var] = $val; }        
         function getConf ($var='') {
         	if(strlen($var)) return( ((isset($this->_conf[$var]))?$this->_conf[$var]:false));
 			else return($this->_conf);

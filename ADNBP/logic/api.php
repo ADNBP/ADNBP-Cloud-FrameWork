@@ -1,37 +1,25 @@
 <?php
 
+    // Error code
+    $error = 0;  // it support: 200,201,204,400 etc..
+    $errorMsg = '';
+    $returnMethod = 'JSON';  // support: JSON, HTML
+        
     //$headers = apache_request_headers(); // Store all headers
     $isSuperAdmin = (strlen($this->getHeader('X-Adnbp-Superuser')))?$this->checkPassword($this->getHeader('X-Adnbp-Superuser'),$this->getConf("adminPassword")):false;
     $apiMethod = $this->getAPIMethod(); // GET , PUT, UPDATE, DELETE, COPY...
     
 // This service has to be implemented in your <document_root>/logic/CloudFrameWorkService.php
-    list($foo,$script,$service,$params) = split('/',$this->_url,4);
-    switch ($service) {
-        case 'templates':
-            if(strlen($params)) {
-                header("Content-type: text/html");
-                $template = $params;
-                if(strpos($template,'.') === false) $template.='.htm';
-                if(is_file($this->_rootpath."/ADNBP/templates/CloudFrameWork/".$template)) {
-                   echo(file_get_contents ( $this->_rootpath."/ADNBP/templates/CloudFrameWork/".$template ));
-                } else if(is_file($this->_webapp."/templates/CloudFrameWork/".$template)) {
-                   echo(file_get_contents ( $this->_webapp."/templates/CloudFrameWork/".$template ));
-                } else echo("<html><body>template not found</body></html>");   
-            } else {
-                $ret=array();
-                if(is_dir($this->_webapp."/templates/CloudFrameWork")) {
-                    $files = scandir($this->_webapp."/templates/CloudFrameWork");
-                    foreach ($files as $key => $value) if(strpos($value,'.htm')) $ret[] = str_replace( '.htm' ,  '', $value);
-                }
-                $files = scandir($this->_rootpath."/ADNBP/templates/CloudFrameWork");
-                foreach ($files as $key => $value) if(strpos($value,'.htm')) $ret[] = str_replace( '.htm' ,  '', $value);
-                
-                
-                header("Content-type: application/json");
-                die(json_encode($ret));
-            }
-            die();  
-            break;
+    list($foo,$script,$service,$params) = explode('/',$this->_url,4);
+    $service = strtolower($service);
+    
+    if(!strlen($service)) {
+                 $this->setConf("notemplate",false);
+                include_once $this->_rootpath."/ADNBP/logic/api/apiDoc.php";
+                if(is_file($this->_webapp."/logic/api/api/apiDoc.php"))  include_once $this->_webapp."/logic/api/apiDoc.php";
+    } else {
+        switch ($service) {
+        
         case 'auth':
                 if(strlen($params)) {
                 echo '<h1>Server Side</h1>';
@@ -56,15 +44,7 @@
             else echo(($this->version() == $params)?"OK $params":"Warning. Your version  ".htmlentities($params)." is different of current version:".$this->version);
             die();
             break;
-        case 'myip':
-            echo $_SERVER[REMOTE_ADDR];
-            die();
-            break;
-        case 'genPassword':
-            if(strlen($params)) echo $this->crypt($params);
-            else echo "A string param is required: ../getPassword/{yourPassword}";
-            die();
-            break;          
+      
         case 'fetchURL':
             if(strpos($_GET[url], 'http') !== false) {
                 echo @file_get_contents($_GET[url]);
@@ -78,15 +58,54 @@
             // This allow to create own services in each WebServer
             if(is_file($this->_webapp."/logic/api/".$service.".php"))
                 include_once $this->_webapp."/logic/api/".$service.".php";
-            else {
-                
-                 $this->setConf("notemplate",false);
-                //$this->setConf("top","CloudFrameWorkTop.php");
-                //$this->setConf("bottom","CloudFrameWorkBottom.php");
-                include_once $this->_rootpath."/ADNBP/logic/api/apiDoc.php";
-                if(is_file($this->_webapp."/logic/api/api/apiDoc.php"))  include_once $this->_webapp."/logic/api/apiDoc.php";
+            elseif(is_file($this->_rootpath."/ADNBP/logic/api/".$service.".php"))
+                include_once $this->_rootpath."/ADNBP/logic/api/".$service.".php";
+           else {
+                 $error = 404;
             }
             break;
+        }
+
+        // Output header
+        switch ($error) {
+            case 405:
+                header("HTTP/1.0 405 Method Not Allowed");
+                $errorMsg= 'Method '.$this->getAPIMethod().' is not supported';
+                
+                break;
+            case 400:
+                header("HTTP/1.0 400 Bad Request");
+                break;  
+
+            case 401:
+                header("HTTP/1.0 401 Unauthorized");
+                break;  
+            case 404:
+                header("HTTP/1.0 404 Not Found");
+                $errorMsg= 'Unknow  '.$this->_url;
+                break;
+            default:
+                break;
+        }
+        
+        // Output Value
+        switch ($returnMethod) {
+            case 'JSON':
+                header("Content-type: application/json");
+                if(!$error) $value['success'] = true;
+                else {
+                    $value['success'] = false;
+                    $value['error']=array('message'=>$errorMsg);
+                }
+                die(json_encode($value));                   
+                break;
+            
+            default:
+                header("Content-type: text/html");
+                if($error) $value = $errorMsg;
+                die($value);
+                break;
+        }
     }
 
 ?>
