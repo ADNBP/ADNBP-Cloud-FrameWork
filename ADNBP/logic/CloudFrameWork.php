@@ -14,7 +14,7 @@ switch ($service) {
 	case 'home':
         $pageContent = $memcache->get("CFHome");
         if(!strlen($pageContent) || isset($_GET[nocache])) {
-           $pageContent = $this->getCloudServiceResponse("getTemplate/intro.htm");
+           $pageContent = $this->getCloudServiceResponse("templates/intro");
            $memcache->set("CFHome","$pageContent");
         }
         $this->setConf("pageCode","home");
@@ -23,7 +23,7 @@ switch ($service) {
        $this->setConf("pageCode","GeoLocation");
        $pageContent = $memcache->get("CFGeoLocation");
        if(!strlen($pageContent) || isset($_GET[nocache])) {
-           $pageContent = $this->getCloudServiceResponse("getTemplate/GeoLocation.htm");
+           $pageContent = $this->getCloudServiceResponse("templates/GeoLocation");
            $memcache->set("CFGeoLocation","$pageContent");
        }
        $pageContent =  str_replace("{output}", print_r($this->getGeoPlugin(),true), $pageContent);
@@ -41,7 +41,7 @@ switch ($service) {
         $this->setConf("pageCode","CloudSQL");
         $pageContent = $memcache->get("CFCloudSQL");
         if(!strlen($pageContent) || isset($_GET[nocache])) {
-           $pageContent = $this->getCloudServiceResponse("getTemplate/CloudSQL.htm");
+           $pageContent = $this->getCloudServiceResponse("templates/CloudSQL");
            $memcache->set("CFCloudSQL","$pageContent");
         }
         $pageContent =  str_replace("{output}", (!$db->error())?"OK connecting to ".$db->getConf("dbServer"):$db->getError(), $pageContent);
@@ -51,7 +51,7 @@ switch ($service) {
        $this->setConf("pageCode","Email");
        $pageContent = $memcache->get("CFEmail");
        if(!strlen($pageContent) || isset($_GET[nocache])) {
-           $pageContent = $this->getCloudServiceResponse("getTemplate/Email.htm");
+           $pageContent = $this->getCloudServiceResponse("templates/Email");
            $memcache->set("CFEmail","$pageContent");
        }
         include_once($this->_rootpath."/ADNBP/class/email/logic/Email.php");
@@ -71,7 +71,7 @@ switch ($service) {
        $this->setConf("pageCode","SMS");
        $pageContent = $memcache->get("CFSMS");
        if(!strlen($pageContent) || isset($_GET[nocache])) {
-           $pageContent = $this->getCloudServiceResponse("getTemplate/SMS.htm");
+           $pageContent = $this->getCloudServiceResponse("templates/SMS");
            $memcache->set("CFEmail","$pageContent");
        }
 	   $_from = $this->getConf("twilioNumber");
@@ -88,7 +88,7 @@ switch ($service) {
        $this->setConf("pageCode","File");
        $pageContent = $memcache->get("CFFile");
        if(!strlen($pageContent) || isset($_GET[nocache])) {
-           $pageContent = $this->getCloudServiceResponse("getTemplate/File.htm");
+           $pageContent = $this->getCloudServiceResponse("templates/File");
            $memcache->set("CFEmail","$pageContent");
        }
         include_once($this->_rootpath."/ADNBP/class/io/logic/File.php");
@@ -100,7 +100,7 @@ switch ($service) {
        $this->setConf("pageCode","DataStore");
        $pageContent = $memcache->get("CFDataStore");
        if(!strlen($pageContent) || isset($_GET[nocache])) {
-           $pageContent = $this->getCloudServiceResponse("getTemplate/DataStore.htm");
+           $pageContent = $this->getCloudServiceResponse("templates/DataStore");
            $memcache->set("CFDataStore","$pageContent");
        }
         include_once($this->_rootpath."/ADNBP/class/io/logic/DataStore.php");
@@ -108,15 +108,28 @@ switch ($service) {
         $pageContent =  str_replace("{source}", htmlentities($output),$pageContent);
        break;                        
     case 'Translate':
+       // Read template        
        $this->setConf("pageCode","Translate");
        $pageContent = $memcache->get("CFTranslate");
        if(!strlen($pageContent) || isset($_GET[nocache])) {
-           $pageContent = $this->getCloudServiceResponse("getTemplate/Translate.htm");
+           $pageContent = $this->getCloudServiceResponse("templates/Translate");
            $memcache->set("CFDataStore","$pageContent");
        }
-       $pageContent =  str_replace("{key}", htmlentities($_GET['key']), $pageContent);
+       
+       // Analyzing Credentials
+       $_publicKey = $this->getConf('GooglePublicAPICredential');
+       if(!strlen($_publicKey)) $_publicKey = $_GET['publicKey'];
+       $pageContent =  str_replace("{publicKey}", $_publicKey, $pageContent);
+             
+       $_serverKey = $this->getConf('GoogleServerAPICredential'); 
+       if(strlen($_serverKey))           
+           $pageContent =  str_replace("{serverKey}", 'Currently configured: *****', $pageContent);
+       else {
+           $_serverKey = $_GET['serverKey'];
+           $pageContent =  str_replace("{serverKey}", '<input type="input" name="serverKey"  placeholder="Write your Google Server Key" class="form-control" >', $pageContent);
+       }       
+       
        $pageContent =  str_replace("{msgSource}", htmlentities($_GET['msgSource']), $pageContent);
-	   
        $sourceLangs = "<option value='es,en' ".(($_GET['langs']=="es,en")?'selected':'').">Español a English
             				<option  value='es,ru' ".(($_GET['langs']=="es,ru")?'selected':'').">Español to Русский
             				<option  value='en,es' ".(($_GET['langs']=="en,es")?'selected':'').">English to Español            					
@@ -128,21 +141,21 @@ switch ($service) {
 		if(strlen($_GET['langs']))
 			list($source,$target) = explode(',',$_GET['langs'],2);
 		
-		if(strlen($source) && strlen($target) && strlen($_GET['msgSource']) && strlen($_GET['key']) && $source!=$target) {
+		if(strlen($source) && strlen($target) && strlen($_GET['msgSource']) && strlen($_serverKey) && $source!=$target) {
 			
 			$data['q'] = $_GET['msgSource'];
 			$data['source'] = $source;
 			$data['target'] = $target;
-			$data['key'] = $_GET['key'];
+			$data['key'] = $_serverKey;
 			
 			$ret = json_decode($this->getCloudServiceResponse('https://www.googleapis.com/language/translate/v2',$data,'GET'));
-			$pageContent =  str_replace("{msgTranslated}", htmlentities($ret->data->translations[0]->translatedText), $pageContent);
+			$pageContent =  str_replace("{msgTranslated}", addslashes($ret->data->translations[0]->translatedText), $pageContent);
 			
 		}
 		
             				
        break;  	default:
-		 $pageContent = $this->getCloudServiceResponse("getTemplate/".$service.".htm");
+		 $pageContent = $this->getCloudServiceResponse("templates/".$service);
 		break;
 }
 

@@ -63,7 +63,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
         var $_basename = '';
         var $_isAuth = false;
         var $_version = "2014Jun.17";
-        var $_defaultCFURL="http://cloud.adnbp.com/CloudFrameWorkService";
+        var $_defaultCFURL="http://cloud.adnbp.com/api";
         var $_webapp = '';
         var $_rootpath = '';
         /**
@@ -206,7 +206,6 @@ if (!defined ("_ADNBP_CLASS_") ) {
             
             if(strpos($rute, 'http')!==false) $_url = $rute;
             else $_url = $this->getCloudServiceURL($rute);
-            
             
             if($data !== null && is_array($data) && $verb===null or $verb=='POST') {
             	$verb='POST';

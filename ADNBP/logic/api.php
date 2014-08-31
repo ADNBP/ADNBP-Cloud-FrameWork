@@ -13,7 +13,7 @@
     list($foo,$script,$service,$params) = explode('/',$this->_url,4);
     $service = strtolower($service);
     
-    if(!strlen($service)) {
+    if(!strlen($service) && !strlen($params)) {
                  $this->setConf("notemplate",false);
                 include_once $this->_rootpath."/ADNBP/logic/api/apiDoc.php";
                 if(is_file($this->_webapp."/logic/api/api/apiDoc.php"))  include_once $this->_webapp."/logic/api/apiDoc.php";
@@ -83,6 +83,9 @@
             case 404:
                 header("HTTP/1.0 404 Not Found");
                 $errorMsg= 'Unknow  '.$this->_url;
+                break;
+            case 503:
+                header("HTTP/1.0 504 Service Unavailable");
                 break;
             default:
                 break;
