@@ -1,0 +1,81 @@
+        <div class="jumbotron">
+        <h1>Chat Cloud FrameWork</h1>
+        <p>Many times to have a Chat for customer support will increase your sales and service quality. Here you can find a basic.
+           This service allows communicate one-to-one with many-to-one notifications.
+        </p>
+        <p>This is 100% ajax communicating with RESTFull Chat Cloud FrameWork API. A Cloud FrameWork Public API will be required.</p>
+        
+        <form id=translate name=translate class="navbar-form " method=get>
+        <table class="table-striped" width="100%">
+            <tr>
+                <td>Api Url</td>
+                <td>Merchant Id</td>
+                <td>Merchant Lang</td>
+                <td>Client Id</td>
+                <td>Client Lang</td>
+            </tr>
+            <tr>
+                <td>
+            <input value="/api/chat" type="input" id='apiService' name="apiService"  placeholder="Url of you API" class="form-control" >
+            </td><td><input value="Bloombees" type="input" id='merchantId' name="merchantId"  placeholder="MerchantId" class="form-control" >
+            </td><td><select class="form-control" id='merchantLang' name='merchantLang'>
+                <option value='en'>English</option>
+                <option value='es'>Español</option>
+                <option value='ru'>Русский</option>
+            </select>
+
+                        
+           </td><td> <input value="Client" type="input" id='clientId' name="merchantId"  placeholder="ClientId" class="form-control" >
+           </td><td> <select class="form-control" id='clientLang' name='clientLang'>
+                <option value='en'>English</option>
+                <option value='es'>Español</option>
+                <option value='ru'>Русский</option>
+            </select>
+            </td>
+            </tr><tr><td colspan="5"> <input class="btn"  type=submit value='Begin a chat Room example'> </td>
+            </tr>
+         </table>
+      
+        </form>
+        </div>
+        <script>
+        
+           // Simple Hascode Function
+           hashCode = function(str) {
+                var hash = 0;
+                if (str.length == 0) return hash;
+                for (i = 0; i < str.length; i++) {
+                    char = str.charCodeAt(i);
+                    hash = ((hash<<5)-hash)+char;
+                    hash = hash & hash; // Convert to 32bit integer
+                }
+                return hash;
+            }
+            
+            var trans = {}; // It will optimize the calls avoiding 2 calls for the same text
+            function getTranslation(value,langs,keyValue) {
+                if(value.length < 2) alert('write a message to translate');
+                else if(langs.length < 5) alert('missing langs');
+                else if(keyValue.length < 15) alert('missing GooglePublicAPI');
+                else {
+                    var tHash = hashCode(value+langs);
+                    if(trans[tHash] !== undefined) {
+                        alert('String cached');
+                        $("#msgTranslated").val(trans[tHash]);
+                    } else {
+                      
+                        // Function to GET a URL
+                        var lang = langs.split(',');
+                        // trans[hashCode(value)] = true;
+                        $.get("https://www.googleapis.com/language/translate/v2",{q:value,source:lang[0],target:lang[1],key:keyValue},function(data) {
+                            
+                            var t = data.data.translations[0].translatedText;
+                            var tDecoded = jQuery('<div />').html(t).text();
+                            $("#msgTranslated").val(tDecoded);
+                            trans[tHash] = tDecoded;
+                        });
+                    }
+                    
+               }
+            }
+        </script>

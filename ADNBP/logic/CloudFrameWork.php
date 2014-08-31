@@ -31,7 +31,6 @@ switch ($service) {
        if($this->getConf("GooglePublicAPICredential"))
        $pageContent =  str_replace("{GooglePublicAPICredential}", $this->getConf("GooglePublicAPICredential"), $pageContent);
 	   break;
-       
     case 'CloudSQL':
         $this->loadClass("db/CloudSQL");
         $db = new CloudSQL();
@@ -46,7 +45,6 @@ switch ($service) {
         }
         $pageContent =  str_replace("{output}", (!$db->error())?"OK connecting to ".$db->getConf("dbServer"):$db->getError(), $pageContent);
           break;
-
     case 'Email':
        $this->setConf("pageCode","Email");
        $pageContent = $memcache->get("CFEmail");
@@ -66,13 +64,12 @@ switch ($service) {
         $pageContent =  str_replace("{sendGridPassword}", htmlentities($_sendgridPassword), $pageContent);
         $pageContent =  str_replace("{source}", htmlentities(file_get_contents($this->_rootpath."/ADNBP/class/email/logic/Email.php")),$pageContent);
        break;
-       
     case 'SMS':
        $this->setConf("pageCode","SMS");
        $pageContent = $memcache->get("CFSMS");
        if(!strlen($pageContent) || isset($_GET[nocache])) {
            $pageContent = $this->getCloudServiceResponse("templates/SMS");
-           $memcache->set("CFEmail","$pageContent");
+           $memcache->set("CFSMS","$pageContent");
        }
 	   $_from = $this->getConf("twilioNumber");
         include_once($this->_rootpath."/ADNBP/class/sms/logic/SMS.php");
@@ -83,13 +80,12 @@ switch ($service) {
         $pageContent =  str_replace("{txtMsg}", htmlentities($_txtMsg), $pageContent);
         $pageContent =  str_replace("{source}", htmlentities(file_get_contents($this->_rootpath."/ADNBP/class/sms/logic/SMS.php")),$pageContent);
        break;
-	   
     case 'File':
        $this->setConf("pageCode","File");
        $pageContent = $memcache->get("CFFile");
        if(!strlen($pageContent) || isset($_GET[nocache])) {
            $pageContent = $this->getCloudServiceResponse("templates/File");
-           $memcache->set("CFEmail","$pageContent");
+           $memcache->set("CFFile","$pageContent");
        }
         include_once($this->_rootpath."/ADNBP/class/io/logic/File.php");
 
@@ -107,13 +103,22 @@ switch ($service) {
 
         $pageContent =  str_replace("{source}", htmlentities($output),$pageContent);
        break;                        
+    case 'Chat':
+       // Read template        
+       $this->setConf("pageCode","Chat");
+       $pageContent = $memcache->get("CFChat");
+       if(!strlen($pageContent) || isset($_GET[nocache])) {
+           $pageContent = $this->getCloudServiceResponse("templates/Chat");
+           $memcache->set("CFChat","$pageContent");
+       }
+       break;
     case 'Translate':
        // Read template        
        $this->setConf("pageCode","Translate");
        $pageContent = $memcache->get("CFTranslate");
        if(!strlen($pageContent) || isset($_GET[nocache])) {
            $pageContent = $this->getCloudServiceResponse("templates/Translate");
-           $memcache->set("CFDataStore","$pageContent");
+           $memcache->set("CFTranslate","$pageContent");
        }
        
        // Analyzing Credentials
