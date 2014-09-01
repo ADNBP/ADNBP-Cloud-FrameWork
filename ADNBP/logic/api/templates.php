@@ -44,8 +44,8 @@ switch ($this->getAPIMethod()) {
                             $value = str_replace($matchs[0][$i], '<!-- '.$matchs[0][$i].' -->'.$_GET[$matchs[1][$i]], $value);
                         }
                     }
-                    _print($value);
-                    die();
+                    
+                    die($value);
                 }        
         }
         break;
