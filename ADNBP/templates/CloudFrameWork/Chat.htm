@@ -4,43 +4,139 @@
            This service allows communicate one-to-one with many-to-one notifications.
         </p>
         <p>This is 100% ajax communicating with RESTFull Chat Cloud FrameWork API. A Cloud FrameWork Public API will be required.</p>
-        
-        <form id=translate name=translate class="navbar-form " method=get>
-        <table class="table-striped" width="100%">
-            <tr>
-                <td>Api Url</td>
-                <td>Merchant Id</td>
-                <td>Merchant Lang</td>
-                <td>Client Id</td>
-                <td>Client Lang</td>
-            </tr>
-            <tr>
-                <td>
-            <input value="/api/chat" type="input" id='apiService' name="apiService"  placeholder="Url of you API" class="form-control" >
-            </td><td><input value="Bloombees" type="input" id='merchantId' name="merchantId"  placeholder="MerchantId" class="form-control" >
-            </td><td><select class="form-control" id='merchantLang' name='merchantLang'>
-                <option value='en'>English</option>
-                <option value='es'>Español</option>
-                <option value='ru'>Русский</option>
-            </select>
 
-                        
-           </td><td> <input value="Client" type="input" id='clientId' name="merchantId"  placeholder="ClientId" class="form-control" >
-           </td><td> <select class="form-control" id='clientLang' name='clientLang'>
-                <option value='en'>English</option>
-                <option value='es'>Español</option>
-                <option value='ru'>Русский</option>
-            </select>
-            </td>
-            </tr><tr><td colspan="5"> <input class="btn"  type=submit value='Begin a chat Room example'> </td>
-            </tr>
-         </table>
-      
-        </form>
         </div>
+        <form id=translate name=translate  role="form" method=get>
+
+        <div class="row">
+         <div class="col-md-6">
+            <div class="form-inline">
+            <label for="apiService" class="control-label">&nbsp;&nbsp;Api URL:&nbsp;&nbsp;</label>
+            <input value="/api/chat" type="input" id='apiService' name="apiService"  placeholder="Url of you API" class="form-control" >
+            </div>   
+             
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                
+                <div class="row">  
+                    <div class="col-xs-2">  
+                    <h3 class="panel-title">Merchant Id</h3>
+                    </div>
+                    <div class="col-xs-4">  
+                        <input value="Bloombees" type="input" id='merchantId' name="merchantId"  placeholder="MerchantId" class="form-control input-sm" >
+                                         
+                    </div>
+                    <div class="col-xs-3">  
+                    <select class="form-control input-sm" id='merchantLang' name='merchantLang'>
+                        <option value='en'>English</option>
+                        <option value='es'>Español</option>
+                        <option value='ru'>Русский</option>
+                    </select>  
+                    </div>
+                    <div class="col-xs-2">  
+                        <input value="begin" type="button"  class="btn btn-primary btn-sm" >
+                    </div>
+                </div>
+              </div>
+              
+              <div class="panel-body">
+                 <textarea id='merchantArea'  class="form-control" rows="10" readonly></textarea>
+                 <input value="" type="input" id='merchantDialog' name="merchantDialog"  
+                 placeholder="write your text" 
+                 class="form-control" 
+                 onkeypress="if (event.keyCode==13){ addChat('merchant'); }"
+                 >
+              </div>
+            </div> <!-- panel -->
+            
+        </div> <!-- col-md-5 -->
+
+        <div class="col-md-2">
+        </div>    
+         <div class="col-md-6">
+            <div class="panel panel-default">
+              <div class="panel-heading">
+
+                <div class="row">  
+                    <div class="col-xs-2">  
+                    <h3 class="panel-title">Client Id</h3>
+                    </div>
+                    <div class="col-xs-4">  
+                        <input value="ClientId" type="input" id='clientId' name="clentId"  placeholder="clientId" class="form-control input-sm" >
+                    </div>
+                    <div class="col-xs-3">  
+                    <select class="form-control input-sm" id='clientLang' name='clientLang'>
+                        <option value='en'>English</option>
+                        <option value='es'>Español</option>
+                        <option value='ru'>Русский</option>
+                    </select>  
+                    </div>                 
+                    
+                    <div class="col-xs-2">  
+                        <input value="begin" type="button"  class="btn btn-primary btn-sm" >
+                    </div>
+                </div>
+
+              </div>
+              <div class="panel-body">
+                 <textarea id='clientArea'  class="form-control" rows="12" readonly></textarea>
+                 <input value="" type="input" id='clientDialog' name="clientDialog"  
+                 placeholder="write your text" 
+                 class="form-control" 
+                 onkeypress="if (event.keyCode==13){ addChat('client'); }"
+                 >
+              </div>
+            </div>
+        </div>
+        </div>
+</form>
+
         <script>
         
            // Simple Hascode Function
+           function addChat(pref) {
+
+               var org='5';
+               var chatId='1';
+               var source=$('#'+pref+'Id').val();
+               var dest=(pref=='merchant')?$('#clientId').val():$('#merchantId').val();
+               var langSource = (pref=='merchant')?$('#clientLang').val():$('#merchantLang').val();
+               var langDest = (pref=='merchant')?$('#clientLang').val():$('#merchantLang').val();
+               var messageToSend = $('#'+pref+'Dialog').val();               
+               var url = "/api/chat/"+org+"/"+chatId+"/"+source+"/"+dest;
+               //alert(url+' langSource: '+langSource+' langDest: '+langDest);
+                /*
+               var addText = $('#'+pref+'Area').val()+"\n"+messageToSend;
+               $('#'+pref+'Area').val(addText);
+               $('#'+pref+'Dialog').val('');      
+               */         
+               
+               $.ajax(url,{
+                   data: JSON.stringify({message:messageToSend,lang:langSource}),
+                   'type':'POST',
+                   'contentType': 'application/json'
+                }).done(function(data) {
+                   var addText = $('#'+pref+'Area').val()+"\n"+data.data.ChatsConversation_DateTime+':'+data.data.ChatsConversation_UserId+"\n"+data.data.ChatsConversation_Name;
+                   $('#'+pref+'Area').val(addText);
+                            //alert(data.data.ChatsConversation_Name+' en '+pref);
+                }).fail(function() {
+                        var addText = $('#'+pref+'Area').val()+"\nError.. try again.";
+                        $('#'+pref+'Area').val(addText);
+                });
+               /*
+               $.post(url,{message:messageToSend,lang:langSource},function(data) {
+                            alert(data.data.ChatsConversation_Name);
+                            /*
+                            var t = data.data.translations[0].translatedText;
+                            var tDecoded = jQuery('<div />').html(t).text();
+                            $("#msgTranslated").val(tDecoded);
+                            trans[tHash] = tDecoded;
+                        });
+                            */
+                        
+               
+           }
+           
            hashCode = function(str) {
                 var hash = 0;
                 if (str.length == 0) return hash;

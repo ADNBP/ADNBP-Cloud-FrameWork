@@ -62,6 +62,7 @@
                 include_once $this->_rootpath."/ADNBP/logic/api/".$service.".php";
            else {
                  $error = 404;
+                 $errorMsg= 'Unknow file '.$service.' in '.$this->_url;
             }
             break;
         }
@@ -82,7 +83,8 @@
                 break;  
             case 404:
                 header("HTTP/1.0 404 Not Found");
-                $errorMsg= 'Unknow  '.$this->_url;
+                if(!strlen($errorMsg))
+                    $errorMsg= 'Unknow '.$service.' in '.$this->_url;
                 break;
             case 503:
                 header("HTTP/1.0 504 Service Unavailable");
