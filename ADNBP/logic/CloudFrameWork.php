@@ -2,7 +2,7 @@
 $this->urlRedirect("/CloudFrameWork","/CloudFrameWork/home");
 
 if(!strlen($this->getSessionVar("version")) || isset($_GET[nocache])) {
-    $this->setSessionVar("version",$this->getCloudServiceResponse("checkVersion/".$this->version));
+    $this->setSessionVar("version",$this->getCloudServiceResponse("version/".$this->version));
 }
 
 list($foo,$script,$service,$params) = split('/',$this->_url,4);

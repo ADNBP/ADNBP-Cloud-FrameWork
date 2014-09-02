@@ -323,28 +323,28 @@ if (!defined ("_MYSQLI_CLASS_") ) {
          *  OBJECT QUERIES
          */
          
-        function initQueryObject($id,$data=array(),$table='') {
-            $this->_qObject[$id][data] = $data;
-            $this->_qObject[$id][table] = $table;
+        function initQueryObject($id,$data=array(),$mixValue='') {
+            $this->_qObject[$id]['data'] = $data;
+            $this->_qObject[$id]['mixValue'] = $mixValue;
         }
 
         function getQueryObject($id) {$this->_qObject[$id];}
         
         function setQueryObjectSelectFields($id,$value) {
             if(is_array($value)) $value = implode(",",$value);
-            $this->_qObject[$id][selectFields] = $value;
+            $this->_qObject[$id]['selectFields'] = $value;
         }
         
-        function setQueryObjectOrder($id,$value) { $this->_qObject[$id][order] = $value; }
-        function setQueryObjectTable($id,$value) { $this->_qObject[$id][table] = $value; }
-        function setQueryObjectData($id,$value) { $this->_qObject[$id][data] = $value;  }       
+        function setQueryObjectOrder($id,$value) { $this->_qObject[$id]['order'] = $value; }
+        function setQueryObjectTable($id,$value) { $this->_qObject[$id]['table'] = $value; }
+        function setQueryObjectData($id,$value) { $this->_qObject[$id]['data'] = $value;  }       
          
         function setQueryObjectWhere($id,$q,$v='') {
-            $this->_qObject[$id][where] = array();
+            $this->_qObject[$id]['where'] = array();
             $this->addQueryObjectWhere($id,$q,$v);
         }
         
-        function addQueryObjectWhere($id,$q,$v='') { $this->_qObject[$id][where][] = $q; }
+        function addQueryObjectWhere($id,$q,$v='') { $this->_qObject[$id]['where'][] = $q; }
 		
         function addFieldDependence($field,$dependence) { $this->_cloudDependences[$field] .= $dependence; }
         function setFieldDependence($field,$dependence) {
@@ -425,26 +425,35 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 						
 		}
  
-                    
-        function cloudFrameWork($action,$data='',$table='',$order='',$selectFields='*',$page=0) {
+        function setLimit($limit) { $this->_limit = $limit;}
+        function getLimit($limit) { reurn($this->_limit);}
+        /*
+         * $action could be: getFieldTypes, getObjectFields ..
+         * $data: array with field values or table where condition
+         * $mixValue: if is_string is the name of the table elseif is_array are the values from a table where in $data
+         */      
+        function cloudFrameWork($action,$data='',$mixValue='',$order='',$selectFields='*',$page=0) {
         	
 			if(!strlen($selectFields)) $selectFields='*';
 			if(!is_numeric($page)) $page=0;
+            $table=''; // We have to calculate $table
 			
-            // Analyze de possibles params
-            if(is_string($data) && is_array($this->_qObject[$data][data])) {
-            	
+            // Analyze if possibles params come from _qObject array
+            if(is_string($data) && is_array($this->_qObject[$data]['data'])) {
                 $id = $data;
-                $data = $this->_qObject[$id][data];
-                $table = $this->_qObject[$id][table];
-                $order = $this->_qObject[$id][order];
-                $page = $this->_qObject[$id][page];
-                $selectFields = $this->_qObject[$id][selectFields];
-				
+                $data = $this->_qObject[$id]['data'];
+                $mixValue = $this->_qObject[$id]['mixValue'];
+                $table = $this->_qObject[$id]['table'];
+                $order = $this->_qObject[$id]['order'];
+                $page = $this->_qObject[$id]['page'];
+                $selectFields = $this->_qObject[$id]['selectFields'];
             }
             
-            if(!is_array($data) && !strlen($table)) {
-                $this->setError("No fields in \$data in cloudFrameWork function.");
+            if( !strlen($table) && (!is_array($data) || count($data)==0)) {
+                $this->setError('Required at least no empty array $data in cloudFrameWork function.');
+                return false;
+            } elseif(count($data)>1 && is_array($mixValue)) {
+                $this->setError('if $data has more than 1 row then $mixValue can not be an array');
                 return false;
             } elseif(is_array($data)) {
                 $allFields = array_keys($data);
@@ -456,27 +465,51 @@ if (!defined ("_MYSQLI_CLASS_") ) {
             if($this->error()) return false;
             
             // figuring out the table to work with
-            $_where = '';
             if(!strlen($table)) {
-                list($table,$foo) = split("_",$allFields[0],2);
-                
-                if(!strlen($foo) && count($allFields) > 1) {
-                	
-                    $this->setError("I can not figure out the name of the table to query.");
-                    return false;                    
-                } else if(strlen($foo)) {
-                    $table.="s";
-                    $_q = "SELECT count(*) TOT FROM INFORMATION_SCHEMA.TABLES t WHERE t.TABLE_SCHEMA='%s' AND TABLE_NAME = '%s' ";
-                    $tmp = $this->getDataFromQuery($_q,$this->_dbdatabase,$table );
-                    if($tmp[0][TOT]==0) $table = $allFields[0];
-                } 
-            } 
-			
+                // if $mixValue is string with data then it has to be the table;
+                if(is_string($mixValue) && strlen($mixValue)>0) {
+                    $table = $mixValue;
+                    $mixValue='';
+                // If not we have to find out the name of table from data
+                } else {
+                    // In CloudFramWorkd all fields has to have the following structure: (tableName-no-ending-with-s)_fieldname.
+                    // if there is no _ we assum it is a table
+                    list($tmpTable,$foo) = split("_",$allFields[0],2);
+                    if(!strlen($foo) ) {
+                        // if the first field have no _ then it will be the table and no more fields are allowed
+                        if(count($allFields) == 1) $table = $tmpTable;
+                        else {
+                            $this->setError("I can not figure out the name of the table to query.");
+                            return false;
+                        } 
+                    // if it has a _ then let's see if the view of the table exist               
+                    } else if(strlen($foo)) {
+                        $tmpTable.="s";
+                        $_q = "SELECT count(*) TOT FROM INFORMATION_SCHEMA.TABLES t WHERE t.TABLE_SCHEMA='%s' AND TABLE_NAME = '%s' ";
+                        $tmp = $this->getDataFromQuery($_q,$this->_dbdatabase,$tmpTable );
+                        
+                        // if table exist in database
+                        if($tmp[0][TOT]==1) $table = $tmpTable;
+                        else {
+                            $this->setError("$tmpTable is not a right table.");
+                            return false;                            
+                        }
+                    }                     
+                }
+            }
+            
+            // Here $table now has a value.
+			// Let's see if $data[$table] has a where conditions in it count
+            $_where = '';
             $_tableInFirstField = false;
             if( count($allFields) == 1 && $allFields[0] == $table ) {
-                $_where = $data[$table];
+                // If $table is_array then $table will have the values of $where
+                if(is_array($mixValue) || strlen($mixValue)) $_where = $this->joinQueryValues($data[$table],$mixValue);
+                else $_where = $data[$table];
                 $_tableInFirstField =true;
             }
+            
+            
             
             if(strpos($table, "Rel_") !== false) 
                $_relTable = true;

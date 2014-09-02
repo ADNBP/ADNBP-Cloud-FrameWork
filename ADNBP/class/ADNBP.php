@@ -62,7 +62,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
         var $_userLanguages = array();
         var $_basename = '';
         var $_isAuth = false;
-        var $_version = "2014Jun.17";
+        var $_version = "2014Sep.1";
         var $_defaultCFURL="http://cloud.adnbp.com/api";
         var $_webapp = '';
         var $_rootpath = '';
