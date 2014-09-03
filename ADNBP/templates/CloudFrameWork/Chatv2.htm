@@ -56,74 +56,14 @@
                     
                       <div class="checkbox">
                       <label>
-                        <input type="checkbox" id='clientTransLang' value="en">
-                        Translate to <span id='clientTranslate'>English</span>
+                        <input type="checkbox" id='clientTransLang' value="1" checked>
+                        Active Translation
                       </label>
                     </div>
                  </div>   
               </div>
             </div>
         </div>
-
-        <div class="col-md-2">
-        </div>  
-          
-          <div class="col-md-6">
-            <div class="form-inline">
-            <label for="apiService" class="control-label">&nbsp;&nbsp;Client who has contacted:&nbsp;&nbsp;<br/></label>
-             <input value="ClientId" type="input" id='merchantUserId' name="merchantUserId"  placeholder="Your client is" class="form-control " >
-
-            </div>               
-            <div class="panel panel-default">
-              <div class="panel-heading">
-                <div class="row">  
-                    <div class="col-xs-2">  
-                    <h3 class="panel-title">Merchant CHAT</h3>
-                    </div>
-                    <div class="col-xs-3">  
-                        <input value="Bloombees" type="input" id='merchantId' name="merchantId"  placeholder="MerchantId" class="form-control input-sm" >
-                                         
-                    </div>
-                    <div class="col-xs-3">  
-                    <select class="form-control input-sm" id='merchantLang' name='merchantLang' 
-                    onchange="$('#clientTransLang').val($('#merchantLang').val());$('#clientTranslate').html($('#merchantLang option:selected').text());"
-                    >
-                        <option value='en'>English</option>
-                        <option value='es'>Español</option>
-                        <option value='ru'>Русский</option>
-                    </select>  
-                    </div>
-                    <div class="col-xs-2">  
-                        <input value="begin" type="button"  class="btn btn-primary btn-sm" onclick="initChat('merchant');">
-                    </div>
-                    <div class="col-xs-2">  
-                    </div>
-                </div>
-              </div>
-              
-              <div class="panel-body">
-                 <textarea id='merchantArea'  class="form-control" rows="10" readonly></textarea>
-                 
-                 <div class='form-inline'>
-                     
-                     <input size='60' value="" type="input" id='merchantDialog' name="merchantDialog"  
-                     placeholder="write your text" 
-                     class="form-control" 
-                     onkeypress="if (event.keyCode==13){ addChat('merchant'); }"
-                     >
-                     <div class="checkbox">
-                      <label>
-                        <input type="checkbox" id='merchantTransLang' value="en">
-                        Translate to <span id='merchantTranslate'>English</span>
-                      </label>
-                    </div>
-                    
-                </div>
-              </div><!-- panel-body -->
-            </div> <!-- panel -->
-            
-        </div> <!-- col-md-6 -->
-                 
 
         </div>
 </form>
@@ -136,6 +76,7 @@
         	
            // Simple Hascode Function
            function addChat(pref) {
+           	   pref = 'client';
            	
                var messageToSend = $('#'+pref+'Dialog').val();               
            	   if(messageToSend.length < 1) return;
@@ -150,8 +91,8 @@
                var params = {message:messageToSend,lang:langSource};
                var transLang = $('#'+pref+'TransLang').val();
                
-               if($('#'+pref+'TransLang').prop('checked') && langSource != transLang)
-                  params = {message:messageToSend,lang:langSource,translate:1,translate_lang:transLang};
+               
+               
                
                $.ajax({
                	   url: url,
@@ -195,20 +136,15 @@
                var source=$('#'+pref+'Id').val();
                var dest = $('#'+pref+'UserId').val();
                var langSource = $('#'+pref+'Lang').val();               
-               var langDest = (pref=='merchant')?$('#clientLang').val():$('#merchantLang').val();
+               var langDest = $('#'+pref+'Lang').val(); // To delete
                var lastUserId = '';
                
                // init box if we reload
                if(lastChatId=='') {
-	               $('#merchantArea').val('');
 	               $('#clientArea').val('');
                }
                
                // Update the oposite to emulate experience
-               var opPref = (pref=='merchant')?'client':'merchant';
-               $('#'+opPref+'Id').val(dest);
-               $('#'+opPref+'UserId').val(source);
-               
                // Lets do the call
                var url = $('#apiService').val()+"/"+org+"/"+chatId+"/updated/"+source+"/"+dest; 
                $.get(url
@@ -237,6 +173,15 @@
                             	if( (pref=='merchant' && !avoidMerchant) || (pref=='client' && !avoidClient) ) {
 	                                personSource = (data.data[x].ChatsConversation_UserId == source)?'You':data.data[x].ChatsConversation_UserId;
 	                                line = "\n"+data.data[x].ChatsConversation_DateTime+': '+personSource+"\n  ["+data.data[x].ChatsConversation_UserLang+'] '+data.data[x].ChatsConversation_Name;
+	                                
+	                                // Evaluate Real-time translation
+	                                if($('#'+pref+'TransLang').prop('checked') && data.data[x].ChatsConversation_UserId != source) 
+	                                   if(langSource !=  data.data[x].ChatsConversation_UserLang) {
+	                                   	   var trans = getTranslation(data.data[x].ChatsConversation_Name,data.data[x].ChatsConversation_UserLang+','+langSource);
+	                                   	   line = line+"\n  ["+langSource+"]"+trans;
+	                                   
+	                                   }
+	                                   
 	                                if(data.data[x].ChatsConversation_RequireTranslation==1) {
 	                                    line = line + "\n  ["+data.data[x].ChatsConversation_DestIdLang+'] '+data.data[x].ChatsConversation_TextTranslated;
 	                                }
@@ -249,19 +194,6 @@
 
                                 }
                                 
-                                if( (opPref=='merchant' && !avoidMerchant) || (opPref=='client' && !avoidClient) ) {
-	                                personDest = (data.data[x].ChatsConversation_UserId == dest)?'You':data.data[x].ChatsConversation_UserId;
-	                                line = "\n"+data.data[x].ChatsConversation_DateTime+': '+personDest+"\n  ["+data.data[x].ChatsConversation_UserLang+'] '+data.data[x].ChatsConversation_Name;
-	                                if(data.data[x].ChatsConversation_RequireTranslation==1) {
-	                                    line = line + "\n  ["+data.data[x].ChatsConversation_DestIdLang+'] '+data.data[x].ChatsConversation_TextTranslated;
-	                                }
-	                                // The previous line change the user add a return for visual propose
-	                                if(lastUserIdOpPref != data.data[x].ChatsConversation_UserId) line = line+"\n";
-	                                addTextDest = line+addTextDest;
-	                                // For visual control I have to know who was the previous user
-	                                lastUserIdOpPref = data.data[x].ChatsConversation_UserId;
-                                }
-	                                
                             }
                             
                             // If there is new information
@@ -273,13 +205,6 @@
 	                            );  
 	                        }
 	                        
-	                        if(addTextDest != '') { 
-	                            $('#'+opPref+'Area').val($('#'+opPref+'Area').val()+"\n"+addTextDest);
-	                            psconsole = $('#'+opPref+'Area');
-	                            psconsole.scrollTop(
-	                                psconsole[0].scrollHeight - psconsole.height()
-	                            );  
-	                        }
                         });
                
            }
@@ -299,7 +224,9 @@
             }
             
             var trans = {}; // It will optimize the calls avoiding 2 calls for the same text
-            function getTranslation(value,langs,keyValue) {
+            function getTranslation(value,langs) {
+            	var keyValue = '{publicKey}';
+            	var retValue = '';
                 if(value.length < 2) alert('write a message to translate');
                 else if(langs.length < 5) alert('missing langs');
                 else if(keyValue.length < 15) alert('missing GooglePublicAPI');
@@ -307,7 +234,7 @@
                     var tHash = hashCode(value+langs);
                     if(trans[tHash] !== undefined) {
                         alert('String cached');
-                        $("#msgTranslated").val(trans[tHash]);
+                        retValue = trans[tHash];
                     } else {
                       
                         // Function to GET a URL
@@ -317,11 +244,12 @@
                             
                             var t = data.data.translations[0].translatedText;
                             var tDecoded = jQuery('<div />').html(t).text();
-                            $("#msgTranslated").val(tDecoded);
                             trans[tHash] = tDecoded;
+                            retValue = tDecoded;
                         });
                     }
                     
                }
+               return(retValue);
             }
         </script>

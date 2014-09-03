@@ -1,5 +1,13 @@
 <?php
 
+	// Rules for Cross-Domain AJAX
+	
+	header("Access-Control-Allow-Origin: *");
+	header("Access-Control-Allow-Methods: POST,GET");
+	header("Access-Control-Allow-Headers: Content-Type");
+	header('Access-Control-Max-Age: 1000');
+		
+
     // Error code
     $error = 0;  // it support: 200,201,204,400 etc..
     $errorMsg = '';

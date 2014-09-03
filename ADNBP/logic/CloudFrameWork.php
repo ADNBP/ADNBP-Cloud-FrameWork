@@ -104,13 +104,27 @@ switch ($service) {
         $pageContent =  str_replace("{source}", htmlentities($output),$pageContent);
        break;                        
     case 'Chat':
-       // Read template        
+       // Read template  
+             
        $this->setConf("pageCode","Chat");
-       $pageContent = $memcache->get("CFChat");
+	   if(isset($_GET['v2'])) 
+       		$pageContent = $memcache->get("CFChatv2");
+	   else
+       		$pageContent = $memcache->get("CFChat");
        if(!strlen($pageContent) || isset($_GET[nocache])) {
-           $pageContent = $this->getCloudServiceResponse("templates/Chat");
-           $memcache->set("CFChat","$pageContent");
+       	   if(isset($_GET['v2'])) {
+		      $pageContent = $this->getCloudServiceResponse("templates/Chatv2");
+	           $memcache->set("CFChatv2","$pageContent");
+		   } else {
+           	  $pageContent = $this->getCloudServiceResponse("templates/Chat");
+	           $memcache->set("CFChat","$pageContent");
+		   }
        }
+       // Analyzing Credentials
+       $_publicKey = $this->getConf('GooglePublicAPICredential');
+       if(!strlen($_publicKey)) $_publicKey = $_GET['publicKey'];
+       $pageContent =  str_replace("{publicKey}", $_publicKey, $pageContent);
+	   
        break;
     case 'Translate':
        // Read template        
