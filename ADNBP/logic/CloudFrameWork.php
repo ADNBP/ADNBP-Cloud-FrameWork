@@ -89,6 +89,7 @@ switch ($service) {
        }
         include_once($this->_rootpath."/ADNBP/class/io/logic/File.php");
 
+        $pageContent =  str_replace("{value}", htmlentities($_GET['path']),$pageContent);
         $pageContent =  str_replace("{source}", htmlentities($output),$pageContent);
         $pageContent =  str_replace("{msg}", htmlentities($msg),$pageContent);
        break;  
