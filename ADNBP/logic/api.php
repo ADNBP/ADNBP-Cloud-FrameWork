@@ -95,7 +95,7 @@
                     $errorMsg= 'Unknow '.$service.' in '.$this->_url;
                 break;
             case 503:
-                header("HTTP/1.0 504 Service Unavailable");
+                header("HTTP/1.0 503 Service Unavailable");
                 break;
             default:
                 break;
