@@ -1,7 +1,7 @@
 <?php
 
 	// Rules for Cross-Domain AJAX
-	
+	// https://www.getpostman.com/collections/f6c73fa68b03add49d09
 	header("Access-Control-Allow-Origin: *");
 	header("Access-Control-Allow-Methods: POST,GET");
 	header("Access-Control-Allow-Headers: Content-Type");
