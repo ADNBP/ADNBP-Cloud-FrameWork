@@ -105,7 +105,6 @@ switch ($service) {
        break;                        
     case 'Chat':
        // Read template  
-             
        $this->setConf("pageCode","Chat");
 	   if(isset($_GET['v2'])) 
        		$pageContent = $memcache->get("CFChatv2");
@@ -124,7 +123,6 @@ switch ($service) {
        $_publicKey = $this->getConf('GooglePublicAPICredential');
        if(!strlen($_publicKey)) $_publicKey = $_GET['publicKey'];
        $pageContent =  str_replace("{publicKey}", $_publicKey, $pageContent);
-	   
        break;
     case 'Translate':
        // Read template        
