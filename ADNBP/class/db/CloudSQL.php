@@ -239,6 +239,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                     else $params = $args;
                 }
                 unset($args);
+				
                 
                 if(count($params) != $n_percentsS) {
                     $this->setError("Number of %s doesn't count match with number of arguments. Query: $q -> ".print_r($params,true));
@@ -258,10 +259,13 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 		// substitue %s by values in a string
 		function joinQueryValues($q,$values) {
 			if(!is_array($values)) $values = array($values);
-			$tr=count($values);
-			if($tr==0) return($q);
-			else for($i=0;$i<$tr;$i++) $values[$i] = $this->_db->real_escape_string($values[$i]);
-			return(vsprintf($q, $values));
+			if(count($values)==0) return($q); // Empty array to join.
+			
+			$joins = array();
+			foreach ($values as $key => $value) {
+				$joins[] = $this->_db->real_escape_string($value);
+			}
+			return(vsprintf($q, $joins));
 		}
         
         function getQueryFromSearch ($search,$fields=false,$joints="=",$operators="AND") {
