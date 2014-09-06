@@ -1,6 +1,6 @@
         <div class="jumbotron">
         <h1>Chat Cloud FrameWork</h1>
-        <p>Many times to have a Chat for customer support will increase your sales and service quality. Here you can find a basic chat based in Cloud FrameWork Chat API service (CFCAS).
+        <p>Many times to have a Chat for customer support will increase your sales and service quality. Here you can find a powerful chat with real-time-google-translation based in Cloud FrameWork Chat API service (CFCAS).
            This service allows communicate one-to-one with many-to-one notifications.
         </p>
         <p>This example is 100% ajax communicating with RESTFull Chat Cloud FrameWork API Service.</p>
@@ -12,10 +12,10 @@
          <div class="col-md-6">
             <div class="form-inline">
             <label for="apiService" class="control-label">&nbsp;&nbsp;Api URL:&nbsp;&nbsp;</label>
-            <input value="http://localhost:9080/api/chat" type="input" id='apiService' name="apiService"  placeholder="Url of you API" class="form-control" >
+            <input value="/api/chat" type="input" id='apiService' name="apiService"  placeholder="Url of you API" class="form-control" >
 
-            <label for="apiService" class="control-label">&nbsp;&nbsp;Merchant to Contact:&nbsp;&nbsp;</label>
-            <input value="Bloombees" type="input" id='clientUserId' name="clientUserId"  placeholder="Merchant Id" class="form-control" >
+            <label for="apiService" class="control-label">&nbsp;&nbsp;Target Chat:&nbsp;&nbsp;</label>
+            <input value="" type="input" id='clientUserId' name="clientUserId"  placeholder="Merchant Id" class="form-control" >
             </div>   
            
             <div class="panel panel-default">
@@ -23,10 +23,10 @@
 
                 <div class="row">  
                     <div class="col-xs-2">  
-                    <h3 class="panel-title">Client CHAT</h3>
+                    <h3 class="panel-title">Source CHAT</h3>
                     </div>
                     <div class="col-xs-3">  
-                        <input value="ClientId" type="input" id='clientId' name="clentId"  placeholder="clientId" class="form-control input-sm" >
+                        <input value="" type="input" id='clientId' name="clentId"  placeholder="clientId" class="form-control input-sm" >
                     </div>
                     <div class="col-xs-2">  
                     <select class="form-control input-sm" id='clientLang' name='clientLang'
@@ -86,10 +86,8 @@
                var source=$('#'+pref+'Id').val();
                var dest = $('#'+pref+'UserId').val();
                var langSource = $('#'+pref+'Lang').val();               
-               var langDest = (pref=='merchant')?$('#clientLang').val():$('#merchantLang').val();               
                var url = $('#apiService').val()+"/"+org+"/"+chatId+"/"+source+"/"+dest;
                var params = {message:messageToSend,lang:langSource};
-               var transLang = $('#'+pref+'TransLang').val();
                
                
                
@@ -136,9 +134,11 @@
                var source=$('#'+pref+'Id').val();
                var dest = $('#'+pref+'UserId').val();
                var langSource = $('#'+pref+'Lang').val();               
-               var langDest = $('#'+pref+'Lang').val(); // To delete
                var lastUserId = '';
                
+               if(source=='' || dest=='') {
+               	return(false);
+               }
                // init box if we reload
                if(lastChatId=='') {
 	               $('#clientArea').val('');
@@ -146,9 +146,13 @@
                
                // Update the oposite to emulate experience
                // Lets do the call
+               var params = {from:lastChatId};
+               if($('#'+pref+'TransLang').prop('checked')) {
+               	  params = {from:lastChatId,translate_lang:langSource};
+               }
                var url = $('#apiService').val()+"/"+org+"/"+chatId+"/updated/"+source+"/"+dest; 
                $.get(url
-                   ,{from:lastChatId}
+                   ,params
                    ,function(data) {
                             var addTextSource = '';
                             var addTextDest = '';
@@ -174,16 +178,9 @@
 	                                personSource = (data.data[x].ChatsConversation_UserId == source)?'You':data.data[x].ChatsConversation_UserId;
 	                                line = "\n"+data.data[x].ChatsConversation_DateTime+': '+personSource+"\n  ["+data.data[x].ChatsConversation_UserLang+'] '+data.data[x].ChatsConversation_Name;
 	                                
-	                                // Evaluate Real-time translation
-	                                if($('#'+pref+'TransLang').prop('checked') && data.data[x].ChatsConversation_UserId != source) 
-	                                   if(langSource !=  data.data[x].ChatsConversation_UserLang) {
-	                                   	   var trans = getTranslation(data.data[x].ChatsConversation_Name,data.data[x].ChatsConversation_UserLang+','+langSource);
-	                                   	   line = line+"\n  ["+langSource+"]"+trans;
-	                                   
-	                                   }
-	                                   
-	                                if(data.data[x].ChatsConversation_RequireTranslation==1) {
-	                                    line = line + "\n  ["+data.data[x].ChatsConversation_DestIdLang+'] '+data.data[x].ChatsConversation_TextTranslated;
+	                                // Evaluate translation
+	                                if($('#'+pref+'TransLang').prop('checked') && langSource != data.data[x].ChatsConversation_UserLang) {
+	                                	line = line+"\n  ["+langSource+"] "+data.data[x].ChatsConversation_TextTranslated;
 	                                }
 	                                // The previous line change the user add a return for visual propose
 	                                if(lastUserIdPref != data.data[x].ChatsConversation_UserId) line = line+"\n";
