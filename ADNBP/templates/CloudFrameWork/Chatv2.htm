@@ -56,7 +56,7 @@
                     
                       <div class="checkbox">
                       <label>
-                        <input type="checkbox" id='clientTransLang' value="1" checked>
+                        <input type="checkbox" id='clientTransLang' value="1" >
                         Active Translation
                       </label>
                     </div>
@@ -222,6 +222,7 @@
             
             var trans = {}; // It will optimize the calls avoiding 2 calls for the same text
             function getTranslation(value,langs) {
+            	return('');
             	var keyValue = '{publicKey}';
             	var retValue = '';
                 if(value.length < 2) alert('write a message to translate');
