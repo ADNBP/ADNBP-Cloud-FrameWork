@@ -24,6 +24,7 @@ function _print() {
 	for ($i=0,$tr=count($args); $i < $tr; $i++) {
 		if($args[$i] == "exit") exit;
 		else if(is_array($args[$i])) echo print_r($args[$i],true); 
+        else if(is_object($args[$i])) echo var_dump($args[$i]); 
 		else if(is_bool($args[$i])) echo '<li>'.($args[$i])?'true':'false';
 		else if(is_null($args[$i])) echo '<li>NULL';
 		else echo "<li>".$args[$i];
