@@ -67,10 +67,11 @@ if (!defined ("_ADNBP_CLASS_") ) {
         var $_defaultCFURL="http://cloud.adnbp.com/api";
         var $_webapp = '';
         var $_rootpath = '';
+        var $_timeZone = 'Europe/Madrid';
         /**
         * Constructor
         */
-        function ADNBP ($session=true,$sessionId='') {
+        function ADNBP ($session=true,$sessionId='',$rootpath='') {
             
             if($session) {
                 if(strlen($sessionId))
@@ -79,10 +80,19 @@ if (!defined ("_ADNBP_CLASS_") ) {
                 
             }
             
+            // About timeZone
+            /*
+            if(!strlen(date_default_timezone_get()))
+                date_default_timezone_set($this->_timeZone);
+            else $this->_timeZone = date_default_timezone_get();
+            */
+            date_default_timezone_set($this->_timeZone);
             // $this->_webapp = dirname(dirname(__FILE__))."/webapp";
             // $this->_rootpath = dirname(dirname(dirname(__FILE__)));
-			$this->_rootpath = $_SERVER['DOCUMENT_ROOT'];
-            $this->_webapp = $_SERVER['DOCUMENT_ROOT']."/webapp";
+            if(!strlen($rootpath)) $rootpath=$_SERVER['DOCUMENT_ROOT'];
+			$this->_rootpath = $rootpath;
+            $this->_webapp = $rootpath."/webapp";
+            
 			
 
 
