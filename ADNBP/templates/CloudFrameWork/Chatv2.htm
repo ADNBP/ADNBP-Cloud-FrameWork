@@ -37,7 +37,9 @@
                         <option value='ru'>Русский</option>
                     </select>  
                     </div>                 
-                    
+                    <div class="col-xs-3">  
+                        <input value="Product1" type="input" id='roomId' name="roomId"  placeholder="roomId" class="form-control input-sm" >
+                    </div>                    
                     <div class="col-xs-2">  
                         <input value="begin" type="button"  class="btn btn-primary btn-sm" onclick="initChat('client');">
                     </div>
@@ -85,9 +87,10 @@
                var chatId='1';
                var source=$('#'+pref+'Id').val();
                var dest = $('#'+pref+'UserId').val();
+               var room = $('#'+pref+'roomId').val();
                var langSource = $('#'+pref+'Lang').val();               
                var url = $('#apiService').val()+"/"+org+"/"+chatId+"/"+source+"/"+dest;
-               var params = {message:messageToSend,lang:langSource};
+               var params = {message:messageToSend,lang:langSource,roomid:room};
                
                
                
@@ -133,6 +136,7 @@
                var chatId='1';
                var source=$('#'+pref+'Id').val();
                var dest = $('#'+pref+'UserId').val();
+               var room = $('#'+pref+'roomId').val();
                var langSource = $('#'+pref+'Lang').val();               
                var lastUserId = '';
                
@@ -144,9 +148,9 @@
 	               $('#clientArea').val('');
                }
                
-               // Update the oposite to emulate experience
-               // Lets do the call
+               // from only show the conversations where Id > the IdNumber of the last ChatIdInversation
                var params = {from:lastChatId};
+               
                if($('#'+pref+'TransLang').prop('checked')) {
                	  params = {from:lastChatId,translate_lang:langSource};
                }
