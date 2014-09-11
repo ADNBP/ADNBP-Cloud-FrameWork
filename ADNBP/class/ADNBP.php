@@ -236,7 +236,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
 					                              .strtoupper(sha1($this->getConf("CloudServiceId").$_date.$this->getConf("CloudServiceToken")))."\r\n";
 				}
 		        $context  = stream_context_create($options);
-		        return(file_get_contents($_url,false,$context));
+		        return(@file_get_contents($_url,false,$context));
 				
             } else {
             	if($verb===null) $verb='GET';
@@ -245,7 +245,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
 				 	$_url.='?';
 				 	foreach ($data as $key => $value) $_url.=$key.'='.urlencode($value).'&';
 				 }
-				 return(file_get_contents($_url));
+				 return(@file_get_contents($_url));
 				 
             }
             
