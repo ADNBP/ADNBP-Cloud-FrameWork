@@ -37,9 +37,12 @@ require_once(dirname(__FILE__) . '/mimePart.php');
        function GoogleAppsEmail ($from = '', $subject = '', $text = '', $thtml = '') {
             global $adnbp;
             
-            if(!strlen($from) && is_object($adnbp)) $from = $adnbp->getConf("defaultEmailSender");
+            if(is_array($from)) {
+                $this->setFrom($from[0]);
+                $this->setFromName($from[1]);
+            } else if(!strlen($from) && is_object($adnbp)) $from = $adnbp->getConf("defaultEmailSender");
+            else  $this->setFrom($from);
             
-            $this->setFrom($from);
             $this->setSubject($subject);
             $this->setTextBody($text);
             $this->setHtmlBody($thtml);
@@ -49,18 +52,19 @@ require_once(dirname(__FILE__) . '/mimePart.php');
        function getError() { return($this->_errorMsg); }
        function isError() { return($this->_error === true); }
        function setError($msg) { $this->_errorMsg = $msg; $this->_error = true;}
-       function setFrom($txt) { $this->_data[sender] = $txt; }
-       function setSubject($txt) { $this->_data[subject] = $txt; }
-       function setTextBody($txt) { $this->_data[textBody] = $txt; }
-       function setText($txt) { $this->_data[textBody] = $txt; }
+       function setFrom($txt) { $this->_data['sender'] = $txt; }
+       function setFromName($txt) { $this->_data['senderName'] = $txt; }
+       function setSubject($txt) { $this->_data['subject'] = $txt; }
+       function setTextBody($txt) { $this->_data['textBody'] = $txt; }
+       function setText($txt) { $this->_data['textBody'] = $txt; }
        
-       function setTo($txt) { $this->_data[to] = $txt; }
+       function setTo($txt) { $this->_data['to'] = $txt; }
        
-       function setHtmlBody($txt) { $this->_data[htmlBody]= $txt; }
-       function setHtml($txt) { $this->_data[htmlBody]= $txt; }
+       function setHtmlBody($txt) { $this->_data['htmlBody']= $txt; }
+       function setHtml($txt) { $this->_data['htmlBody']= $txt; }
        
        function setHtmlTemplate($txt) {
-            $this->_data[htmlTemplate]= $txt;
+            $this->_data['htmlTemplate']= $txt;
             if(is_file("./templates/$txt")) {
                 $this->setHtmlBody(file_get_contents("./templates/$txt"));
             } else {
@@ -119,34 +123,35 @@ require_once(dirname(__FILE__) . '/mimePart.php');
                return(false);
            }
            
-           if(!$this->checkValidEmail($this->_data[sender])){
-               $this->setError("Error in 'From' email: ".$this->_data[sender]);
+           if(!$this->checkValidEmail($this->_data['sender'])){
+               $this->setError("Error in 'From' email: ".$this->_data['sender']);
                return(false);
            }
            
            
            // Checking if everything is OK
-           if(!strlen($this->_data[sender])) {
+           if(!strlen($this->_data['sender'])) {
                $this->setError("Sender missing. Use setFrom(email) method.");
                return(false);
            }
            
-           if(!strlen($this->_data[textBody]) && !strlen($this->_data[htmlBody])) {
+           if(!strlen($this->_data['textBody']) && !strlen($this->_data['htmlBody'])) {
                $this->setError("Text or HTML Body missing. Use setTextBody(txt) or setHtmlBody(html) methods.");
                return(false);
            }
 
-           if(!strlen($this->_data[subject])) {
+           if(!strlen($this->_data['subject'])) {
                $this->setError("Subjectmissing. Use setSubject(txt) method.");
                return(false);
            }
            
            if(is_object($this->_sendgrid)) {
                
-               $this->_sendgridmail->setFrom($this->_data[sender]);
-               $this->_sendgridmail->setSubject($this->_data[subject]);
-               if(strlen($this->_data[htmlBody])) $this->_sendgridmail->setHtml($this->_data[htmlBody]);
-               if(strlen($this->_data[textBody])) $this->_sendgridmail->setText($this->_data[textBody]);
+               $this->_sendgridmail->setFrom($this->_data['sender']);
+               if(strlen($this->_data['senderName'])) $this->_sendgridmail->setFromName($this->_data['senderName']);
+               $this->_sendgridmail->setSubject($this->_data['subject']);
+               if(strlen($this->_data['htmlBody'])) $this->_sendgridmail->setHtml($this->_data['htmlBody']);
+               if(strlen($this->_data['textBody'])) $this->_sendgridmail->setText($this->_data['textBody']);
                $this->_sendgridmail->setTos($to);
                $res = $this->_sendgrid->send($this->_sendgridmail);
 
