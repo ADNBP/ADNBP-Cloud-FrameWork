@@ -39,7 +39,8 @@ require_once(dirname(__FILE__) . '/mimePart.php');
             
             if(is_array($from)) {
                 $this->setFrom($from[0]);
-                $this->setFromName($from[1]);
+                if(strlen($from[1]))
+                    $this->setFromName($from[1]);
             } else if(!strlen($from) && is_object($adnbp)) $from = $adnbp->getConf("defaultEmailSender");
             else  $this->setFrom($from);
             
