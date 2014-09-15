@@ -108,6 +108,7 @@
                 if(!$error) $value['success'] = true;
                 else {
                     $value['success'] = false;
+                    $value['status'] = ($error)?$error:200;
                     $value['error']=array('message'=>$errorMsg);
                 }
                 die(json_encode($value));                   
