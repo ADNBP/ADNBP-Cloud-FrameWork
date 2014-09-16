@@ -55,9 +55,9 @@ switch ($this->getAPIMethod()) {
                                 $langs = explode('lang:',$matchs[0][$i]);
                                 // preg_match_all('/lang:(.+)/', $matchs[1][$i],$langs);
                                 for($j=1,$tr2 = count($langs);$j<$tr2;$j++) {
-                                    if(preg_match('/(default|.*,default\[\[)/', $langs[$j])) 
+                                    if(preg_match('/^(default|.*,default\[\[)/', $langs[$j])) 
                                         $_defaultIndex = $j;
-                                    if(preg_match('/('.$lang.'|.*,'.$lang.'\[\[)/', $langs[$j])) 
+                                    if(preg_match('/^('.$lang.'|.*,'.$lang.'\[\[)/', $langs[$j])) 
                                         $_selectedIndex = $j;
                                 }
                                 if($_selectedIndex < 0) $_selectedIndex = $_defaultIndex;
