@@ -225,10 +225,13 @@ if (!defined ("_ADNBP_CLASS_") ) {
                     'http' => array(
                     'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
                     'method'  => 'POST',
+                    'ignore_errors'  => '1',
                     'content' => http_build_query($data),
                         )
                  );
 
+                // You have to calculate the Content-Length to run as script
+                $options['http']['header'] .= sprintf('Content-Length: %d', strlen(http_build_query($data)))."\r\n";
 				if(strlen($this->getConf("CloudServiceId")) && strlen($this->getConf("CloudServiceToken"))) {
 					$_date = time();
 					$options['http']['header'] .= 'X-Cloudservice-Date: '.$_date."\r\n";
