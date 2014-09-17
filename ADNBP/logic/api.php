@@ -9,7 +9,9 @@
 		
 
     // Error code
-    $error = 0;  // it support: 200,201,204,400 etc..
+    $error = 0;  // it support: 400 etc..
+    $okRet = 200;  // it support: 200,201,204,400 etc..
+    
     $errorMsg = '';
     $returnMethod = 'JSON';  // support: JSON, HTML
         
@@ -100,6 +102,13 @@
             default:
                 break;
         }
+        switch ($okRet) {
+            case 201:
+                header("HTTP/1.0 201 Created");
+                break;
+            default:
+                break;
+		}
         
         // Output Value
         switch ($returnMethod) {
@@ -108,7 +117,7 @@
                 if(!$error) $value['success'] = true;
                 else {
                     $value['success'] = false;
-                    $value['status'] = ($error)?$error:200;
+                    $value['status'] = ($error)?$error:$okRet;
                     $value['error']=array('message'=>$errorMsg);
                 }
                 die(json_encode($value));                   

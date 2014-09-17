@@ -42,7 +42,7 @@ foreach ($api as $service => $serviceContent)
             <b></b>
             <table class="table table-bordered  table-striped">
             <tr>
-                <td width='20%' nowrap="yes">&nbsp;<?=$methodContent['method']?>:&nbsp;<?=$subgroupContent['call']?><span class="glyphicon glyphicon-link"></span></td>
+                <td width='20%' nowrap="yes">&nbsp;<?=$methodContent['method']?>:&nbsp;<a href='<?=$host.$methodContent['url']?>' target='blank'><?=$subgroupContent['call']?><span class="glyphicon glyphicon-link"></span></a></td>
                 <td valign="bottom"><?=$methodContent[title]?>
                 </td>
                 <!-- onclick='window.location="/CloudFrameWorkService<?=(strlen($value2['example']))?$value2['example']:$value2['api']?>";'  -->

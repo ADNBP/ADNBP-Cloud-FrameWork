@@ -488,7 +488,9 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                         } 
                     // if it has a _ then let's see if the view of the table exist               
                     } else if(strlen($foo)) {
-                        $tmpTable.="s";
+                    	// it it is a Rel table
+                    	if($tmpTable=='Rel') $tmpTable = $allFields[0];
+						else $tmpTable.="s";
                         $_q = "SELECT count(*) TOT FROM INFORMATION_SCHEMA.TABLES t WHERE t.TABLE_SCHEMA='%s' AND TABLE_NAME = '%s' ";
                         $tmp = $this->getDataFromQuery($_q,$this->_dbdatabase,$tmpTable );
                         

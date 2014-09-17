@@ -44,21 +44,23 @@
                     list($param3,$call) = explode('[', $param3);
                     $lastCommand =$currentService.'_'.$currentGroup.'_subgroup';
                     $api[$currentService][$lastCommand][$lastId]['title']=$param2.' '.$param3;
-                    $api[$currentService][$lastCommand][$lastId]['call']='['.$call;
+                    $api[$currentService][$lastCommand][$lastId]['call']=str_replace(']', '', $call);
                     break;
 
                 case '###':
                     $currentCalls++;
                     $lastId = $currentCalls;
-                    list($param3,$method) = explode('[', $param3);
+                    list($param3,$method,$url) = explode('[', $param3);
                     $lastCommand =$currentService.'_'.$currentGroup.'_'.$currentSubgroup.'_methods';
                     $api[$currentService][$lastCommand][$lastId]['title']=$param2.' '.$param3;
-                    $api[$currentService][$lastCommand][$lastId]['method']='['.$method;
+                    $api[$currentService][$lastCommand][$lastId]['method']=str_replace(']', '', $method);
+                    $api[$currentService][$lastCommand][$lastId]['url']=str_replace(']', '', $url);
                     break;
 
                 default:
+					if(strlen(ltrim($apiFile[$i]))) $apiFile[$i] = ltrim($apiFile[$i]);
                     if($currentService)
-                       $api[$currentService][$lastCommand][$lastId]['description'].=ltrim($apiFile[$i]);
+                       $api[$currentService][$lastCommand][$lastId]['description'].=$apiFile[$i];
                    
                 break;
             }
