@@ -602,7 +602,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
         function checkPassword($passw,$compare) {
    		 	return(crypt($passw,$compare) == $compare);
 		}
-		 		/*
+		 /*
 		 * String replace KeyCodes
 		 */
 		 function strCFReplace($str) {
@@ -612,6 +612,55 @@ if (!defined ("_ADNBP_CLASS_") ) {
 		 	return($str);
 		 }
 		 
+		 /*
+		 * String with {{lang:...}} codes to apply in a language
+		 */
+		 function applyTranslations($str,$lang) {
+		 	if(!strlen($lang)) return($str);
+			
+		 	unset($matchs);
+            $_expr = "((?!}}).)*";
+            preg_match_all('/{{('.$_expr.')}}/s', $str,$matchs);
+            if(is_array($matchs[0])) for($i=0,$tr=count($matchs[0]);$i<$tr;$i++) if(strpos($matchs[1][$i],'lang:') !== false) {
+            	$_defaultIndex = 1;
+                $_selectedIndex = -1;
+                
+                // Lets find the language to show
+                unset($langs);
+                $_expr = "((?!}}).)*";
+                $langs = explode('lang:',$matchs[0][$i]);
+				// preg_match_all('/lang:(.+)/', $matchs[1][$i],$langs);
+                for($j=1,$tr2 = count($langs);$j<$tr2;$j++) {
+                    if(preg_match('/^(default|.*,default\[\[)/', $langs[$j])) 
+                        $_defaultIndex = $j;
+                    if(preg_match('/^('.$lang.'|.*,'.$lang.'\[\[)/', $langs[$j])) 
+                        $_selectedIndex = $j;
+                }
+                if($_selectedIndex < 0) $_selectedIndex = $_defaultIndex;
+                
+                // Extract the text of that language
+                unset($text);
+                $_expr = "((?!\]\]).)*";
+                preg_match('/\[\[('.$_expr.')\]\]/s', $langs[$_selectedIndex],$text);
+                $str = str_replace($matchs[0][$i], $text[1], $str);
+			}
+			return($str);
+		 }
+
+		 /*
+		 * String with {{var}} to find substitutions with $_REQUEST['var']
+		 */
+		 function applyVars($str) {
+		 	unset($matchs);
+            $_expr = "((?!}}).)*";
+            preg_match_all('/{{('.$_expr.')}}/s', $str,$matchs);
+            if(is_array($matchs[0])) for($i=0,$tr=count($matchs[0]);$i<$tr;$i++) {
+                // if not there is Variables
+                    if(isset($_GET[$matchs[1][$i]]))
+                        $str = str_replace($matchs[0][$i], $_REQUEST[$matchs[1][$i]], $str);
+            }
+			return($str);		 	
+		 }
 		 /*
 		  * The function getAllHeaders doesnt exist
 		  * Then use the following function to check a header
