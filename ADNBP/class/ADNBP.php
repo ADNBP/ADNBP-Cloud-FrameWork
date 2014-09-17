@@ -650,7 +650,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
 		 /*
 		 * String with {{var}} to find substitutions with $_REQUEST['var']
 		 */
-		 function applyVars($str) {
+		 function applyVarsSubsitutions($str) {
 		 	unset($matchs);
             $_expr = "((?!}}).)*";
             preg_match_all('/{{('.$_expr.')}}/s', $str,$matchs);
@@ -670,5 +670,22 @@ if (!defined ("_ADNBP_CLASS_") ) {
 			$str = str_replace('-', '_', $str);
 			return((isset($_SERVER['HTTP_'.$str]))?$_SERVER['HTTP_'.$str]:'');
 		  }
+          
+          /*
+           *  Valida a field with different Types
+           */
+          function validateField($field,$type) {
+              switch ($type) {
+                  case 'email':
+                      return(filter_var($field, FILTER_VALIDATE_EMAIL));
+                      break;
+                  case 'url':
+                      return(filter_var($field, FILTER_VALIDATE_URL));
+                      break;                  
+                  default:
+                      return(false);
+                      break;
+              }
+          }
     }
 }

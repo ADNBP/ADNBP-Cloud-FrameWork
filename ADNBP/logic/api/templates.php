@@ -35,10 +35,10 @@ switch ($this->getAPIMethod()) {
                     $error = 404;
                     $errorMsg ="<html><body>template not found</body></html>"; 
                 } else {
+                    // Do substitutions
                 	if(strlen($lang))
 						$value = $this->applyTranslations($value,$lang); // substitute {{lang:xxxx }}
-					$value = $this->applyVars($value,$lang);
-                    // Do substitutions
+					$value = $this->applyVarsSubsitutions($value);
                     die($value);
                 }        
         }
