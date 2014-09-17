@@ -1,34 +1,76 @@
-    <div class="jumbotron">
-    <h1>CloudFrameWorkServices RESTful APIs</h1>
-    <b>The following public RESTfull APIs are accesible:</b>
-    <h2><?=$docServicesTitle?></h2>
-    <p><?=$docServicesSubtitle?></p>
-    </div>
-    
- 
- 
+<?php 
+$gIndex=0;
+foreach ($api as $service => $serviceContent) 
+{
+?><div class="jumbotron">
+    <h1><?=htmlentities($serviceContent['service'][$service]['title'])?></h1>
+    <small><?=htmlentities($host)?></small>
+    <p><?=$serviceContent['service'][$service]['description']?></p>
+</div>
+    <?php
+        foreach ($api[$service][$service.'_group'] as $group => $groupContent) {
+            $gIndex++;
+            
+    ?>
      <ul class="nav nav-tabs" role="tablist">
-      <li class="active"><a href="#home" role="tab" data-toggle="tab">Home</a></li>
-      <li><a href="#profile" role="tab" data-toggle="tab">Profile</a></li>
-      <li><a href="#messages" role="tab" data-toggle="tab">Messages</a></li>
-      <li><a href="#settings" role="tab" data-toggle="tab">Settings</a></li>
+      <li class="active"><a href="#<?=$service.'_'.$group?>" role="tab" data-toggle="tab"><big><?=$groupContent['title']?></big></a></li>
+      <?php if(is_array($api[$service][$service.'_'.$group.'_subgroup'])) foreach ($api[$service][$service.'_'.$group.'_subgroup'] as $subgroup => $subgroupContent) { ?>
+      <li><a href="#<?=$service.'_'.$group.'_'.$subgroup?>" role="tab" data-toggle="tab"><small><?=$subgroupContent['title']?></small></a></li>
+      <?php } ?>
     </ul>
-        <!-- Tab panes -->
+   <!-- Tab panes -->
     <div class="tab-content">
-      <div class="tab-pane active" id="home">...</div>
-      <div class="tab-pane" id="profile">...</div>
-      <div class="tab-pane" id="messages">...</div>
-      <div class="tab-pane" id="settings">...</div>
-    </div>
+      <div class="tab-pane active" id="<?=$service.'_'.$group?>">  
+          <div class="panel panel-default">
+          <div class="panel-body">
+          <?=$groupContent['description']?>
+          </div>
+          </div>
+      </div>
+      <?php if(is_array($api[$service][$service.'_'.$group.'_subgroup'])) 
+              foreach ($api[$service][$service.'_'.$group.'_subgroup'] as $subgroup => $subgroupContent) { ?>
+      
+      <div class="tab-pane" id="<?=$service.'_'.$group.'_'.$subgroup?>">
+      <div class="tab-pane active" id="<?=$service.'_'.$group.'_'.$subgroup?>">  
+          <div class="panel panel-default">
+          <div class="panel-body">
+          <?php 
+          if(is_array($api[$service][$service.'_'.$group.'_'.$subgroup.'_methods'])) 
+             foreach ($api[$service][$service.'_'.$group.'_'.$subgroup.'_methods'] as $method => $methodContent) { ?>
+                 
+            
+            <b></b>
+            <table class="table table-bordered  table-striped">
+            <tr>
+                <td width='20%' nowrap="yes">&nbsp;<?=$methodContent['method']?>:&nbsp;<?=$subgroupContent['call']?><span class="glyphicon glyphicon-link"></span></td>
+                <td valign="bottom"><?=$methodContent[title]?>
+                </td>
+                <!-- onclick='window.location="/CloudFrameWorkService<?=(strlen($value2['example']))?$value2['example']:$value2['api']?>";'  -->
+                </tr>
+                <tr>
+                    <td colspan="3">
+                     <pre><?=htmlentities($methodContent['description'])?></pre>
+                        
+                    </td>
+            </tr>
+            </table>
+          <?php } ?>
+          </div>
+          </div>
+      </div>          
+      </div>
+      <?php } ?>
+
+    </div>    
+    <?php } ?>
+    <?php } ?>
+
+
+
+<?php  if(false) {?>
     
-     <div class="panel panel-default">
-      <div class="panel-heading">
-        <h3 class="panel-title">Panel title</h3>
-      </div>
-      <div class="panel-body">
-        Panel content
-      </div>
-    </div>   
+
+     
     <?php if(true) {?>
     <div class="panel-group" id="accordion">
     <?php if(is_array($docServices)) foreach ($docServices as $key => $value) {?>
@@ -41,6 +83,9 @@
         </div>
         <div id="collapse<?=$key?>" class="panel-collapse collapse ">
         <div class="panel-body">
+            
+            
+            
             <?php if(isset($value['api']))  foreach ($value['api'] as $index => $value2) {?>
             <b><?=$value2['title']?></b>
             <table class="table table-bordered  table-striped">
@@ -78,9 +123,14 @@
             </tr>
             </table>
             <?php }?>
+       
+       
+       
        </div>
        </div>
     </div>   
     <?php } ?>
     </div>   
     <?php } ?>
+    
+<?php } ?>
