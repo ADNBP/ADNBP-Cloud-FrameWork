@@ -656,7 +656,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
             preg_match_all('/{{('.$_expr.')}}/s', $str,$matchs);
             if(is_array($matchs[0])) for($i=0,$tr=count($matchs[0]);$i<$tr;$i++) {
                 // if not there is Variables
-                    if(isset($_GET[$matchs[1][$i]]))
+                    if(isset($_REQUEST[$matchs[1][$i]]))
                         $str = str_replace($matchs[0][$i], $_REQUEST[$matchs[1][$i]], $str);
             }
 			return($str);		 	
