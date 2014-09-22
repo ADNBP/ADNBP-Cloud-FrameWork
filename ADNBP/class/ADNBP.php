@@ -243,13 +243,19 @@ if (!defined ("_ADNBP_CLASS_") ) {
 		        return(@file_get_contents($_url,false,$context));
 				
             } else {
-            	if($verb===null) $verb='GET';
+                $options = array(
+                    'http' => array(
+                    'method'  => 'GET',
+                    'ignore_errors'  => '1',
+                        )
+                 );
+                 if($verb===null) $verb='GET';
 				 $_extraGET='?';
 				 if(is_array($data)) {
 				 	$_url.='?';
 				 	foreach ($data as $key => $value) $_url.=$key.'='.urlencode($value).'&';
 				 }
-				 return(@file_get_contents($_url));
+				 return(@file_get_contents($_url,false,$context));
 				 
             }
             
