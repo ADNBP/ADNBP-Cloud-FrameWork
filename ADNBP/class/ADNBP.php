@@ -262,6 +262,11 @@ if (!defined ("_ADNBP_CLASS_") ) {
 
         }
 
+		function checkBasicAuth($user,$passw) {
+			include_once(dirname(__FILE__).'/ADNBP/checkBasicAuth.php');
+		    return $res;			
+		}
+
 		function checkAPIAuth(&$msg) {
 			include_once(dirname(__FILE__).'/ADNBP/checkAPIAuth.php');
 			if(strlen($msgerror)) { $msg.=$msgerror;return(false); }
