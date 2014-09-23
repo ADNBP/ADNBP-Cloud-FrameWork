@@ -4,6 +4,8 @@ $_url = $this->getCloudServiceURL($rute);
 $options = array(
     'http' => array(
     'method'  => $verb,
+    'ignore_errors'  => '1'
+	
         )
  );
 
@@ -15,7 +17,7 @@ if($headers!=null) $options['http']['header'] =$headers;
 
 $context  = stream_context_create($options);
 
-$res = file_get_contents($_url,false,$context);
+$res = @file_get_contents($_url,false,$context);
 
 if ($res === false) {
 		throw new Exception("$verb $rute failed: $php_errormsg");
