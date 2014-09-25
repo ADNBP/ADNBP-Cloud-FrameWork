@@ -60,6 +60,7 @@ if(!strlen($_GET['path'])) {
     if(strpos($path, 'gs://')===false) $path = 'gs://'.$path;
     
     if(!is_file($path)) $msg = $path . ' doesn\'t exist';
+	elseif(strpos($path, 'config.php')) $msg='THIS FILE NEVER HAS TO BE SHOWN. THIS IS A VIOLATION OF SECURITY AND YOUR ACCESS WILL BE NOTIFIED';
     else $msg=file_get_contents($path);
      
 }
