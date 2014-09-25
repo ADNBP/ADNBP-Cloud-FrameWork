@@ -25,10 +25,16 @@ switch ($this->getAPIMethod()) {
                 $returnMethod = 'HTML';
                 $found =true;
                 if(strpos($template,'.') === false) $template.='.htm';
-                if(is_file($this->_rootpath."/ADNBP/templates/CloudFrameWork/".$template)) {
-                   $value = file_get_contents ( $this->_rootpath."/ADNBP/templates/CloudFrameWork/".$template );
-                } else if(is_file($this->_webapp."/templates/CloudFrameWork/".$template)) {
+				
+				// Allow include the templates from GoogleCloudStoreBucket
+				if(strlen($this->getConf("GoogleCloudStoreBucket"))) {
+					if(is_file($this->getConf("GoogleCloudStoreBucket")."/templates/CloudFrameWork/".$template)) {
+                       $value = file_get_contents ($this->getConf("GoogleCloudStoreBucket")."/templates/CloudFrameWork/".$template );
+					} else $found = false;
+				} elseif(is_file($this->_webapp."/templates/CloudFrameWork/".$template)) {
                    $value = file_get_contents ( $this->_webapp."/templates/CloudFrameWork/".$template );
+                } elseif(is_file($this->_rootpath."/ADNBP/templates/CloudFrameWork/".$template)) {
+                   $value = file_get_contents ( $this->_rootpath."/ADNBP/templates/CloudFrameWork/".$template );
                 } else $found = false;
                 
                 if(!$found) {
