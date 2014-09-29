@@ -11,7 +11,7 @@ else
 
 // $error = 0;Initialitated in api.php
 // GET , PUT, UPDATE, DELETE, COPY...
-switch ($this->getAPIMethod()) {
+switch ($api->method) {
     case 'GET':
         switch ($urlParams) {
             case 'checkapikey':

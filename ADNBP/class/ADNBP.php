@@ -18,8 +18,9 @@
 * @package com.adnbp.framework
 */
 
-function _print() {
-	$args = func_get_args();
+function _print() { __print(func_get_args()); }
+function _printe() { __print(array_merge(func_get_args(),array('exit'))); }
+function __print($args) {
 	echo "<pre>";
 	for ($i=0,$tr=count($args); $i < $tr; $i++) {
         if($args[$i] === "exit") exit;
@@ -32,6 +33,8 @@ function _print() {
 	}
 	echo "</pre>";
 }
+
+
 
 if (!defined ("_ADNBP_CLASS_") ) {
     define ("_ADNBP_CLASS_", TRUE);
@@ -64,8 +67,8 @@ if (!defined ("_ADNBP_CLASS_") ) {
         var $_userLanguages = array();
         var $_basename = '';
         var $_isAuth = false;
-        var $_version = "2014Sep.1";
-        var $_defaultCFURL="http://cloud.adnbp.com/api";
+        var $_version = "2014Sep.27";
+        var $_defaultCFURL="https://cloud.adnbp.com/api";
         var $_webapp = '';
         var $_rootpath = '';
         var $_timeZone = 'Europe/Madrid';
@@ -115,31 +118,34 @@ if (!defined ("_ADNBP_CLASS_") ) {
                 die('<html><head><title>ADNBP Cloud FrameWork KeepSession '.time().'</title><meta name="robots" content="noindex"></head><body bgcolor="#'.$bg.'"></body></html>');
             }
 
-            // Change with $this->setWebApp("");
-            // if(is_file(dirname(__FILE__)."/../../adnbp_framework_config.php"))
+            //  Use this file to assign webApp. $this->setWebApp(""); if not ADNBP/webapp will be included
             if(is_file($this->_rootpath."/adnbp_framework_config.php"))
                include_once($this->_rootpath."/adnbp_framework_config.php");
 
 
-            // CONFIG BASIC
+       // CONFIG VARS
+            // load FrameWork default values
+            include_once($this->getRootPath()."/ADNBP/config/config.php"); // load Defaults Values
             
-            include_once($this->getRootPath()."/ADNBP/config/config.php");
-            
-            if(is_file($this->_webapp."/config/config.php")) {
+             // load webapp config values
+            if(is_file($this->_webapp."/config/config.php")) 
                 include_once($this->_webapp."/config/config.php");
-                if (!$this->getConf("CloudServiceUrl")) $this->setConf("CloudServiceUrl",$this->_defaultCFURL);
-            }            
+			
+			// load bucket config values. Use this to keep safely passwords etc.. in a external bucket only accesible by admin
+			if(strlen($this->getConf('ConfigPath')) && is_file($this->getConf('ConfigPath')."/config.php"))   
+			    include_once($this->getConf('ConfigPath')."/config.php");   
             
-            // analyze Default Lang
+	  // OTHER VARS
+	        // CloudService API. If not defined it will point to ADNBP external Serivice
+            if (!$this->getConf("CloudServiceUrl")) $this->setConf("CloudServiceUrl",$this->_defaultCFURL);
+            
+            // analyze Default Lang and its configuration
             $this->_userLanguages = explode(',',$_SERVER['HTTP_ACCEPT_LANGUAGE']);
-            
             if($this->getConf("setLanguageByPath")) {
                 $elems = explode("/",$this->_url);
                 if(isset($elems[1]) && strlen($elems[1]) && isset($elems[2]) && strlen($elems[2])) $this->_lang = $elems[1];
             } elseif( strlen($_GET['adnbplang'])) $this->_lang = $_GET['adnbplang'];
             $this->setConf("lang",$this->_lang);
-            
-			
             
         }
 
@@ -197,6 +203,18 @@ if (!defined ("_ADNBP_CLASS_") ) {
                 include_once(dirname(__FILE__) ."/".$class.".php");
             else die("$class not found");
         }
+		
+		function init(&$obj,$type) {
+			switch ($type) {
+				case 'db':
+	                $this->loadClass("db/CloudSQL");
+	                $db = new CloudSQL();
+					$db->connect();
+					break;
+				default:
+					break;
+			}
+		}
         
         function getCloudServiceURL($add=''){
             // analyze Default Country
@@ -276,9 +294,16 @@ if (!defined ("_ADNBP_CLASS_") ) {
 		function getAPIMethod() {
 		    return((strlen($_SERVER['REQUEST_METHOD']))?$_SERVER['REQUEST_METHOD']:'GET');	
 		}
+		function checkAPIMethod($methods) {
+		    return(strpos(strtoupper($methods), $this->getAPIMethod())!==false);	
+		}
 		function getAPIRawData() {
 			return(file_get_contents("php://input"));
 		}
+		function getAPIPutData() {
+			parse_str(file_get_contents("php://input"),$ret);
+			return($ret);
+		}		
 
         function getDataFromAPI($rute,$data=null,$verb='GET',$format='json',$headers=null) {
 			include_once(dirname(__FILE__).'/ADNBP/getDataFromAPI.php');

@@ -2,7 +2,7 @@
 $date = date("Y-m-d H:i:s");
 $value=array('default_timezone'=>date_default_timezone_get(),'datetime'=>$date);
 // GET , PUT, UPDATE, DELETE, COPY...
-switch ($this->getAPIMethod()) {
+switch ($api->method) {
     case 'GET':
         list($continent,$city,$date) = explode('/',$params);
         if(!strlen($continent))
@@ -16,7 +16,11 @@ switch ($this->getAPIMethod()) {
         }
         break;
     default:
-        $error=400;
+        $api->error=400;
         break;
 } 
+
+// Compatibility until migration
+$error = $api->error;
+$errorMsg = $api->errorMsg;
 ?>

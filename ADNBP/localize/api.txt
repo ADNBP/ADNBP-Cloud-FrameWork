@@ -1,8 +1,28 @@
 FORMAT: 1A
 HOST: http://www.google.com
 
-# Bloombees
-Notes API is a *short texts saving* service similar to its physical paper presence on your table.
+# API
+<h2>Allowed HTTPs requests:</h2>
+<ul>
+<li>POST - Creates or updates a resource
+<li>PUT - Updates a resource
+<li>GET - Retrieves a resource or list of resources
+<li>DELETE - Delete a resource
+</ul>
+
+<h2>Typical Server Responses</h2>
+<ul>
+<li>200 OK - The request was successful (some API calls may return 201 instead).
+<li>201 Created - The request was successful and a resource was created.
+<li>204 No Content - The request was successful but there is no representation to return (that is, the response is empty).
+<li>400 Bad Request - The request could not be understood or was missing required parameters.
+<li>401 Unauthorized - Authentication failed or user does not have permissions for the requested operation.
+<li>403 Forbidden - Access denied.
+<li>404 Not Found - Resource was not found.
+<li>405 Method Not Allowed - Requested method is not supported for the specified resource.
+<li>429 Too Many Requests - Exceeded CloudFrameWork API limits. Pause requests, wait one minute, and try again.
+<li>503 Service Unavailable - The service is temporary unavailable (e.g. scheduled Platform Maintenance). Try again later.
+</ul>
 
 # Group Notes
 Notes related resources of the **Notes API**

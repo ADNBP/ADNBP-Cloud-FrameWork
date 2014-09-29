@@ -1,10 +1,10 @@
 <?php
 
 // From api.php I receive: $service, (string)$params 
-// $error = 0;Initialitated in api.php
+// $api->error = 0;Initialitated in api.php
 // GET , PUT, UPDATE, DELETE, COPY...
 
-switch ($this->getAPIMethod()) {
+switch ($api->method) {
     case 'GET':
         list($template,$lang) = explode('/',$params);
 		$value['api_path'] = $this->getConf("ApiTemplatesPath");
@@ -12,11 +12,11 @@ switch ($this->getAPIMethod()) {
             $ret=array();
 			if(strlen($this->getConf("ApiTemplatesPath"))) {
 				if(preg_match("/^http/", $this->getConf("ApiTemplatesPath"))){
-					$error=503;
-					$errorMsg = "We can not get list of templates from a remote URL: ".$this->getConf("ApiTemplatesPath");
+					$api->error=503;
+					$api->errorMsg = "We can not get list of templates from a remote URL: ".$this->getConf("ApiTemplatesPath");
 				} elseif(!is_dir($this->getConf("ApiTemplatesPath"))) {
-					$error=503;
-					$errorMsg = "Error. The following path does not exist: ".$this->getConf("ApiTemplatesPath");
+					$api->error=503;
+					$api->errorMsg = "Error. The following path does not exist: ".$this->getConf("ApiTemplatesPath");
 					$ret[] = $this->getConf("ApiTemplatesPath").' doesn\'t exist';
 	            } else {
 	            	$files = scandir($this->getConf("ApiTemplatesPath"));
@@ -34,7 +34,7 @@ switch ($this->getAPIMethod()) {
             
         } else if(strpos($template, '..')) {
             $returnMethod = 'HTML';
-            $error=403;
+            $api->error=403;
             $value = '{templateRoute} doesn\'t allow ".." in the route. Important security issued have been reported.';
         } else {
                 $returnMethod = 'HTML';
@@ -57,8 +57,8 @@ switch ($this->getAPIMethod()) {
                 } else $found = false;
                 
                 if(!$found) {
-                    $error = 404;
-                    $errorMsg ="<html><body>template not found</body></html>"; 
+                    $api->error = 404;
+                    $api->errorMsg ="<html><body>template not found</body></html>"; 
                 } else {
                     // Do substitutions
                 	if(strlen($lang))
@@ -69,6 +69,10 @@ switch ($this->getAPIMethod()) {
         }
         break;
     default:
-        $error=405;
+        $api->error=405;
         break;
 } 
+
+// Compatibility until migration
+$error = $api->error;
+$errorMsg = $api->errorMsg;

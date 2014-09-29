@@ -1,19 +1,23 @@
 <?php
 
+    $this->loadClass("api/RESTful");
+    $api = new RESTful();
+	
+	
 	// Rules for Cross-Domain AJAX
 	// https://www.getpostman.com/collections/f6c73fa68b03add49d09
 	header("Access-Control-Allow-Origin: *");
-	header("Access-Control-Allow-Methods: POST,GET");
+	header("Access-Control-Allow-Methods: POST,GET,PUT");
 	header("Access-Control-Allow-Headers: Content-Type");
 	header('Access-Control-Max-Age: 1000');
 		
 
-    // Error code
+    // Error code && Ok Code
     $error = 0;  // it support: 400 etc..
     $okRet = 200;  // it support: 200,201,204,400 etc..
-    
     $errorMsg = '';
     $returnMethod = 'JSON';  // support: JSON, HTML
+        
         
     //$headers = apache_request_headers(); // Store all headers
     $isSuperAdmin = (strlen($this->getHeader('X-Adnbp-Superuser')))?$this->checkPassword($this->getHeader('X-Adnbp-Superuser'),$this->getConf("adminPassword")):false;
@@ -25,8 +29,8 @@
     
     if(!strlen($service) && !strlen($params)) {
                  $this->setConf("notemplate",false);
-                include_once $this->_rootpath."/ADNBP/logic/api/apiDoc.php";
-                if(is_file($this->_webapp."/logic/api/api/apiDoc.php"))  include_once $this->_webapp."/logic/api/apiDoc.php";
+                include_once $this->_rootpath."/ADNBP/logic/apiDoc.php";
+                if(is_file($this->_webapp."/logic/api/apiDoc.php"))  include_once $this->_webapp."/logic/api/apiDoc.php";
     } else {
         switch ($service) {
         
@@ -65,67 +69,78 @@
             die();
             break;
         default:
+			
             // This allow to create own services in each WebServer
-            if(is_file($this->_webapp."/logic/api/".$service.".php"))
-                include_once $this->_webapp."/logic/api/".$service.".php";
-            elseif(is_file($this->_rootpath."/ADNBP/logic/api/".$service.".php"))
-                include_once $this->_rootpath."/ADNBP/logic/api/".$service.".php";
-           else {
-                 $error = 404;
-                 $errorMsg= 'Unknow file '.$service.' in '.$this->_url;
+            if(strlen($this->getConf("ApiPath"))) {
+		        if(is_file($this->getConf("ApiPath").'/'.$service.".php"))
+		            include_once $this->getConf("ApiPath").'/'.$service.".php";
+		        elseif(is_file($this->_rootpath."/ADNBP/logic/api/".$service.".php"))
+		            include_once $this->_rootpath."/ADNBP/logic/api/".$service.".php";
+		        else {
+		             $error = 404;
+		             $errorMsg= 'Unknow file '.$service.' in bucket '.$this->getConf("ApiPath");
+		        }
+            	
+            } else {
+		        if(is_file($this->_webapp."/logic/api/".$service.".php"))
+		            include_once $this->_webapp."/logic/api/".$service.".php";
+		        elseif(is_file($this->_rootpath."/ADNBP/logic/api/".$service.".php"))
+		            include_once $this->_rootpath."/ADNBP/logic/api/".$service.".php";
+		       else {
+		             $error = 404;
+		             $errorMsg= 'Unknow file '.$service.' in '.$this->_url;
+		        }
             }
             break;
         }
 
-        // Output header
-        switch ($error) {
-            case 405:
-                header("HTTP/1.0 405 Method Not Allowed");
-                $errorMsg= 'Method '.$this->getAPIMethod().' is not supported';
-                
-                break;
-            case 400:
-                header("HTTP/1.0 400 Bad Request");
-                break;  
+        // Compatibility until migration to $api
+        $api->error = $error;
+		$api->errorMsg = $errorMsg;
+		$api->contentTypeReturn = $returnMethod;
 
-            case 401:
-                header("HTTP/1.0 401 Unauthorized");
-                break;  
-            case 404:
-                header("HTTP/1.0 404 Not Found");
-                if(!strlen($errorMsg))
-                    $errorMsg= 'Unknow '.$service.' in '.$this->_url;
-                break;
-            case 503:
-                header("HTTP/1.0 503 Service Unavailable");
-                break;
-            default:
-                break;
+        $ret = array();
+		$ret['header'] = $api->getHeader();
+        $ret['status'] = $api->getReturnCode();
+        $ret['method'] = $api->method;
+        $ret['success'] = ($api->error)?false:true;
+		$ret['ip']=$this->_ip;
+        $ret['url']=$_SERVER['REQUEST_URI'];
+        $ret['user_agent']=$this->userAgent;
+		$ret['params']=json_encode($api->formParams);
+        if($api->error) {
+                $ret['error']['message']=$api->errorMsg;
         }
-        switch ($okRet) {
-            case 201:
-                header("HTTP/1.0 201 Created");
-                break;
-            default:
-                break;
+		
+		// Send Logs APILog
+		if($api->service != 'logs' && strlen($this->getConf("ApiLogsURL"))) {
+				
+			// $logParams['test_mode'] = 'on';
+			$logParams['title'] = 'API '.$this->_url;
+			$logParams['text'] = json_encode($ret);
+			$urlLog = $this->getConf("ApiLogsURL").'/Logs/';
+			$urlLog .= ($api->error)?'Error':'Sucess';
+			
+			$retLog = json_decode($this->getCloudServiceResponse($urlLog,$logParams));
+			
+			
+			if(is_object($retLog) && isset($retLog->success) && $retLog->success) $ret['log_saved'] = true;
+			else {
+				$ret['log_saved'] = false;
+				$ret['log_message'] = json_encode($retLog);
+			}
 		}
-        
-        // Output Value
-        switch ($returnMethod) {
+
+        if(is_array($value)) $ret = array_merge($ret,$value);
+		$api->sendHeaders();
+		// Output Value
+        switch ($api->contentTypeReturn) {
             case 'JSON':
-                header("Content-type: application/json");
-                if(!$error) $value['success'] = true;
-                else {
-                    $value['success'] = false;
-                    $value['status'] = ($error)?$error:$okRet;
-                    $value['error']=array('message'=>$errorMsg);
-                }
-                die(json_encode($value));                   
+                die(json_encode($ret));                   
                 break;
             
             default:
-                header("Content-type: text/html");
-                if($error) $value = $errorMsg;
+                if($api->error) $value = $api->errorMsg;
                 die($value);
                 break;
         }

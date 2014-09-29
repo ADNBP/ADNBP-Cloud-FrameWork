@@ -40,6 +40,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
         var $_lastRes=false;                                        // Holds the last result set
         var $_lastQuery='';                                        // Holds the last result set
         var $_lastInsertId='';                                        // Holds the last result set
+        var $_affectedRows=null;
         var $result;                                                // Holds the MySQL query result
         var $records;                                                // Holds the total number of records returned
         var $affected;                                        // Holds the total number of records affected
@@ -172,9 +173,12 @@ if (!defined ("_MYSQLI_CLASS_") ) {
             } else {
                 $ret=array();
 				
+				
 				if($this->_debug) _print($_q);
 				
                 if( ($this->_lastRes = $this->_db->query($_q)) ) {
+                	$this->_affectedRows = $this->_db->affected_rows;
+					
                     while ($fila = $this->_lastRes->fetch_array( MYSQL_ASSOC)) $ret[] = $fila;
                     if(is_object($this->_lastRes))
                        $this->_lastRes->close();
@@ -197,6 +201,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                 if( ($this->_lastRes = $this->_db->query($_q)) ) {
                     $_ok=true;
                     $this->_lastInsertId = $this->_db->insert_id;
+                    $this->_affectedRows = $this->_db->affected_rows;
                     if(is_object($this->_lastRes)) {
                         $this->_lastRes->close();
                     }
@@ -321,6 +326,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 		function setDB($db) {$this->_dbdatabase = $db;}
         function getQuery() {return( $this->_lastQuery);}
         function getInsertId() {return( $this->_lastInsertId);}
+        function getAffectedRows() {return( $this->_affectedRows);}
         
         
         /*
@@ -520,7 +526,8 @@ if (!defined ("_MYSQLI_CLASS_") ) {
             if(strpos($table, "Rel_") !== false) 
                $_relTable = true;
             
-            if($action == 'insert' || $action == "replace" || $action == 'insertRecord' || $action == "replaceRecord" || $action == "ggetRecordsForEdit" ||  $action == "updateRecord" || $action =="getFieldTypes")
+            if($action == 'insert' || $action == "replace" || $action == 'update' || $action == 'delete' 
+            || $action == 'insertRecord' || $action == "replaceRecord"  ||  $action == "updateRecord" || $action =="getFieldTypes")
                 $table ="CF_".$table;
 
             // Field Types of the table
@@ -584,6 +591,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                     $tables[$table]['updateWhereFields'] .= $field."=".(($fieldTypes[$field]['isNum'])?"%s":"'%s'");
                     $tables[$table]['updateWhereValues'][] = $data[$field];
                 }
+				
                 
                 if($data[$field] !='%') {
                     if($data[$field]=="_empty_") {
@@ -773,12 +781,23 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                            return($_ret);
                         }
                         break;
+						
                     case 'updateRecord':
-                        $_q = "UPDATE $key SET ".$tables[$table]['updateFields']." WHERE ".$tables[$table]['updateWhereFields'];
-						if(!is_array($value['updateWhereValues'])) $this->setError("No UPDATE condition in $_q");
+                    case 'update':
+
+	                     $_q = "UPDATE $key SET ".$tables[$table]['updateFields']." WHERE ".$tables[$table]['updateWhereFields'];
+						if(!strlen($tables[$table]['updateWhereFields']) || !is_array($value['updateWhereValues']))  $this->setError("No UPDATE condition in $_q");
+						else  $this->command($_q,array_merge($value['values'],$value['updateWhereValues']));
+						if($this->error()) return false;
+                        
+                        break;
+                    case 'deleteRecord':
+                    case 'delete':
+	                    $_q = "DELETE FROM $key  WHERE ". $tables[$table]['selectWhere'];
+						if(!strlen($tables[$table]['selectWhere']) || !is_array($tables[$table]['values']))  $this->setError("No DELETE condition in $_q");
 						else {
-	                        $this->command($_q,array_merge($value['values'],$value['updateWhereValues']));
-                        }
+	                        $this->command($_q,array_merge($value['values']));
+						}
 						if($this->error()) return false;
                         
                         break;
