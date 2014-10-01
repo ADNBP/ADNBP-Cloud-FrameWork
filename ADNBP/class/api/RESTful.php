@@ -57,7 +57,6 @@ if (!defined ("_RESTfull_CLASS_") ) {
 		    if (strpos(strtoupper($methods), $this->method)===false) {
 		    	$this->error = 405;
 				$this->errorMsg = ($msg=='')?'Method '.$this->method.' is not supported':$msg;
-				$this->header('');
 		    }
 		    return($this->error === 0);	
 		}
