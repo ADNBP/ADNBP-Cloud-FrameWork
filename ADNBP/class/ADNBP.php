@@ -653,6 +653,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
 		 */
 		 function applyTranslations($str,$lang) {
 		 	if(!strlen($lang)) return($str);
+			$str = trim($str); // erase no desired chars
 			
 		 	unset($matchs);
             $_expr = "((?!}}).)*";
