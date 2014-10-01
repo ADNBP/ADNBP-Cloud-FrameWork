@@ -114,20 +114,26 @@
 		
 		// Send Logs APILog
 		if($api->service != 'logs' && strlen($this->getConf("ApiLogsURL"))) {
+			
+			if(!isset($_REQUEST['nolog']) && !isset($_REQUEST['test'])) {
+					
+				// $logParams['test_mode'] = 'on';
+				$logParams['title'] = 'API '.$this->_url;
+				$logParams['text'] = json_encode($ret);
+				$urlLog = $this->getConf("ApiLogsURL").'/Logs/';
+				$urlLog .= ($api->error)?'Error':'Sucess';
 				
-			// $logParams['test_mode'] = 'on';
-			$logParams['title'] = 'API '.$this->_url;
-			$logParams['text'] = json_encode($ret);
-			$urlLog = $this->getConf("ApiLogsURL").'/Logs/';
-			$urlLog .= ($api->error)?'Error':'Sucess';
-			
-			$retLog = json_decode($this->getCloudServiceResponse($urlLog,$logParams));
-			
-			
-			if(is_object($retLog) && isset($retLog->success) && $retLog->success) $ret['log_saved'] = true;
-			else {
-				$ret['log_saved'] = false;
-				$ret['log_message'] = json_encode($retLog);
+				$retLog = json_decode($this->getCloudServiceResponse($urlLog,$logParams));
+				
+				if(is_object($retLog) && isset($retLog->success) && $retLog->success) $ret['log_saved'] = true;
+				else {
+					$ret['log_saved'] = false;
+					$ret['log_message'] = json_encode($retLog);
+				}
+			} else {
+					$ret['log_ignored'] = true;
+				    if(isset($_REQUEST['test']))  $ret['log_message'] = 'test form var has been passed';
+ 
 			}
 		}
 
