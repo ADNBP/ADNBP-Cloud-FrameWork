@@ -134,6 +134,14 @@ if (!defined ("_ADNBP_CLASS_") ) {
 			// load bucket config values. Use this to keep safely passwords etc.. in a external bucket only accesible by admin
 			if(strlen($this->getConf('ConfigPath')) && is_file($this->getConf('ConfigPath')."/config.php"))   
 			    include_once($this->getConf('ConfigPath')."/config.php");   
+			
+			// For development purpose find local_config.php. Don't forget to add **/local_config.php in .gitignore
+			if($_SERVER['SERVER_NAME']=='localhost') {
+	            if(is_file($this->_rootpath."/local_config.php"))
+	               include_once($this->_rootpath."/local_config.php");				
+	            if(is_file($this->_webapp."/local_config.php"))
+	               include_once($this->_webapp."/local_config.php");				
+			}
             
 	  // OTHER VARS
 	        // CloudService API. If not defined it will point to ADNBP external Serivice
