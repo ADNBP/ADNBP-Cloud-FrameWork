@@ -72,6 +72,8 @@ if (!defined ("_ADNBP_CLASS_") ) {
         var $_webapp = '';
         var $_rootpath = '';
         var $_timeZone = 'Europe/Madrid';
+		var $error = false;
+		var $errorMsg = '';
         /**
         * Constructor
         */
@@ -731,6 +733,14 @@ if (!defined ("_ADNBP_CLASS_") ) {
                       return(false);
                       break;
               }
+          }
+
+          /*
+           *  Error Handle
+           */
+          function setError($errorMsg) {
+              $this->error = true;
+			  $this->errorMsg = $errorMsg;
           }
     }
 }
