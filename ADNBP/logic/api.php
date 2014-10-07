@@ -115,8 +115,7 @@
 		// Send Logs APILog
 		if($api->service != 'logs' && strlen($this->getConf("ApiLogsURL"))) {
 			
-			if(!isset($_REQUEST['nolog']) && !isset($_REQUEST['test'])) {
-					
+			if(isset($_REQUEST['addLog']) && !isset($_REQUEST['test'])) {
 				// $logParams['test_mode'] = 'on';
 				$logParams['title'] = 'API '.$this->_url;
 				$logParams['text'] = json_encode($ret);
@@ -131,9 +130,10 @@
 					$ret['log_message'] = json_encode($retLog);
 				}
 			} else {
+				if(isset($_REQUEST['addLog'])) {
 					$ret['log_ignored'] = true;
-				    if(isset($_REQUEST['test']))  $ret['log_message'] = 'test form var has been passed';
- 
+				    $ret['log_message'] = 'test form-var has been passed';
+				}
 			}
 		}
 
