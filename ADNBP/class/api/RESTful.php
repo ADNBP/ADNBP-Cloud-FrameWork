@@ -85,6 +85,10 @@ if (!defined ("_RESTfull_CLASS_") ) {
 					header("Content-type: application/json");
 					
 					break;
+				case 'TEXT':
+					header("Content-type: text/plain");
+					
+					break;
 				default:
 					header("Content-type: text/html");
 					break;
