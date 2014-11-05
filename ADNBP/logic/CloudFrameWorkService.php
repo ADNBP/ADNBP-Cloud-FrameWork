@@ -5,7 +5,7 @@
 	$apiMethod = $this->getAPIMethod(); // GET , PUT, UPDATE, DELETE, COPY...
     
 // This service has to be implemented in your <document_root>/logic/CloudFrameWorkService.php
-    list($foo,$script,$service,$params) = split('/',$this->_url,4);
+    list($foo,$script,$service,$params) = explode('/',$this->_url,4);
     switch ($service) {
         case 'keepSession':
             // This method will never exist because it is implemented in ADNBP.class

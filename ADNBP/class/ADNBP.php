@@ -70,6 +70,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
         var $_version = "2014Sep.27";
         var $_defaultCFURL="https://cloud.adnbp.com/api";
         var $_webapp = '';
+        var $_webappURL = '';
         var $_rootpath = '';
         var $_timeZone = 'Europe/Madrid';
 		var $error = false;
@@ -104,7 +105,10 @@ if (!defined ("_ADNBP_CLASS_") ) {
 
             // Paths
             // note: in Google Apps Engine PHP doen't work $_SERVER: PATH_INFO or PHP_SELF
-            list($this->_url,$this->_urlParams) = explode('?',$_SERVER['REQUEST_URI'],2);
+            if(strpos($_SERVER['REQUEST_URI'], '?') !== null)
+                list($this->_url,$this->_urlParams) = explode('?',$_SERVER['REQUEST_URI'],2);
+            else $this->_url = $_SERVER['REQUEST_URI'];
+            
             $this->_scriptPath = $_SERVER['SCRIPT_NAME'];
             $this->_ip = $_SERVER['REMOTE_ADDR'];
             $this->_userAgent = $_SERVER['HTTP_USER_AGENT'];
@@ -162,10 +166,15 @@ if (!defined ("_ADNBP_CLASS_") ) {
         function version() {return($this->_version);}
         function getRootPath() {return($this->_rootpath);}
         function getWebAppPath() {return($this->_webapp);}
+        function getWebAppURL() {return($this->_webappURL);}
+
         function setWebApp($dir) {
             if(!is_dir($this->_rootpath.$dir))
                die($dir." doesn't exist. The path has to begin with /");
-            else $this->_webapp=$this->_rootpath.$dir;
+            else {
+                $this->_webapp=$this->_rootpath.$dir;
+                $this->_webappURL=$dir;
+            }
         }
 		
 	    function _checkParameter(&$_data,$var,$saveInSession=false,$resetIfEmpty=false,$method='request') {
@@ -402,7 +411,6 @@ if (!defined ("_ADNBP_CLASS_") ) {
             list($foo,$this->_parseDic) = explode("adnbp_dic_languages=",$this->_parseDic,2);
             list($langs,$this->_parseDic) = explode("adnbp_dic_var=",$this->_parseDic,2);
             if(strlen($langs)) $lang = explode(",",$this->_parseDic,2);
-            for($i=0,$tr=count($translates);$i<$tr;$i++);
             
             do {
                 list($content,$this->_parseDic) = explode("adnbp_dic_var=",$this->_parseDic,2);

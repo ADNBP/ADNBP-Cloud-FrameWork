@@ -756,7 +756,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 					 	   $_ret['totRows'] = $nrows[0]['TOT'];
 						 
 						   
-                           if($action == "getRecordsForEdit") $this->_limit = 50;  
+                           // if($action == "getRecordsForEdit") $this->_limit = 50;  
 						   
 					 	   $_ret['totPages'] = round($nrows[0]['TOT']/$this->_limit,0);
 					 	   if($_ret['totPages']*$this->_limit < $nrows[0]['TOT']) $_ret['totPages']++;

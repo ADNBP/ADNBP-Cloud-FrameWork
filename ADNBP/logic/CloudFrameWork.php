@@ -1,7 +1,7 @@
 <?php
 $this->urlRedirect("/CloudFrameWork","/CloudFrameWork/home");
 
-if(!strlen($this->getSessionVar("version")) || isset($_GET[nocache])) {
+if(!strlen($this->getSessionVar("version")) || isset($_GET['nocache'])) {
     $this->setSessionVar("version",$this->getCloudServiceResponse("version/".$this->version));
 }
 
@@ -13,7 +13,7 @@ $memcache = new Memcache;
 switch ($service) {
 	case 'home':
         $pageContent = $memcache->get("CFHome");
-        if(!strlen($pageContent) || isset($_GET[nocache])) {
+        if(!strlen($pageContent) || isset($_GET['nocache'])) {
            $pageContent = $this->getCloudServiceResponse("templates/intro");
            $memcache->set("CFHome","$pageContent");
         }
@@ -22,7 +22,7 @@ switch ($service) {
     case 'GeoLocation':
        $this->setConf("pageCode","GeoLocation");
        $pageContent = $memcache->get("CFGeoLocation");
-       if(!strlen($pageContent) || isset($_GET[nocache])) {
+       if(!strlen($pageContent) || isset($_GET['nocache'])) {
            $pageContent = $this->getCloudServiceResponse("templates/GeoLocation");
            $memcache->set("CFGeoLocation","$pageContent");
        }
@@ -39,7 +39,7 @@ switch ($service) {
         $db->close();
         $this->setConf("pageCode","CloudSQL");
         $pageContent = $memcache->get("CFCloudSQL");
-        if(!strlen($pageContent) || isset($_GET[nocache])) {
+        if(!strlen($pageContent) || isset($_GET['nocache'])) {
            $pageContent = $this->getCloudServiceResponse("templates/CloudSQL");
            $memcache->set("CFCloudSQL","$pageContent");
         }
@@ -48,7 +48,7 @@ switch ($service) {
     case 'Email':
        $this->setConf("pageCode","Email");
        $pageContent = $memcache->get("CFEmail");
-       if(!strlen($pageContent) || isset($_GET[nocache])) {
+       if(!strlen($pageContent) || isset($_GET['nocache'])) {
            $pageContent = $this->getCloudServiceResponse("templates/Email");
            $memcache->set("CFEmail","$pageContent");
        }
@@ -67,7 +67,7 @@ switch ($service) {
     case 'SMS':
        $this->setConf("pageCode","SMS");
        $pageContent = $memcache->get("CFSMS");
-       if(!strlen($pageContent) || isset($_GET[nocache])) {
+       if(!strlen($pageContent) || isset($_GET['nocache'])) {
            $pageContent = $this->getCloudServiceResponse("templates/SMS");
            $memcache->set("CFSMS","$pageContent");
        }
@@ -83,7 +83,7 @@ switch ($service) {
     case 'File':
        $this->setConf("pageCode","File");
        $pageContent = $memcache->get("CFFile");
-       if(!strlen($pageContent) || isset($_GET[nocache])) {
+       if(!strlen($pageContent) || isset($_GET['nocache'])) {
            $pageContent = $this->getCloudServiceResponse("templates/File");
            $memcache->set("CFFile","$pageContent");
        }
@@ -96,7 +96,7 @@ switch ($service) {
     case 'DataStore':
        $this->setConf("pageCode","DataStore");
        $pageContent = $memcache->get("CFDataStore");
-       if(!strlen($pageContent) || isset($_GET[nocache])) {
+       if(!strlen($pageContent) || isset($_GET['nocache'])) {
            $pageContent = $this->getCloudServiceResponse("templates/DataStore");
            $memcache->set("CFDataStore","$pageContent");
        }
@@ -111,7 +111,7 @@ switch ($service) {
        		$pageContent = $memcache->get("CFChatv2");
 	   else
        		$pageContent = $memcache->get("CFChat");
-       if(!strlen($pageContent) || isset($_GET[nocache])) {
+       if(!strlen($pageContent) || isset($_GET['nocache'])) {
        	   if(isset($_GET['v2'])) {
 		      $pageContent = $this->getCloudServiceResponse("templates/Chatv2");
 	           $memcache->set("CFChatv2","$pageContent");
@@ -129,7 +129,7 @@ switch ($service) {
        // Read template        
        $this->setConf("pageCode","Translate");
        $pageContent = $memcache->get("CFTranslate");
-       if(!strlen($pageContent) || isset($_GET[nocache])) {
+       if(!strlen($pageContent) || isset($_GET['nocache'])) {
            $pageContent = $this->getCloudServiceResponse("templates/Translate");
            $memcache->set("CFTranslate","$pageContent");
        }
@@ -172,7 +172,22 @@ switch ($service) {
 		}
 		
             				
-       break;  	default:
+       break;  	
+       
+    case 'Excel':
+       $this->setConf("pageCode","Excel");
+       $pageContent = $memcache->get("CFExcel");
+       if(!strlen($pageContent) || isset($_GET['nocache'])) {
+           $pageContent = $this->getCloudServiceResponse("templates/Excel");
+           $memcache->set("CFExcel","$pageContent");
+       }
+        include_once($this->_rootpath."/ADNBP/class/excel/logic/Excel.php");
+        $pageContent =  str_replace("{source}", htmlentities(file_get_contents($this->_rootpath."/ADNBP/class/excel/logic/Excel.php")),$pageContent);
+        $pageContent =  str_replace("{data}","Header1,Header2,Header3\nCell11,Cell12,Cell13\nCell21,Cell22,Cell23\nCell31,Cell32,Cell33",$pageContent);
+      
+       break;
+       
+       default:
 		 $pageContent = $this->getCloudServiceResponse("templates/".$service);
 		break;
 }
