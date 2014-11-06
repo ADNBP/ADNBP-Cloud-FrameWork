@@ -69,28 +69,34 @@
             die();
             break;
         default:
-			
-            // This allow to create own services in each WebServer
-            if(strlen($this->getConf("ApiPath"))) {
-		        if(is_file($this->getConf("ApiPath").'/'.$service.".php"))
-		            include_once $this->getConf("ApiPath").'/'.$service.".php";
-		        elseif(is_file($this->_rootpath."/ADNBP/logic/api/".$service.".php"))
-		            include_once $this->_rootpath."/ADNBP/logic/api/".$service.".php";
-		        else {
-		             $error = 404;
-		             $errorMsg= 'Unknow file '.$service.' in bucket '.$this->getConf("ApiPath");
-		        }
-            	
+			// This allows to create your own services in each WebServer
+            $__includePath ='';
+            
+            // If ApiPath is defined, normally pointing into a bucket..
+            if(strlen($this->getConf("ApiPath"))) 
+                if(is_file($this->getConf("ApiPath").'/'.$service.".php"))
+                    $__includePath = $this->getConf("ApiPath").'/'.$service.".php";
+                elseif(is_file($this->_rootpath."/ADNBP/logic/api/".$service.".php"))
+                    $__includePath = $this->_rootpath."/ADNBP/logic/api/".$service.".php";
+            
+            //  If there is no path found lets try under logic/api
+            if($__includePath=='')
+               if(is_file($this->_webapp."/logic/api/".$service.".php"))
+                    $__includePath = $this->_webapp."/logic/api/".$service.".php";
+               elseif(is_file($this->_rootpath."/ADNBP/logic/api/".$service.".php"))
+                    $__includePath =  $this->_rootpath."/ADNBP/logic/api/".$service.".php";
+            
+            //Now include the file or show the error
+            if(strlen($__includePath)) {
+                include_once $__includePath;
             } else {
-		        if(is_file($this->_webapp."/logic/api/".$service.".php"))
-		            include_once $this->_webapp."/logic/api/".$service.".php";
-		        elseif(is_file($this->_rootpath."/ADNBP/logic/api/".$service.".php"))
-		            include_once $this->_rootpath."/ADNBP/logic/api/".$service.".php";
-		       else {
-		             $error = 404;
-		             $errorMsg= 'Unknow file '.$service.' in '.$this->_url;
-		        }
+                $error = 404;
+                if(strlen($this->getConf("ApiPath")))
+                     $errorMsg= 'Unknow file '.$service.' in bucket '.$this->getConf("ApiPath");
+                else
+                     $errorMsg= 'Unknow file '.$service.' in '.$this->_url;
             }
+ 
             break;
         }
 

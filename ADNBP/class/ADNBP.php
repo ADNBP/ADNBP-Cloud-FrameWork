@@ -56,6 +56,8 @@ if (!defined ("_ADNBP_CLASS_") ) {
         var $_lang = "es";
         var $_parseDic = "";  // String to parse a dictionary
         var $_dic = array();
+        var $_dics = array();
+        var $_translations = array();
         var $_pageContent = array();
         var $_charset = "UTF-8";
         var $_url = ''; 
@@ -67,7 +69,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
         var $_userLanguages = array();
         var $_basename = '';
         var $_isAuth = false;
-        var $_version = "2014Sep.27";
+        var $_version = "2014Nov.06";
         var $_defaultCFURL="https://cloud.adnbp.com/api";
         var $_webapp = '';
         var $_webappURL = '';
@@ -425,6 +427,8 @@ if (!defined ("_ADNBP_CLASS_") ) {
             } while(strlen($this->_parseDic));
         }
         
+        
+        // Dictionaries in method 1.
         function setDicContent($key,$content,$lang="") {
             if(!strlen($lang)) $lang = $this->_lang;
             $this->_dic[$key][$lang] = $content;
@@ -437,6 +441,36 @@ if (!defined ("_ADNBP_CLASS_") ) {
             if(!strlen($lang)) $lang = $this->_lang; 
             return((strlen($this->_dic[$key][$lang]))?str_replace("\n","<br />",htmlentities($this->_dic[$key][$lang],ENT_COMPAT | ENT_HTML401,$this->_charset)):htmlentities($key));
         }
+        
+        // Dictionaries in method 2
+        function t($dic,$key,$raw=false,$lang='') {
+            str_replace('..', '', $dic); // Security issue to avoid includes ../
+            str_replace('/', '', $dic); // Security issue to avoid includes ../
+            if(!strlen($lang)) $lang = $this->_lang;
+                                    
+            // Load dictionary repository
+            if(!isset($this->dics[$dic]) || isset($_GET['nocache'])) {
+                $this->_translations[$dic] = $this->readTranslationKeys($dic,$lang);
+                $this->dics[$dic] = $this->_translations[$dic]!==null;
+            }
+            $ret = isset($this->_translations[$dic][$key])?$this->_translations[$dic][$key]:$dic.'-'.$key;
+            return(($raw)?$ret:str_replace("\n","<br />",htmlentities($ret,ENT_COMPAT | ENT_HTML401,$this->_charset)));
+        }
+        
+        function readTranslationKeys($dic,$lang) {
+            
+            if(strlen($this->getConf("LocalizePath"))) {
+                if(is_file($this->getConf("LocalizePath").'/'.$lang.'_'.$dic.'.php')) {
+                    return include_once $this->getConf("LocalizePath").'/'.$lang.'_'.$dic.'.php';
+                }
+            } else {
+                if(is_file($this->webapp.'/localize/'.$lang.'_'.$dic.'.php')) 
+                    return include_once $this->webapp.'/localize/'.$lang.'_'.$dic.'.php';
+            }
+            return(array());
+            
+        }
+                
 		
 		function setPageContent($key,$content) { $this->_pageContent[$key] = $content;}
 		function addPageContent($key,$content) { $this->_pageContent[$key] .= $content;}
@@ -572,20 +606,28 @@ if (!defined ("_ADNBP_CLASS_") ) {
             }
             
             if(!$this->getConf("notemplate")) {
-                if(!$this->getConf("template")) {
-                    if(is_file("./templates/".$this->_basename))
-                        include("./templates/".$this->_basename);
-                    elseif(is_file($this->_rootpath."/ADNBP/templates/".$this->_basename))
-                        include($this->_rootpath."/ADNBP/templates/".$this->_basename);
-                    elseif ($this->getConf("logic")=="nologic") {
-                        
-                    }
+                // Content of template is stored in a var 'templateVarContent'
+                if(strlen($this->getConf("templateVarContent"))) {
+                    $var = $this->getConf("templateVarContent");  // exist a var with the content of the template
+                    echo $$var;
+                    
+                // Content of template is stored in a file defined in template   
                 } else {
-                    if(is_file($this->_webapp."/templates/".$this->getConf("template")))
-                        include($this->_webapp."/templates/".$this->getConf("template"));
-                    elseif(is_file($this->_rootpath."/ADNBP/templates/".$this->getConf("template")))
-                        include($this->_rootpath."/ADNBP/templates/".$this->getConf("template"));
-                    else echo "No template found: ".$this->getConf("template");
+                    if(!$this->getConf("template")) {
+                        if(is_file("./templates/".$this->_basename))
+                            include("./templates/".$this->_basename);
+                        elseif(is_file($this->_rootpath."/ADNBP/templates/".$this->_basename))
+                            include($this->_rootpath."/ADNBP/templates/".$this->_basename);
+                        elseif ($this->getConf("logic")=="nologic") {
+                            
+                        }
+                    } else {
+                        if(is_file($this->_webapp."/templates/".$this->getConf("template")))
+                            include($this->_webapp."/templates/".$this->getConf("template"));
+                        elseif(is_file($this->_rootpath."/ADNBP/templates/".$this->getConf("template")))
+                            include($this->_rootpath."/ADNBP/templates/".$this->getConf("template"));
+                        else echo "No template found: ".$this->getConf("template");
+                    }
                 }
             } 
             
