@@ -193,5 +193,11 @@ switch ($service) {
 }
 
 
+// I put in a var the conten of the template instead to use a file.
+$templateContent = '<p>Current Version:'.$this->getConf("setCloudFrameWorkVersion").' '
+                    .$this->getSessionVar("version").'  | CloudServiceUrl conf var: '
+                    .$this->getConf("CloudServiceUrl").' </p>'
+                    .$pageContent;
+$this->setConf('templateVarContent','templateContent');                 
 
 ?>
