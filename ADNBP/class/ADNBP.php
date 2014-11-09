@@ -449,26 +449,41 @@ if (!defined ("_ADNBP_CLASS_") ) {
             if(!strlen($lang)) $lang = $this->_lang;
                                     
             // Load dictionary repository
-            if(!isset($this->dics[$dic]) || isset($_GET['nocache'])) {
+            if(!isset($this->dics[$dic])) {
                 $this->_translations[$dic] = $this->readTranslationKeys($dic,$lang);
-                $this->dics[$dic] = $this->_translations[$dic]!==null;
+                $this->dics[$dic] = true;
             }
             $ret = isset($this->_translations[$dic][$key])?$this->_translations[$dic][$key]:$dic.'-'.$key;
             return(($raw)?$ret:str_replace("\n","<br />",htmlentities($ret,ENT_COMPAT | ENT_HTML401,$this->_charset)));
         }
         
         function readTranslationKeys($dic,$lang) {
+               
+            // Security control because we write local files
+            $patron = '/[^a-zA-Z0-9_-]+/';
+            $filename = '/'.preg_replace($patron,'',$lang).'_'.preg_replace($patron,'',$dic).'.php';
             
-            if(strlen($this->getConf("LocalizePath"))) {
-                if(is_file($this->getConf("LocalizePath").'/'.$lang.'_'.$dic.'.php')) {
-                    return include_once $this->getConf("LocalizePath").'/'.$lang.'_'.$dic.'.php';
+            // If I have defined a specific Path out of the webapp I can write from external service.
+            if(strlen($this->getConf("LocalizePath")) && is_dir($this->getConf("LocalizePath"))) {
+                
+                // Try to get the dictionary dinamically if ApiDictionaryURL is defined and to write locally
+                if(strlen($this->getConf("ApiDictionaryURL")) && 
+                (!is_file($this->getConf("LocalizePath").$filename) || isset($_GET['nocache'])) ) {
+                    $content = $this->getCloudServiceResponse($this->getConf("ApiDictionaryURL")."/$dic/$lang?format=yii");
+                    if(!empty($content)) {
+                        file_put_contents($this->getConf("LocalizePath").$filename, $content);
+                    }
+                }
+            
+                // Read the dictionary if the file exist
+                if(is_file($this->getConf("LocalizePath").$filename)) {
+                    return include_once $this->getConf("LocalizePath").$filename;
                 }
             } else {
-                if(is_file($this->webapp.'/localize/'.$lang.'_'.$dic.'.php')) 
-                    return include_once $this->webapp.'/localize/'.$lang.'_'.$dic.'.php';
+                if(is_file($this->webapp.'/localize'.$filename)) 
+                    return include_once $this->webapp.'/localize'.$filename;
             }
             return(array());
-            
         }
                 
 		
