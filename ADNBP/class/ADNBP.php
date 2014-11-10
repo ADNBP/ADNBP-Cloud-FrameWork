@@ -53,7 +53,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
         var $_conf = array();
         var $_menu = array();
         var $_sessionVarsFromGet = array();
-        var $_lang = "es";
+        var $_lang = "en";
         var $_parseDic = "";  // String to parse a dictionary
         var $_dic = array();
         var $_dics = array();
@@ -157,10 +157,19 @@ if (!defined ("_ADNBP_CLASS_") ) {
             
             // analyze Default Lang and its configuration
             $this->_userLanguages = explode(',',$_SERVER['HTTP_ACCEPT_LANGUAGE']);
+			
+			if(strpos($this->_url, '/CloudFrameWork') !== false  || strpos($this->_url, '/api') !== false )  $this->setConf("setLanguageByPath",false);
+			
             if($this->getConf("setLanguageByPath")) {
                 $elems = explode("/",$this->_url);
                 if(isset($elems[1]) && strlen($elems[1]) && isset($elems[2]) && strlen($elems[2])) $this->_lang = $elems[1];
-            } elseif( strlen($_GET['adnbplang'])) $this->_lang = $_GET['adnbplang'];
+				
+            } else{
+            	
+            	if( strlen($_GET['adnbplang'])) $this->setSessionVar('adnbplang', $_GET['adnbplang']);
+				if(strlen($this->getSessionVar('adnbplang')))
+            		$this->_lang =$this->getSessionVar('adnbplang');
+			}
             $this->setConf("lang",$this->_lang);
             
         }
@@ -409,12 +418,17 @@ if (!defined ("_ADNBP_CLASS_") ) {
         */
         function _parseDic() {
             $_ok=true;
-            list($foo,$this->_parseDic) = explode("ADNBP_DIC_FILE",$this->_parseDic,2);
-            list($foo,$this->_parseDic) = explode("adnbp_dic_languages=",$this->_parseDic,2);
+			if(strpos($this->_parseDic, "ADNBP_DIC_FILE")!==null)
+            	list($foo,$this->_parseDic) = explode("ADNBP_DIC_FILE",$this->_parseDic,2);
+			
+			if(strpos($this->_parseDic, "adnbp_dic_languages")!==null)
+            	list($foo,$this->_parseDic) = explode("adnbp_dic_languages=",$this->_parseDic,2);
+			
             list($langs,$this->_parseDic) = explode("adnbp_dic_var=",$this->_parseDic,2);
             if(strlen($langs)) $lang = explode(",",$this->_parseDic,2);
             
-            do {
+			if( strpos($this->_parseDic, "adnbp_dic_var=")!==null) do {
+				$content='';
                 list($content,$this->_parseDic) = explode("adnbp_dic_var=",$this->_parseDic,2);
                 $translates = explode("<=>",$content); 
                 $var = trim($translates[0]);
@@ -424,7 +438,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
                 }
                 // if(!strlen($this->getDicContent($var))) $this->setDicContent($var,$translate);  // put a default value for current lang
                 
-            } while(strlen($this->_parseDic));
+            } while(strlen($this->_parseDic) && strpos($this->_parseDic, "adnbp_dic_var=")!==null);
         }
         
         
@@ -468,7 +482,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
                 
                 // Try to get the dictionary dinamically if ApiDictionaryURL is defined and to write locally
                 if(strlen($this->getConf("ApiDictionaryURL")) && 
-                (!is_file($this->getConf("LocalizePath").$filename) || isset($_GET['nocache'])) ) {
+                (!is_file($this->getConf("LocalizePath").$filename) || isset($_GET['reloadDictionaries'])) ) {
                     $content = $this->getCloudServiceResponse($this->getConf("ApiDictionaryURL")."/$dic/$lang?format=yii");
                     if(!empty($content)) {
                         file_put_contents($this->getConf("LocalizePath").$filename, $content);
@@ -503,6 +517,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
 			//if(strpos($this->_url, '/CloudFrameWork') !== false  || $this->_basename == 'api' || strpos($this->_url, '/api/') !== false ) {
 			if(strpos($this->_url, '/CloudFrameWork') !== false  || strpos($this->_url, '/api') !== false ) {
                 
+				$this->setConf("setLanguageByPath",f);
                 list($foo,$this->_basename,$foo) = explode('/',$this->_url,3);
                 $this->_basename.=".php"; // add .php extension to the basename in order to find logic and templates.
 
@@ -534,7 +549,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
 					 	 $this->_menu[$i]['path'] = str_replace("{*}",'',$this->_menu[$i]['path']);
 					 	 if(strpos($this->_url, $this->_menu[$i]['path']) === 0)  $_found = true;
 
-					 } else if($this->_menu[$i]['path'] ==  $this->_url || $this->_menu[$i][$this->getConf("lang")."_path"] == $this->_url) 
+					 } else if($this->_menu[$i]['path'] ==  $this->_url || (!empty($this->_menu[$i][$this->getConf("lang")."_path"]) && $this->_menu[$i][$this->getConf("lang")."_path"] == $this->_url)) 
 	                     $_found = true;
 					 
 					 if($_found) foreach ($this->_menu[$i] as $key => $value) {

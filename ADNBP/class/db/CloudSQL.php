@@ -484,7 +484,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                 } else {
                     // In CloudFramWorkd all fields has to have the following structure: (tableName-no-ending-with-s)_fieldname.
                     // if there is no _ we assum it is a table
-                    list($tmpTable,$foo) = split("_",$allFields[0],2);
+                    list($tmpTable,$foo) = explode("_",$allFields[0],2);
                     if(!strlen($foo) ) {
                         // if the first field have no _ then it will be the table and no more fields are allowed
                         if(count($allFields) == 1) $table = $tmpTable;
