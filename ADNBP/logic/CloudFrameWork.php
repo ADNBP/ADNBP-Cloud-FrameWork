@@ -5,7 +5,7 @@ if(!strlen($this->getSessionVar("version")) || isset($_GET['nocache'])) {
     $this->setSessionVar("version",$this->getCloudServiceResponse("version/".$this->version));
 }
 
-list($foo,$script,$service,$params) = split('/',$this->_url,4);
+list($foo,$script,$service,$params) = explode('/',$this->_url,4);
 
 
 $memcache = new Memcache;
