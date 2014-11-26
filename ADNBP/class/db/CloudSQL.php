@@ -430,7 +430,6 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 			$ret = str_ireplace("from  ", '', $ret);
 			$ret = str_ireplace("replace  ", '', $ret);
 			$ret = str_ireplace("truncate  ", '', $ret);
-			$ret = str_ireplace("truncate  ", '', $ret);
 			return($ret);
 						
 		}
