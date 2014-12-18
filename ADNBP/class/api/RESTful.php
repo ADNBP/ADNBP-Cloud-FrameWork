@@ -76,6 +76,10 @@ if (!defined ("_RESTfull_CLASS_") ) {
 			}
 		    return($this->error === 0);	
 		}	
+
+		function addHeader($key,$value) {
+			$this->header[$key] = $value;
+		}
 	
 		function sendHeaders() {
 			$header = $this->getHeader();
