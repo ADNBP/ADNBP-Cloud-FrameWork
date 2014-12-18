@@ -262,7 +262,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
         /**
         * Call External Cloud Service
         */
-        function getCloudServiceResponse($rute,$data=null,$verb=null) {
+        function getCloudServiceResponse($rute,$data=null,$verb=null,$extraheaders=null) {
             
             if(strpos($rute, 'http')!==false) $_url = $rute;
             else $_url = $this->getCloudServiceURL($rute);
@@ -297,17 +297,25 @@ if (!defined ("_ADNBP_CLASS_") ) {
                     'ignore_errors'  => '1',
                         )
                  );
+				 if($extraheaders !== null && is_array($extraheaders)) {
+				 	foreach ($extraheaders as $key => $value) {
+						 $options['http']['header'].= $key.': '.$value."\r\n";
+					}
+				 }
+				 
                  if($verb===null) $verb='GET';
 				 $_extraGET='?';
 				 if(is_array($data)) {
 				 	$_url.='?';
 				 	foreach ($data as $key => $value) $_url.=$key.'='.urlencode($value).'&';
 				 }
+
+		         $context  = stream_context_create($options);
+
 				 return(@file_get_contents($_url,false,$context));
 				 
             }
             
-
         }
 
 		function checkBasicAuth($user,$passw) {
