@@ -69,7 +69,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
         var $_userLanguages = array();
         var $_basename = '';
         var $_isAuth = false;
-        var $_version = "2014Nov.06";
+        var $_version = "2015Jan.09";
         var $_defaultCFURL="https://cloud.adnbp.com/api";
         var $_webapp = '';
         var $_webappURL = '';
@@ -830,5 +830,51 @@ if (!defined ("_ADNBP_CLASS_") ) {
               $this->error = true;
 			  $this->errorMsg = $errorMsg;
           }
+		  
+		  /*
+		   * Manage User Roles
+		   */
+		   
+		   function setRole($rolId,$rolName,$org='') {
+		   	  if(!strlen($org)) $org = $this->getAuthUserData("currentOrganizationId");
+			  $_userRoles = $this->getSessionVar("UserRoles"); if(empty($_userRoles)) $_userRoles = array();
+			  
+			  $_userRoles[$org]['byId'][$rolId] = $rolName;
+			  $_userRoles[$org]['byName'][$rolName] = $rolId;
+			  $this->setSessionVar("UserRoles",$_userRoles);
+		   }
+
+		   function hasRoleId($rolId,$org='') {
+		   	  if(!strlen($org)) $org = $this->getAuthUserData("currentOrganizationId");
+			  $_userRoles = $this->getSessionVar("UserRoles"); if(empty($_userRoles)) $_userRoles = array();
+
+			  if(!is_array($rolId)) $rolId = array($rolId);
+			  $ret = false;
+			  foreach ($rolId as $key => $value) {
+				  if(strlen($value) && !empty($_userRoles[$org]['byId'][$value]) && strlen($_userRoles[$org]['byId'][$value])) $ret = true;
+			  }
+			  return($ret);
+			  
+		   }
+
+		   function hasRoleName($rolName,$org='') {
+		   	  if(!strlen($org)) $org = $this->getAuthUserData("currentOrganizationId");
+			  $_userRoles = $this->getSessionVar("UserRoles"); if(empty($_userRoles)) $_userRoles = array();
+			  
+			  if(!is_array($rolName)) $rolName = array($rolName);
+			  $ret = false;
+			  foreach ($rolName as $key => $value) {
+				  if(strlen($value) && !empty($_userRoles[$org]['byName'][$value]) && strlen($_userRoles[$org]['byName'][$value])) $ret = true;
+			  }
+			  return($ret);
+		   }
+		   
+		   function resetRoles() {
+			  $this->setSessionVar("UserRoles",array());
+		   }
+		   
+		   function getRoles() {
+			  return($this->getSessionVar("UserRoles"));
+		   }		   
     }
 }
