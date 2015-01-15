@@ -64,7 +64,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
         var $_urlParams = ''; 
         var $_scriptPath = ''; 
         var $_ip = '';
-        var $_country = null;
+        var $_geoData = null;
         var $_userAgent = '';
         var $_userLanguages = array();
         var $_basename = '';
@@ -214,15 +214,47 @@ if (!defined ("_ADNBP_CLASS_") ) {
 		function checkPostParameter(&$_data,$var,$saveInSession=false,$resetIfEmpty=false) {$this->_checkParameter($_data,$var,$saveInSession,$resetIfEmpty,'post');}
 		function checkRequestParameter(&$_data,$var,$saveInSession=false,$resetIfEmpty=false) {$this->_checkParameter($_data,$var,$saveInSession,$resetIfEmpty,'request');}
 
-        function readGeoPlugin() {
-            // analyze Default Country
-            $this->_country = unserialize (file_get_contents('http://www.geoplugin.net/php.gp?ip='.$this->_ip));
+        function getGeoPlugin($ip='REMOTE') {
+        	if(!strlen($ip)) $ip ='REMOTE';
+            if($ip=='REMOTE') $ip = $this->_ip;
+			if($ip=='::1') $ip='';
+            return(unserialize (file_get_contents('http://www.geoplugin.net/php.gp?ip='.$ip)));
         }
         
-        function getGeoPlugin() {
-            if(!is_array($this->_country)) $this->readGeoPlugin();
-            return($this->_country);
+        function readGeoData($ip='REMOTE',$reload=false) {
+        	if(!strlen($ip)) $ip ='REMOTE';
+			
+        	if(!$reload || $this->_geoData===null || !is_array($this->_geoData[$ip]))
+        		$this->_geoData[$ip]=$this->getSessionVar('geoPluggin_'.$ip);
+			
+        	if($reload || $this->_geoData===null || !is_array($this->_geoData[$ip])) {
+        		$this->_geoData[$ip] = array();
+            	$data = $this->getGeoPlugin($ip);
+				foreach ($data as $key => $value) {
+					$key = str_replace('geoplugin_', '', $key);
+					$this->_geoData[$ip][$key] = $value;
+				}
+				$this->setSessionVar('geoPluggin_'.$ip, $this->_geoData[$ip]);
+			}
         }
+		
+		function getGeoData($var,$ip='REMOTE') {
+			if( $this->_geoData===null || !is_array($this->_geoData[$ip])) {
+				$this->readGeoData($ip);
+			} 
+			
+			if(is_array($this->_geoData[$ip])) {
+				if(!empty($this->_geoData[$ip][$var])) {
+					return($this->_geoData[$ip][$var]);
+				} else {
+					return('Key not found. Use: '.implode(array_keys($this->_geoData[$ip])));
+				}
+			} else {
+				return('Error reading GeoData');
+			}
+		}
+		
+		
         
         
         /**
@@ -830,6 +862,16 @@ if (!defined ("_ADNBP_CLASS_") ) {
               $this->error = true;
 			  $this->errorMsg = $errorMsg;
           }
+
+
+		  /*
+		   * Manage Country, Language
+		   */
+		   
+		   function getCountry() {
+		   	
+		   	
+		   }
 		  
 		  /*
 		   * Manage User Roles
