@@ -857,13 +857,13 @@ if (!defined ("_ADNBP_CLASS_") ) {
 			  
 		   }
 
-		   function hasRoleName($rolName,$org='') {
+		   function hasRoleName($roleName,$org='') {
 		   	  if(!strlen($org)) $org = $this->getAuthUserData("currentOrganizationId");
 			  $_userRoles = $this->getSessionVar("UserRoles"); if(empty($_userRoles)) $_userRoles = array();
 			  
-			  if(!is_array($rolName)) $rolName = array($rolName);
+			  if(!is_array($roleName)) $roleName = array($roleName);
 			  $ret = false;
-			  foreach ($rolName as $key => $value) {
+			  foreach ($roleName as $key => $value) {
 				  if(strlen($value) && !empty($_userRoles[$org]['byName'][$value]) && strlen($_userRoles[$org]['byName'][$value])) $ret = true;
 			  }
 			  return($ret);
