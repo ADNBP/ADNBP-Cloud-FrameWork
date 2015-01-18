@@ -77,17 +77,23 @@ if (!defined ("_ADNBP_CLASS_") ) {
         var $_timeZone = 'Europe/Madrid';
 		var $error = false;
 		var $errorMsg = '';
+		var $_timePerformance=array();
+		var $_cache=null;
         /**
         * Constructor
         */
         function ADNBP ($session=true,$sessionId='',$rootpath='') {
             
+			// Time performance
+			$this->initTime();
+			
             if($session) {
                 if(strlen($sessionId))
                     session_id($sessionId);
                 session_start();
                 
             }
+			
             
             // About timeZone
             /*
@@ -640,6 +646,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
                // die(print_r($this->_dic));
            }
            
+		   $this->setPartialTime('Logic Start');
            $this->checkAuth();
                 if(!strlen($this->getConf("logic"))) {
                     if(is_file($this->_webapp."/logic/".$this->_basename)) 
@@ -657,7 +664,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
                         $output = "No logic Found";
                     }
                 }    
-            
+            $this->setPartialTime('Logic End');
 					
             if(!$this->getConf("notopbottom") && !$this->getConf("notemplate")) {
               if(!strlen($this->getConf("top"))) {
@@ -865,14 +872,64 @@ if (!defined ("_ADNBP_CLASS_") ) {
 
 
 		  /*
-		   * Manage Country, Language
+		   * Time Performce
+		   */
+		   function initTime() {
+				$this->_timePerformance['times'][] = array('Init Server response',$_SERVER["REQUEST_TIME_FLOAT"],0);
+				$this->_timePerformance['times'][] = array('ADNBP Class Construction',microtime(true),microtime(true)-$_SERVER["REQUEST_TIME_FLOAT"]);
+				$this->_timePerformance['max'] = microtime(true)-$_SERVER["REQUEST_TIME_FLOAT"];
+		   }		   
+		   function setPartialTime($txt) {
+		   	    $time = microtime(true)-$this->_timePerformance['times'][count($this->_timePerformance['times'])-1][1];
+		   	   	$this->_timePerformance['times'][] = array($txt,microtime(true),$time);
+				$this->_timePerformance['max'] = ($time>$this->_timePerformance['max'])?$time:$this->_timePerformance['max'];
+		   }		   
+		   function getTotalTime($prec=4) {
+				$txt='Require TotalTime';
+				$this->setPartialTime($txt);
+				$currentTime = microtime(true);
+				return(round($currentTime-$this->_timePerformance['times'][0][1],$prec));
+		   }		  
+		  /*
+		   * Memory Cache
 		   */
 		   
-		   function getCountry() {
-		   	
-		   	
+		   function initCache($str,$type='memory') {
+		   		if(!strlen(trim($str))) $str = 'ADNBP GLOBAL';
+				
+		   		$this->_cache['object'] = new Memcache;
+				$this->_cache['type'] = $type;
+				$this->_cache['str'] = $str;
+				if(strlen($this->_cache['object']->get($str)))
+					$this->_cache['data'] = unserialize(gzuncompress($this->_cache['object']->get($str)));
+				else 
+					$this->_cache['data'] = array();
+				
 		   }
-		  
+		   
+		   function resetCache() {
+		   	    if($this->_cache === null) return(null);
+				$this->_cache['data'] = array();
+				$this->saveCache();
+		   }	
+		   
+		   function setCache($str,$data) {
+		   	    if($this->_cache === null) return(null);
+				$this->_cache['data'][$str] = gzcompress(serialize($data));
+				$this->saveCache();
+		   }
+		   	
+		   function getCache($str) {
+		   	    if($this->_cache === null || !isset($this->_cache['data'][$str]) ) return(null);
+				return(unserialize(gzuncompress($this->_cache['data'][$str])));
+		   }
+		   		   		   
+		   function saveCache() {
+		   		if($this->_cache === null) return(null);
+				$this->_cache['data']['_microtime_'] = microtime(true);
+				$this->_cache['object']->set($this->_cache['str'],gzcompress(serialize($this->_cache['data'])));
+		   }
+		      
 		  /*
 		   * Manage User Roles
 		   */
