@@ -55,7 +55,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
         var $_dbsocket;        // MySQL Database
         var $_dbport = '3306';        // MySQL Database
         var $_dbtype = 'mysql';
-        var $_limit = 1000;
+        var $_limit = 0;
         var $_qObject = array();
         var $_cloudDependences = array();
 		var $_cloudReferalFields = array();
@@ -654,11 +654,14 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 						if(!strlen($table)) $table = $key;
 						if(strlen($order)) $order = " ORDER BY ".$order;
                         if($action == "getRecords") {
-                            $_q = "select $selectFields from $table main where ".$value['selectWhere'].$order." limit ".$this->_limit;
+                            $_q = "select $selectFields from $table main where ".$value['selectWhere'].$order;
+                            if($this->_limit) $_q .=" limit ".$this->_limit;
+							
                            return($this->getDataFromQuery($_q,$value['values']));
                            
                         } else if($action == "getDistinctRecords") {
-                            $_q = "select distinct $selectFields from $table main where ".$value['selectWhere'].$order." limit ".$this->_limit;
+                            $_q = "select distinct $selectFields from $table main where ".$value['selectWhere'].$order;
+                            if($this->_limit) $_q .=" limit ".$this->_limit;
                            return($this->getDataFromQuery($_q,$value['values']));
                            
                         } else {

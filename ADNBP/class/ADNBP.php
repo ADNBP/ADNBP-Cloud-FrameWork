@@ -79,6 +79,8 @@ if (!defined ("_ADNBP_CLASS_") ) {
 		var $errorMsg = '';
 		var $_timePerformance=array();
 		var $_cache=null;
+		var $_format = array();
+		
         /**
         * Constructor
         */
@@ -102,6 +104,9 @@ if (!defined ("_ADNBP_CLASS_") ) {
             else $this->_timeZone = date_default_timezone_get();
             */
             date_default_timezone_set($this->_timeZone);
+			$this->_format['decimalPoint']=",";
+			$this->_format['thousandSep']=".";
+			
             // $this->_webapp = dirname(dirname(__FILE__))."/webapp";
             // $this->_rootpath = dirname(dirname(dirname(__FILE__)));
             if(!strlen($rootpath)) $rootpath=$_SERVER['DOCUMENT_ROOT'];
@@ -974,6 +979,10 @@ if (!defined ("_ADNBP_CLASS_") ) {
 		   
 		   function getRoles() {
 			  return($this->getSessionVar("UserRoles"));
-		   }		   
+		   }
+		   
+		   function numberFormat($n,$decs=0) {
+			  return(number_format($n,$dec,$this->_format['decimalPoint'],$this->_format['thousandSep']));
+		   }  
     }
 }
