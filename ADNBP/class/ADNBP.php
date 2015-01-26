@@ -982,7 +982,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
 		   }
 		   
 		   function numberFormat($n,$decs=0) {
-			  return(number_format($n,$dec,$this->_format['decimalPoint'],$this->_format['thousandSep']));
+			  return(number_format($n,$decs,$this->_format['decimalPoint'],$this->_format['thousandSep']));
 		   }  
     }
 }
