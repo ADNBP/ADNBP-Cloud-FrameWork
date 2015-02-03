@@ -80,6 +80,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
 		var $_timePerformance=array();
 		var $_cache=null;
 		var $_format = array();
+		var $_mobileDetect=null;
 		
         /**
         * Constructor
@@ -984,5 +985,24 @@ if (!defined ("_ADNBP_CLASS_") ) {
 		   function numberFormat($n,$decs=0) {
 			  return(number_format($n,$decs,$this->_format['decimalPoint'],$this->_format['thousandSep']));
 		   }  
+		   
+		   
+		   function _checkDetectMobile() {
+		   	   if(!is_object($this->_mobileDetect)) {
+		   	   	
+		   	   		$this->loadClass("mobile/MobileDetect");
+    				$this->_mobileDetect = new MobileDetect(); 
+		   	   }
+		   }
+		   function isMobile() {
+		   	  $this->_checkDetectMobile();
+		   	  return($this->_mobileDetect->isMobile());
+		   }
+		   
+		   function isTablet() {
+		   	  $this->_checkDetectMobile();
+		   	  return($this->_mobileDetect->isTablet());
+		   	
+		   }
     }
 }
