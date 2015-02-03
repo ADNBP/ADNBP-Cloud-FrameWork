@@ -1004,5 +1004,9 @@ if (!defined ("_ADNBP_CLASS_") ) {
 		   	  return($this->_mobileDetect->isTablet());
 		   	
 		   }
+		   function isDetect($key) {
+		   	  $this->_checkDetectMobile();
+			  return ($this->_mobileDetect->{'is'.$key}());
+		   }
     }
 }
