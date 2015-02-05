@@ -53,13 +53,16 @@ $config = array(
 		
 		'Google' => array(
 			'client_id' => $this->getConf("GoogleOauth_CLIENT_ID"),
-			'client_secret' => $this->getConf("GoogleOauth_CLIENT_SECRET"),
+			'client_secret' => $this->getConf("GoogleOauth_CLIENT_SECRET")
 		),
-		/*
+		'Instagram' => array(
+			'client_id' => $this->getConf("InstagramOauth_CLIENT_ID"),
+			'client_secret' => $this->getConf("InstagramOauth_CLIENT_SECRET")
+		),		
 		'Twitter' => array(
-			'key' => 'YOUR CONSUMER KEY',
-			'secret' => 'YOUR CONSUMER SECRET'
+			'key' => $this->getConf("TwitterOauth_KEY"),
+			'secret' => $this->getConf("TwitterOauth_SECRET")
 		),
-			*/	
+			
 	),
 );
