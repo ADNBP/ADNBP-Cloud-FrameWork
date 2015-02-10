@@ -741,7 +741,6 @@ if (!defined ("_ADNBP_CLASS_") ) {
                      include($this->_rootpath."/ADNBP/logic/CloudFrameWorkAuth.php");   
                   }
             }
-            
         }
         /**
         * Redirect to other URL
