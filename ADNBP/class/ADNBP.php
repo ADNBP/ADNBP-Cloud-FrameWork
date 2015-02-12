@@ -512,8 +512,8 @@ if (!defined ("_ADNBP_CLASS_") ) {
         
         // Dictionaries in method 2
         function t($dic,$key,$raw=false,$lang='') {
-            str_replace('..', '', $dic); // Security issue to avoid includes ../
-            str_replace('/', '', $dic); // Security issue to avoid includes ../
+            $dic = str_replace('..', '', trim($dic)); // Security issue to avoid includes ../
+            $dic = str_replace('/', '', $dic); // Security issue to avoid includes ../
             if(!strlen($lang)) $lang = $this->_lang;
                                     
             // Load dictionary repository
@@ -824,6 +824,10 @@ if (!defined ("_ADNBP_CLASS_") ) {
                 $_expr = "((?!\]\]).)*";
                 preg_match('/\[\[('.$_expr.')\]\]/s', $langs[$_selectedIndex],$text);
                 $str = str_replace($matchs[0][$i], $text[1], $str);
+			} else if(strpos($matchs[1][$i],'dic:') !== false) {
+				list($foo,$dic) = explode('dic:',$matchs[1][$i],2);
+				list($cat_id,$key_id) = explode(',',$dic,2);
+				$str = str_replace($matchs[0][$i], $this->t($cat_id,$key_id,false,$lang), $str);
 			}
 			return($str);
 		 }
