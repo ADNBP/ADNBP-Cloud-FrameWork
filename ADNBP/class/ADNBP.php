@@ -178,9 +178,10 @@ if (!defined ("_ADNBP_CLASS_") ) {
 				
             } else{
             	
-            	if( strlen($_GET['adnbplang'])) $this->setSessionVar('adnbplang', $_GET['adnbplang']);
+            	if( strlen($_GET['lang'])) $this->setSessionVar('adnbplang', $_GET['lang']);
 				if(strlen($this->getSessionVar('adnbplang')))
             		$this->_lang =$this->getSessionVar('adnbplang');
+				
 			}
             $this->setConf("lang",$this->_lang);
             
@@ -309,7 +310,6 @@ if (!defined ("_ADNBP_CLASS_") ) {
         * Call External Cloud Service
         */
         function getCloudServiceResponse($rute,$data=null,$verb=null,$extraheaders=null) {
-            
             if(strpos($rute, 'http')!==false) $_url = $rute;
             else $_url = $this->getCloudServiceURL($rute);
             
@@ -333,6 +333,7 @@ if (!defined ("_ADNBP_CLASS_") ) {
 					$options['http']['header'] .= 'X-Cloudservice-Signature: '
 					                              .strtoupper(sha1($this->getConf("CloudServiceId").$_date.$this->getConf("CloudServiceToken")))."\r\n";
 				}
+				$options['http']['header'] .='Connection: close'."\r\n";
 		        $context  = stream_context_create($options);
 		        return(@file_get_contents($_url,false,$context));
 				
@@ -356,8 +357,8 @@ if (!defined ("_ADNBP_CLASS_") ) {
 				 	foreach ($data as $key => $value) $_url.=$key.'='.urlencode($value).'&';
 				 }
 
+				 $options['http']['header'] .='Connection: close'."\r\n";
 		         $context  = stream_context_create($options);
-
 				 return(@file_get_contents($_url,false,$context));
 				 
             }
@@ -900,7 +901,13 @@ if (!defined ("_ADNBP_CLASS_") ) {
 				$this->setPartialTime($txt);
 				$currentTime = microtime(true);
 				return(round($currentTime-$this->_timePerformance['times'][0][1],$prec));
-		   }		  
+		   }	
+		   function getLastPartialTime() {
+		   	 $ret = null;
+			 $last = 0;
+			 if(is_array($this->_timePerformance['times'])) $last = count($this->_timePerformance['times'])-1;
+			 return(($last>=0)?$this->_timePerformance['times'][$last]:null);
+		   }	  
 		  /*
 		   * Memory Cache
 		   */
