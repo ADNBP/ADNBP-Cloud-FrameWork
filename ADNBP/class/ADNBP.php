@@ -309,23 +309,46 @@ if (!defined ("_ADNBP_CLASS_") ) {
         /**
         * Call External Cloud Service
         */
-        function getCloudServiceResponse($rute,$data=null,$verb=null,$extraheaders=null) {
+        function getCloudServiceResponse($rute,$data=null,$verb=null,$extraheaders=null,$raw=false) {
             if(strpos($rute, 'http')!==false) $_url = $rute;
             else $_url = $this->getCloudServiceURL($rute);
             
             if($data !== null && is_array($data) && $verb===null or $verb=='POST') {
             	$verb='POST';
-                $options = array(
-                    'http' => array(
-                    'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
-                    'method'  => 'POST',
-                    'ignore_errors'  => '1',
-                    'content' => http_build_query($data),
-                        )
-                 );
+				
+				if(!$raw) {
+					$build_data = http_build_query($data);
+	                $options = array(
+	                    'http' => array(
+	                    'header'  => "Content-type: application/raw\r\n",
+	                    'method'  => 'POST',
+	                    'ignore_errors'  => '1',
+	                    'content' => $build_data,
+	                        )
+	                 );
+				} else {
+					$build_data = json_encode($data);
+	                $options = array(
+	                    'http' => array(
+	                    'header'  => "Content-type: application/raw\r\n",
+	                    'method'  => 'POST',
+	                    'ignore_errors'  => '1',
+	                    'content' => $build_data,
+	                        )
+	                 );					
+				}
+				 
+				 
+				 
+				 if($extraheaders !== null && is_array($extraheaders)) {
+				 	foreach ($extraheaders as $key => $value) {
+						 $options['http']['header'].= $key.': '.$value."\r\n";
+					}
+				 }				 
 
                 // You have to calculate the Content-Length to run as script
-                $options['http']['header'] .= sprintf('Content-Length: %d', strlen(http_build_query($data)))."\r\n";
+                $options['http']['header'] .= sprintf('Content-Length: %d', strlen($build_data))."\r\n";
+				
 				if(strlen($this->getConf("CloudServiceId")) && strlen($this->getConf("CloudServiceToken"))) {
 					$_date = time();
 					$options['http']['header'] .= 'X-Cloudservice-Date: '.$_date."\r\n";
