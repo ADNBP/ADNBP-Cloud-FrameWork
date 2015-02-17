@@ -526,8 +526,10 @@ if (!defined ("_ADNBP_CLASS_") ) {
             return(($raw)?$ret:str_replace("\n","<br />",htmlentities($ret,ENT_COMPAT | ENT_HTML401,$this->_charset)));
         }
         
-        function readTranslationKeys($dic,$lang) {
-               
+        function readTranslationKeys($dic,$lang='') {
+        	
+			if($lang=='') $lang = $this->_lang;
+			   
             // Security control because we write local files
             $patron = '/[^a-zA-Z0-9_-]+/';
             $filename = '/'.preg_replace($patron,'',$lang).'_'.preg_replace($patron,'',$dic).'.php';
@@ -538,10 +540,12 @@ if (!defined ("_ADNBP_CLASS_") ) {
                 // Try to get the dictionary dinamically if ApiDictionaryURL is defined and to write locally
                 if(strlen($this->getConf("ApiDictionaryURL")) && 
                 (!is_file($this->getConf("LocalizePath").$filename) || isset($_GET['reloadDictionaries'])) ) {
-                    $content = $this->getCloudServiceResponse($this->getConf("ApiDictionaryURL")."/$dic/$lang?format=yii");
-                    if(!empty($content)) {
-                        file_put_contents($this->getConf("LocalizePath").$filename, $content);
-                    }
+					if(!strlen($_GET['reloadDictionaries']) || $dic==$_GET['reloadDictionaries']) {
+	                    $content = $this->getCloudServiceResponse($this->getConf("ApiDictionaryURL").'/'.rawurlencode($dic)."/$lang?format=yii");
+	                    if(!empty($content)) {
+	                        file_put_contents($this->getConf("LocalizePath").$filename, $content);
+	                    }
+					}
                 }
             
                 // Read the dictionary if the file exist
