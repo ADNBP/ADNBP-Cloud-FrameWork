@@ -36,6 +36,14 @@ class ImageManager {
 		if ($permissions != null) {   chmod($filename, $permissions);
 		}
 	}
+	function saveBucket($filename) {
+		ob_start();
+		imagepng($this -> image);
+		$options = array('gs' => array('acl'=>'public-read','Content-Type' => 'image/png'));
+		$ctx = stream_context_create($options);	
+		file_put_contents($filename, ob_get_contents(),0,$ctx);
+		ob_end_clean();
+	}
 	function output($image_type = IMAGETYPE_PNG) {
 		if ($image_type == IMAGETYPE_JPEG) { imagejpeg($this -> image);
 		} elseif ($image_type == IMAGETYPE_GIF) {   imagegif($this -> image);
