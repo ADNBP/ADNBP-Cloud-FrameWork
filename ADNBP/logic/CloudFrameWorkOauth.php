@@ -10,7 +10,7 @@
 /**
  * Define paths
  */
-if(strlen($_GET[ret])) $this->setSessionVar("redirectOnAuth",$_GET[ret]);
+if(strlen($_GET['ret'])) $this->setSessionVar("redirectOnAuth",$_GET['ret']);
   $this->setConf("pageCode","oauth");
 
  
