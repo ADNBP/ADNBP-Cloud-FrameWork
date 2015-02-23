@@ -373,7 +373,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
 				if (!$raw) {
 					$build_data = http_build_query($data);
-					$options = array('http' => array('header' => "Content-type: application/raw\r\n", 'method' => 'POST', 'ignore_errors' => '1', 'content' => $build_data, ));
+					$options = array('http' => array('header' => "Content-type: application/x-www-form-urlencoded\r\n", 'method' => 'POST', 'ignore_errors' => '1', 'content' => $build_data, ));
 				} else {
 					$build_data = json_encode($data);
 					$options = array('http' => array('header' => "Content-type: application/raw\r\n", 'method' => 'POST', 'ignore_errors' => '1', 'content' => $build_data, ));
