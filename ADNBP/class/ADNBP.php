@@ -97,6 +97,11 @@ if (!defined("_ADNBP_CLASS_")) {
 		 */
 		function ADNBP($session = true, $sessionId = '', $rootpath = '') {
 
+			// Temporary bug workaround
+			// https://code.google.com/p/googleappengine/issues/detail?id=11695#c6
+			 apc_delete('_ah_app_identity_:https://www.googleapis.com/auth/devstorage.read_only');
+			 apc_delete('_ah_app_identity_:https://www.googleapis.com/auth/devstorage.read_write');
+			 
 			// Time performance
 			$this -> initTime();
 
