@@ -1053,23 +1053,31 @@ if (!defined("_ADNBP_CLASS_")) {
 		 * Memory Cache
 		 */
 
-		function initCache($str, $type = 'memory') {
-			if (!strlen(trim($str)))
-				$str = 'ADNBP GLOBAL';
-
-			$this -> _cache['object'] = new Memcache;
+		function initCache($str, $type = 'memory',$path='') {
 			$this -> _cache['type'] = $type;
-			$this -> _cache['str'] = $str;
-			if (strlen($this -> _cache['object'] -> get($str)))
-				$this -> _cache['data'] = unserialize(gzuncompress($this -> _cache['object'] -> get($str)));
-			else
-				$this -> _cache['data'] = array();
-
+			switch ($this -> _cache['type']) {
+				case 'memory':
+					$this->loadClass('cache/MemoryCache');
+					$this -> _cache['object'] = new MemoryCache($str);
+					break;
+				default:
+					if (!strlen(trim($str)))
+						$str = 'ADNBP GLOBAL';
+					$this -> _cache['object'] = new Memcache;
+					$this -> _cache['str'] = $str;
+					if (strlen($this -> _cache['object'] -> get($str)))
+						$this -> _cache['data'] = unserialize(gzuncompress($this -> _cache['object'] -> get($str)));
+					else
+						$this -> _cache['data'] = array();
+					break;
+			}
 		}
 
 		function resetCache() {
 			if ($this -> _cache === null)
 				return (null);
+			if($this -> _cache['type']!='memoryOld') return false;
+			
 			$this -> _cache['data'] = array();
 			$this -> saveCache();
 		}
@@ -1077,19 +1085,40 @@ if (!defined("_ADNBP_CLASS_")) {
 		function setCache($str, $data) {
 			if ($this -> _cache === null)
 				return (null);
-			$this -> _cache['data'][$str] = gzcompress(serialize($data));
-			$this -> saveCache();
+
+			switch ($this -> _cache['type']) {
+				case 'memory':
+					$this -> _cache['object']->set($str,$data);
+					break;
+				default:
+					$this -> _cache['data'][$str] = gzcompress(serialize($data));
+					$this -> saveCache();					
+					break;
+			}
+
 		}
 
 		function getCache($str) {
-			if ($this -> _cache === null || !isset($this -> _cache['data'][$str]))
+			if ($this -> _cache === null)
 				return (null);
-			return (unserialize(gzuncompress($this -> _cache['data'][$str])));
+
+			switch ($this -> _cache['type']) {
+				case 'memory':
+					return($this -> _cache['object']->get($str));
+					break;
+				default:
+					if (!isset($this -> _cache['data'][$str]))
+						return (null);
+					return (unserialize(gzuncompress($this -> _cache['data'][$str])));
+					break;
+			}
 		}
 
 		function saveCache() {
 			if ($this -> _cache === null)
 				return (null);
+			if($this -> _cache['type']!='memoryOld') return false;
+
 			$this -> _cache['data']['_microtime_'] = microtime(true);
 			$this -> _cache['object'] -> set($this -> _cache['str'], gzcompress(serialize($this -> _cache['data'])));
 		}
