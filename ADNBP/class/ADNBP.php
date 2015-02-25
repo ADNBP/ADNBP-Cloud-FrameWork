@@ -645,7 +645,6 @@ if (!defined("_ADNBP_CLASS_")) {
 			if (!strlen($lang))
 				$lang = $this -> _lang;
 
-				__addPerformance("CONTROL: ");
 			// Load dictionary repository
 			if (!isset($this -> dics[$dic])) {
 				$this -> _translations[$dic] = $this -> readTranslationKeys($dic, $lang);
@@ -662,7 +661,7 @@ if (!defined("_ADNBP_CLASS_")) {
 				$lang = $this -> _lang;
 
 			// Eval return cache to read Dics
-			if(is_object($this -> _cache['object'])) $this->initCache();
+			if(!is_object($this -> _cache['object'])) $this->initCache();
 			if(!isset($_GET['reloadDictionaries']) && !isset($_GET['reload']) && is_object($this -> _cache['object']) ) {
 	    		$_qHash = hash('md5','readTranslationKeys->'.$dic.'_'.$lang);	
 				$ret = $this->getCache($_qHash);
@@ -1121,8 +1120,10 @@ if (!defined("_ADNBP_CLASS_")) {
 			$this -> _cache['type'] = $type;
 			switch ($this -> _cache['type']) {
 				case 'memory':
-					$this->loadClass('cache/MemoryCache');
-					$this -> _cache['object'] = new MemoryCache($str);
+					if(!is_object($this -> _cache['object'] )) {
+						$this->loadClass('cache/MemoryCache');
+						$this -> _cache['object'] = new MemoryCache($str);
+					}
 					break;
 				default:
 					if (!strlen(trim($str)))
