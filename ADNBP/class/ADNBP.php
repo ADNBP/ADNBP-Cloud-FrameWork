@@ -97,6 +97,8 @@ if (!defined("_ADNBP_CLASS_")) {
 		 */
 		function ADNBP($session = true, $sessionId = '', $rootpath = '') {
 
+			__addPerformance('LOAD CLASS & INIT OBJECT $this '.__CLASS__.'-'.__FUNCTION__,__FILE__);
+			
 			// Temporary bug workaround
 			// https://code.google.com/p/googleappengine/issues/detail?id=11695#c6
 			 apc_delete('_ah_app_identity_:https://www.googleapis.com/auth/devstorage.read_only');
@@ -111,6 +113,7 @@ if (!defined("_ADNBP_CLASS_")) {
 				session_start();
 
 			}
+			__addPerformance('session_start: ','','memory');
 
 			// About timeZone
 			/*
@@ -151,30 +154,42 @@ if (!defined("_ADNBP_CLASS_")) {
 				die('<html><head><title>ADNBP Cloud FrameWork KeepSession ' . time() . '</title><meta name="robots" content="noindex"></head><body bgcolor="#' . $bg . '"></body></html>');
 			}
 
+			$_configs ='';
 			//  Use this file to assign webApp. $this->setWebApp(""); if not ADNBP/webapp will be included
-			if (is_file($this -> _rootpath . "/adnbp_framework_config.php"))
+			if (is_file($this -> _rootpath . "/adnbp_framework_config.php")) {
 				include_once ($this -> _rootpath . "/adnbp_framework_config.php");
-
+				$_configs.='/adnbp_framework_config.php - ';
+			}
 			// CONFIG VARS
 			// load FrameWork default values
 			include_once ($this -> getRootPath() . "/ADNBP/config/config.php");
+			$_configs.='/ADNBP/config/config.php - ';
 			// load Defaults Values
 
 			// load webapp config values
-			if (is_file($this -> _webapp . "/config/config.php"))
+			if (is_file($this -> _webapp . "/config/config.php")) {
 				include_once ($this -> _webapp . "/config/config.php");
-
+				$_configs.=$this -> _webappURL.'/config/config.php - ';
+				
+			}
 			// load bucket config values. Use this to keep safely passwords etc.. in a external bucket only accesible by admin
-			if (strlen($this -> getConf('ConfigPath')) && is_file($this -> getConf('ConfigPath') . "/config.php"))
+			if (strlen($this -> getConf('ConfigPath')) && is_file($this -> getConf('ConfigPath') . "/config.php")) {
 				include_once ($this -> getConf('ConfigPath') . "/config.php");
-
+				$_configs.=$this -> getConf('ConfigPath') . "/config.php";
+			}
 			// For development purpose find local_config.php. Don't forget to add **/local_config.php in .gitignore
 			if ($_SERVER['SERVER_NAME'] == 'localhost') {
-				if (is_file($this -> _rootpath . "/local_config.php"))
+				if (is_file($this -> _rootpath . "/local_config.php")) {
 					include_once ($this -> _rootpath . "/local_config.php");
-				if (is_file($this -> _webapp . "/local_config.php"))
+					$_configs.='/local_config.php - ';
+				}
+				if (is_file($this -> _webapp . "/local_config.php")) {
 					include_once ($this -> _webapp . "/local_config.php");
+					$_configs.=$this -> _webappURL.'/local_config.php - ';
+				}
 			}
+
+			__addPerformance('load configs: ', $_configs);unset($_configs);
 
 			// OTHER VARS
 			// CloudService API. If not defined it will point to ADNBP external Serivice
@@ -213,6 +228,8 @@ if (!defined("_ADNBP_CLASS_")) {
 
 			// Set to lang conf var the current lang
 			$this -> setConf("lang", $this -> _lang);
+			
+			__addPerformance('END '.__CLASS__.'-'.__FUNCTION__);			
 
 		}
 
@@ -366,7 +383,8 @@ if (!defined("_ADNBP_CLASS_")) {
 		 * Call External Cloud Service
 		 */
 		function getCloudServiceResponse($rute, $data = null, $verb = null, $extraheaders = null, $raw = false) {
-			$this -> setPartialTime("Start getCloudServiceResponse calling $rute " . json_encode($data));
+			__addPerformance('Start getCloudServiceResponse: ',"$rute " . json_encode($data),'time');
+			
 
 			if (strpos($rute, 'http') !== false)
 				$_url = $rute;
@@ -425,7 +443,8 @@ if (!defined("_ADNBP_CLASS_")) {
 				$ret = @file_get_contents($_url, false, $context);
 
 			}
-			$this -> setPartialTime('Received data getCloudServiceResponse');
+			__addPerformance('Received getCloudServiceResponse: ');
+			
 			return ($ret);
 		}
 
@@ -618,6 +637,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
 		// Dictionaries in method 2
 		function t($dic, $key, $raw = false, $lang = '') {
+			
 			$dic = str_replace('..', '', trim($dic));
 			// Security issue to avoid includes ../
 			$dic = str_replace('/', '', $dic);
@@ -625,9 +645,11 @@ if (!defined("_ADNBP_CLASS_")) {
 			if (!strlen($lang))
 				$lang = $this -> _lang;
 
+				__addPerformance("CONTROL: ");
 			// Load dictionary repository
 			if (!isset($this -> dics[$dic])) {
 				$this -> _translations[$dic] = $this -> readTranslationKeys($dic, $lang);
+				__addPerformance("getDicContentInHTML()->readTranslationKeys($dic)");
 				$this -> dics[$dic] = true;
 			}
 			$ret = isset($this -> _translations[$dic] -> $key) ? $this -> _translations[$dic] -> $key : $dic . '-' . $key;
@@ -635,9 +657,18 @@ if (!defined("_ADNBP_CLASS_")) {
 		}
 
 		function readTranslationKeys($dic, $lang = '') {
-
+			
 			if ($lang == '')
 				$lang = $this -> _lang;
+
+			// Eval return cache to read Dics
+			if(is_object($this -> _cache['object'])) $this->initCache();
+			if(!isset($_GET['reloadDictionaries']) && !isset($_GET['reload']) && is_object($this -> _cache['object']) ) {
+	    		$_qHash = hash('md5','readTranslationKeys->'.$dic.'_'.$lang);	
+				$ret = $this->getCache($_qHash);
+				if(is_object($ret)) return($ret);
+			}
+
 
 			// Security control because we write local files
 			$patron = '/[^a-zA-Z0-9_-]+/';
@@ -658,6 +689,7 @@ if (!defined("_ADNBP_CLASS_")) {
 								$dic[$value -> key] = $value -> $lang;
 							}
 							file_put_contents($this -> getConf("LocalizePath") . $filename, json_encode($dic));
+							__addPerformance('file_put_contents: ',$this -> getConf("LocalizePath") . $filename,'time');
 							unset($dic);
 						}
 					}
@@ -665,11 +697,20 @@ if (!defined("_ADNBP_CLASS_")) {
 
 				// Read the dictionary if the file exist
 				if (is_file($this -> getConf("LocalizePath") . $filename)) {
-					return json_decode(file_get_contents($this -> getConf("LocalizePath") . $filename));
-				}
+					$ret =  json_decode(file_get_contents($this -> getConf("LocalizePath") . $filename));
+					if(is_object($this -> _cache['object']) ) {
+						$this->setCache($_qHash,$ret);
+					}
+					return($ret);
+									}
 			} else {
-				if (is_file($this -> webapp . '/localize' . $filename))
-					return json_decode($this -> webapp . '/localize' . $filename);
+				if (is_file($this -> webapp . '/localize' . $filename)) {
+					$ret =  json_decode($this -> webapp . '/localize' . $filename);
+					if(is_object($this -> _cache['object']) ) {
+						$this->setCache($_qHash,$ret);
+					}
+					return($ret);
+				}
 			}
 			return (json_decode('{}'));
 		}
@@ -693,10 +734,13 @@ if (!defined("_ADNBP_CLASS_")) {
 		 */
 		function run() {
 
+			__addPerformance('INIT '.__CLASS__.'-'.__FUNCTION__,__FILE__);
+
 			$this -> _basename = basename($this -> _url);
 			$scriptname = basename($this -> _scriptPath);
 
-			//if(strpos($this->_url, '/CloudFrameWork') !== false  || $this->_basename == 'api' || strpos($this->_url, '/api/') !== false ) {
+		// Find out the template based in the URL
+			//if URL has CloudFrameWork* & /api has an special treatment
 			if (strpos($this -> _url, '/CloudFrameWork') !== false || strpos($this -> _url, '/api') !== false) {
 
 				$this -> setConf("setLanguageByPath", f);
@@ -716,7 +760,9 @@ if (!defined("_ADNBP_CLASS_")) {
 
 				}
 
-			} else if (!$this -> getConf("notemplate")) {
+			} 
+			// else if getConf("notemplate") is not defined
+			else if (!$this -> getConf("notemplate")) {
 
 				if (is_file($this -> _webapp . "/config/menu.php"))
 					include ($this -> _webapp . "/config/menu.php");
@@ -769,56 +815,65 @@ if (!defined("_ADNBP_CLASS_")) {
 				}
 			}
 
-			// Insert global dictionary
+		// Dictionaries deprecated
+			// Insert global dictionary - deprectated
 			if (is_file($this -> _webapp . "/localize/global.txt")) {
 				$this -> _parseDic = file_get_contents($this -> _webapp . "/localize/global.txt");
 				$this -> _parseDic();
+				__addPerformance('Load and parse dics ',$this -> _webappURL . "/localize/global.txt",'memory');
 			}
 
 			if (strlen($this -> getConf("dictionary")))
 				if (is_file($this -> _webapp . "/localize/" . $this -> getConf("dictionary") . ".txt")) {
 					$this -> _parseDic = file_get_contents($this -> _webapp . "/localize/" . $this -> getConf("dictionary") . ".txt");
 					$this -> _parseDic();
-					// die(print_r($this->_dic));
+					__addPerformance('Load and parse dics ',$this -> _webappURL . "/localize/" . $this -> getConf("dictionary") . ".txt",'memory');
 				}
 
-			$this -> setPartialTime('Logic Start');
+		// Create the object to control Auth
 			$this -> checkAuth();
+			__addPerformance('checkAuth');
+			
+		// Load Logic
 			if (!strlen($this -> getConf("logic"))) {
-				if (is_file($this -> _webapp . "/logic/" . $this -> _basename))
+				if (is_file($this -> _webapp . "/logic/" . $this -> _basename)) {
 					include ($this -> _webapp . "/logic/" . $this -> _basename);
-				elseif (is_file($this -> _rootpath . "/ADNBP/logic/" . $this -> _basename)) {
-
+					__addPerformance('Logic file: ',$this -> _webappURL. "/logic/" . $this -> _basename);
+				} elseif (is_file($this -> _rootpath . "/ADNBP/logic/" . $this -> _basename)) {
 					include ($this -> _rootpath . "/ADNBP/logic/" . $this -> _basename);
+					__addPerformance('Logic file: ',"/ADNBP/logic/" . $this -> _basename);
 				}
 
 			} else {
-				if (is_file($this -> _webapp . "/logic/" . $this -> getConf("logic")))
+				if (is_file($this -> _webapp . "/logic/" . $this -> getConf("logic"))) {
 					include ($this -> _webapp . "/logic/" . $this -> getConf("logic"));
-				else {
+					__addPerformance('Logic file: ',$this -> _webappURL. "/logic/" . $this -> getConf("logic"));
+				} else {
 					$output = "No logic Found";
 				}
 			}
-			$this -> setPartialTime('Logic End');
 
-			if (!$this -> getConf("notopbottom") && !$this -> getConf("notemplate")) {
+		// Load top
+			if (!$this -> getConf("notopbottom") && !$this -> getConf("notemplate") && !isset($_GET['__notop'])) {
 				if (!strlen($this -> getConf("top"))) {
-					if (is_file($this -> _webapp . "/templates/top.php"))
+					if (is_file($this -> _webapp . "/templates/top.php")){
 						include ($this -> _webapp . "/templates/top.php");
-					elseif (is_file("./ADNBP/templates/top.php"))
+					} elseif (is_file("./ADNBP/templates/top.php"))
 						include ("./ADNBP/templates/top.php");
 				} else {
-					if (is_file($this -> _webapp . "/templates/" . $this -> getConf("top")))
+					if (is_file($this -> _webapp . "/templates/" . $this -> getConf("top"))) {
 						include ($this -> _webapp . "/templates/" . $this -> getConf("top"));
-					else if (is_file($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("top")))
+					} else if (is_file($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("top"))) {
 						include ($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("top"));
-					else
+					} else
 						echo "No top file found: " . $this -> getConf("top");
 
 				}
 			}
+			__addPerformance('Load Top template: ');
 
-			if (!$this -> getConf("notemplate")) {
+		// Load template
+			if (!$this -> getConf("notemplate") && !isset($_GET['__notemplate'])) {
 				// Content of template is stored in a var 'templateVarContent'
 				if (strlen($this -> getConf("templateVarContent"))) {
 					$var = $this -> getConf("templateVarContent");
@@ -828,25 +883,31 @@ if (!defined("_ADNBP_CLASS_")) {
 					// Content of template is stored in a file defined in template
 				} else {
 					if (!$this -> getConf("template")) {
-						if (is_file("./templates/" . $this -> _basename))
+						if (is_file("./templates/" . $this -> _basename)){
 							include ("./templates/" . $this -> _basename);
-						elseif (is_file($this -> _rootpath . "/ADNBP/templates/" . $this -> _basename))
+							__addPerformance('Load main template: ',"./templates/". $this -> _basename);
+							
+						} elseif (is_file($this -> _rootpath . "/ADNBP/templates/" . $this -> _basename)){
 							include ($this -> _rootpath . "/ADNBP/templates/" . $this -> _basename);
-						elseif ($this -> getConf("logic") == "nologic") {
+							__addPerformance('Load main template: ',"/ADNBP/templates/". $this -> _basename);
+						} elseif ($this -> getConf("logic") == "nologic") {
 
 						}
 					} else {
-						if (is_file($this -> _webapp . "/templates/" . $this -> getConf("template")))
+						if (is_file($this -> _webapp . "/templates/" . $this -> getConf("template"))){
 							include ($this -> _webapp . "/templates/" . $this -> getConf("template"));
-						elseif (is_file($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("template")))
+							__addPerformance('Load main template: ',$this -> _webappURL."/templates/". $this -> getConf("template"));
+						} elseif (is_file($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("template"))){
 							include ($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("template"));
-						else
+							__addPerformance('Load main template: ',"/ADNBP/templates/". $this -> getConf("template"));
+						} else
 							echo "No template found: " . $this -> getConf("template");
 					}
 				}
 			}
-
-			if (!$this -> getConf("notopbottom") && !$this -> getConf("notemplate")) {
+			
+			
+			if (!$this -> getConf("notopbottom") && !$this -> getConf("notemplate") && !isset($_GET['__nobottom'])) {
 				if (!strlen($this -> getConf("bottom"))) {
 					if (is_file($this -> _webapp . "/templates/bottom.php"))
 						include ($this -> _webapp . "/templates/bottom.php");
@@ -862,8 +923,11 @@ if (!defined("_ADNBP_CLASS_")) {
 
 				}
 			}
+			__addPerformance('Load Bottom and END '.__CLASS__.'-'.__FUNCTION__);
+			
 		}
 
+		
 		function checkAuth() {
 			$_ret = $this -> isAuth();
 			if (strlen($this -> getConf("requireAuth"))) {
