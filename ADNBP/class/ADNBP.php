@@ -72,6 +72,7 @@ if (!defined("_ADNBP_CLASS_")) {
 		var $_charset = "UTF-8";
 		var $_url = '';
 		var $_urlParams = '';
+		var $_urlParts = array();
 		var $_scriptPath = '';
 		var $_ip = '';
 		var $_geoData = null;
@@ -91,21 +92,15 @@ if (!defined("_ADNBP_CLASS_")) {
 		var $_cache = null;
 		var $_format = array();
 		var $_mobileDetect = null;
+		var $__performance = null;
 
 		/**
 		 * Constructor
 		 */
 		function ADNBP($session = true, $sessionId = '', $rootpath = '') {
-
+			global $__performance;
+			$this->__performance = &$__performance;
 			__addPerformance('LOAD CLASS & INIT OBJECT $this '.__CLASS__.'-'.__FUNCTION__,__FILE__);
-			
-			// Temporary bug workaround
-			// https://code.google.com/p/googleappengine/issues/detail?id=11695#c6
-			 apc_delete('_ah_app_identity_:https://www.googleapis.com/auth/devstorage.read_only');
-			 apc_delete('_ah_app_identity_:https://www.googleapis.com/auth/devstorage.read_write');
-			 
-			// Time performance
-			$this -> initTime();
 
 			if ($session) {
 				if (strlen($sessionId))
@@ -114,7 +109,19 @@ if (!defined("_ADNBP_CLASS_")) {
 
 			}
 			__addPerformance('session_start: ','','memory');
+			// If the call is just to KeepSession
+			if (strpos($this -> _url, '/CloudFrameWorkService/keepSession') !== false) {
+				header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
+				header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // past date en el pasado
+				$bg = (isset($_GET['bg']) && strlen($_GET['bg'])) ? $_GET['bg'] : 'FFFFFF';
+				die('<html><head><title>ADNBP Cloud FrameWork KeepSession ' . time() . '</title><meta name="robots" content="noindex"></head><body bgcolor="#' . $bg . '"></body></html>');
+			}
 
+			// Temporary bug workaround
+			// https://code.google.com/p/googleappengine/issues/detail?id=11695#c6
+			 apc_delete('_ah_app_identity_:https://www.googleapis.com/auth/devstorage.read_only');
+			 apc_delete('_ah_app_identity_:https://www.googleapis.com/auth/devstorage.read_write');
+			 
 			// About timeZone
 			/*
 			 if(!strlen(date_default_timezone_get()))
@@ -142,17 +149,9 @@ if (!defined("_ADNBP_CLASS_")) {
 			$this -> _scriptPath = $_SERVER['SCRIPT_NAME'];
 			$this -> _ip = $_SERVER['REMOTE_ADDR'];
 			$this -> _userAgent = $_SERVER['HTTP_USER_AGENT'];
+			$this -> _urlParts = explode('/',$this-> _url);
 
-			// If the call is just to KeepSession
-			if (strpos($this -> _url, '/CloudFrameWorkService/keepSession') !== false) {
 
-				header("Cache-Control: no-cache, must-revalidate");
-				// HTTP/1.1
-				header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
-				// Fecha en el pasado
-				$bg = (isset($_GET['bg']) && strlen($_GET['bg'])) ? $_GET['bg'] : 'FFFFFF';
-				die('<html><head><title>ADNBP Cloud FrameWork KeepSession ' . time() . '</title><meta name="robots" content="noindex"></head><body bgcolor="#' . $bg . '"></body></html>');
-			}
 
 			$_configs ='';
 			//  Use this file to assign webApp. $this->setWebApp(""); if not ADNBP/webapp will be included
@@ -727,6 +726,7 @@ if (!defined("_ADNBP_CLASS_")) {
 		function getRawPageContent($key) {
 			return ($this -> _pageContent[$key]);
 		}
+		
 
 		/**
 		 * Run method

@@ -33,20 +33,25 @@ function __showPerformance($title = '', $top = "<!--\n", $bottom = "\n-->") {
 
 function __addPerformance($title, $file = '', $type = 'all') {
 	global $__performance;
-	$__performance['info'][] = $__performance['lastIndex'] . ' - ' . $title;
+	$__performance['info'][] = $__performance['lastIndex'] 
+	. ' (tot: ' . number_format(round(memory_get_usage() / (1024 * 1024), 3), 3) . ' Mb, '
+	. (round(microtime(true) - $__performance['initMicrotime'], 3))
+	.' secs) - ' . $title;
+
+	$line = '[';
 	if (strlen($file))
-		$__performance['info'][] = ' - Route: ' . $file;
+		$__performance['info'][] = '   ' . $file;
 	
 	if ($type=='all' || $type=='memory' || $_GET['__performance'] == $__performance['lastIndex']) {
-		$__performance['info'][] = ' - Memory from last: ' . number_format(round(memory_get_usage() / (1024 * 1024) - $__performance['lastMemory'], 4), 4) . 'Mb'
-		                           .' (tot: ' . number_format(round(memory_get_usage() / (1024 * 1024), 4), 4) . 'Mb)';
+		 $line .=  number_format(round(memory_get_usage() / (1024 * 1024) - $__performance['lastMemory'], 3), 3) . ' Mb';
 		$__performance['lastMemory'] = memory_get_usage() / (1024 * 1024);
 	}
 	if ($type=='all' || $type=='time' || $_GET['__performance'] == $__performance['lastIndex']) {
-		$__performance['info'][] = ' - Time from last: ' . (round(microtime(true) - $__performance['lastMicrotime'], 9)) . ' sec'
-								  .' (tot: ' . (round(microtime(true) - $__performance['initMicrotime'], 9)) . ' sec)';
+		$line .= (($line=='[')?'':', ').  (round(microtime(true) - $__performance['lastMicrotime'], 3)) . ' sec';
 		$__performance['lastMicrotime'] = microtime(true);
 	}
+	$line .= ']';
+	$__performance['info'][] = '   '.$line;
 	if (isset($_GET['__performance']) && $_GET['__performance'] == $__performance['lastIndex']) {
 		__showPerformance();
 		exit ;
