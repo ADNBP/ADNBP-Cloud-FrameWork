@@ -671,6 +671,65 @@ class SimpleImage {
 	}
 	
 	/**
+	 * Outputs image as data base64 to use as img src
+	 *
+	 * @param null|string	$format		If omitted or null - format of original file will be used, may be gif|jpg|png
+	 * @param int|null		$quality	Output image quality in percents 0-100
+	 *
+	 * @return string
+	 * @throws Exception
+	 *
+	 */
+	function saveBucket($filename,$format = null, $quality = null,$acl='public-read') {
+		
+		// Determine quality
+		$quality = $quality ?: $this->quality;
+		
+		// Determine mimetype
+		switch (strtolower($format)) {
+			case 'gif':
+				$mimetype = 'image/gif';
+				break;
+			case 'jpeg':
+			case 'jpg':
+				imageinterlace($this->image, true);
+				$mimetype = 'image/jpeg';
+				break;
+			case 'png':
+				$mimetype = 'image/png';
+				break;
+			default:
+				$info = getimagesize($this->filename);
+				$mimetype = $info['mime'];
+				unset($info);
+				break;
+		}
+		
+		// Output the image
+		ob_start();
+		switch ($mimetype) {
+			case 'image/gif':
+				imagegif($this->image);
+				break;
+			case 'image/jpeg':
+				imagejpeg($this->image, null, round($quality));
+				break;
+			case 'image/png':
+				imagepng($this->image, null, round(9 * $quality / 100));
+				break;
+			default:
+				throw new Exception('Unsupported image format: '.$this->filename);
+				break;
+		}
+		$image_data = ob_get_contents();
+		ob_end_clean();
+
+		$options = array('gs' => array('acl'=>$acl,'Content-Type' => $mimetype));
+		$ctx = stream_context_create($options);	
+		return file_put_contents($filename, $image_data,0,$ctx);
+	}
+
+	/**
 	 * Overlay
 	 *
 	 * Overlay an image on top of another, works with 24-bit PNG alpha-transparency
