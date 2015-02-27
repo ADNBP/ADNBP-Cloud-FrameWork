@@ -9,7 +9,7 @@
  *
  */
 
-use Exception;
+// use Exception;
 
 /**
  * Class SimpleImage
@@ -47,6 +47,7 @@ class SimpleImage {
 		} elseif ($width) {
 			$this->create($width, $height, $color);
 		}
+		
 		return $this;
 	}
 	
@@ -242,7 +243,6 @@ class SimpleImage {
 			'format' => 'png',
 			'mime' => 'image/png'
 		);
-		
 		if ($color) {
 			$this->fill($color);
 		}
@@ -332,7 +332,6 @@ class SimpleImage {
 	 *
 	 */
 	function fill($color = '#000000') {
-		
 		$rgba = $this->normalize_color($color);
 		$fill_color = imagecolorallocatealpha($this->image, $rgba['r'], $rgba['g'], $rgba['b'], $rgba['a']);
 		imagealphablending($this->image, false);
