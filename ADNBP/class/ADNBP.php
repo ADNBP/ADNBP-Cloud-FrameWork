@@ -119,8 +119,8 @@ if (!defined("_ADNBP_CLASS_")) {
 
 			// Temporary bug workaround
 			// https://code.google.com/p/googleappengine/issues/detail?id=11695#c6
-			 apc_delete('_ah_app_identity_:https://www.googleapis.com/auth/devstorage.read_only');
-			 apc_delete('_ah_app_identity_:https://www.googleapis.com/auth/devstorage.read_write');
+			apc_delete('_ah_app_identity_:https://www.googleapis.com/auth/devstorage.read_only');
+			apc_delete('_ah_app_identity_:https://www.googleapis.com/auth/devstorage.read_write');
 			 
 			// About timeZone
 			/*
@@ -381,6 +381,15 @@ if (!defined("_ADNBP_CLASS_")) {
 		/**
 		 * Call External Cloud Service
 		 */
+		function getCloudServiceResponseCache($rute, $data = null, $verb = null, $extraheaders = null, $raw = false) {
+		    $_qHash = hash('md5',$rute.json_encode($data).$verb);	
+			$ret = $this->getCache($_qHash);
+			if(isset($_GET['reload']) || $ret===false || $ret === null) {
+				$ret = $this->getCloudServiceResponse($rute, $data , $verb , $extraheaders , $raw );
+				$this->setCache($_qHash,$ret);
+			}	
+			return($ret);
+		}
 		function getCloudServiceResponse($rute, $data = null, $verb = null, $extraheaders = null, $raw = false) {
 			__addPerformance('Start getCloudServiceResponse: ',"$rute " . json_encode($data),'time');
 			
@@ -419,6 +428,7 @@ if (!defined("_ADNBP_CLASS_")) {
 				$options['http']['header'] .= 'Connection: close' . "\r\n";
 				$context = stream_context_create($options);
 				$ret = @file_get_contents($_url, false, $context);
+				if($ret===false) $this->setError(error_get_last());
 
 			} else {
 				$options = array('http' => array('method' => 'GET', 'ignore_errors' => '1', ));
@@ -440,6 +450,7 @@ if (!defined("_ADNBP_CLASS_")) {
 				$options['http']['header'] .= 'Connection: close' . "\r\n";
 				$context = stream_context_create($options);
 				$ret = @file_get_contents($_url, false, $context);
+				if($ret===false) $this->setError(error_get_last());
 
 			}
 			__addPerformance('Received getCloudServiceResponse: ');
@@ -1079,7 +1090,7 @@ if (!defined("_ADNBP_CLASS_")) {
 		 */
 		function setError($errorMsg) {
 			$this -> error = true;
-			$this -> errorMsg = $errorMsg;
+			$this -> errorMsg[] = $errorMsg;
 		}
 
 		/*
@@ -1116,7 +1127,7 @@ if (!defined("_ADNBP_CLASS_")) {
 		 * Memory Cache
 		 */
 
-		function initCache($str, $type = 'memory',$path='') {
+		function initCache($str='', $type = 'memory',$path='') {
 			$this -> _cache['type'] = $type;
 			switch ($this -> _cache['type']) {
 				case 'memory':
