@@ -660,9 +660,9 @@ if (!defined("_ADNBP_CLASS_")) {
 				$lang = $this -> _lang;
 
 			// Eval return cache to read Dics
+    		$_qHash = hash('md5','readTranslationKeys->'.$dic.'_'.$lang);	
 			if(!is_object($this -> _cache['object'])) $this->initCache();
 			if(!isset($_GET['reloadDictionaries']) && !isset($_GET['reload']) && is_object($this -> _cache['object']) ) {
-	    		$_qHash = hash('md5','readTranslationKeys->'.$dic.'_'.$lang);	
 				$ret = $this->getCache($_qHash);
 				if(is_object($ret)) return($ret);
 			}
