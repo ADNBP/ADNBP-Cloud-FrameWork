@@ -42,6 +42,7 @@ class SimpleImage {
 	 *
 	 */
 	function __construct($filename = null, $width = null, $height = null, $color = null) {
+		$this->image=null;
 		if ($filename) {
 			$this->load($filename);
 		} elseif ($width) {
@@ -49,6 +50,9 @@ class SimpleImage {
 		}
 		
 		return $this;
+	}
+	function loaded() {
+		return($this->image !== null);
 	}
 	
 	/**
