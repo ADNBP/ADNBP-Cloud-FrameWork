@@ -41,6 +41,16 @@ class MemoryCache {
 			return null;
 		}
 	}
+	function getTime($str,$expireTime=-1) {
+		if(!strlen(trim($str))) return false;
+		$info = $this -> _object ->get($this->str.'-'.$str);
+		if(strlen($info) && $info!==null) {
+			$info = unserialize($info);
+			return(microtime(true)-$info['_microtime_']);
+		} else {
+			return null;
+		}
+	}
 	
 	function _save() {
 		$this -> _object ->set($this->str,gzcompress(serialize($this->data)));
