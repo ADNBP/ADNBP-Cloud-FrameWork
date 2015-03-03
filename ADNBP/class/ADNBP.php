@@ -392,7 +392,7 @@ if (!defined("_ADNBP_CLASS_")) {
 		/**
 		 * Call External Cloud Service
 		 */
-		function getCloudServiceResponseCache($rute, $data = null, $verb = null, $extraheaders = null, $raw = false) {
+		function getCloudServiceResponseCache($rute, $data = null, $verb = 'GET', $extraheaders = null, $raw = false) {
 		    $_qHash = hash('md5',$rute.json_encode($data).$verb);	
 			$ret = $this->getCache($_qHash);
 			if(isset($_GET['reload']) || $ret===false || $ret === null) {
@@ -401,7 +401,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			}	
 			return($ret);
 		}
-		function getCloudServiceResponse($rute, $data = null, $verb = null, $extraheaders = null, $raw = false) {
+		function getCloudServiceResponse($rute, $data = null, $verb = 'GET', $extraheaders = null, $raw = false) {
 			__addPerformance('Start getCloudServiceResponse: ',"$rute " . json_encode($data),'time');
 			
 
@@ -410,15 +410,43 @@ if (!defined("_ADNBP_CLASS_")) {
 			else
 				$_url = $this -> getCloudServiceURL($rute);
 
-			if ($data !== null && is_array($data) && $verb === null or $verb == 'POST') {
-				$verb = 'POST';
+			if($verb=='GET') {
+				$options = array('http' => array('method' => 'GET', 'ignore_errors' => '1', ));
+				if ($extraheaders !== null && is_array($extraheaders)) {
+					foreach ($extraheaders as $key => $value) {
+						$options['http']['header'] .= $key . ': ' . $value . "\r\n";
+					}
+				}
 
+				if ($verb === null)
+					$verb = 'GET';
+				$_extraGET = '?';
+				if (is_array($data)) {
+					$_url .= '?';
+					foreach ($data as $key => $value)
+						$_url .= $key . '=' . urlencode($value) . '&';
+				}
+
+				if (strlen($this -> getConf("CloudServiceId")) && strlen($this -> getConf("CloudServiceToken"))) {
+					$_date = time();
+					$options['http']['header'] .= 'X-Cloudservice-Date: ' . $_date . "\r\n";
+					$options['http']['header'] .= 'X-Cloudservice-Id: ' . $this -> getConf("CloudServiceId") . "\r\n";
+					$options['http']['header'] .= 'X-Cloudservice-Signature: ' . strtoupper(sha1($this -> getConf("CloudServiceId") . $_date . $this -> getConf("CloudServiceToken"))) . "\r\n";
+				}
+
+				$options['http']['header'] .= 'Connection: close' . "\r\n";
+				$context = stream_context_create($options);
+				$ret = @file_get_contents($_url, false, $context);
+				if($ret===false) $this->setError(error_get_last());
+
+			} else {
+				if(!strlen($verb)) $verb = 'POST';
 				if (!$raw) {
 					$build_data = http_build_query($data);
-					$options = array('http' => array('header' => "Content-type: application/x-www-form-urlencoded\r\n", 'method' => 'POST', 'ignore_errors' => '1', 'content' => $build_data, ));
+					$options = array('http' => array('header' => "Content-type: application/x-www-form-urlencoded\r\n", 'method' => $verb, 'ignore_errors' => '1', 'content' => $build_data, ));
 				} else {
 					$build_data = json_encode($data);
-					$options = array('http' => array('header' => "Content-type: application/raw\r\n", 'method' => 'POST', 'ignore_errors' => '1', 'content' => $build_data, ));
+					$options = array('http' => array('header' => "Content-type: application/raw\r\n", 'method' => $verb, 'ignore_errors' => '1', 'content' => $build_data, ));
 				}
 
 				if ($extraheaders !== null && is_array($extraheaders)) {
@@ -441,29 +469,7 @@ if (!defined("_ADNBP_CLASS_")) {
 				$ret = @file_get_contents($_url, false, $context);
 				if($ret===false) $this->setError(error_get_last());
 
-			} else {
-				$options = array('http' => array('method' => 'GET', 'ignore_errors' => '1', ));
-				if ($extraheaders !== null && is_array($extraheaders)) {
-					foreach ($extraheaders as $key => $value) {
-						$options['http']['header'] .= $key . ': ' . $value . "\r\n";
-					}
-				}
-
-				if ($verb === null)
-					$verb = 'GET';
-				$_extraGET = '?';
-				if (is_array($data)) {
-					$_url .= '?';
-					foreach ($data as $key => $value)
-						$_url .= $key . '=' . urlencode($value) . '&';
-				}
-
-				$options['http']['header'] .= 'Connection: close' . "\r\n";
-				$context = stream_context_create($options);
-				$ret = @file_get_contents($_url, false, $context);
-				if($ret===false) $this->setError(error_get_last());
-
-			}
+			} 
 			__addPerformance('Received getCloudServiceResponse: ');
 			
 			return ($ret);
