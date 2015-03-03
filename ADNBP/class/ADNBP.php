@@ -309,18 +309,26 @@ if (!defined("_ADNBP_CLASS_")) {
 			if (!strlen($ip))
 				$ip = 'REMOTE';
 
-			if (!$reload || $this -> _geoData === null || !is_array($this -> _geoData[$ip]))
+			if (isset($this -> _geoData['reloaded'][$ip]) || !$reload || $this -> _geoData === null || !is_array($this -> _geoData[$ip]))
 				$this -> _geoData[$ip] = $this -> getSessionVar('geoPluggin_' . $ip);
+			
 
-			if ($reload || $this -> _geoData === null || !is_array($this -> _geoData[$ip])) {
+			if (!isset($this -> _geoData['reloaded'][$ip]) &&
+			    ($reload || $this -> _geoData === null || !is_array($this -> _geoData[$ip]))) {
+				__addPerformance('Calling geoData service '.__FUNCTION__,__FILE__,'time');
 				$this -> _geoData[$ip] = array();
 				$data = $this -> getGeoPlugin($ip);
+				__addPerformance('receiving geoData  ','http://www.geoplugin.net/php.gp?ip=' . $ip,'time');
+				
 
 				foreach ($data as $key => $value) {
 					$key = str_replace('geoplugin_', '', $key);
 					$this -> _geoData[$ip][$key] = $value;
 				}
 				$this -> setSessionVar('geoPluggin_' . $ip, $this -> _geoData[$ip]);
+				
+				//avoid to call service twice in the same script
+				$this -> _geoData['reloaded'][$ip] = true;
 			}
 		}
 
@@ -340,7 +348,10 @@ if (!defined("_ADNBP_CLASS_")) {
 				return ('Error reading GeoData');
 			}
 		}
-
+		function setGeoData($var, $value,$ip = 'REMOTE') {
+			$this -> _geoData[$ip][$var] = $value;
+			$this -> setSessionVar('geoPluggin_' . $ip, $this -> _geoData[$ip]);
+		}
 		/**
 		 * Class Loader
 		 */
@@ -744,8 +755,7 @@ if (!defined("_ADNBP_CLASS_")) {
 		 */
 		function run() {
 
-			__addPerformance('INIT '.__CLASS__.'-'.__FUNCTION__,__FILE__);
-
+			__addPerformance('INIT '.__CLASS__.'-'.__FUNCTION__);
 			$this -> _basename = basename($this -> _url);
 			$scriptname = basename($this -> _scriptPath);
 
