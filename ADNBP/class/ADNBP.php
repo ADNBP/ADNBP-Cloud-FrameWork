@@ -80,7 +80,7 @@ if (!defined("_ADNBP_CLASS_")) {
 		var $_userLanguages = array();
 		var $_basename = '';
 		var $_isAuth = false;
-		var $_version = "2015Jan.09";
+		var $_version = "2015Marchb.04";
 		var $_defaultCFURL = "https://cloud.adnbp.com/api";
 		var $_webapp = '';
 		var $_webappURL = '';
@@ -137,7 +137,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			if (!strlen($rootpath))
 				$rootpath = $_SERVER['DOCUMENT_ROOT'];
 			$this -> _rootpath = $rootpath;
-			$this -> _webapp = $rootpath . "/webapp";
+			$this -> _webapp = $rootpath . "/ADNBP/webapp";
 
 			// Paths
 			// note: in Google Apps Engine PHP doen't work $_SERVER: PATH_INFO or PHP_SELF
@@ -789,7 +789,6 @@ if (!defined("_ADNBP_CLASS_")) {
 			} 
 			// else if getConf("notemplate") is not defined
 			else if (!$this -> getConf("notemplate")) {
-
 				if (is_file($this -> _webapp . "/config/menu.php"))
 					include ($this -> _webapp . "/config/menu.php");
 
@@ -990,6 +989,7 @@ if (!defined("_ADNBP_CLASS_")) {
 		/**
 		 * Password checking
 		 */
+		// Crypting strong code
 		function crypt($input, $rounds = 7) {
 			$salt = "";
 			$salt_chars = array_merge(range('A', 'Z'), range('a', 'z'), range(0, 9));
@@ -999,6 +999,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			return crypt($input, sprintf('$2a$%02d$', $rounds) . $salt);
 		}
 
+		// Compare Password
 		function checkPassword($passw, $compare) {
 			return (crypt($passw, $compare) == $compare);
 		}

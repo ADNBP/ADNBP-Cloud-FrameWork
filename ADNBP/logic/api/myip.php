@@ -1,5 +1,5 @@
 <?php
-$value=array();
+$_config$value=array();
 // GET , PUT, UPDATE, DELETE, COPY...
 switch ($api->method) {
     case 'GET':

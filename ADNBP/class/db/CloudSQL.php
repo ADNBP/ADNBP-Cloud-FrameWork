@@ -73,26 +73,23 @@ if (!defined ("_MYSQLI_CLASS_") ) {
             global $adnbp;
             
         	if(strlen($h)) {
-        	    
-        		$this->_dbserver = $h;
-        		$this->_dbuser = $u;
-        		$this->_dbpassword = $p;
-        		$this->_dbdatabase = $db;
-                $this->_port = $port;
-                $this->_dbsocket = $socket;
-                
-        	}  else if(strlen( $adnbp->getConf("dbServer"))  || $adnbp->getConf("dbSocket")) {
-        	    
-                $this->_dbserver = $adnbp->getConf("dbServer");
-                $this->_dbuser = $adnbp->getConf("dbUser");
-                $this->_dbpassword = $adnbp->getConf("dbPassword");
-                $this->_dbdatabase = $adnbp->getConf("dbName");
-                $this->_dbsocket = $adnbp->getConf("dbSocket");
-                
-                if(strlen($adnbp->getConf("dbPort")))
-                    $this->_dbport = $adnbp->getConf("dbPort");
-
-            } 
+        		$this->_dbserver = trim($h);
+        		$this->_dbuser = trim($u);
+        		$this->_dbpassword = trim($p);
+        		$this->_dbdatabase = trim($db);
+                $this->_port = trim($port);
+                $this->_dbsocket = trim($socket);
+        	}  else if(strlen( trim($adnbp->getConf("dbServer")))  || trim($adnbp->getConf("dbSocket"))) {
+                $this->_dbserver = trim($adnbp->getConf("dbServer"));
+                $this->_dbuser = trim($adnbp->getConf("dbUser"));
+                $this->_dbpassword = trim($adnbp->getConf("dbPassword"));
+                $this->_dbdatabase = trim($adnbp->getConf("dbName"));
+                $this->_dbsocket = trim($adnbp->getConf("dbSocket"));
+                if(strlen(trim($adnbp->getConf("dbPort"))))
+                    $this->_dbport = trim($adnbp->getConf("dbPort"));
+            }
+			if(!strlen($this->_dbserver.$this->_dbsocket)) $this->_dbserver='127.0.0.1';
+			if(!strlen($this->_dbdatabase)) $this->_dbdatabase='mysql';
             
             set_error_handler(create_function( 
                 '$errno, $errstr, $errfile, $errline', 

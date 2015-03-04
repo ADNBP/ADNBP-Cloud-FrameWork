@@ -4,20 +4,49 @@ $this->urlRedirect("/CloudFrameWork","/CloudFrameWork/home");
 if(!strlen($this->getSessionVar("version")) || isset($_GET['nocache'])) {
     $this->setSessionVar("version",$this->getCloudServiceResponse("version/".$this->version));
 }
-
 list($foo,$script,$service,$params) = explode('/',$this->_url,4);
 
 
-$memcache = new Memcache;
 
+
+$pageContent='';
+$memcache = new Memcache;
 switch ($service) {
 	case 'home':
-        $pageContent = $memcache->get("CFHome");
-        if(!strlen($pageContent) || isset($_GET['nocache'])) {
-           $pageContent = $this->getCloudServiceResponse("templates/intro");
-           $memcache->set("CFHome","$pageContent");
-        }
-        $this->setConf("pageCode","home");
+		
+		// IF $_REQUEST['VerifyCloudFrameWorkConfigPassword'] is send update Password in $this->setSessionVar('CloudFrameWorkConfigPassword') if 
+		if(strlen($_REQUEST['VerifyCloudFrameWorkConfigPassword']) && strlen($this->getConf('CloudFrameWorkConfigPassword'))) {
+			if($this->checkPassword($_REQUEST['VerifyCloudFrameWorkConfigPassword'],$this->getConf('CloudFrameWorkConfigPassword')))
+				$this->setSessionVar('CloudFrameWorkConfigPassword',$this->getConf('CloudFrameWorkConfigPassword'));
+			else
+				$this->setSessionVar('CloudFrameWorkConfigPassword','');
+		}
+		
+		// If there is a password and it doesn't match with $this->getSessionVar('CloudFrameWorkConfigPassword')
+		if(strlen($this->getConf('CloudFrameWorkConfigPassword')) 
+		   && $this->getConf('CloudFrameWorkConfigPassword') != $this->getSessionVar('CloudFrameWorkConfigPassword')) {
+			$_config = json_decode(file_get_contents(__DIR__.'/data/password.json'));
+		} 
+		// ELSE allow Platform configuration
+		else {
+			// Include the logic file based on the command string comming from json
+			if (strlen($_POST['command'])) 
+					if(is_file(__DIR__.'/CloudFrameWork/'.$_POST['command'].'.php'))
+						include_once __DIR__.'/CloudFrameWork/'.$_POST['command'].'.php';
+			
+			// start json
+			$tmp = file_get_contents(__DIR__.'/data/start.json');
+			if(strlen($this->getConf('CloudFrameWorkWebApp'))) 
+			    $tmp = str_replace('{your_proyect_webapp}', $this->getConf('CloudFrameWorkWebApp').'_webapp', $tmp);
+			$_config = json_decode($tmp);
+			
+			if(strlen($this->getConf('CloudFrameWorkWebApp'))) {
+				$tmp = file_get_contents(__DIR__.'/data/configVars.json');
+				$tmp = str_replace('{your_proyect_webapp}', $this->getConf('CloudFrameWorkWebApp').'_webapp', $tmp);
+				$_config = array_merge($_config,json_decode($tmp));
+			}
+		}
+		$this->setConf('template','CloudFrameWorkConfigure.php');
 		break;
     case 'GeoLocation':
        $this->setConf("pageCode","GeoLocation");
@@ -188,16 +217,16 @@ switch ($service) {
        break;
        
        default:
-		 $pageContent = $this->getCloudServiceResponse("templates/".$service);
 		break;
 }
 
 
 // I put in a var the conten of the template instead to use a file.
-$templateContent = '<p>Current Version:'.$this->getConf("setCloudFrameWorkVersion").' '
-                    .$this->getSessionVar("version").'  | CloudServiceUrl conf var: '
-                    .$this->getConf("CloudServiceUrl").' </p>'
-                    .$pageContent;
-$this->setConf('templateVarContent','templateContent');                 
-
+if(strlen($pageContent)){
+	$templateContent = '<p>Current Version:'.$this->_version.' '
+	                    .$this->getSessionVar("version").'  | CloudServiceUrl conf var: '
+	                    .$this->getConf("CloudServiceUrl").' </p>'
+	                    .$pageContent;
+	$this->setConf('templateVarContent','templateContent');                 
+}
 ?>
