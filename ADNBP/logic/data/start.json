@@ -3,7 +3,7 @@
 		"command": "saveadnbpframeworkfile",
 		"alert": "If you save {document_root}/adnbp_framework_config.php will be written deleting previous information",
 		"title": "Start configuration",
-		"subtitle": "First time configuration",
+		"subtitle": "First time configuration in localhost. IT DOES NOT WORK IN PRODUCTION SERVERS",
 		"description": "Let's create a basic structure:
 <pre>
 {document_root}/adnbp_framework_config.php 

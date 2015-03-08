@@ -1,5 +1,15 @@
 [
 	{
+		"title": "Configure your public/private Portal defining <b>friendly-urls</b>",
+		"subtitle": "What you do you want to show when someone goes to <b>{your_url}/</b> or <b>{your_url}/help</b> ?
+			<p>You can define the friendly-url and to say what logic or/and template to show.</p>
+		",
+		"description": "{webapp}/config/menu.php",
+		"vars": [
+			{ "file": "{webapp}/config/menu.php"}
+		]
+	}
+	,{
 		"title": "DB Connection",
 		"subtitle": "Connection properties",
 		"description": "To connect with a Mysql Database you can execute:

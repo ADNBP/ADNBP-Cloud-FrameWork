@@ -126,7 +126,7 @@
 				$logParams['title'] = 'API '.$this->_url;
 				$logParams['text'] = json_encode($ret);
 				$urlLog = $this->getConf("ApiLogsURL").'/Logs/';
-				$urlLog .= ($api->error)?'Error':'Sucess';
+				$urlLog .= ($api->error)?'Error':'Success';
 				
 				$retLog = json_decode($this->getCloudServiceResponse($urlLog,$logParams));
 				

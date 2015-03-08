@@ -1,7 +1,7 @@
-<h1>ADNBP Cloud FrameWork Services configuration</h1>
+<h1>ADNBP Cloud FrameWork Portal Configuration</h1>
 <?php if(is_array($_config)) foreach ($_config as $key => $value) {?>
-	<h2><?=htmlentities($value->title)?></h2>
-	<h3><?=htmlentities($value->subtitle)?></h3>
+	<h2><?=$value->title?></h2>
+	<h3><?=$value->subtitle?></h3>
 	<form method="post">
 	<input type='hidden' name='command' value='<?=htmlentities($value->command)?>'>
 	<blockquote>
@@ -20,6 +20,10 @@
 		<br/>
 		<small>
 		<?=$value2->field?>: <input type='<?=($value2->type)?$value2->type:"text"?>)' name='<?=$value2->field?>' value='<?=$_REQUEST[$value2->field]?>'> 
+		<?php } elseif($value2->file) {?>
+		// <?=$value2->description?>
+		<br/>
+		<textarea width=100% rows=10>Content</textarea>
 		<?php } ?>
 	<?php } ?>
 	</blockquote>
