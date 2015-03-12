@@ -13,6 +13,7 @@ if (!defined ("_RESTfull_CLASS_") ) {
 		var $ok = 200;
 		var $errorMsg = '';
 		var $header = '';
+		var $requestHeaders = array();
 		var $method = '';
 		var $contentTypeReturn = 'JSON';
 		var $url ='';
@@ -23,17 +24,25 @@ if (!defined ("_RESTfull_CLASS_") ) {
         
         function RESTful ($apiUrl='/api') {
         	
+			// $this->requestHeaders = apache_request_headers();
 			$this->method = (strlen($_SERVER['REQUEST_METHOD']))?$_SERVER['REQUEST_METHOD']:'GET';
-		    if($this->method=='GET' || $this->method=='DELETE')
+		    if($this->method=='GET' )
 			  $this->formParams = &$_GET;
-			elseif($this->method=='PUT')    
-			   parse_str(file_get_contents("php://input"),$this->formParams);
-			else 
-			  $this->formParams = &$_POST;	
-			
-			// Direct input in rawData
-			$this->rawData = $this->getRawData;
-			
+			else {
+			   if(count($_GET))  $this->formParams = array_merge($this->formParam,$_GET);
+			   if(count($_POST))  $this->formParams = array_merge($this->formParams,$_POST);
+			   $input = file_get_contents("php://input");
+			   if(strlen($input)) {
+			   		$this->formParams['raw'] = $input;
+				   	$this->formParams = array_merge($this->formParams,json_decode($input,true));
+					/*
+				   if(strpos($this->requestHeaders['Content-Type'], 'json')) {
+				   }
+					 * 
+					 */
+			   }
+			}
+					
 			// URL splits
 			list($this->url,$this->urlParams) = explode('?',$_SERVER['REQUEST_URI'],2);
 			
@@ -76,6 +85,11 @@ if (!defined ("_RESTfull_CLASS_") ) {
 			}
 		    return($this->error === 0);	
 		}	
+
+		function setError($value,$key=400) {
+			$this->error = $key;
+			$this->errorMsg = $value;
+		}
 
 		function addHeader($key,$value) {
 			$this->header[$key] = $value;

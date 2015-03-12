@@ -112,7 +112,7 @@
         $ret['success'] = ($api->error)?false:true;
 		$ret['ip']=$this->_ip;
         $ret['url']=(($_SERVER['HTTPS']=='on')?'https://':'http://').$_SERVER['HTTP_HOST'].'/'.$_SERVER['REQUEST_URI'];
-        $ret['user_agent']=$this->userAgent;
+        $ret['user_agent']=($this->userAgent!=null)?$this->userAgent:$api->requestHeaders['User-Agent'];
 		$ret['params']=json_encode($api->formParams);
         if($api->error) {
                 $ret['error']['message']=$api->errorMsg;
