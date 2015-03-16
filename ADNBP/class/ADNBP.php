@@ -296,13 +296,13 @@ if (!defined("_ADNBP_CLASS_")) {
 		}
 
 		function getGeoPlugin($ip = 'REMOTE') {
-			if (!strlen($ip))
-				$ip = 'REMOTE';
-			if ($ip == 'REMOTE')
+			if (!strlen($ip) || $ip == 'REMOTE')
 				$ip = $this -> _ip;
 			if ($ip == '::1' || $ip = '127.0.0.1')
 				$ip = '';
-			return (unserialize(file_get_contents('http://www.geoplugin.net/php.gp?ip=' . $ip)));
+			
+			if(strlen($ip)) $ip = 'ip='.$ip;
+			return (unserialize(@file_get_contents('http://www.geoplugin.net/php.gp?' . $ip)));
 		}
 
 		function readGeoData($ip = 'REMOTE', $reload = false) {
@@ -337,7 +337,6 @@ if (!defined("_ADNBP_CLASS_")) {
 			if ($this -> _geoData === null || !is_array($this -> _geoData[$ip]) || isset($_GET['reload'])) {
 				$this -> readGeoData($ip, isset($_GET['reload']));
 			}
-
 			if (is_array($this -> _geoData[$ip])) {
 				if (!empty($this -> _geoData[$ip][$var])) {
 					return ($this -> _geoData[$ip][$var]);
@@ -348,6 +347,7 @@ if (!defined("_ADNBP_CLASS_")) {
 				return ('Error reading GeoData');
 			}
 		}
+		
 		function setGeoData($var, $value,$ip = 'REMOTE') {
 			$this -> _geoData[$ip][$var] = $value;
 			$this -> setSessionVar('geoPluggin_' . $ip, $this -> _geoData[$ip]);
