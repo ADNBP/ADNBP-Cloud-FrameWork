@@ -33,14 +33,9 @@ function __showPerformance($title = '', $top = "<!--\n", $bottom = "\n-->") {
 
 function __addPerformance($title, $file = '', $type = 'all') {
 	global $__performance;
-	$__performance['info'][] = $__performance['lastIndex'] 
-	. ' (tot: ' . number_format(round(memory_get_usage() / (1024 * 1024), 3), 3) . ' Mb, '
-	. (round(microtime(true) - $__performance['initMicrotime'], 3))
-	.' secs) - ' . $title;
 
-	$line = '[';
-	if (strlen($file))
-		$__performance['info'][] = '   ' . $file;
+	$line = $__performance['lastIndex'].' [';
+	if (strlen($file)) $file = " ($file)";
 	
 	if ($type=='all' || $type=='memory' || $_GET['__performance'] == $__performance['lastIndex']) {
 		 $line .=  number_format(round(memory_get_usage() / (1024 * 1024) - $__performance['lastMemory'], 3), 3) . ' Mb';
@@ -50,8 +45,12 @@ function __addPerformance($title, $file = '', $type = 'all') {
 		$line .= (($line=='[')?'':', ').  (round(microtime(true) - $__performance['lastMicrotime'], 3)) . ' sec';
 		$__performance['lastMicrotime'] = microtime(true);
 	}
-	$line .= ']';
-	$__performance['info'][] = '   '.$line;
+	$line .= '] '.$title;
+	$__performance['info'][] = $line.$file;
+	$__performance['info'][] =   'tot[' . number_format(round(memory_get_usage() / (1024 * 1024), 3), 3) . ' Mb, '
+	. (round(microtime(true) - $__performance['initMicrotime'], 3))
+	.' secs]' ;
+	
 	if (isset($_GET['__performance']) && $_GET['__performance'] == $__performance['lastIndex']) {
 		__showPerformance();
 		exit ;
