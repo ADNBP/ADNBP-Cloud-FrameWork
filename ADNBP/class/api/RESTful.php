@@ -34,7 +34,13 @@ if (!defined ("_RESTfull_CLASS_") ) {
 			   $input = file_get_contents("php://input");
 			   if(strlen($input)) {
 			   		$this->formParams['raw'] = $input;
-				   	$this->formParams = array_merge($this->formParams,json_decode($input,true));
+				    $input_array = json_decode($input,true);
+				    if(is_array($input_array))
+				   		$this->formParams = array_merge($this->formParams, $input_array);
+					else {
+						$this->setError('Wrong JSON: '.$input,400);
+					}
+					unset($input_array);
 					/*
 				   if(strpos($this->requestHeaders['Content-Type'], 'json')) {
 				   }
