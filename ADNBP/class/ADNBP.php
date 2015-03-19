@@ -394,7 +394,7 @@ if (!defined("_ADNBP_CLASS_")) {
 		}
 
 		/**
-		 * Call External Cloud Service
+		 * Call External Cloud Service Caching the result
 		 */
 		function getCloudServiceResponseCache($rute, $data = null, $verb = 'GET', $extraheaders = null, $raw = false) {
 		    $_qHash = hash('md5',$rute.json_encode($data).$verb);	
@@ -405,10 +405,15 @@ if (!defined("_ADNBP_CLASS_")) {
 			}	
 			return($ret);
 		}
+		
+		
+		/**
+		 * Call External Cloud Service 
+		 */
 		function getCloudServiceResponse($rute, $data = null, $verb = 'GET', $extraheaders = null, $raw = false) {
 			__addPerformance('Start getCloudServiceResponse: ',"$rute " . json_encode($data),'time');
 			
-
+			// Creating the final URL
 			if (strpos($rute, 'http') !== false)
 				$_url = $rute;
 			else
