@@ -445,7 +445,11 @@ if (!defined("_ADNBP_CLASS_")) {
 
 				$options['http']['header'] .= 'Connection: close' . "\r\n";
 				$context = stream_context_create($options);
-				$ret = @file_get_contents($_url, false, $context);
+				try {
+					$ret = @file_get_contents($_url, false, $context);
+				} catch(Exception $e) {
+					_print($e->getMessage());
+				}
 				if($ret===false) $this->setError(error_get_last());
 
 			} else {
@@ -475,7 +479,11 @@ if (!defined("_ADNBP_CLASS_")) {
 				}
 				$options['http']['header'] .= 'Connection: close' . "\r\n";
 				$context = stream_context_create($options);
-				$ret = @file_get_contents($_url, false, $context);
+				try {
+					$ret = @file_get_contents($_url, false, $context);
+				} catch(Exception $e) {
+					_print($e->getMessage());
+				}
 				if($ret===false) $this->setError(error_get_last());
 
 			} 
