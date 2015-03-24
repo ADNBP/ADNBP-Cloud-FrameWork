@@ -1,72 +1,27 @@
 
 // HTML 5 W3
-var _adnbpCurrentGeoLocationByBrowser = 'did not get yet. Use: setGeoLocationByBrowser()'; //
-var _adnbpCurrentGeoLocationByBrowserStatus = 'no init'; //
-var _adnbpCurrentGeoLocationByBrowserLat = 0; //
-var _adnbpCurrentGeoLocationByBrowserLong = 0; //
-var _adnbpKeepSession=0;  // each 5 seconds
 
+// FORM SUPPORT
+function autoSizeTextArea(ele,w,h) { ele.style.height = 'auto'; ele.style.height = h ; ele.style.width = w ;}
 
-function setGeoLocationByBrowser() {
-   if(_adnbpCurrentGeoLocationByBrowserStatus == 'no init') {
-      _adnbpCurrentGeoLocationByBrowser="Requesting GeoLocation from the browser";
-      _adnbpCurrentGeoLocationByBrowserStatus = 'init setGeoLocationByBrowser';
-      
-      if (navigator.geolocation) {
-         _adnbpCurrentGeoLocationByBrowserStatus = 'calling navigator.geolocation';
-        navigator.geolocation.getCurrentPosition(recordGeoLocationByBrowser);
-      }
-      else{
-           _adnbpCurrentGeoLocationByBrowser="Geolocation is not supported by this browser.";
-           _adnbpCurrentGeoLocationByBrowserStatus='not supported';
-      }
-   }
+// KEEEP SESSION
+var _adnbpKeepSession=0;  // Put a value > 0 and call keepSession to maintain the session. 120 (recommended)
+function keepSession() { if(_adnbpKeepSession>0) {setInterval (calTokeepSession, _adnbpKeepSession);}}
+function calTokeepSession() {http_request = new XMLHttpRequest();http_request.open('GET', "/CloudFrameWorkService/keepSession"); http_request.send(null);}
+
+/**
+ * parses and returns URI query parameters 
+ * 
+ * @param {string} param parm
+ * @param {bool?} asArray if true, returns an array instead of a scalar 
+ * @returns {Object|Array} 
+ */
+function getURIParameter(param, asArray) {
+    return document.location.search.substring(1).split('&').reduce(function(p,c) {
+        var parts = c.split('=', 2).map(function(param) { return decodeURIComponent(param); });
+        if(parts.length == 0 || parts[0] != param) return (p instanceof Array) && !asArray ? null : p;
+        return asArray ? p.concat(parts.concat(true)[1]) : parts.concat(true)[1];
+    }, []);
 }
-
-function autoSizeTextArea(ele,w,h)
-{
-   ele.style.height = 'auto';
-   //var newHeight = (ele.scrollHeight > 32 ? ele.scrollHeight : 32);
-   ele.style.height = h ;
-   ele.style.width = w ;
-}
-
-function keepSession() {
-    if(_adnbpKeepSession>0) {
-        setInterval (calTokeepSession, _adnbpKeepSession);
-    }
-}
-
-function calTokeepSession() {
-    http_request = new XMLHttpRequest();
-    http_request.open('GET', "/CloudFrameWorkService/keepSession");
-    http_request.send(null);
-    
-}
-  
-function recordGeoLocationByBrowser(position) {
-  _adnbpCurrentGeoLocationByBrowser="Latitude: " + position.coords.latitude + 
-  "<br>Longitude: " + position.coords.longitude;
-  _adnbpCurrentGeoLocationByBrowserLat = position.coords.latitude;
-  _adnbpCurrentGeoLocationByBrowserLong = position.coords.longitude;
-   _adnbpCurrentGeoLocationByBrowserStatus = 'ok';  
-
-}
-
-function getGeoLocationByBrowser() {
-    return(_adnbpCurrentGeoLocationByBrowser);
-}
-
-function showGeoLocationByBrowserInGoogleMaps(div) {
-    if(_adnbpCurrentGeoLocationByBrowserStatus=='no init') {
-        alert('Use first setGeoLocationByBrowser();');
-    } else {
-        var mapOptions = {
-          center: new google.maps.LatLng(_adnbpCurrentGeoLocationByBrowserLat, _adnbpCurrentGeoLocationByBrowserLong),
-          zoom: 8
-        };
-        var map = new google.maps.Map(document.getElementById(div),
-            mapOptions);
-    }
-    
-}
+// getURIParameter("id")  // returns the last id or null if not present
+// getURIParameter("id", true) // returns an array of all ids
