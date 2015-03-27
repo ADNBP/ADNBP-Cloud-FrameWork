@@ -312,9 +312,9 @@ if (!defined("_ADNBP_CLASS_")) {
 			if (isset($this -> _geoData['reloaded'][$ip]) || !$reload || $this -> _geoData === null || !is_array($this -> _geoData[$ip]))
 				$this -> _geoData[$ip] = $this -> getSessionVar('geoPluggin_' . $ip);
 			
-
+			
 			if (!isset($this -> _geoData['reloaded'][$ip]) &&
-			    ($reload || $this -> _geoData === null || !is_array($this -> _geoData[$ip]))) {
+			    ($reload || $this -> _geoData === null || !is_array($this -> _geoData[$ip])) || !count($this -> _geoData[$ip])) {
 				$this -> _geoData[$ip] = array();
 				$data = $this -> getGeoPlugin($ip);
 				__addPerformance('receiving getGeoPlugin('.$ip.')','','time');
@@ -342,7 +342,7 @@ if (!defined("_ADNBP_CLASS_")) {
 				if (!empty($this -> _geoData[$ip][$var])) {
 					return ($this -> _geoData[$ip][$var]);
 				} else {
-					return ('Key not found. Use: ' . implode(array_keys($this -> _geoData[$ip])));
+					return ("Key not found. Use for $ip: " . implode(array_keys($this -> _geoData[$ip])));
 				}
 			} else {
 				return ('Error reading GeoData');
