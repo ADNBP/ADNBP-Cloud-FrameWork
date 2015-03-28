@@ -28,5 +28,7 @@ $this->setConf("API_KEY_APIKEYTEST",array('organization'=>'Test Organization','a
 // $this->setConf("GooglePublicAPICredential","{Write here your Key}"); 
 // $this->setConf("GoogleServerAPICredential","{Write here your Key}"); 
 
+// API HEADER AUTH FOR TESTING
+$this->setConf('X-CLOUDFRAMEWORK-ID-test',true);
 
 ?>

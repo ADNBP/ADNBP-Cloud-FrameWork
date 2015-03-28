@@ -1,15 +1,9 @@
 <?php
-$_config$value=array();
-// GET , PUT, UPDATE, DELETE, COPY...
-switch ($api->method) {
-    case 'GET':
-        $value['ip'] =  $_SERVER['REMOTE_ADDR'];
-        break;
-    default:
-        $api->error=400;
-        break;
-} 
+$api->checkMethod('GET');
 
-// Compatibility until migration
-$error = $api->error;
-$errorMsg = $api->errorMsg;
+if(!$api->error) switch ($this->getAPIMethod()) {
+    case 'GET':
+		$api->addReturnData(array('ip'=>$_SERVER['REMOTE_ADDR']));
+		unset($value);
+        break;
+}

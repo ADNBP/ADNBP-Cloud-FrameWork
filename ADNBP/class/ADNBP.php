@@ -602,7 +602,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
 		function getConf($var = '') {
 			if (strlen($var))
-				return (((isset($this -> _conf[$var])) ? $this -> _conf[$var] : false));
+				return (((isset($this -> _conf[$var])) ? $this -> _conf[$var] : null));
 			else
 				return ($this -> _conf);
 		}
