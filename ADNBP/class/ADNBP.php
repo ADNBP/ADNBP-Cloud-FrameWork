@@ -527,6 +527,15 @@ if (!defined("_ADNBP_CLASS_")) {
 			return $res;
 		}
 
+		function getRequestFingerPrint() {
+			$ret['ip'] = 	$this -> _ip = $_SERVER['REMOTE_ADDR'];
+			$ret['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
+			$ret['script_hash'] = sha1($_SERVER['HTTP_HOST']
+									.' - '.$_SERVER['SCRIPT_FILENAME']
+									.' - '.$_SERVER['SERVER_SOFTWARE']);
+			return($ret);
+		}
+
 		/**
 		 * Var confs
 		 */

@@ -83,7 +83,7 @@ if (!defined ("_RESTfull_CLASS_") ) {
 			}
 		}
 
-		function generateAuthToken($id,$value) {
+		function generateAuthToken($id,$value,$clientfingerprint=null) {
 			global $adnbp;
 			
 			if(empty($id) || empty($value)) {
@@ -91,8 +91,9 @@ if (!defined ("_RESTfull_CLASS_") ) {
 			} elseif(!strlen($adnbp->getConf('X-CLOUDFRAMEWORK-ID-'.$id))) {
 				$api->setError('Missing conf-var X-CLOUDFRAMEWORK-ID-'.$id);
 			} else {
-				//$dataToken['fingerprint'] = $adnbp->getFingerPrint();
-				$dataToken['data'] = $value;
+				$dataToken['fingerprint'] = $adnbp->getRequestFingerPrint();
+				$dataToken['hash_fingerprint'] = sha1(json_encode($dataToken['fingerprint']));
+				$dataToken['clientfingerprint'] = $clientfingerprint;
 				$token = sha1(json_encode($dataToken));
 				$dataToken['token'] = $token;
 				unset($_SESSION['X-CLOUDFRAMEWORK-INFOTOKEN-'.$id]);
@@ -121,6 +122,9 @@ if (!defined ("_RESTfull_CLASS_") ) {
 			global $adnbp;
 			switch ($type) {
 				case 'CLOUDFRAMEWORK':
+				    // Every request has a Request Fingerprint
+					$_hasFingerPrint = sha1(json_encode($adnbp->getRequestFingerPrint()));
+					
 					if(!strlen($this->getInputHeader('X-CLOUDFRAMEWORK-ID'))) 
 						$this->setAuth(false,'Missing X-CLOUDFRAMEWORK-ID');
 					elseif(!strlen($adnbp->getConf('X-CLOUDFRAMEWORK-ID-'.$this->getInputHeader('X-CLOUDFRAMEWORK-ID'))))
@@ -129,9 +133,14 @@ if (!defined ("_RESTfull_CLASS_") ) {
 						$this->setAuth(false,'Missing X-CLOUDFRAMEWORK-TOKEN');
 					else {
 						if(!isset($_SESSION['X-CLOUDFRAMEWORK-INFOTOKEN-'.$this->getInputHeader('X-CLOUDFRAMEWORK-ID')]))
-							$this->setAuth(false,"Token '".$this->getInputHeader('X-CLOUDFRAMEWORK-ID')."' ID not created or has expired!");
+							$this->setAuth(false,"Token '".$this->getInputHeader('X-CLOUDFRAMEWORK-ID')."' ID not created or has expired!.Get a new token.");
 						elseif($_SESSION['X-CLOUDFRAMEWORK-INFOTOKEN-'.$this->getInputHeader('X-CLOUDFRAMEWORK-ID')]['token'] != $this->getInputHeader('X-CLOUDFRAMEWORK-TOKEN')) {
-							$this->setAuth(false,"Token '".$this->getInputHeader('X-CLOUDFRAMEWORK-TOKEN')."' does not match");
+							// Delete Token
+							unset($_SESSION['X-CLOUDFRAMEWORK-INFOTOKEN-'.$this->getInputHeader('X-CLOUDFRAMEWORK-ID')]);
+							$this->setAuth(false,"Token '".$this->getInputHeader('X-CLOUDFRAMEWORK-TOKEN')."' does not match.");
+						} elseif($_hasFingerPrint != $_SESSION['X-CLOUDFRAMEWORK-INFOTOKEN-'.$this->getInputHeader('X-CLOUDFRAMEWORK-ID')]['hash_fingerprint']) {
+							unset($_SESSION['X-CLOUDFRAMEWORK-INFOTOKEN-'.$this->getInputHeader('X-CLOUDFRAMEWORK-ID')]);
+							$this->setAuth(false,"Fingerprint doesn't match. Security violation. This call will generate security protocol to evaluate an attack.");
 						} else return true;
 					}
 					return false;

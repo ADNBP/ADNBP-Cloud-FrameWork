@@ -18,6 +18,7 @@ if($this->getAPIMethod() =='POST' && $api->params[0]=='auth'){
 		$api->checkMandatoryFormParam('id','missing id form-param');
 		$api->checkMandatoryFormParam('user','missing user form-param');
 		$api->checkMandatoryFormParam('password','missing password form-param');
+		$api->checkMandatoryFormParam('clientfingerprint','missing clientfingerprint form-param');
 		if(!$api->error) {
 			if(!strlen($api->formParams['user']) || !strlen($api->formParams['password']) || !strlen($api->formParams['id'])) {
 				$api->setError('User not found. id,user and password can no be empty.',404);
@@ -44,7 +45,7 @@ if(!$api->error) {
 			$api->addReturnData('POST method'); // multi-type return data
 			switch ($api->params[0]) {
 				case 'auth':
-					$token = $api->generateAuthToken($api->formParams['id'],array('user'=>$api->formParams['user']));
+					$token = $api->generateAuthToken($api->formParams['id'],array('user'=>$api->formParams['user']),$api->formParams['clientfingerprint']);
 					if(!$api->error) {
 						$api->addReturnData(array('token'=>$token));
 					}
