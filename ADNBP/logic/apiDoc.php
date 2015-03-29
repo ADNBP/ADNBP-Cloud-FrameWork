@@ -1,5 +1,4 @@
 <?php
-
 // API Documentation Module APIARY compatible
         if(is_file($this->_webapp."/localize/api.txt")) $file = $this->_webapp."/localize/api.txt";
         else $file = $this->_rootpath."/ADNBP/localize/api.txt";

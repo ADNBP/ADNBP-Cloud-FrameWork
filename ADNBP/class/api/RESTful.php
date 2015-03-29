@@ -88,8 +88,8 @@ if (!defined ("_RESTfull_CLASS_") ) {
 			
 			if(empty($id) || empty($value)) {
 				$this->setError('invalid id and token in setAuthToken function',503);
-			} elseif(!strlen($adnbp->getConf('X-CLOUDFRAMEWORK-ID-'.$id))) {
-				$api->setError('Missing conf-var X-CLOUDFRAMEWORK-ID-'.$id);
+			} elseif($adnbp->getConf('CLOUDFRAMEWORK-ID-'.$id) === null) {
+				$api->setError('Missing conf-var CLOUDFRAMEWORK-ID-'.$id);
 			} else {
 				$dataToken['fingerprint'] = $adnbp->getRequestFingerPrint();
 				$dataToken['hash_fingerprint'] = sha1(json_encode($dataToken['fingerprint']));
@@ -127,8 +127,8 @@ if (!defined ("_RESTfull_CLASS_") ) {
 					
 					if(!strlen($this->getInputHeader('X-CLOUDFRAMEWORK-ID'))) 
 						$this->setAuth(false,'Missing X-CLOUDFRAMEWORK-ID');
-					elseif(!strlen($adnbp->getConf('X-CLOUDFRAMEWORK-ID-'.$this->getInputHeader('X-CLOUDFRAMEWORK-ID'))))
-						$this->setAuth(false,'Missing conf-var X-CLOUDFRAMEWORK-ID-'.$this->getInputHeader('X-CLOUDFRAMEWORK-ID'));
+					elseif($adnbp->getConf('CLOUDFRAMEWORK-ID-'.$this->getInputHeader('X-CLOUDFRAMEWORK-ID')) ===null)
+						$this->setAuth(false,'Missing conf-var CLOUDFRAMEWORK-ID-'.$this->getInputHeader('X-CLOUDFRAMEWORK-ID'));
 					elseif(!strlen($this->getInputHeader('X-CLOUDFRAMEWORK-TOKEN'))) 
 						$this->setAuth(false,'Missing X-CLOUDFRAMEWORK-TOKEN');
 					else {
@@ -145,11 +145,32 @@ if (!defined ("_RESTfull_CLASS_") ) {
 					}
 					return false;
 					break;
+				case 'HTTP_REFERER':
+					$referer = 	$_SERVER['HTTP_REFERER'];
+					if(!strlen($referer)) $referer = $this->formParams['HTTP_REFERER'];
+					if(!strlen($referer)) {
+						$this->setAuth(false,"HTTP_REFERER unknown. Pass a HTTP_REFERER form-var to evaluate");
+					} else {
+						$key = $this->formParams['API_KEY'];
+						if(!strlen($key)) 
+							$this->setAuth(false,"API_KEY form-var is missing");
+						elseif($adnbp->getConf('API_KEY-'.$key) ===null && is_array($adnbp->getConf('API_KEY-'.$key)))
+							$this->setAuth(false,'Missing array conf-var API_KEY-'.$key.' with he valid domains');
+						else {
+							foreach ($adnbp->getConf('API_KEY-'.$key) as $key => $content) {
+								if($content=="*" || strpos($referer,$content)!==false) {
+									return(true);
+								}
+							}
+							$this->setAuth(false,"HTTP_REFERER does not match with valid domains");
+						}
+					}
+					return(false);		
+					break;
 				default:
-						include_once(dirname(__FILE__).'/RESTful/checkAuth.php');
-						if(strlen($msgerror)) { $msg.=$msgerror;return(false); }
-						else return(true);		
+					$this->setAuth(false,"Method $type no supported");
 					
+					return(false);		
 					break;
 			}
 			return null;
@@ -196,6 +217,7 @@ if (!defined ("_RESTfull_CLASS_") ) {
 				case 'TEXT':
 				case 'HTML':
 					$this->contentTypeReturn = $method;
+					break;
 				default:
 					$this->contentTypeReturn = 'JSON';
 					break;
@@ -225,10 +247,16 @@ if (!defined ("_RESTfull_CLASS_") ) {
 			
 		}
 		
-		function setReturnData($value) { $this->returnData['data'] = array($value); }
+		function setReturnData($value) {
+			 $this->returnData['data'] = $value; 
+		}
 		function addReturnData($value) {
 			 if($this->returnData===null) $this->setReturnData($value);
-			 else $this->returnData['data'][] = $value; 
+			 else {
+			 	if(!is_array($value)) $value = array($value);
+			 	if(!is_array($this->returnData['data'])) $this->returnData['data'] = array($this->returnData['data']);
+			 	$this->returnData['data'] = array_merge( $this->returnData['data'],$value);
+			 }
 		}
 		
 		function getReturnCode() { return(($this->error)?$this->error:$this->ok); }

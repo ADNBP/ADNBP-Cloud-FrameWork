@@ -1,50 +1,16 @@
 <?php
-
     $this->loadClass("api/RESTful");
     $api = new RESTful();
 	
-	// Superadmin password
-	if(strlen($this->getHeader('X-Adnbp-Superuser')) && strlen($this->getConf("adminPassword")))
-     	$api->setAuth($this->checkPassword($this->getHeader('X-Adnbp-Superuser'),$this->getConf("adminPassword")));
-    
     if(!strlen($api->service)) {
         $this->setConf("notemplate",false);
         include_once $this->_rootpath."/ADNBP/logic/apiDoc.php";
         if(is_file($this->_webapp."/logic/api/apiDoc.php"))  include_once $this->_webapp."/logic/api/apiDoc.php";
     } else {
     	if(!$api->error) switch ($api->service) {
-	        case 'auth':
-	                if(strlen($params)) {
-	                echo '<h1>Server Side</h1>';
-	                echo '<li>conf-var: CloudServiceToken-'.$params.': '.(strlen($this->getConf("CloudServiceToken-".$params))?'exist. OK':'missing. ERROR').'</li>';
-	                echo '<h1>Client Side</h1>';
-	                echo '<li>header: X-Cloudservice-Id '.(strlen($this->getHeader('X-Cloudservice-Id'))?'exist. OK':'missing. ERROR').'</li>';
-	                echo '<li>header: X-Cloudservice-Date '.(strlen($this->getHeader('X-Cloudservice-Date'))?'exist. OK':'missing. ERROR').'</li>';
-	                echo '<li>header: X-Cloudservice-Signature '.(strlen($this->getHeader('X-Cloudservice-Signature'))?'exist. OK':'missing. ERROR').'</li>';
-	                $msg = '';
-	                if(strlen($this->getConf("CloudServiceToken-".$params)))
-	                if($this->checkAPIAuth($msg)){
-	                    echo "<li>API Auth OK";
-	                } else echo "<li>API Auth Error: ".$msg;
-	                
-	            } else {
-	                echo "A Id param is required: ../checkAPIAuth/{Id}";
-	            }
-	            die();
-	            break;
-	        case 'version':
-	            if(!strlen($params)) echo "Your current version is: ".$this->version();
+	        case '_version':
+	            if(!strlen($params)) echo "Your current CloudFrameWork version is: ".$this->version();
 	            else echo(($this->version() == $params)?"OK $params":"Warning. Your version  ".htmlentities($params)." is different of current version:".$this->version);
-	            die();
-	            break;
-	      
-	        case 'fetchURL':
-	            if(strpos($_GET[url], 'http') !== false) {
-	                echo @file_get_contents($_GET[url]);
-	            } else {
-	                echo "You have to provide 'url' GET variable: .../fetchURL?url={encodedURL} ";
-	            }
-	
 	            die();
 	            break;
 	        default:
@@ -75,7 +41,6 @@
 						$api->setError(404,'Unknow file '.$api->service.' in '.$this->_url);
 					
 	            }
-	 
 	            break;
 	        }
 
@@ -124,7 +89,6 @@
 		if(is_array($api->returnData)) $ret = array_merge($ret,$api->returnData);
 		
 		// the following line is deprectated
-        if(is_array($value)) $ret = array_merge($ret,$value);
 		$api->sendHeaders();
 		// Output Value
         switch ($api->contentTypeReturn) {
@@ -133,8 +97,8 @@
                 break;
             
             default:
-                if($api->error) $value = $api->errorMsg;
-                die($value);
+                if($api->error) die($api->errorMsg);
+				else die($api->returnData['data']);
                 break;
         }
     }

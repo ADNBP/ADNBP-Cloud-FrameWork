@@ -80,7 +80,7 @@ if (!defined("_ADNBP_CLASS_")) {
 		var $_userLanguages = array();
 		var $_basename = '';
 		var $_isAuth = false;
-		var $_version = "2015Marchb.04";
+		var $_version = "2015_March_29";
 		var $_defaultCFURL = "https://cloud.adnbp.com/api";
 		var $_webapp = '';
 		var $_webappURL = '';
@@ -316,7 +316,8 @@ if (!defined("_ADNBP_CLASS_")) {
 			if (!isset($this -> _geoData['reloaded'][$ip]) &&
 			    ($reload || $this -> _geoData === null || !is_array($this -> _geoData[$ip])) || !count($this -> _geoData[$ip])) {
 				$this -> _geoData[$ip] = array();
-				$data = $this -> getGeoPlugin($ip);
+				$data['source_ip'] = $ip;
+				$data = array_merge($data,$this -> getGeoPlugin($ip));
 				__addPerformance('receiving getGeoPlugin('.$ip.')','','time');
 				
 
@@ -331,7 +332,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			}
 		}
 
-		function getGeoData($var, $ip = '') {
+		function getGeoData($var='', $ip = '') {
 			if(!strlen($ip)) $ip=$this->_ip;
 			if(!strlen($ip)) $ip='REMOTE';
 
@@ -339,7 +340,8 @@ if (!defined("_ADNBP_CLASS_")) {
 				$this -> readGeoData($ip, isset($_GET['reload']));
 			}
 			if (is_array($this -> _geoData[$ip])) {
-				if (!empty($this -> _geoData[$ip][$var])) {
+				if(!strlen($var)) return($this -> _geoData[$ip]);
+				elseif (!empty($this -> _geoData[$ip][$var])) {
 					return ($this -> _geoData[$ip][$var]);
 				} else {
 					return ("Key not found. Use for $ip: " . implode(array_keys($this -> _geoData[$ip])));

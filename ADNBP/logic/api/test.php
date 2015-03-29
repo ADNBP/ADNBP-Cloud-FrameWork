@@ -9,8 +9,10 @@ if(!$api->error && $api->params[0]=='checkauth') {
 	// X-CLOUDFRAMEWORK-TOKEN auth
 	if(strlen($this->getHeader('X-CLOUDFRAMEWORK-ID'))) {
 		$api->checkAuth('CLOUDFRAMEWORK');
+	} elseif(strlen($api->formParams['API_KEY'])) {
+		$api->checkAuth('HTTP_REFERER');
 	} else
-		$api->setAuth(false,'require right headers. Cloud FrameWord support several auth ways:');
+		$api->setAuth(false,'require right headers or right API_KEY. Cloud FrameWord support several auth ways.');
 }
 
 // Mandatory variables for end-points.
@@ -33,7 +35,15 @@ if(!$api->error) {
 			$api->addReturnData('GET method'); // multi-type return data
 			switch ($api->params[0]) {
 				case 'checkauth':
-					$api->addReturnData(array('tokenInfo'=>$api->getAuthToken()));
+					if(strlen($this->getHeader('X-CLOUDFRAMEWORK-ID'))) 
+						$api->addReturnData(array('tokenInfo'=>$api->getAuthToken()));
+					else if(strlen($api->formParams['API_KEY']))
+						$api->addReturnData(array('allowed-domains'=>$this->getConf('API_KEY-'.$api->formParams['API_KEY'])));
+					break;					
+
+				case 'source':
+					echo file_get_contents(__FILE__);
+					die();
 					break;					
 				
 				default:

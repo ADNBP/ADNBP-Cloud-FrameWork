@@ -1,51 +1,34 @@
 <?php
+$api->checkMethod('POST');
 
-// From api.php I receive: $service, (string)$params 
-list($urlParams,$key) = explode('/',$params);
-
-$value=array();
-// $error = 0;Initialitated in api.php
-// GET , PUT, UPDATE, DELETE, COPY...
-switch ($api->method) {
-    case 'GET':
-        switch ($params) {
+if(!$api->error) {
+	switch ($api->params[0]) {
             case 'crypt':
-                if(isset($_GET['password']) || strlen($_GET['password']) ) {
-                    $value['password'] = $_GET['password'];
-                    $value['crypt'] = $this->crypt($_GET['password']);
-                    // $value['urlencoded_crypt'] = urlencode($this->crypt($_GET['password']));
-                } else {
-                    $api->error=400;
-                    $api->errorMsg='Required parameter  is not received. Send password parameter';
-                }
-                break;
+				switch ($api->params[1]) {
+					case 'validate':
+		                if( strlen($api->formParams['password']) && strlen($api->formParams['password_crypt']) ) {
+		                	$api->addReturnData(
+		                	    array(
+		                	         'validated'=>$this->checkPassword($api->formParams['password'],$api->formParams['password_crypt'])
+		                	        ,'password'=>$api->formParams['password']
+		                	        ,'password_crypt'=>$api->formParams['password_crypt']
+									)
+							);
+		                } else $api->setError('Required form-params: password and password_crypt');
+		                break;						
+					
+					default:
+						if(!strlen($api->params[1])) {
+			                if( strlen($api->formParams['password']) )  $api->addReturnData(array('password'=>$api->formParams['password'],'crypt'=>$this->crypt($api->formParams['password'])));
+			                else $api->setError('Required form-param  is not received.');
+						} else					
+							$api->setError('url params allowed: crypt and crypt/validate');
+						break;
+				}
+				break;
 
-            case 'crypt/validate':
-                if(isset($_GET['password']) || strlen($_GET['password']) || isset($_GET['password_crypt']) || strlen($_GET['password_crypt'])) {
-                    $value['password'] = $_GET['password'];
-                    $value['password_crypt'] = $_GET['password_crypt'];
-                    $value['validated'] = $this->checkPassword($_GET['password'],$_GET['password_crypt']);
-                } else {
-                    $api->error=400;
-                    $api->errorMsg='Required parameters are not received. Send password,password_crypt parameters';
-                }
-                break;
-                                
             default:
-                $api->error=400;
-                if(!strlen($params))
-                    $api->errorMsg='Missing actions. Use: crypt';
-                else 
-                    $api->errorMsg='No recognized action '.$params.'. Use: crypt';
+				$api->setError('url params allowed: crypt');
                 break;
         }
-        break;
-    
-    default:
-        $api->error=405;
-        break;
-} 
-
-// Compatibility until migration
-$error = $api->error;
-$errorMsg = $api->errorMsg;
+}

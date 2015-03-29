@@ -1,5 +1,4 @@
 FORMAT: 1A
-HOST: http://www.google.com
 
 # API
 <h2>Allowed HTTPs requests:</h2>
@@ -24,9 +23,67 @@ HOST: http://www.google.com
 <li>503 Service Unavailable - The service is temporary unavailable (e.g. scheduled Platform Maintenance). Try again later.
 </ul>
 
-# Group Notes
-Notes related resources of the **Notes API**
+# Group CloudFrameWork Basic
+CloudFrameWork Basic Calls to understand how it works.
 
+## version [/_version]
+### Version of the current Cloud FrameWork [GET]
++ Response 200 (text/plain)
+
+Your current CloudFrameWork version is: XXXXXX
+
+## myip [/myip]
+### Get the current IP and geolocalization [GET]
++ Response 200  (application/json)
+
+{
+"success": true,
+"status": 200,
+"data": [
+{
+"source_ip": "::1",
+"request": "87.220.130.48",
+"status": 206,
+"credit": "Some of the returned data includes GeoLite data created by MaxMind, available from <a href=\\'http:\/\/www.maxmind.com\\'>http:\/\/www.maxmind.com<\/a>.",
+"city": "",
+"region": "",
+"areaCode": "0",
+"dmaCode": "0",
+"countryCode": "ES",
+"countryName": "Spain",
+"continentCode": "EU",
+"latitude": "40",
+"longitude": "-4",
+"regionCode": "",
+"regionName": null,
+"currencyCode": "EUR",
+"currencySymbol": "&#8364;",
+"currencySymbol_UTF8": "€",
+"currencyConverter": "0.9184"
+}
+]
+}
+
+## crypt [/crypt]
+### Encrypt a string to generate a password [POST]
++ Request (html/form-data) or (application/json)
+
+        { "password": string to encrypt }
+        
++ Response 200  (application/json)
+
+{
+"success": true,
+"status": 200,
+	"data": {
+	"password": "hola",
+	"crypt": "$2a$07$6MOSjHlrRaYRSD4xyIIgE.qYcz8qeFZTze58jykOVUlVirmeoSJ72"
+	}
+}
+
+
+# Group Notes
+CloudFrameWork calls
 ## Notes Collection [/notes]
 ### List all Notes [GET]
 + Response 200 (application/json)
