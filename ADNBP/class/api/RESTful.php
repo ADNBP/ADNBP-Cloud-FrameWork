@@ -20,6 +20,7 @@ if (!defined ("_RESTfull_CLASS_") ) {
 		var $urlParams ='';
 		var $returnData=null;
 		var $auth = true;
+		var $referer = null;
 		
 		var $service ='';
 		var $serviceParam ='';
@@ -33,6 +34,7 @@ if (!defined ("_RESTfull_CLASS_") ) {
 			header("Access-Control-Allow-Headers: Content-Type");
 			header('Access-Control-Max-Age: 1000');
         	
+			
 			// $this->requestHeaders = apache_request_headers();
 			$this->method = (strlen($_SERVER['REQUEST_METHOD']))?$_SERVER['REQUEST_METHOD']:'GET';
 		    if($this->method=='GET' )
@@ -64,6 +66,10 @@ if (!defined ("_RESTfull_CLASS_") ) {
 					 */
 			   }
 			}
+
+			// HTTP_REFERER
+			$this->referer = $_SERVER['HTTP_REFERER'];
+			if(!strlen($this->referer)) $this->referer = $_SERVER['SERVER_NAME'];
 					
 			// URL splits
 			list($this->url,$this->urlParams) = explode('?',$_SERVER['REQUEST_URI'],2);
@@ -146,8 +152,7 @@ if (!defined ("_RESTfull_CLASS_") ) {
 					return false;
 					break;
 				case 'HTTP_REFERER':
-					$referer = 	$_SERVER['HTTP_REFERER'];
-					if(!strlen($referer)) $referer = $this->formParams['HTTP_REFERER'];
+					$referer = 	$this->referer;
 					if(!strlen($referer)) {
 						$this->setAuth(false,"HTTP_REFERER unknown. Pass a HTTP_REFERER form-var to evaluate");
 					} else {
@@ -162,7 +167,7 @@ if (!defined ("_RESTfull_CLASS_") ) {
 									return(true);
 								}
 							}
-							$this->setAuth(false,"HTTP_REFERER does not match with valid domains");
+							$this->setAuth(false,"HTTP_REFERER '$referer' does not match with valid domains");
 						}
 					}
 					return(false);		

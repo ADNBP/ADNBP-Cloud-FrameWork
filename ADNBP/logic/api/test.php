@@ -38,6 +38,7 @@ if(!$api->error) {
 					if(strlen($this->getHeader('X-CLOUDFRAMEWORK-ID'))) 
 						$api->addReturnData(array('tokenInfo'=>$api->getAuthToken()));
 					else if(strlen($api->formParams['API_KEY']))
+						$api->addReturnData(array('HTTP_REFERER'=>$api->referer));
 						$api->addReturnData(array('allowed-domains'=>$this->getConf('API_KEY-'.$api->formParams['API_KEY'])));
 					break;					
 
