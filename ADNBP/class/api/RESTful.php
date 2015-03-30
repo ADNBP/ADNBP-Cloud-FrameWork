@@ -252,6 +252,10 @@ if (!defined ("_RESTfull_CLASS_") ) {
 			
 		}
 		
+		function setReturnResponse($value) {
+			 $this->returnData = $value; 
+		}
+
 		function setReturnData($value) {
 			 $this->returnData['data'] = $value; 
 		}
