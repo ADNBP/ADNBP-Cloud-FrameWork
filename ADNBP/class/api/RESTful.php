@@ -269,6 +269,7 @@ if (!defined ("_RESTfull_CLASS_") ) {
 		}
 		
 		function getReturnCode() { return(($this->error)?$this->error:$this->ok); }
+		function setReturnCode($code) { $this->ok=$code; }
 		function getHeader() {
 			 switch ($this->getReturnCode()) {
 	            case 201:

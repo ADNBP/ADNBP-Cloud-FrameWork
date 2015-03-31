@@ -401,7 +401,7 @@ if (!defined("_ADNBP_CLASS_")) {
 		function getCloudServiceResponseCache($rute, $data = null, $verb = 'GET', $extraheaders = null, $raw = false) {
 		    $_qHash = hash('md5',$rute.json_encode($data).$verb);	
 			$ret = $this->getCache($_qHash);
-			if(isset($_GET['reload']) || $ret===false || $ret === null) {
+			if(isset($_GET['reload']) || isset($_REQUEST['CF_cleanCache']) || $ret===false || $ret === null) {
 				$ret = $this->getCloudServiceResponse($rute, $data , $verb , $extraheaders , $raw );
 				$this->setCache($_qHash,$ret);
 			}	
@@ -421,6 +421,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			else
 				$_url = $this -> getCloudServiceURL($rute);
 
+			$_errMsg = '';
 			if($verb=='GET') {
 				$options = array('http' => array('method' => 'GET', 'ignore_errors' => '1', ));
 				if ($extraheaders !== null && is_array($extraheaders)) {
@@ -450,9 +451,9 @@ if (!defined("_ADNBP_CLASS_")) {
 				try {
 					$ret = @file_get_contents($_url, false, $context);
 				} catch(Exception $e) {
-					_print($e->getMessage());
+					$_errMsg = $e->getMessage();
 				}
-				if($ret===false) $this->setError(error_get_last());
+				if($ret===false) $this->setError(error_get_last().' | '.$_errMsg);
 
 			} else {
 				if(!strlen($verb)) $verb = 'POST';
@@ -484,9 +485,9 @@ if (!defined("_ADNBP_CLASS_")) {
 				try {
 					$ret = @file_get_contents($_url, false, $context);
 				} catch(Exception $e) {
-					_print($e->getMessage());
+					$_errMsg = $e->getMessage();
 				}
-				if($ret===false) $this->setError(error_get_last());
+				if($ret===false) $this->setError(error_get_last().' | '.$_errMsg);
 
 			} 
 			__addPerformance('Received getCloudServiceResponse: ');
@@ -1194,14 +1195,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			}
 		}
 
-		function resetCache() {
-			if ($this -> _cache === null)
-				return (null);
-			if($this -> _cache['type']!='memoryOld') return false;
-			
-			$this -> _cache['data'] = array();
-			$this -> saveCache();
-		}
+
 
 		function setCache($str, $data) {
 			if ($this -> _cache === null)
@@ -1245,6 +1239,21 @@ if (!defined("_ADNBP_CLASS_")) {
 					break;
 			}
 		}
+		
+		/*
+		 * Deprecated
+		 */
+		function resetCache() {
+			if ($this -> _cache === null)
+				return (null);
+			if($this -> _cache['type']!='memoryOld') return false;
+			
+			$this -> _cache['data'] = array();
+			$this -> saveCache();
+		}
+		/*
+		 * Deprecated
+		 */	
 		function saveCache() {
 			if ($this -> _cache === null)
 				return (null);
