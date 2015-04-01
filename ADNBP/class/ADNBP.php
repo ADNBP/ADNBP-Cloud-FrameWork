@@ -93,6 +93,7 @@ if (!defined("_ADNBP_CLASS_")) {
 		var $_format = array();
 		var $_mobileDetect = null;
 		var $__performance = null;
+		var $_referer=null;
 
 		/**
 		 * Constructor
@@ -151,7 +152,9 @@ if (!defined("_ADNBP_CLASS_")) {
 			$this -> _userAgent = $_SERVER['HTTP_USER_AGENT'];
 			$this -> _urlParts = explode('/',$this-> _url);
 
-
+			// HTTP_REFERER
+			$this->_referer = $_SERVER['HTTP_REFERER'];
+			if(!strlen($this->_referer)) $this->_referer = $_SERVER['SERVER_NAME'];
 
 			$_configs ='';
 			//  Use this file to assign webApp. $this->setWebApp(""); if not ADNBP/webapp will be included
@@ -554,6 +557,113 @@ if (!defined("_ADNBP_CLASS_")) {
 				unset($this -> _isAuth[$namespace]['data']);
 			$this -> setSessionVar("CloudAuth", $this -> _isAuth);
 		}
+		
+		function generateAuthToken($id,$value,$clientfingerprint=null) {
+			
+			if(empty($id) || empty($value)) {
+				$this->setError('invalid id and token in setAuthToken function',503);
+			} elseif($this->getConf('CLOUDFRAMEWORK-ID-'.$id) === null) {
+				$this->setError('Missing conf-var CLOUDFRAMEWORK-ID-'.$id);
+			} else {
+				$dataToken['fingerprint'] = $this->getRequestFingerPrint();
+				$dataToken['hash_fingerprint'] = sha1(json_encode($dataToken['fingerprint']));
+				$dataToken['clientfingerprint'] = $clientfingerprint;
+				$token = sha1(json_encode($dataToken));
+				$dataToken['token'] = $token;
+				unset($_SESSION['X-CLOUDFRAMEWORK-INFOTOKEN-'.$id]);
+				$_SESSION['X-CLOUDFRAMEWORK-INFOTOKEN-'.$id] = $dataToken;
+				return($token);
+			}
+			return null;
+		}
+		
+		function getAuthToken($id,$token) {
+			$id = $this->getInputHeader('X-CLOUDFRAMEWORK-ID');
+			$token = $this->getInputHeader('X-CLOUDFRAMEWORK-TOKEN');
+			if(!strlen($id) || !strlen($token) || !isset($_SESSION['X-CLOUDFRAMEWORK-INFOTOKEN-'.$id])) {
+				$this->setError("getAuthToken() Error. Missing right values: $id,$token",503);
+			} else {
+				if($_SESSION['X-CLOUDFRAMEWORK-INFOTOKEN-'.$id]['token'] != $token) {
+					$this->setError('Token is not correct');
+				} else {
+					return($_SESSION['X-CLOUDFRAMEWORK-INFOTOKEN-'.$id]);
+				}
+			}
+			return null;
+		}
+
+		function getInputHeader($str) {
+			$str = strtoupper($str);
+			$str = str_replace('-', '_', $str);
+			return ((isset($_SERVER['HTTP_' . $str])) ? $_SERVER['HTTP_' . $str] : '');
+		}
+				
+		function checkAuthToken($type) {
+			switch ($type) {
+				case 'CLOUDFRAMEWORK':
+				    // Every request has a Request Fingerprint
+					$_hasFingerPrint = sha1(json_encode($this->getRequestFingerPrint()));
+					if(!strlen($this->getInputHeader('X-CLOUDFRAMEWORK-ID'))) {
+						// $this->setAuth(false,'Missing X-CLOUDFRAMEWORK-ID');
+						return(false);
+					} elseif($this->getConf('CLOUDFRAMEWORK-ID-'.$this->getInputHeader('X-CLOUDFRAMEWORK-ID')) ===null) {
+						//$this->setAuth(false,'Missing conf-var CLOUDFRAMEWORK-ID-'.$this->getInputHeader('X-CLOUDFRAMEWORK-ID'));
+						return(false);
+					} elseif(!strlen($this->getInputHeader('X-CLOUDFRAMEWORK-TOKEN'))) {
+						//$this->setAuth(false,'Missing X-CLOUDFRAMEWORK-TOKEN');
+						return(false);
+					} else {
+						if(!isset($_SESSION['X-CLOUDFRAMEWORK-INFOTOKEN-'.$this->getInputHeader('X-CLOUDFRAMEWORK-ID')])) {
+							//$this->setAuth(false,"Token '".$this->getInputHeader('X-CLOUDFRAMEWORK-ID')."' ID not created or has expired!.Get a new token.");
+							return(false);
+						} elseif($_SESSION['X-CLOUDFRAMEWORK-INFOTOKEN-'.$this->getInputHeader('X-CLOUDFRAMEWORK-ID')]['token'] != $this->getInputHeader('X-CLOUDFRAMEWORK-TOKEN')) { 
+							// Delete Token
+							unset($_SESSION['X-CLOUDFRAMEWORK-INFOTOKEN-'.$this->getInputHeader('X-CLOUDFRAMEWORK-ID')]);
+							//$this->setAuth(false,"Token '".$this->getInputHeader('X-CLOUDFRAMEWORK-TOKEN')."' does not match.");
+							return(false);
+							
+						} elseif($_hasFingerPrint != $_SESSION['X-CLOUDFRAMEWORK-INFOTOKEN-'.$this->getInputHeader('X-CLOUDFRAMEWORK-ID')]['hash_fingerprint']) {
+							unset($_SESSION['X-CLOUDFRAMEWORK-INFOTOKEN-'.$this->getInputHeader('X-CLOUDFRAMEWORK-ID')]);
+							$this->setAuth(false,"Fingerprint doesn't match. Security violation. This call will generate security protocol to evaluate an attack.");
+							return(false);
+						} else return(true);
+					}
+					return false;
+					break;
+				case 'HTTP_REFERER':
+					$referer = 	$this->_referer;
+					if(!strlen($referer)) {
+						// $this->setAuth(false,"HTTP_REFERER unknown. Pass a HTTP_REFERER form-var to evaluate");
+						return(false);
+						
+					} else {
+						$key = $this->formParams['API_KEY'];
+						if(!strlen($key)) {
+							//$this->setAuth(false,"API_KEY form-var is missing");
+							return(false);
+							
+						} elseif($this->getConf('API_KEY-'.$key) ===null && is_array($this->getConf('API_KEY-'.$key))) {
+							//$this->setAuth(false,'Missing array conf-var API_KEY-'.$key.' with he valid domains');
+							return(false);
+						} else {
+							foreach ($this->getConf('API_KEY-'.$key) as $key => $content) {
+								if($content=="*" || strpos($referer,$content)!==false) {
+									return(true);
+								}
+							}
+							//$this->setAuth(false,"HTTP_REFERER '$referer' does not match with valid domains");
+							return(false);
+						}
+					}
+					return(false);		
+					break;
+				default:
+					//$this->setAuth(false,"Method $type no supported");
+					return(false);		
+					break;
+			}
+			return null;
+		}			
 
 		// About User Auth information
 		function requireAuth($namespace = 'CloudUser') {
@@ -992,6 +1102,8 @@ if (!defined("_ADNBP_CLASS_")) {
 				}
 			}
 		}
+		
+		
 
 		/**
 		 * Redirect to other URL

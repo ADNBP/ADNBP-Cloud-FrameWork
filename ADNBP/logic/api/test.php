@@ -8,9 +8,9 @@ $api->setReturnFormat('JSON'); // allowed methos¡ds to send info: JSON, TEXT, H
 if(!$api->error && $api->params[0]=='checkauth') {
 	// X-CLOUDFRAMEWORK-TOKEN auth
 	if(strlen($this->getHeader('X-CLOUDFRAMEWORK-ID'))) {
-		$api->checkAuth('CLOUDFRAMEWORK');
+		$api->setAuth($this->checkAuthToken('CLOUDFRAMEWORK'));
 	} elseif(strlen($api->formParams['API_KEY'])) {
-		$api->checkAuth('HTTP_REFERER');
+		$api->setAuth($this->checkAuthToken('HTTP_REFERER'));
 	} else
 		$api->setAuth(false,'require right headers or right API_KEY. Cloud FrameWord support several auth ways.');
 }
@@ -36,10 +36,11 @@ if(!$api->error) {
 			switch ($api->params[0]) {
 				case 'checkauth':
 					if(strlen($this->getHeader('X-CLOUDFRAMEWORK-ID'))) 
-						$api->addReturnData(array('tokenInfo'=>$api->getAuthToken()));
-					else if(strlen($api->formParams['API_KEY']))
+						$api->addReturnData(array('tokenInfo'=>$this->getAuthToken($this->getHeader('X-CLOUDFRAMEWORK-ID'),$this->getHeader('X-CLOUDFRAMEWORK-TOKEN'))));
+					else if(strlen($api->formParams['API_KEY'])) {
 						$api->addReturnData(array('HTTP_REFERER'=>$api->referer));
 						$api->addReturnData(array('allowed-domains'=>$this->getConf('API_KEY-'.$api->formParams['API_KEY'])));
+					}
 					break;					
 
 				case 'source':
@@ -56,8 +57,8 @@ if(!$api->error) {
 			$api->addReturnData('POST method'); // multi-type return data
 			switch ($api->params[0]) {
 				case 'auth':
-					$token = $api->generateAuthToken($api->formParams['id'],array('user'=>$api->formParams['user']),$api->formParams['clientfingerprint']);
-					if(!$api->error) {
+					$token = $this->generateAuthToken($api->formParams['id'],array('user'=>$api->formParams['user']),$api->formParams['clientfingerprint']);
+					if(!$this->error) {
 						$api->addReturnData(array('token'=>$token));
 					}
 					break;					

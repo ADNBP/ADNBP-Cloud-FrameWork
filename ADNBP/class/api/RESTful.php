@@ -67,9 +67,7 @@ if (!defined ("_RESTfull_CLASS_") ) {
 			   }
 			}
 
-			// HTTP_REFERER
-			$this->referer = $_SERVER['HTTP_REFERER'];
-			if(!strlen($this->referer)) $this->referer = $_SERVER['SERVER_NAME'];
+			
 					
 			// URL splits
 			list($this->url,$this->urlParams) = explode('?',$_SERVER['REQUEST_URI'],2);
@@ -89,100 +87,8 @@ if (!defined ("_RESTfull_CLASS_") ) {
 			}
 		}
 
-		function generateAuthToken($id,$value,$clientfingerprint=null) {
-			global $adnbp;
-			
-			if(empty($id) || empty($value)) {
-				$this->setError('invalid id and token in setAuthToken function',503);
-			} elseif($adnbp->getConf('CLOUDFRAMEWORK-ID-'.$id) === null) {
-				$api->setError('Missing conf-var CLOUDFRAMEWORK-ID-'.$id);
-			} else {
-				$dataToken['fingerprint'] = $adnbp->getRequestFingerPrint();
-				$dataToken['hash_fingerprint'] = sha1(json_encode($dataToken['fingerprint']));
-				$dataToken['clientfingerprint'] = $clientfingerprint;
-				$token = sha1(json_encode($dataToken));
-				$dataToken['token'] = $token;
-				unset($_SESSION['X-CLOUDFRAMEWORK-INFOTOKEN-'.$id]);
-				$_SESSION['X-CLOUDFRAMEWORK-INFOTOKEN-'.$id] = $dataToken;
-				return($token);
-			}
-			return null;
-		}
-		
-		function getAuthToken() {
-			$id = $this->getInputHeader('X-CLOUDFRAMEWORK-ID');
-			$token = $this->getInputHeader('X-CLOUDFRAMEWORK-TOKEN');
-			if(!strlen($id) || !strlen($token) || !isset($_SESSION['X-CLOUDFRAMEWORK-INFOTOKEN-'.$id])) {
-				$this->setError("getAuthToken() Error. Missing right values: $id,$token",503);
-			} else {
-				if($_SESSION['X-CLOUDFRAMEWORK-INFOTOKEN-'.$id]['token'] != $token) {
-					$this->setError('Token is not correct');
-				} else {
-					return($_SESSION['X-CLOUDFRAMEWORK-INFOTOKEN-'.$id]);
-				}
-			}
-			return null;
-		}
-		
-		function checkAuth($type) {
-			global $adnbp;
-			switch ($type) {
-				case 'CLOUDFRAMEWORK':
-				    // Every request has a Request Fingerprint
-					$_hasFingerPrint = sha1(json_encode($adnbp->getRequestFingerPrint()));
-					
-					if(!strlen($this->getInputHeader('X-CLOUDFRAMEWORK-ID'))) 
-						$this->setAuth(false,'Missing X-CLOUDFRAMEWORK-ID');
-					elseif($adnbp->getConf('CLOUDFRAMEWORK-ID-'.$this->getInputHeader('X-CLOUDFRAMEWORK-ID')) ===null)
-						$this->setAuth(false,'Missing conf-var CLOUDFRAMEWORK-ID-'.$this->getInputHeader('X-CLOUDFRAMEWORK-ID'));
-					elseif(!strlen($this->getInputHeader('X-CLOUDFRAMEWORK-TOKEN'))) 
-						$this->setAuth(false,'Missing X-CLOUDFRAMEWORK-TOKEN');
-					else {
-						if(!isset($_SESSION['X-CLOUDFRAMEWORK-INFOTOKEN-'.$this->getInputHeader('X-CLOUDFRAMEWORK-ID')]))
-							$this->setAuth(false,"Token '".$this->getInputHeader('X-CLOUDFRAMEWORK-ID')."' ID not created or has expired!.Get a new token.");
-						elseif($_SESSION['X-CLOUDFRAMEWORK-INFOTOKEN-'.$this->getInputHeader('X-CLOUDFRAMEWORK-ID')]['token'] != $this->getInputHeader('X-CLOUDFRAMEWORK-TOKEN')) {
-							// Delete Token
-							unset($_SESSION['X-CLOUDFRAMEWORK-INFOTOKEN-'.$this->getInputHeader('X-CLOUDFRAMEWORK-ID')]);
-							$this->setAuth(false,"Token '".$this->getInputHeader('X-CLOUDFRAMEWORK-TOKEN')."' does not match.");
-						} elseif($_hasFingerPrint != $_SESSION['X-CLOUDFRAMEWORK-INFOTOKEN-'.$this->getInputHeader('X-CLOUDFRAMEWORK-ID')]['hash_fingerprint']) {
-							unset($_SESSION['X-CLOUDFRAMEWORK-INFOTOKEN-'.$this->getInputHeader('X-CLOUDFRAMEWORK-ID')]);
-							$this->setAuth(false,"Fingerprint doesn't match. Security violation. This call will generate security protocol to evaluate an attack.");
-						} else return true;
-					}
-					return false;
-					break;
-				case 'HTTP_REFERER':
-					$referer = 	$this->referer;
-					if(!strlen($referer)) {
-						$this->setAuth(false,"HTTP_REFERER unknown. Pass a HTTP_REFERER form-var to evaluate");
-					} else {
-						$key = $this->formParams['API_KEY'];
-						if(!strlen($key)) 
-							$this->setAuth(false,"API_KEY form-var is missing");
-						elseif($adnbp->getConf('API_KEY-'.$key) ===null && is_array($adnbp->getConf('API_KEY-'.$key)))
-							$this->setAuth(false,'Missing array conf-var API_KEY-'.$key.' with he valid domains');
-						else {
-							foreach ($adnbp->getConf('API_KEY-'.$key) as $key => $content) {
-								if($content=="*" || strpos($referer,$content)!==false) {
-									return(true);
-								}
-							}
-							$this->setAuth(false,"HTTP_REFERER '$referer' does not match with valid domains");
-						}
-					}
-					return(false);		
-					break;
-				default:
-					$this->setAuth(false,"Method $type no supported");
-					
-					return(false);		
-					break;
-			}
-			return null;
-		}
-		
 
-			
+					
 		function checkMethod($methods,$msg='') {
 		    if (strpos(strtoupper($methods), $this->method)===false) {
 		    	$this->error = 405;
@@ -194,7 +100,8 @@ if (!defined ("_RESTfull_CLASS_") ) {
 		function checkMandatoryFormParam($key,$msg='') {
 			if(!isset($this->formParams[$key])) {
 				$this->error = 400;
-				$this->errorMsg = ($msg=='')?'form-param missing':$msg;
+				if(strlen($this->errorMsg)) $this->errorMsg.=" | ";
+				$this->errorMsg .= ($msg=='')?"'$key'".' form-param missing ':$msg;
 			}
 		    return($this->error === 0);	
 		}	
@@ -303,12 +210,6 @@ if (!defined ("_RESTfull_CLASS_") ) {
 	    	}
 			return($ret);
 		}	
-
-		function getInputHeader($str) {
-			$str = strtoupper($str);
-			$str = str_replace('-', '_', $str);
-			return ((isset($_SERVER['HTTP_' . $str])) ? $_SERVER['HTTP_' . $str] : '');
-		}
 	
 
     } // Class
