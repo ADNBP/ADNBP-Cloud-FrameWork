@@ -6,17 +6,14 @@ $api->setReturnFormat('JSON'); // allowed methos¡ds to send info: JSON, TEXT, H
 
 // Auth privileges
 if(!$api->error && $api->params[0]=='checkauth') {
-	// X-CLOUDFRAMEWORK-TOKEN auth
-	if(strlen($this->getHeader('X-CLOUDFRAMEWORK-ID'))) {
-		$api->setAuth($this->checkAuthToken('CLOUDFRAMEWORK'));
-	} elseif(strlen($api->formParams['API_KEY'])) {
-		$api->setAuth($this->checkAuthToken('HTTP_REFERER'));
-	} else
-		$api->setAuth(false,'require right headers or right API_KEY. Cloud FrameWord support several auth ways.');
+	if(!$this->authToken('check')) {
+		$api->setError($this->getLog(),401);
+	}	
 }
 
 // Mandatory variables for end-points.
 if($this->getAPIMethod() =='POST' && $api->params[0]=='auth'){
+		$this->setAuth(false);
 		$api->checkMandatoryFormParam('id','missing id form-param');
 		$api->checkMandatoryFormParam('user','missing user form-param');
 		$api->checkMandatoryFormParam('password','missing password form-param');
@@ -36,10 +33,9 @@ if(!$api->error) {
 			switch ($api->params[0]) {
 				case 'checkauth':
 					if(strlen($this->getHeader('X-CLOUDFRAMEWORK-ID'))) 
-						$api->addReturnData(array('tokenInfo'=>$this->getAuthToken($this->getHeader('X-CLOUDFRAMEWORK-ID'),$this->getHeader('X-CLOUDFRAMEWORK-TOKEN'))));
+						$api->addReturnData(array('tokenData'=>$this->getAuthUserData('tokenData')));
 					else if(strlen($api->formParams['API_KEY'])) {
-						$api->addReturnData(array('HTTP_REFERER'=>$api->referer));
-						$api->addReturnData(array('allowed-domains'=>$this->getConf('API_KEY-'.$api->formParams['API_KEY'])));
+						$api->addReturnData(array('API_KEY_DATA'=>$this->getAuthUserData()));
 					}
 					break;					
 
@@ -57,13 +53,14 @@ if(!$api->error) {
 			$api->addReturnData('POST method'); // multi-type return data
 			switch ($api->params[0]) {
 				case 'auth':
-					$token = $this->generateAuthToken($api->formParams['id'],array('user'=>$api->formParams['user']),$api->formParams['clientfingerprint']);
-					if(!$this->error) {
-						$api->addReturnData(array('token'=>$token));
+					if($this->authToken('generate',array($api->formParams['id'],$api->formParams['clientfingerprint']))) {
+						$api->addReturnData(array('userAuthData'=>$this->getAuthUserData()));
+					} else {
+						$api->setError($this->getLog(),401);
 					}
 					break;					
 				default:
-					if(strlen($api->params[0])) $this->setError('unknown call');
+					if(strlen($api->params[0])) $api->setError('unknown call');
 					break;
 			}
 			break;	
