@@ -97,12 +97,17 @@ if (!defined ("_RESTfull_CLASS_") ) {
 		    return($this->error === 0);	
 		}
 		
-		function checkMandatoryFormParam($key,$msg='') {
-			if(!isset($this->formParams[$key])) {
-				$this->error = 400;
-				if(strlen($this->errorMsg)) $this->errorMsg.=" | ";
-				$this->errorMsg .= ($msg=='')?"'$key'".' form-param missing ':$msg;
-			}
+		function checkMandatoryFormParam($keys,$msg='') {
+			if(!is_array($keys) && strlen($keys)) $keys = array($keys);
+			
+			if(is_array($keys)) 
+				 foreach($keys as $i => $key) {
+					if(!isset($this->formParams[$key])) {
+						if(!strlen($msg)) $msg = "'$key'".' form-param missing ';
+						$this->setError($msg);
+						break;
+					}
+				}
 		    return($this->error === 0);	
 		}	
 		

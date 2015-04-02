@@ -93,7 +93,6 @@ switch ($command) {
 				
 				$this->setAuthUserData('token',$token);
 				$this->setAuthUserData('tokenData',json_decode($dataToken));
-				_printe($this->getAuthUserData());
 			}
 			
 			return($this->isAuth());

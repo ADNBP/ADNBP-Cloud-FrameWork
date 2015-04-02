@@ -1,42 +1,36 @@
 <?php
 // Automatically you have $api accesible as a object of ADBP/class/api/RESTful.php
 // This object ins created by ADBP/logic/api.php
-$api->checkMethod('GET,POST'); // allowed methods to receive GET,POST etc..
-$api->setReturnFormat('JSON'); // allowed methos¡ds to send info: JSON, TEXT, HTML
+$api->checkMethod('GET,POST'); 				// allowed methods to receive GET,POST etc..
+if(!$api->error) $this->requireAuth('testAuthApi'); 	// Activating Auth mode.
 
 // Auth privileges
 if(!$api->error && $api->params[0]=='checkauth') {
-	if(!$this->authToken('check')) {
-		$api->setError($this->getLog(),401);
-	}	
+	if(!$this->isAuth() || isset($_GET['API_KEY']) || strlen($this->getHeader('X-CLOUDFRAMEWORK-ID')))
+		if(!$this->authToken('check')) 
+			$api->setError($this->getLog(),401);
 }
 
-// Mandatory variables for end-points.
-if($this->getAPIMethod() =='POST' && $api->params[0]=='auth'){
-		$this->setAuth(false);
-		$api->checkMandatoryFormParam('id','missing id form-param');
-		$api->checkMandatoryFormParam('user','missing user form-param');
-		$api->checkMandatoryFormParam('password','missing password form-param');
-		$api->checkMandatoryFormParam('clientfingerprint','missing clientfingerprint form-param');
-		if(!$api->error) {
-			if(!strlen($api->formParams['user']) || !strlen($api->formParams['password']) || !strlen($api->formParams['id'])) {
-				$api->setError('User not found. id,user and password can no be empty.',404);
-			} 
-		}
-}
+// Mandatory variables for POST method
+if($api->method =='POST' )
+	if($api->params[0]=='auth')
+		$api->checkMandatoryFormParam(array('id','user','password','clientfingerprint'));
+	else if(strlen($api->params[0]))
+		$api->setError('POST only admits: test/auth');
+
 
 // if the methods are supported
 if(!$api->error) {
-	switch ($this->getAPIMethod()) {
+	// Adding Return data
+		$api->setReturnData(array('method'=>$api->method)); 
+		$api->setReturnData(array('auth'=>$this->isAuth())); 
+		
+		switch ($api->method) {
 		case 'GET':
-			$api->addReturnData('GET method'); // multi-type return data
 			switch ($api->params[0]) {
 				case 'checkauth':
-					if(strlen($this->getHeader('X-CLOUDFRAMEWORK-ID'))) 
-						$api->addReturnData(array('tokenData'=>$this->getAuthUserData('tokenData')));
-					else if(strlen($api->formParams['API_KEY'])) {
-						$api->addReturnData(array('API_KEY_DATA'=>$this->getAuthUserData()));
-					}
+					if($this->isAuth())
+						$api->addReturnData(array('userData'=>$this->getAuthUserData()));
 					break;					
 
 				case 'source':
@@ -50,10 +44,12 @@ if(!$api->error) {
 			}
 			break;
 		case 'POST':
-			$api->addReturnData('POST method'); // multi-type return data
 			switch ($api->params[0]) {
 				case 'auth':
-					if($this->authToken('generate',array($api->formParams['id'],$api->formParams['clientfingerprint']))) {
+					$this->setAuth(false);
+					if(!strlen($api->formParams['user']) || !strlen($api->formParams['password']) || !strlen($api->formParams['id'])) {
+						$api->setError('User not found. id,user and password can no be empty.',404);
+					} elseif($this->authToken('generate',array($api->formParams['id'],$api->formParams['clientfingerprint']))) {
 						$api->addReturnData(array('userAuthData'=>$this->getAuthUserData()));
 					} else {
 						$api->setError($this->getLog(),401);
@@ -67,3 +63,4 @@ if(!$api->error) {
 	}
 	
 }
+$api->setReturnFormat('JSON'); 				// Method to return the data

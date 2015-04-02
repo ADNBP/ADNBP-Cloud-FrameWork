@@ -3,7 +3,7 @@
 # Madrid  nov de 2012
 # ADNBP Business & IT Perfomrnance S.L.
 # http://www.adnbp.com (info@adnbp.coom)
-# Last update: feb 2015
+# Last update: Apr 2015
 # Project ADNBP Framework
 #
 #####
@@ -18,12 +18,8 @@
  * @package com.adnbp.framework
  */
 
-function _print() { __print(func_get_args());
-}
-
-function _printe() { __print(array_merge(func_get_args(), array('exit')));
-}
-
+function _print() { __print(func_get_args());}
+function _printe() { __print(array_merge(func_get_args(), array('exit')));}
 function __print($args) {
 	echo "<pre>";
 	for ($i = 0, $tr = count($args); $i < $tr; $i++) {
@@ -58,6 +54,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
 	class ADNBP {
 
+		var $_version = "2015_Apr_02";
 		var $_conf = array();
 		var $_menu = array();
 		var $_sessionVarsFromGet = array();
@@ -80,7 +77,6 @@ if (!defined("_ADNBP_CLASS_")) {
 		var $_userLanguages = array();
 		var $_basename = '';
 		var $_isAuth = false;
-		var $_version = "2015_March_29";
 		var $_defaultCFURL = "https://cloud.adnbp.com/api";
 		var $_webapp = '';
 		var $_webappURL = '';
@@ -546,8 +542,7 @@ if (!defined("_ADNBP_CLASS_")) {
 		/**
 		 * Var confs
 		 */
-		function setAuth($bool, $namespace = 'CloudUser') {
-
+		function setAuth($bool, $namespace = '') {
 			if (!strlen($namespace))
 				$namespace = $this -> getConf("requireAuth");
 			if (!strlen($namespace))
@@ -567,7 +562,10 @@ if (!defined("_ADNBP_CLASS_")) {
 		
 		function authToken($command,$data=array()) {
 			// $command can be: check, generate
-			$this->requireAuth();
+			if(!strlen($this -> getConf("requireAuth"))) {
+				$this->addLog('$this->requireAuth([{namespace]}) missing;');
+				return false;
+			}
 			return  include(__DIR__.'/ADNBP/authToken.php');
 		}
 			
@@ -594,6 +592,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
 			if ($this -> _isAuth === false && strlen($this -> getConf("requireAuth"))) {
 				$this -> _isAuth = $this -> getSessionVar("CloudAuth");
+				if(!isset($this -> _isAuth[$namespace])) return false;
 			}
 			return ($this -> _isAuth[$namespace]['auth'] === true);
 		}
