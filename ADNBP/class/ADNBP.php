@@ -584,12 +584,6 @@ if (!defined("_ADNBP_CLASS_")) {
 			if (!strlen($namespace))
 				return false;
 
-			if (isset($_GET['logout']) && strlen($_GET['logout']) > 0) {
-				$this -> setAuth(false, $namespace);
-				Header("Location: $this->_url");
-				exit ;
-			}
-
 			if ($this -> _isAuth === false && strlen($this -> getConf("requireAuth"))) {
 				$this -> _isAuth = $this -> getSessionVar("CloudAuth");
 				if(!isset($this -> _isAuth[$namespace])) return false;

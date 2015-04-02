@@ -28,7 +28,7 @@ if (!defined ("_RESTfull_CLASS_") ) {
         function RESTful ($apiUrl='/api') {
         	
 			// Rules for Cross-Domain AJAX
-			// https://www.getpostman.com/collections/f6c73fa68b03add49d09
+			// https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS
 			header("Access-Control-Allow-Origin: *");
 			header("Access-Control-Allow-Methods: POST,GET,PUT");
 			header("Access-Control-Allow-Headers: Content-Type");
@@ -91,8 +91,8 @@ if (!defined ("_RESTfull_CLASS_") ) {
 					
 		function checkMethod($methods,$msg='') {
 		    if (strpos(strtoupper($methods), $this->method)===false) {
-		    	$this->error = 405;
-				$this->errorMsg = ($msg=='')?'Method '.$this->method.' is not supported':$msg;
+		    	if(!strlen($msg)) $msg = 'Method '.$this->method.' is not supported';
+		    	$this->setError($msg,405);
 		    }
 		    return($this->error === 0);	
 		}

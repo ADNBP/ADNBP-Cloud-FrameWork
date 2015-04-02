@@ -1,7 +1,8 @@
+/*
+* ADNBP Cloud FrameWork Auth JS 
+* by hector lópez
+*/
 
-// HTML 5 W3
-
-// FORM SUPPORT
 function autoSizeTextArea(ele,w,h) { ele.style.height = 'auto'; ele.style.height = h ; ele.style.width = w ;}
 
 // KEEEP SESSION
@@ -22,6 +23,25 @@ function getURIParameter(param, asArray) {
         if(parts.length == 0 || parts[0] != param) return (p instanceof Array) && !asArray ? null : p;
         return asArray ? p.concat(parts.concat(true)[1]) : parts.concat(true)[1];
     }, []);
+}
+
+/**
+ * Check types of values 
+ * 
+ * @param {string} type values are: email
+ * @param {multi-type} value to evaluate the value
+ * @returns {boolean} 
+ */
+function formInputValidate(type,value) {
+	var ret = false;
+	switch(type) {
+		case 'email':
+		var exp= /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+		if(value.match(exp))
+			ret= true;
+		break;
+	}
+	return ret;
 }
 // getURIParameter("id")  // returns the last id or null if not present
 // getURIParameter("id", true) // returns an array of all ids
