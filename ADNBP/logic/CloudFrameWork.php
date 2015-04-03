@@ -8,7 +8,6 @@ list($foo,$script,$service,$params) = explode('/',$this->_url,4);
 
 
 
-
 $pageContent='';
 $memcache = new Memcache;
 switch ($service) {

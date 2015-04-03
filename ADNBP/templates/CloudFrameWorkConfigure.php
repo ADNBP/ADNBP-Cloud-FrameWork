@@ -19,7 +19,7 @@
 		// <?=$value2->description?>
 		<br/>
 		<small>
-		<?=$value2->field?>: <input type='<?=($value2->type)?$value2->type:"text"?>)' name='<?=$value2->field?>' value='<?=$_REQUEST[$value2->field]?>'> 
+		<?=$value2->field?>: <input type='<?=($value2->type)?$value2->type:"text"?>' name='<?=$value2->field?>' value='<?=$_REQUEST[$value2->field]?>'> 
 		<?php } elseif($value2->file) {?>
 		// <?=$value2->description?>
 		<br/>

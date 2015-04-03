@@ -539,27 +539,49 @@ if (!defined("_ADNBP_CLASS_")) {
 			return($ret);
 		}
 
-		/**
-		 * Var confs
-		 */
-		function setAuth($bool, $namespace = '') {
-			if (!strlen($namespace))
-				$namespace = $this -> getConf("requireAuth");
-			if (!strlen($namespace))
-				return false;
-
-			$this -> _isAuth[$namespace]['auth'] = ($bool === true);
-			if (!$this -> _isAuth[$namespace]['auth'])
-				unset($this -> _isAuth[$namespace]['data']);
-			$this -> setSessionVar("CloudAuth", $this -> _isAuth);
-		}
-
 		function getInputHeader($str) {
 			$str = strtoupper($str);
 			$str = str_replace('-', '_', $str);
 			return ((isset($_SERVER['HTTP_' . $str])) ? $_SERVER['HTTP_' . $str] : '');
 		}
 		
+		/**
+		 * Auth functions
+		 */
+
+		// To active Auth you have to call requireAuth([{namespace}]) 		
+		function requireAuth($namespace = 'CloudUser') {
+			$this -> setConf("requireAuth", $namespace);
+		}		 
+
+		function isAuth($namespace = '') {
+			if (!strlen($namespace)) $namespace = $this -> getConf("requireAuth");
+			if (!strlen($namespace)) return false;
+
+			if ($this -> _isAuth === false && strlen($this -> getConf("requireAuth"))) {
+				$this -> _isAuth = $this -> getSessionVar("CloudAuth");
+				if(!isset($this -> _isAuth[$namespace])) return false;
+			}
+			return ($this -> _isAuth[$namespace]['auth'] === true);
+		}
+				
+		// To set true or false
+		function setAuth($bool, $namespace = '') {
+			if (!strlen($namespace)) $namespace = $this -> getConf("requireAuth");
+			if (!strlen($namespace)) return false;
+			
+			if($bool===false ) {
+				unset($this -> _isAuth[$namespace]['data']);
+				$this -> _isAuth[$namespace]['auth'] = false;
+			} else {
+				$this -> _isAuth[$namespace]['auth'] = true;
+			}
+			$this -> setSessionVar("CloudAuth", $this -> _isAuth);
+			return true;
+			
+		}
+
+		// To use Auth tokens
 		function authToken($command,$data=array()) {
 			// $command can be: check, generate
 			if(!strlen($this -> getConf("requireAuth"))) {
@@ -569,28 +591,6 @@ if (!defined("_ADNBP_CLASS_")) {
 			return  include(__DIR__.'/ADNBP/authToken.php');
 		}
 			
-		function checkAuthToken($type) {
-			
-		}			
-
-		// About User Auth information
-		function requireAuth($namespace = 'CloudUser') {
-			$this -> setConf("requireAuth", $namespace);
-		}
-
-		function isAuth($namespace = '') {
-			if (!strlen($namespace))
-				$namespace = $this -> getConf("requireAuth");
-			if (!strlen($namespace))
-				return false;
-
-			if ($this -> _isAuth === false && strlen($this -> getConf("requireAuth"))) {
-				$this -> _isAuth = $this -> getSessionVar("CloudAuth");
-				if(!isset($this -> _isAuth[$namespace])) return false;
-			}
-			return ($this -> _isAuth[$namespace]['auth'] === true);
-		}
-
 		function setAuthUserData($key, $value, $namespace = '') {
 			if (!strlen($namespace))
 				$namespace = $this -> getConf("requireAuth");
@@ -622,9 +622,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			return ($this -> _isAuth[$namespace]['data']);
 		}
 
-		function setConf($var, $val) {$this -> _conf[$var] = $val;
-		}
-
+		function setConf($var, $val) {$this -> _conf[$var] = $val; }
 		function getConf($var = '') {
 			if (strlen($var))
 				return (((isset($this -> _conf[$var])) ? $this -> _conf[$var] : null));
@@ -632,12 +630,8 @@ if (!defined("_ADNBP_CLASS_")) {
 				return ($this -> _conf);
 		}
 
-		function pushMenu($var) { $this -> _menu[] = $var;
-		}
-
-		function setSessionVar($var, $value) { $_SESSION['adnbpSessionVar_' . $var] = $value;
-		}
-
+		function pushMenu($var) { $this -> _menu[] = $var; }
+		function setSessionVar($var, $value) { $_SESSION['adnbpSessionVar_' . $var] = $value; }
 		function getSessionVar($var) {
 			return ((isset($_SESSION['adnbpSessionVar_' . $var])) ? $_SESSION['adnbpSessionVar_' . $var] : null);
 		}
@@ -722,6 +716,9 @@ if (!defined("_ADNBP_CLASS_")) {
 			}
 			$ret = isset($this -> _translations[$dic] -> $key) ? $this -> _translations[$dic] -> $key : $dic . '-' . $key;
 			return (($raw) ? $ret : str_replace("\n", "<br />", htmlentities($ret, ENT_COMPAT | ENT_HTML401, $this -> _charset)));
+		}
+		function t1line ($dic, $key, $raw = false, $lang = '') {
+			return(preg_replace('/(\n|\r)/', ' ', $this->t($dic, $key, $raw, $lang )));
 		}
 
 		function readTranslationKeys($dic, $lang = '') {
@@ -996,6 +993,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
 		
 		function checkAuth() {
+				
 			$_ret = $this -> isAuth();
 			if (strlen($this -> getConf("requireAuth"))) {
 				if (is_file($this -> _webapp . "/logic/CloudFrameWorkAuth.php"))
