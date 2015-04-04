@@ -9,4 +9,5 @@
 
 // Look into ADNBP/config/config.php to rewrite Vars
 
+include_once __DIR__.'/../../config/config.php';
 ?>

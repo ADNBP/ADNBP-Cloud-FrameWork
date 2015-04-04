@@ -29,7 +29,10 @@ $this->setConf("API_KEY_APIKEYTEST",array('organization'=>'Test Organization','a
 // $this->setConf("GoogleServerAPICredential","{Write here your Key}"); 
 
 // API HEADER AUTH FOR TESTING
-$this->setConf('CLOUDFRAMEWORK-ID-test',array('data'=>'for test'));
-$this->setConf('API_KEY-test',array('localhost','cloudframework.adnbp.com'));
+$this->setConf('CloudServiceId','test'); // Password to manage Security Calls
+$this->setConf('CloudServiceSecret','$RHThr;We*Ef'); // Password to manage Security Calls
+
+$this->setConf('CLOUDFRAMEWORK-ID-test',array("secret"=>"$RHThr;We*Ef",'data'=>'for test'));
+$this->setConf('API_KEY-test',array('allowed_referers'=>array('localhost','cloudframework.adnbp.com')));
 
 ?>

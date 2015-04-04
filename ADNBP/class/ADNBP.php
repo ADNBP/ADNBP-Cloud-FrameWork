@@ -162,16 +162,12 @@ if (!defined("_ADNBP_CLASS_")) {
 			// CONFIG VARS
 			// load FrameWork default values
 			__addPerformance('LOADING CONFIGS: ', '','');
-			include_once ($this -> getRootPath() . "/ADNBP/config/config.php");
-			$_configs.='/ADNBP/config/config.php - ';
-			// load Defaults Values
 
 			// load webapp config values
 			if (is_file($this -> _webapp . "/config/config.php")) {
 				include_once ($this -> _webapp . "/config/config.php");
 				$_configs.=$this -> _webappURL.'/config/config.php - ';
-				
-			}
+			} 
 			// load bucket config values. Use this to keep safely passwords etc.. in a external bucket only accesible by admin
 			if (strlen($this -> getConf('ConfigPath')) && is_file($this -> getConf('ConfigPath') . "/config.php")) {
 				include_once ($this -> getConf('ConfigPath') . "/config.php");
@@ -439,12 +435,9 @@ if (!defined("_ADNBP_CLASS_")) {
 						$_url .= $key . '=' . urlencode($value) . '&';
 				}
 
-				if (strlen($this -> getConf("CloudServiceId")) && strlen($this -> getConf("CloudServiceToken"))) {
-					$_date = time();
-					$options['http']['header'] .= 'X-Cloudservice-Date: ' . $_date . "\r\n";
-					$options['http']['header'] .= 'X-Cloudservice-Id: ' . $this -> getConf("CloudServiceId") . "\r\n";
-					$options['http']['header'] .= 'X-Cloudservice-Signature: ' . strtoupper(sha1($this -> getConf("CloudServiceId") . $_date . $this -> getConf("CloudServiceToken"))) . "\r\n";
-				}
+				// Automatic send header for X-CLOUDFRAMEWORK-SECURITY if it is defined in config
+				if (strlen($this -> getConf("CloudServiceId")) && strlen($this -> getConf("CloudServiceSecret"))) 
+					$options['http']['header'] .= 'X-CLOUDFRAMEWORK-SECURITY: ' . $this->generateCloudFrameWorkSecurityString($this -> getConf("CloudServiceId"),$this -> getConf("CloudServiceSecret")) . "\r\n";
 
 				$options['http']['header'] .= 'Connection: close' . "\r\n";
 				$context = stream_context_create($options);
@@ -474,12 +467,11 @@ if (!defined("_ADNBP_CLASS_")) {
 				// You have to calculate the Content-Length to run as script
 				$options['http']['header'] .= sprintf('Content-Length: %d', strlen($build_data)) . "\r\n";
 
-				if (strlen($this -> getConf("CloudServiceId")) && strlen($this -> getConf("CloudServiceToken"))) {
-					$_date = time();
-					$options['http']['header'] .= 'X-Cloudservice-Date: ' . $_date . "\r\n";
-					$options['http']['header'] .= 'X-Cloudservice-Id: ' . $this -> getConf("CloudServiceId") . "\r\n";
-					$options['http']['header'] .= 'X-Cloudservice-Signature: ' . strtoupper(sha1($this -> getConf("CloudServiceId") . $_date . $this -> getConf("CloudServiceToken"))) . "\r\n";
-				}
+
+				// Automatic send header for X-CLOUDFRAMEWORK-SECURITY if it is defined in config
+				if (strlen($this -> getConf("CloudServiceId")) && strlen($this -> getConf("CloudServiceSecret"))) 
+					$options['http']['header'] .= 'X-CLOUDFRAMEWORK-SECURITY: ' . $this->generateCloudFrameWorkSecurityString($this -> getConf("CloudServiceId"),$this -> getConf("CloudServiceSecret")) . "\r\n";
+
 				$options['http']['header'] .= 'Connection: close' . "\r\n";
 				$context = stream_context_create($options);
 				try {
@@ -533,9 +525,13 @@ if (!defined("_ADNBP_CLASS_")) {
 		function getRequestFingerPrint() {
 			$ret['ip'] = 	$this -> _ip = $_SERVER['REMOTE_ADDR'];
 			$ret['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
+			$ret['http_referer'] = $this->_referer;
 			$ret['script_hash'] = sha1($_SERVER['HTTP_HOST']
 									.' - '.$_SERVER['SCRIPT_FILENAME']
 									.' - '.$_SERVER['SERVER_SOFTWARE']);
+			$ret['geoData'] = $this->getGeoData();
+			unset($ret['geoData']['source_ip']);
+			unset($ret['geoData']['credit']);
 			return($ret);
 		}
 
@@ -550,8 +546,10 @@ if (!defined("_ADNBP_CLASS_")) {
 		 */
 
 		// To active Auth you have to call requireAuth([{namespace}]) 		
-		function requireAuth($namespace = 'CloudUser') {
+		function requireAuth($namespace = '') {
+			if(!strlen($namespace)) $namespace = 'CloudUser';
 			$this -> setConf("requireAuth", $namespace);
+			if (isset($_GET['logout'])) $this->setAuth(false);
 		}		 
 
 		function isAuth($namespace = '') {
@@ -571,7 +569,8 @@ if (!defined("_ADNBP_CLASS_")) {
 			if (!strlen($namespace)) return false;
 			
 			if($bool===false ) {
-				unset($this -> _isAuth[$namespace]['data']);
+				if(isset($this -> _isAuth[$namespace]['data']))
+					unset($this -> _isAuth[$namespace]['data']);
 				$this -> _isAuth[$namespace]['auth'] = false;
 			} else {
 				$this -> _isAuth[$namespace]['auth'] = true;
@@ -581,6 +580,55 @@ if (!defined("_ADNBP_CLASS_")) {
 			
 		}
 
+		// Check checkCloudFrameWorkSecurity
+		function checkCloudFrameWorkSecurity($id='',$maxSeconds=0,$secret='') {
+			if(!strlen($this->getHeader('X-CLOUDFRAMEWORK-SECURITY'))) 
+				$this->addLog( 'X-CLOUDFRAMEWORK-SECURITY missing.');
+			else {
+				list($_id,$_time,$_token) = explode('__',$this->getHeader('X-CLOUDFRAMEWORK-SECURITY'),3);
+				$secs = microtime(true)-$_time;
+								
+				if(!strlen($secret)) {
+					$secArr = $this->getConf('CLOUDFRAMEWORK-ID-'.$_id);
+					if(isset($secArr['secret'])) $secret =$secArr['secret'];
+				}
+				
+				if(!strlen($secret)) {
+					$this->addLog('conf-var CLOUDFRAMEWORK-ID-'.$_id.' missing or it is not a righ CLOUDFRAMEWORK array.');
+				}elseif(!strlen($_time) || !strlen($_token)) {
+					$this->addLog('wrong X-CLOUDFRAMEWORK-SECURITY format.');
+				} elseif($secs <=0 ) {
+					 $this->addLog('Bad microtime format');
+				} elseif(strlen($id) && $id != $_id) {
+					$this->addLog($_id.' ID is not allowed');
+				}  elseif($this->getHeader('X-CLOUDFRAMEWORK-SECURITY') != $this->generateCloudFrameWorkSecurityString($_id,$_time,$secret)) {
+					$this->addLog('X-CLOUDFRAMEWORK-SECURITY does not match.');
+				} elseif($maxSeconds >0 && $maxSeconds <= $secs) {
+					$this->addLog('Security String has reached maxtime: '.$maxSeconds.' seconds');
+				} else {
+					return(true);
+				}
+			}
+			return false;
+		}
+		
+		function generateCloudFrameWorkSecurityString($_id,$_time='',$secret='') {
+			$ret = null;
+			if(!strlen($secret)) {
+				$secArr = $this->getConf('CLOUDFRAMEWORK-ID-'.$_id);
+				if(isset($secArr['secret'])) $secret =$secArr['secret'];
+			}
+			if(!strlen($secret)) {
+					$this->addLog('conf-var CLOUDFRAMEWORK-SECRET-'.$_id.' missing.');
+			} else {
+				if(!strlen($_time)) $_time = microtime(true);
+				$ret = $_id.'__'.$_time;
+				$ret .= '__'.hash_hmac('sha1',$ret,$this->getConf('CLOUDFRAMEWORK-SECRET-'.$_id));
+			}
+			return $ret;
+		}
+		
+		
 		// To use Auth tokens
 		function authToken($command,$data=array()) {
 			// $command can be: check, generate

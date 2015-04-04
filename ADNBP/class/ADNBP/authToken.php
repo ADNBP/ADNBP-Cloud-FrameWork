@@ -3,33 +3,32 @@
 switch ($command) {
 	case 'check':
 		
-		if(strlen($this->getHeader('X-CLOUDFRAMEWORK-ID'))) $type ='CLOUDFRAMEWORK';
+		if(strlen($this->getHeader('X-CLOUDFRAMEWORK-TOKEN'))) $type ='CLOUDFRAMEWORK';
 		elseif(strlen($_REQUEST['API_KEY'])) $type = 'API_KEY';
 		else {
 			$this->setAuth(false);
-			$this->addLog( 'we spect a X-CLOUDFRAMEWORK-ID or API_KEY form-param. User session has been destroyed.');	
+			$this->addLog( 'we spect a X-CLOUDFRAMEWORK-TOKEN or API_KEY form-param. User session has been destroyed.');	
 			return false;		
 		}
 		switch ($type) {
 				case 'CLOUDFRAMEWORK':
+					list($_id,$_token) = explode('__', $this->getHeader('X-CLOUDFRAMEWORK-TOKEN'),2);
+					
 				    // Every request has a Request Fingerprint
 					$_hasFingerPrint = sha1(json_encode($this->getRequestFingerPrint()));
 					
-					if($this->getConf('CLOUDFRAMEWORK-ID-'.$this->getInputHeader('X-CLOUDFRAMEWORK-ID')) ===null) {
-						$this->addLog('Missing conf-var CLOUDFRAMEWORK-ID-'.$this->getInputHeader('X-CLOUDFRAMEWORK-ID'));
-					} elseif(!strlen($this->getInputHeader('X-CLOUDFRAMEWORK-TOKEN'))) {
-						$this->addLog('Missing X-CLOUDFRAMEWORK-TOKEN');
+					if($this->getConf('CLOUDFRAMEWORK-ID-'.$_id) ===null) {
+						$this->addLog('Missing conf-var CLOUDFRAMEWORK-ID-'.$_id);
 					} elseif(!$this->isAuth()) {
-							$this->addLog( "Token '".$this->getInputHeader('X-CLOUDFRAMEWORK-ID')."' ID not created or has expired!.Get a new token.");	
+							$this->addLog( "Token not created or has expired!.Get a new token.");	
 					} elseif(!strlen($this->getAuthUserData('token')) || $this->getAuthUserData('token') != $this->getInputHeader('X-CLOUDFRAMEWORK-TOKEN')) {
 							$this->addLog("Token '".$this->getInputHeader('X-CLOUDFRAMEWORK-TOKEN')."' does not match.");
-							$this->setAuth(false);
 					} elseif($this->getAuthUserData('tokenData')->hash_fingerprint != $_hasFingerPrint) {
 							$this->addLog("Fingerprint doesn't match. Security violation. This call will generate security protocol to evaluate an attack.");
-							$this->setAuth(false);
 					} else {
 						return(true);
 					}
+					$this->setAuth(false);
 					return false;
 					break;
 					
@@ -39,27 +38,37 @@ switch ($command) {
 						$this->addLog("HTTP_REFERER unknown. Pass a HTTP_REFERER form-var to evaluate");
 					} else {
 						$key = $_REQUEST['API_KEY'];
+						$_api_key_conf = $this->getConf('API_KEY-'.$key);
+						
 						if(!strlen($key)) {
 							$this->addLog("API_KEY form-var is missing");
-						} elseif($this->getConf('API_KEY-'.$key) === null || !is_array($this->getConf('API_KEY-'.$key))) {
-							$this->addLog('Missing array conf-var API_KEY-'.$key.' with  valid domains');
+						} elseif($this->getConf('API_KEY-'.$key) === null || !is_array($_api_key_conf) || !is_array($_api_key_conf['allowed_referers'])) {
+							$this->addLog('Missing array conf-var API_KEY-'.$key.' with  allowed_referers');
 						} else {
-							if($this->isAuth()) {
-								if($this->getAuthUserData('API_KEY') == $key) 
+
+							$dataToken = $this->getConf('API_KEY-'.$key);
+							$finger_print = $this->getRequestFingerPrint();
+							$dataToken_hash = sha1(json_encode($dataToken).json_encode($finger_print));
+							
+							// If is auth and API_KEY match then return true
+							if($this->isAuth() 
+							   && $this->getAuthUserData('API_KEY')->key == $key 
+							   && $this->getAuthUserData('API_KEY')->hash == $dataToken_hash) 
 									return true;
-								$this->addLog("$key does not match. User session has been destroyed.");
-								$this->setAuth(false);
-							} else  foreach ($this->getConf('API_KEY-'.$key) as $index => $content) {
+								
+							// Restart auth session
+							$this->setAuth(false);
+							$api_key_data['key'] = $key;
+							$api_key_data['hash'] = $dataToken_hash;
+							$api_key_data['date'] = date('Y-m-d h:i:s');
+							$api_key_data['fingerprint'] = $finger_print;
+							$api_key_data['data'] = $dataToken;
+							foreach ($_api_key_conf['allowed_referers'] as $index => $content) 
 								if($content=="*" || strpos($referer,$content)!==false) {
-									$this->setAuthUserData('API_KEY',$key);
-									
-									$dataToken = array("HTTP_REFERER"=>$referer,"data"=>$this->getConf('API_KEY-'.$key));
-									$dataToken = json_encode($dataToken);
-									$this->setAuthUserData('API_KEY_DATA',json_decode($dataToken));
+									$this->setAuthUserData('API_KEY',json_decode(json_encode($api_key_data)));
 									return(true);
 								}
-								$this->addLog("HTTP_REFERER '$referer' does not match with valid domains.");
-							}
+							$this->addLog("HTTP_REFERER '$referer' does not match with allowed_referers.");
 							return(false);
 						}
 					}
@@ -88,10 +97,10 @@ switch ($command) {
 				$dataToken['id'] = $id;
 				$dataToken['created'] = date('Y-m-d h:i:s');
 				$token = sha1(json_encode($dataToken));
-				$dataToken['token'] = $token;
+				$dataToken['token'] = $id.'__'.$token;
 				$dataToken =json_encode($dataToken);
 				
-				$this->setAuthUserData('token',$token);
+				$this->setAuthUserData('token',$id.'__'.$token);
 				$this->setAuthUserData('tokenData',json_decode($dataToken));
 			}
 			

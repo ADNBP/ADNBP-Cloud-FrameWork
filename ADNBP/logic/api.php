@@ -10,9 +10,25 @@
     } else {
     	if(!$api->error) switch ($api->service) {
 	        case '_version':
-	            if(!strlen($params)) echo "Your current CloudFrameWork version is: ".$this->version();
-	            else echo(($this->version() == $params)?"OK $params":"Warning. Your version  ".htmlentities($params)." is different of current version:".$this->version);
-	            die();
+				$api->setReturnData(array('version'=>$this->version()));
+
+				// CLIENT AUTH				
+				$api->addReturnData(array('API-CLIENT-HEADER(CloudServiceUrl)'=>$this->getConf("CloudServiceUrl")));
+				$api->addReturnData(array('API-CLIENT-HEADER(CloudServiceId)'=>$this->getConf("CloudServiceId")));
+				if(strlen($this->getConf("CloudServiceId")))
+					$api->addReturnData(array('API-CLIENT-HEADER(CloudServiceSecret)'=>(strlen($this->getConf("CloudServiceSecret")))?'******':'missing' )); 
+				
+				// API-SERVER-HEADERS
+				$serverHeaders = null;
+				foreach ($this -> _conf as $key => $value) {
+					if(strpos($key, 'CLOUDFRAMEWORK-ID-')===0) {
+						list($foo,$foo,$id) = explode("-",$key,3);
+						$secArr = $this->getConf('CLOUDFRAMEWORK-ID-'.$id);
+						$serverHeaders['secret-'.$id] = (strlen($secArr['secret']))?'*****':'SECRET missing';
+					}
+				}
+				$api->addReturnData(array('API-SERVER-HEADER(CLOUDFRAMEWORK-ID-*)'=>$serverHeaders));
+				$api->addReturnData(array('fingerprint'=>$this->getRequestFingerPrint()));
 	            break;
 	        default:
 				// This allows to create your own services in each WebServer
@@ -65,7 +81,6 @@
 		
 		// Send Logs APILog
 		if($api->service != 'logs' && strlen($this->getConf("ApiLogsURL"))) {
-			
 			if(isset($_REQUEST['addLog']) && !isset($_REQUEST['test'])) {
 				// $logParams['test_mode'] = 'on';
 				$logParams['title'] = 'API '.$this->_url;
