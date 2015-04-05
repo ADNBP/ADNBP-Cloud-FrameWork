@@ -180,9 +180,9 @@ if (!defined("_ADNBP_CLASS_")) {
 			__addPerformance('LOADED CONFIGS: ', $_configs);unset($_configs);
 
 			// About timeZone, Date & Number format
-			$this->_timeZoneSystemDefault = array(date_default_timezone_get(),date('Y-m-d h:i:s'));
+			$this->_timeZoneSystemDefault = array(date_default_timezone_get(),date('Y-m-d h:i:s'),date("P"));
 			date_default_timezone_set(($this ->getConf('timeZone'))?$this ->getConf('timeZone'):'Europe/Madrid');
-			$this->_timeZone = array(date_default_timezone_get(),date('Y-m-d h:i:s'));
+			$this->_timeZone = array(date_default_timezone_get(),date('Y-m-d h:i:s'),date("P"));
 			$this -> _format['formatDate'] = ($this ->getConf('formatDate'))?$this ->getConf('timeZone'):"Y-m-d";
 			$this -> _format['formatDateTime'] = ($this ->getConf('formatDateTime'))?$this ->getConf('timeZone'):"Y-m-d h:i:s";
 			$this -> _format['formatDBDate'] = ($this ->getConf('formatDBDate'))?$this ->getConf('timeZone'):"Y-m-d h:i:s";
@@ -257,44 +257,6 @@ if (!defined("_ADNBP_CLASS_")) {
 			}
 		}
 
-		function _checkParameter(&$_data, $var, $saveInSession = false, $resetIfEmpty = false, $method = 'request') {
-
-			if (strlen($this -> getConf($var)))
-				$_data[$var] = $this -> getConf($var);
-			else {
-				if ($method == 'request')
-					$val = $_REQUEST[$var];
-				else if ($method == 'get')
-					$val = $_GET[$var];
-				else if ($method == 'post')
-					$val = $_POST[$var];
-
-				if ($resetIfEmpty || strlen($val))
-					$_data[$var] = $val;
-				//Force to get empty values
-
-				if ($saveInSession)
-					if ($resetIfEmpty) {
-						$this -> setSessionVar($var, $_data[$var]);
-					} else {
-						if (!strlen($_data[$var]))
-							$_data[$var] = $this -> getSessionVar($var);
-						else {
-							$this -> setSessionVar($var, $_data[$var]);
-						}
-					}
-			}
-		}
-
-		function checkGetParameter(&$_data, $var, $saveInSession = false, $resetIfEmpty = false) {$this -> _checkParameter($_data, $var, $saveInSession, $resetIfEmpty, 'get');
-		}
-
-		function checkPostParameter(&$_data, $var, $saveInSession = false, $resetIfEmpty = false) {$this -> _checkParameter($_data, $var, $saveInSession, $resetIfEmpty, 'post');
-		}
-
-		function checkRequestParameter(&$_data, $var, $saveInSession = false, $resetIfEmpty = false) {$this -> _checkParameter($_data, $var, $saveInSession, $resetIfEmpty, 'request');
-		}
-
 		function getGeoPlugin($ip = 'REMOTE') {
 			$_ip = $ip;
 			if (!strlen($_ip) || $_ip == 'REMOTE') $_ip = $this -> _ip;
@@ -358,6 +320,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			$this -> _geoData[$ip][$var] = $value;
 			$this -> setSessionVar('geoPluggin_' . $ip, $this -> _geoData[$ip]);
 		}
+		
 		/**
 		 * Class Loader
 		 */
@@ -366,18 +329,6 @@ if (!defined("_ADNBP_CLASS_")) {
 				include_once (dirname(__FILE__) . "/" . $class . ".php");
 			else
 				die("$class not found");
-		}
-
-		function init(&$obj, $type) {
-			switch ($type) {
-				case 'db' :
-					$this -> loadClass("db/CloudSQL");
-					$db = new CloudSQL();
-					$db -> connect();
-					break;
-				default :
-					break;
-			}
 		}
 
 		function getCloudServiceURL($add = '') {
@@ -441,7 +392,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
 				// Automatic send header for X-CLOUDFRAMEWORK-SECURITY if it is defined in config
 				if (strlen($this -> getConf("CloudServiceId")) && strlen($this -> getConf("CloudServiceSecret"))) 
-					$options['http']['header'] .= 'X-CLOUDFRAMEWORK-SECURITY: ' . $this->generateCloudFrameWorkSecurityString($this -> getConf("CloudServiceId"),$this -> getConf("CloudServiceSecret")) . "\r\n";
+					$options['http']['header'] .= 'X-CLOUDFRAMEWORK-SECURITY: ' . $this->generateCloudFrameWorkSecurityString($this -> getConf("CloudServiceId"),microtime(true),$this -> getConf("CloudServiceSecret")) . "\r\n";
 
 				$options['http']['header'] .= 'Connection: close' . "\r\n";
 				$context = stream_context_create($options);
@@ -474,7 +425,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
 				// Automatic send header for X-CLOUDFRAMEWORK-SECURITY if it is defined in config
 				if (strlen($this -> getConf("CloudServiceId")) && strlen($this -> getConf("CloudServiceSecret"))) 
-					$options['http']['header'] .= 'X-CLOUDFRAMEWORK-SECURITY: ' . $this->generateCloudFrameWorkSecurityString($this -> getConf("CloudServiceId"),$this -> getConf("CloudServiceSecret")) . "\r\n";
+					$options['http']['header'] .= 'X-CLOUDFRAMEWORK-SECURITY: ' . $this->generateCloudFrameWorkSecurityString($this -> getConf("CloudServiceId"),microtime(true),$this -> getConf("CloudServiceSecret")) . "\r\n";
 
 				$options['http']['header'] .= 'Connection: close' . "\r\n";
 				$context = stream_context_create($options);
