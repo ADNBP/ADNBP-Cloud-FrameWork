@@ -81,7 +81,8 @@ if (!defined("_ADNBP_CLASS_")) {
 		var $_webapp = '';
 		var $_webappURL = '';
 		var $_rootpath = '';
-		var $_timeZone = 'Europe/Madrid';
+		var $_timeZoneSystemDefault = null;
+		var $_timeZone = null;
 		var $error = false;
 		var $errorMsg = '';
 		var $_timePerformance = array();
@@ -91,6 +92,7 @@ if (!defined("_ADNBP_CLASS_")) {
 		var $__performance = null;
 		var $_referer=null;
 		var $_log = array();
+		var $_date = null;
 
 		/**
 		 * Constructor
@@ -120,15 +122,6 @@ if (!defined("_ADNBP_CLASS_")) {
 			apc_delete('_ah_app_identity_:https://www.googleapis.com/auth/devstorage.read_only');
 			apc_delete('_ah_app_identity_:https://www.googleapis.com/auth/devstorage.read_write');
 			 
-			// About timeZone
-			/*
-			 if(!strlen(date_default_timezone_get()))
-			 date_default_timezone_set($this->_timeZone);
-			 else $this->_timeZone = date_default_timezone_get();
-			 */
-			date_default_timezone_set($this -> _timeZone);
-			$this -> _format['decimalPoint'] = ",";
-			$this -> _format['thousandSep'] = ".";
 
 			// $this->_webapp = dirname(dirname(__FILE__))."/webapp";
 			// $this->_rootpath = dirname(dirname(dirname(__FILE__)));
@@ -185,6 +178,17 @@ if (!defined("_ADNBP_CLASS_")) {
 				}
 			}
 			__addPerformance('LOADED CONFIGS: ', $_configs);unset($_configs);
+
+			// About timeZone, Date & Number format
+			$this->_timeZoneSystemDefault = array(date_default_timezone_get(),date('Y-m-d h:i:s'));
+			date_default_timezone_set(($this ->getConf('timeZone'))?$this ->getConf('timeZone'):'Europe/Madrid');
+			$this->_timeZone = array(date_default_timezone_get(),date('Y-m-d h:i:s'));
+			$this -> _format['formatDate'] = ($this ->getConf('formatDate'))?$this ->getConf('timeZone'):"Y-m-d";
+			$this -> _format['formatDateTime'] = ($this ->getConf('formatDateTime'))?$this ->getConf('timeZone'):"Y-m-d h:i:s";
+			$this -> _format['formatDBDate'] = ($this ->getConf('formatDBDate'))?$this ->getConf('timeZone'):"Y-m-d h:i:s";
+			$this -> _format['formatDBDateTime'] = ($this ->getConf('formatDBDateTime'))?$this ->getConf('timeZone'):"Y-m-d h:i:s";
+			$this -> _format['formatDecimalPoint'] = ($this ->getConf('formatDecimalPoint'))?$this ->getConf('timeZone'):",";
+			$this -> _format['formatThousandSep'] = ($this ->getConf('formatThousandSep'))?$this ->getConf('timeZone'):".";
 
 			// OTHER VARS
 			// CloudService API. If not defined it will point to ADNBP external Serivice
