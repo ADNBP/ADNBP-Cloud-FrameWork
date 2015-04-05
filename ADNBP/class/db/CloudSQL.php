@@ -158,6 +158,9 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 			} else {
 				$this->setError("No DB server or DB name provided. ");
 			}
+			
+			// Read dates with current timezone.
+			if(!$this->error()) $this->command("set time_zone='%s'",array(date("P")));
 			return($this->_dblink);
 		}
 
@@ -244,7 +247,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 				
                 
                 if(count($params) != $n_percentsS) {
-                    $this->setError("Number of %s doesn't count match with number of arguments. Query: $q -> ".print_r($params,true));
+                    $this->setError("Number of %s ($n_percentsS) doesn't count match with number of arguments (".count($params)."). Query: $q -> ".print_r($params,true));
                     return(false);
                 } else {
                     if($n_percentsS == 0 ) $qreturn = $q;

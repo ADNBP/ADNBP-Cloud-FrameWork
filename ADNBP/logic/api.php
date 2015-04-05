@@ -1,5 +1,5 @@
 <?php
-
+__addPerformance('INI logic/api ',__FILE__);
 $this->loadClass("api/RESTful");
 $api = new RESTful();
 if(!strlen($api->service)) {
@@ -27,7 +27,9 @@ if(!strlen($api->service)) {
     
     //Now include the file or show the error
     if(strlen($__includePath)) {
+    	__addPerformance('including ',$__includePath);
         include_once $__includePath;
+    	__addPerformance('ending ',$__includePath);
     } else {
     	if(strlen($this->getConf("ApiPath")))
     		$api->setError(404,'Unknow file '.$api->service.' in bucket '.$this->getConf("ApiPath"));
@@ -50,6 +52,7 @@ if(!strlen($api->service)) {
 		$ret['urlParams']=$api->params;
 		$ret['form-raw Params']=$api->formParams;
 	}
+	
     if($api->error) {
             $ret['error']['message']=$api->errorMsg;
     }
@@ -83,11 +86,14 @@ if(!strlen($api->service)) {
 	// the following line is deprectated
 	$api->sendHeaders();
 	// Output Value
+	__addPerformance('END logic/api ');
     switch ($api->contentTypeReturn) {
         case 'JSON':
-            die(json_encode($ret));                   
+  			if(isset($api->formParams['__performance']))
+				$ret['__perfomance'] = $this->__performance;
+            die(json_encode($ret));    
+			               
             break;
-        
         default:
             if($api->error) die($api->errorMsg);
 			else die($api->returnData['data']);
