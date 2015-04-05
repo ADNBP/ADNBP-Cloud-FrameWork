@@ -54,7 +54,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
 	class ADNBP {
 
-		var $_version = "2015_Apr_02";
+		var $_version = "2015_Apr_05";
 		var $_conf = array();
 		var $_menu = array();
 		var $_sessionVarsFromGet = array();
@@ -106,7 +106,6 @@ if (!defined("_ADNBP_CLASS_")) {
 				if (strlen($sessionId))
 					session_id($sessionId);
 				session_start();
-
 			}
 			__addPerformance('session_start: ','','memory');
 			// If the call is just to KeepSession
@@ -180,9 +179,9 @@ if (!defined("_ADNBP_CLASS_")) {
 			__addPerformance('LOADED CONFIGS: ', $_configs);unset($_configs);
 
 			// About timeZone, Date & Number format
-			$this->_timeZoneSystemDefault = array(date_default_timezone_get(),date('Y-m-d h:i:s'),date("P"));
+			$this->_timeZoneSystemDefault = array(date_default_timezone_get(),date('Y-m-d h:i:s'),date("P"),time());
 			date_default_timezone_set(($this ->getConf('timeZone'))?$this ->getConf('timeZone'):'Europe/Madrid');
-			$this->_timeZone = array(date_default_timezone_get(),date('Y-m-d h:i:s'),date("P"));
+			$this->_timeZone = array(date_default_timezone_get(),date('Y-m-d h:i:s'),date("P"),time());
 			$this -> _format['formatDate'] = ($this ->getConf('formatDate'))?$this ->getConf('timeZone'):"Y-m-d";
 			$this -> _format['formatDateTime'] = ($this ->getConf('formatDateTime'))?$this ->getConf('timeZone'):"Y-m-d h:i:s";
 			$this -> _format['formatDBDate'] = ($this ->getConf('formatDBDate'))?$this ->getConf('timeZone'):"Y-m-d h:i:s";
@@ -401,7 +400,11 @@ if (!defined("_ADNBP_CLASS_")) {
 				} catch(Exception $e) {
 					$_errMsg = $e->getMessage();
 				}
-				if($ret===false) $this->setError(error_get_last().' | '.$_errMsg);
+				
+				if($ret===false) {
+					$this->setError(error_get_last());
+					if(strlen($_errMsg)) $this->addError($_errMsg);
+				}
 
 			} else {
 				if(!strlen($verb)) $verb = 'POST';
@@ -434,8 +437,10 @@ if (!defined("_ADNBP_CLASS_")) {
 				} catch(Exception $e) {
 					$_errMsg = $e->getMessage();
 				}
-				if($ret===false) $this->setError(error_get_last().' | '.$_errMsg);
-
+				if($ret===false) {
+					$this->setError(error_get_last());
+					if(strlen($_errMsg)) $this->addError($_errMsg);
+				}
 			} 
 			__addPerformance('Received getCloudServiceResponse: ');
 			
@@ -540,34 +545,45 @@ if (!defined("_ADNBP_CLASS_")) {
 			if(!strlen($this->getHeader('X-CLOUDFRAMEWORK-SECURITY'))) 
 				$this->addLog( 'X-CLOUDFRAMEWORK-SECURITY missing.');
 			else {
-				list($_id,$_time,$_token) = explode('__',$this->getHeader('X-CLOUDFRAMEWORK-SECURITY'),3);
-				$secs = microtime(true)-$_time;
-								
-				if(!strlen($secret)) {
-					$secArr = $this->getConf('CLOUDFRAMEWORK-ID-'.$_id);
-					if(isset($secArr['secret'])) $secret =$secArr['secret'];
-				}
-				
-				if(!strlen($secret)) {
-					$this->addLog('conf-var CLOUDFRAMEWORK-ID-'.$_id.' missing or it is not a righ CLOUDFRAMEWORK array.');
-				}elseif(!strlen($_time) || !strlen($_token)) {
-					$this->addLog('wrong X-CLOUDFRAMEWORK-SECURITY format.');
-				} elseif($secs <=0 ) {
-					 $this->addLog('Bad microtime format');
-				} elseif(strlen($id) && $id != $_id) {
-					$this->addLog($_id.' ID is not allowed');
-				}  elseif($this->getHeader('X-CLOUDFRAMEWORK-SECURITY') != $this->generateCloudFrameWorkSecurityString($_id,$_time,$secret)) {
-					$this->addLog('X-CLOUDFRAMEWORK-SECURITY does not match.');
-				} elseif($maxSeconds >0 && $maxSeconds <= $secs) {
-					$this->addLog('Security String has reached maxtime: '.$maxSeconds.' seconds');
+				list($_id,$_zone,$_time,$_token) = explode('__',$this->getHeader('X-CLOUDFRAMEWORK-SECURITY'),4);
+				if(    !strlen($_id)
+					|| !strlen($_zone)
+					|| !strlen($_time)
+					|| !strlen($_token)
+				) {
+					$this->addLog('_wrong format in X-CLOUDFRAMEWORK-SECURITY.');
 				} else {
-					return(true);
+					$date = new DateTime(null, new DateTimeZone($_zone));
+					$secs = microtime(true)+$date->getOffset()-$_time;
+									
+					if(!strlen($secret)) {
+						$secArr = $this->getConf('CLOUDFRAMEWORK-ID-'.$_id);
+						if(isset($secArr['secret'])) $secret =$secArr['secret'];
+					}
+					
+					if(!strlen($secret)) {
+						$this->addLog('conf-var CLOUDFRAMEWORK-ID-'.$_id.' missing or it is not a righ CLOUDFRAMEWORK array.');
+					}elseif(!strlen($_time) || !strlen($_token)) {
+						$this->addLog('wrong X-CLOUDFRAMEWORK-SECURITY format.');
+					} elseif($secs <=0 ) {
+						 $this->addLog('Bad microtime format. Negative value got. Check the clock of the client side.');
+					} elseif(strlen($id) && $id != $_id) {
+						$this->addLog($_id.' ID is not allowed');
+					}  elseif($this->getHeader('X-CLOUDFRAMEWORK-SECURITY') != $this->generateCloudFrameWorkSecurityString($_id,$_time,$secret)) {
+						$this->addLog('X-CLOUDFRAMEWORK-SECURITY does not match.');
+					} elseif($maxSeconds >0 && $maxSeconds <= $secs) {
+						$this->addLog('Security String has reached maxtime: '.$maxSeconds.' seconds');
+					} else {
+						return(true);
+					}
 				}
 			}
 			return false;
 		}
 		
+		// time, has to to be microtime().
 		function generateCloudFrameWorkSecurityString($_id,$_time='',$secret='') {
+			
 			$ret = null;
 			if(!strlen($secret)) {
 				$secArr = $this->getConf('CLOUDFRAMEWORK-ID-'.$_id);
@@ -577,7 +593,9 @@ if (!defined("_ADNBP_CLASS_")) {
 					$this->addLog('conf-var CLOUDFRAMEWORK-SECRET-'.$_id.' missing.');
 			} else {
 				if(!strlen($_time)) $_time = microtime(true);
-				$ret = $_id.'__'.$_time;
+				$date = new DateTime(null, new DateTimeZone('UTC'));
+				$_time += $date->getOffset();
+				$ret = $_id.'__UTC__'.$_time;
 				$ret .= '__'.hash_hmac('sha1',$ret,$this->getConf('CLOUDFRAMEWORK-SECRET-'.$_id));
 			}
 			return $ret;
@@ -1151,8 +1169,12 @@ if (!defined("_ADNBP_CLASS_")) {
 		 *  Error Handle
 		 */
 		function setError($errorMsg) {
+			$this -> errorMsg = array();
+			$this->addError($errorMsg);
+		}
+		function addError($errorMsg) {
 			$this -> error = true;
-			$this -> errorMsg[] = $errorMsg;
+			$this -> errorMsg[] = $errorMsg;			
 		}
 		
 		function addLog($msg) { $this -> _log[] = $msg; }

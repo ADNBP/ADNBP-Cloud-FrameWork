@@ -55,7 +55,8 @@ if (!defined ("_MYSQLI_CLASS_") ) {
         var $_dbsocket;        // MySQL Database
         var $_dbport = '3306';        // MySQL Database
         var $_dbtype = 'mysql';
-        var $_limit = 0;
+        var $_limit = 10000;
+        var $_page = 0;
         var $_qObject = array();
         var $_cloudDependences = array();
 		var $_cloudReferalFields = array();
@@ -435,7 +436,10 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 		}
  
         function setLimit($limit) { $this->_limit = $limit;}
-        function getLimit($limit) { reurn($this->_limit);}
+        function getLimit() { reurn($this->_limit);}
+        function setPage($page) { $this->_page = $page;}
+        function getPage() { reurn($this->_page);}
+
         /*
          * $action could be: getFieldTypes, getObjectFields ..
          * $data: array with field values or table where condition
@@ -498,7 +502,6 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 						else $tmpTable.="s";
                         $_q = "SELECT count(*) TOT FROM INFORMATION_SCHEMA.TABLES t WHERE t.TABLE_SCHEMA='%s' AND TABLE_NAME = '%s' ";
                         $tmp = $this->getDataFromQuery($_q,$this->_dbdatabase,$tmpTable );
-                        
                         // if table exist in database
                         if($tmp[0][TOT]==1) $table = $tmpTable;
                         else {
@@ -646,6 +649,8 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 
                     case 'getRecords':
                     case 'getDistinctRecords':
+                    case 'getPagedRecords':
+                    case 'getPagedDistinctRecords':
                     case 'getRecordsForEdit':
                     case 'getRecordsToExplore':
 						
@@ -653,19 +658,45 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                         
 						if(!strlen($table)) $table = $key;
 						if(strlen($order)) $order = " ORDER BY ".$order;
-                        if($action == "getRecords") {
-                            $_q = "select $selectFields from $table main where ".$value['selectWhere'].$order;
-                            if($this->_limit) $_q .=" limit ".$this->_limit;
-							
-                           return($this->getDataFromQuery($_q,$value['values']));
-                           
-                        } else if($action == "getDistinctRecords") {
-                            $_q = "select distinct $selectFields from $table main where ".$value['selectWhere'].$order;
-                            if($this->_limit) $_q .=" limit ".$this->_limit;
-                           return($this->getDataFromQuery($_q,$value['values']));
-                           
-                        } else {
+						
+						// case 'getPagedRecords':
+                        // case 'getPagedDistinctRecords':                        
+                        if($action == "getPagedRecords" || $action == "getPagedDistinctRecords" ) {
+    
+		                    $_q = "select count(*) TOTAL from (select ".((action == "getPagedDistinctRecords")?'distinct ':'')."$selectFields from $table main where ".$value['selectWhere'].$order;
+	                        $_q .=") __totRows";
+	                        $ret = $this->getDataFromQuery($_q,$value['values']);
+							$tot = $ret[0]['TOTAL'];
 
+							$ret = array();
+							$ret['num_rows'] = $tot;
+				        	$ret['page_limit'] = (intval($this->_limit))?$this->_limit:200;
+				        	$ret['num_pages'] = round($tot/$this->_limit,0);
+							if( ($ret['num_pages'] * $this->_limit) < $tot) $ret['num_pages']++;
+				        	if($this->_page >= $ret['num_pages']) $this->_page = $ret['num_pages']-1;
+				        	$ret['current_page'] = $this->_page;
+							$ret['offset'] = ($this->_page * $this->_limit).",$this->_limit";
+                       		
+	                        $_q = "select ".((action == "getPagedDistinctRecords")?'distinct ':'')."$selectFields from $table main where ".$value['selectWhere'].$order;
+                            $_q .=" limit ".$ret['offset'];
+                            
+                            $ret2 = $this->getDataFromQuery($_q,$value['values']);
+							$ret['num_rows_in_page'] = $this->_affectedRows; 
+							$ret['rows'] = $ret2;
+							unset($ret2);
+                            return($ret);
+                        } 
+						// case 'getRecords':
+                        // case 'getDistinctRecords':                        
+						elseif($action == "getRecords" || $action == "getDistinctRecords") {
+	                        $_q = "select ".((action == "getDistinctRecords")?'distinct ':'')."$selectFields from $table main where ".$value['selectWhere'].$order;
+                            if($this->_limit) $_q .=" limit ".$this->_limit;
+                            return($this->getDataFromQuery($_q,$value['values']));
+                       
+                        } 
+					    // case 'getRecordsForEdit':
+                        // case 'getRecordsToExplore':                           
+                        else {
                            // Eplore types
                            for($k=0,$tr3=count($types);$k<$tr3;$k++) {
                            	   	
@@ -758,8 +789,8 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 					 	   $_ret['totRows'] = $nrows[0]['TOT'];
 						 
 						   
-                           // if($action == "getRecordsForEdit") $this->_limit = 50;  
-						   
+                           // if($action == "getRecordsForEdit") $this->_limit = 50; 
+                           if($this->_limit <= 0) $this->_limit = 10000; 
 					 	   $_ret['totPages'] = round($nrows[0]['TOT']/$this->_limit,0);
 					 	   if($_ret['totPages']*$this->_limit < $nrows[0]['TOT']) $_ret['totPages']++;
 						   

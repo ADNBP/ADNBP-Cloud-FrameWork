@@ -39,7 +39,6 @@ switch ($command) {
 					} else {
 						$key = $_REQUEST['API_KEY'];
 						$_api_key_conf = $this->getConf('API_KEY-'.$key);
-						
 						if(!strlen($key)) {
 							$this->addLog("API_KEY form-var is missing");
 						} elseif($this->getConf('API_KEY-'.$key) === null || !is_array($_api_key_conf) || !is_array($_api_key_conf['allowed_referers'])) {
@@ -69,9 +68,9 @@ switch ($command) {
 									return(true);
 								}
 							$this->addLog("HTTP_REFERER '$referer' does not match with allowed_referers.");
-							return(false);
 						}
 					}
+					$this->setAuth(false);
 					return(false);		
 					break;
 				default:
