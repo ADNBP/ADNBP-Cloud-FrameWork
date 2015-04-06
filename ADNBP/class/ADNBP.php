@@ -741,7 +741,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
 			// Eval return cache to read Dics
     		$_qHash = hash('md5','readTranslationKeys->'.$dic.'_'.$lang);	
-			if(!is_object($this -> _cache['object'])) $this->initCache();
+			$this->initCache();
 			if(!isset($_GET['reloadDictionaries']) && !isset($_GET['reload']) && is_object($this -> _cache['object']) ) {
 				$ret = $this->getCache($_qHash);
 				if(is_object($ret)) return($ret);
@@ -756,17 +756,19 @@ if (!defined("_ADNBP_CLASS_")) {
 			if (strlen($this -> getConf("LocalizePath")) && is_dir($this -> getConf("LocalizePath"))) {
 
 				// Try to get the dictionary dinamically if ApiDictionaryURL is defined and to write locally
-				if (strlen($this -> getConf("ApiDictionaryURL")) && (!is_file($this -> getConf("LocalizePath") . $filename) || isset($_GET['reloadDictionaries']))) {
+				if (strlen($this -> getConf("ApiDictionaryURL")) 
+				    && (!is_file($this -> getConf("LocalizePath") . $filename) || isset($_GET['reloadDictionaries']))) {
 					if (!strlen($_GET['reloadDictionaries']) || $dic == $_GET['reloadDictionaries']) {
 
 						$content = json_decode($this -> getCloudServiceResponse($this -> getConf("ApiDictionaryURL") . '/' . rawurlencode($dic) . "/$lang"));
-
 						if (!empty($content) && $content -> success) {
+								
 							$dic = array();
 							foreach ($content->data as $key => $value) {
 								$dic[$value -> key] = $value -> $lang;
 							}
 							file_put_contents($this -> getConf("LocalizePath") . $filename, json_encode($dic));
+							 
 							__addPerformance('file_put_contents: ',$this -> getConf("LocalizePath") . $filename,'time');
 							unset($dic);
 						}
