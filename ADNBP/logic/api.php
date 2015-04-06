@@ -20,7 +20,9 @@ if(!strlen($api->service)) {
     
     //  If there is no path found lets try under logic/api
     if($__includePath=='')
-       if(is_file($this->_webapp."/logic/api/".$api->service.".php"))
+       if(is_file($this->_webapp."/api/".$api->service.".php"))
+            $__includePath = $this->_webapp."/api/".$api->service.".php";
+	   elseif(is_file($this->_webapp."/logic/api/".$api->service.".php"))
             $__includePath = $this->_webapp."/logic/api/".$api->service.".php";
        elseif(is_file($this->_rootpath."/ADNBP/logic/api/".$api->service.".php"))
             $__includePath =  $this->_rootpath."/ADNBP/logic/api/".$api->service.".php";
