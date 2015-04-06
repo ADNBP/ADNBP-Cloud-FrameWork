@@ -658,12 +658,11 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                         
 						if(!strlen($table)) $table = $key;
 						if(strlen($order)) $order = " ORDER BY ".$order;
-						
 						// case 'getPagedRecords':
                         // case 'getPagedDistinctRecords':                        
                         if($action == "getPagedRecords" || $action == "getPagedDistinctRecords" ) {
     
-		                    $_q = "select count(*) TOTAL from (select ".((action == "getPagedDistinctRecords")?'distinct ':'')."$selectFields from $table main where ".$value['selectWhere'].$order;
+		                    $_q = "select count(*) TOTAL from (select ".(($action == "getPagedDistinctRecords")?'distinct ':'')."$selectFields from $table main where ".$value['selectWhere'].$order;
 	                        $_q .=") __totRows";
 	                        $ret = $this->getDataFromQuery($_q,$value['values']);
 							$tot = $ret[0]['TOTAL'];
@@ -673,10 +672,9 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 				        	$ret['page_limit'] = (intval($this->_limit))?$this->_limit:200;
 				        	$ret['num_pages'] = round($tot/$this->_limit,0);
 							if( ($ret['num_pages'] * $this->_limit) < $tot) $ret['num_pages']++;
-				        	if($this->_page >= $ret['num_pages']) $this->_page = $ret['num_pages']-1;
+				        	if($this->_page >= $ret['num_pages'] && $this->_page >0) $this->_page = $ret['num_pages']-1;
 				        	$ret['current_page'] = $this->_page;
 							$ret['offset'] = ($this->_page * $this->_limit).",$this->_limit";
-                       		
 	                        $_q = "select ".((action == "getPagedDistinctRecords")?'distinct ':'')."$selectFields from $table main where ".$value['selectWhere'].$order;
                             $_q .=" limit ".$ret['offset'];
                             
@@ -689,7 +687,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 						// case 'getRecords':
                         // case 'getDistinctRecords':                        
 						elseif($action == "getRecords" || $action == "getDistinctRecords") {
-	                        $_q = "select ".((action == "getDistinctRecords")?'distinct ':'')."$selectFields from $table main where ".$value['selectWhere'].$order;
+	                        $_q = "select ".(($action == "getDistinctRecords")?'distinct ':'')."$selectFields from $table main where ".$value['selectWhere'].$order;
                             if($this->_limit) $_q .=" limit ".$this->_limit;
                             return($this->getDataFromQuery($_q,$value['values']));
                        
