@@ -100,14 +100,12 @@ if (!defined("_ADNBP_CLASS_")) {
 		function ADNBP($session = true, $sessionId = '', $rootpath = '') {
 			global $__performance;
 			$this->__performance = &$__performance;
-			__addPerformance('LOAD CLASS & INIT OBJECT $this '.__CLASS__.'-'.__FUNCTION__,__FILE__);
-
 			if ($session) {
 				if (strlen($sessionId))
 					session_id($sessionId);
 				session_start();
 			}
-			__addPerformance('session_start: ','','memory');
+			__addPerformance('session_start. Construct Class:'.__CLASS__,__FILE__);
 			// If the call is just to KeepSession
 			if (strpos($this -> _url, '/CloudFrameWorkService/keepSession') !== false) {
 				header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
@@ -152,10 +150,7 @@ if (!defined("_ADNBP_CLASS_")) {
 				$_configs.='/adnbp_framework_config.php - ';
 			}
 			// CONFIG VARS
-			// load FrameWork default values
-			__addPerformance('LOADING CONFIGS: ', '','');
-
-			// load webapp config values
+			// load webapp config values or FrameWork default values
 			if (is_file($this -> _webapp . "/config/config.php")) {
 				include_once ($this -> _webapp . "/config/config.php");
 				$_configs.=$this -> _webappURL.'/config/config.php - ';
@@ -226,9 +221,6 @@ if (!defined("_ADNBP_CLASS_")) {
 
 			// Set to lang conf var the current lang
 			$this -> setConf("lang", $this -> _lang);
-			
-			__addPerformance('END '.__CLASS__.'-'.__FUNCTION__);			
-
 		}
 
 		function version() {
@@ -821,10 +813,8 @@ if (!defined("_ADNBP_CLASS_")) {
 		 */
 		function run() {
 
-			__addPerformance('INIT '.__CLASS__.'-'.__FUNCTION__);
 			$this -> _basename = basename($this -> _url);
 			$scriptname = basename($this -> _scriptPath);
-
 		// Find out the template based in the URL
 			//if URL has CloudFrameWork* & /api has an special treatment
 			if (strpos($this -> _url, '/CloudFrameWork') !== false || strpos($this -> _url, '/api') === 0) {

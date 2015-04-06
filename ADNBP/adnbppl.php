@@ -33,6 +33,9 @@ function __showPerformance($title = '', $top = "<!--\n", $bottom = "\n-->") {
 
 function __addPerformance($title, $file = '', $type = 'all') {
 	global $__performance;
+	
+	// Hidding full path (security)
+	$file = str_replace($_SERVER['DOCUMENT_ROOT'], '', $file);
 
 	$line = $__performance['lastIndex'].' [';
 	if (strlen($file)) $file = " ($file)";
