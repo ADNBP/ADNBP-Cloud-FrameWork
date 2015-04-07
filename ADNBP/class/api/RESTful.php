@@ -172,7 +172,7 @@ if (!defined ("_RESTfull_CLASS_") ) {
 			 $this->returnData['data'] = $value; 
 		}
 		function addReturnData($value) {
-			 if($this->returnData===null) $this->setReturnData($value);
+			 if(!isset($this->returnData['data'])) $this->setReturnData($value);
 			 else {
 			 	if(!is_array($value)) $value = array($value);
 			 	if(!is_array($this->returnData['data'])) $this->returnData['data'] = array($this->returnData['data']);

@@ -44,12 +44,12 @@ if(!strlen($api->service)) {
     $ret = array();
     $ret['success'] = ($api->error)?false:true;
     $ret['status'] = $api->getReturnCode();
+    $ret['url']=(($_SERVER['HTTPS']=='on')?'https://':'http://').$_SERVER['HTTP_HOST'].'/'.$_SERVER['REQUEST_URI'];
 	if(isset($api->formParams['debug'])) {
 		$ret['header'] = $api->getHeader();
         $ret['method'] = $api->method;
 		$ret['session'] = session_id();
 		$ret['ip']=$this->_ip;
-        $ret['url']=(($_SERVER['HTTPS']=='on')?'https://':'http://').$_SERVER['HTTP_HOST'].'/'.$_SERVER['REQUEST_URI'];
         $ret['user_agent']=($this->userAgent!=null)?$this->userAgent:$api->requestHeaders['User-Agent'];
 		$ret['urlParams']=$api->params;
 		$ret['form-raw Params']=$api->formParams;
