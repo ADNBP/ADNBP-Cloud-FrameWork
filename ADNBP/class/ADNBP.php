@@ -64,7 +64,7 @@ if (!defined("_ADNBP_CLASS_")) {
 		// String to parse a dictionary
 		var $_dic = array();
 		var $_dics = array();
-		var $_translations = array();
+		var $_dicKeys = array();
 		var $_pageContent = array();
 		var $_charset = "UTF-8";
 		var $_url = '';
@@ -355,13 +355,14 @@ if (!defined("_ADNBP_CLASS_")) {
 		 * Call External Cloud Service 
 		 */
 		function getCloudServiceResponse($rute, $data = null, $verb = 'GET', $extraheaders = null, $raw = false) {
-			__addPerformance('Start getCloudServiceResponse: ',"$rute " . json_encode($data),'time');
+			__addPerformance('Start getCloudServiceResponse: ',"$rute " . (($data===null)?'{no params}':'{with params}'),'note');
 			
 			// Creating the final URL
 			if (strpos($rute, 'http') !== false)
 				$_url = $rute;
-			else
+			else {
 				$_url = $this -> getCloudServiceURL($rute);
+			}
 
 			$_errMsg = '';
 			if($verb=='GET') {
@@ -713,101 +714,70 @@ if (!defined("_ADNBP_CLASS_")) {
 
 		// Dictionaries in method 2
 		function t($dic, $key, $raw = false, $lang = '') {
-			
-			$dic = str_replace('..', '', trim($dic));
-			// Security issue to avoid includes ../
-			$dic = str_replace('/', '', $dic);
-			// Security issue to avoid includes ../
-			if (!strlen($lang))
-				$lang = $this -> _lang;
+			// Lang to read
+			if (!strlen($lang)) $lang = $this -> _lang;
 
 			// Load dictionary repository
 			if (!isset($this -> dics[$dic])) {
-				$this -> _translations[$dic] = $this -> readTranslationKeys($dic, $lang);
-				__addPerformance("getDicContentInHTML()->readTranslationKeys($dic)");
+				$this -> _dicKeys[$dic] = $this -> readDictionaryKeys($dic, $lang);
 				$this -> dics[$dic] = true;
 			}
-			$ret = isset($this -> _translations[$dic] -> $key) ? $this -> _translations[$dic] -> $key : $dic . '-' . $key;
+			$ret = isset($this -> _dicKeys[$dic] -> $key) ? $this -> _dicKeys[$dic] -> $key : $dic . '-' . $key;
 			return (($raw) ? $ret : str_replace("\n", "<br />", htmlentities($ret, ENT_COMPAT | ENT_HTML401, $this -> _charset)));
 		}
-		function t1line ($dic, $key, $raw = false, $lang = '') {
-			return(preg_replace('/(\n|\r)/', ' ', $this->t($dic, $key, $raw, $lang )));
-		}
+		function t1line ($dic, $key, $raw = false, $lang = '') { return(preg_replace('/(\n|\r)/', ' ', $this->t($dic, $key, $raw, $lang ))); }
 
-		function readTranslationKeys($dic, $lang = '') {
+		function readDictionaryKeys($cat, $lang = '') {
+			// Lang to read
+			if ($lang == '') $lang = $this -> _lang;
 			
-			if ($lang == '')
-				$lang = $this -> _lang;
-
-			// Eval return cache to read Dics
-    		$_qHash = hash('md5','readTranslationKeys->'.$dic.'_'.$lang);	
-			$this->initCache();
-			if(!isset($_GET['reloadDictionaries']) && !isset($_GET['reload']) && is_object($this -> _cache['object']) ) {
-				$ret = $this->getCache($_qHash);
-				if(is_object($ret)) return($ret);
-			}
-
-
-			// Security control because we write local files
+			// Where the filename is: Security control because we write local files
 			$patron = '/[^a-zA-Z0-9_-]+/';
-			$filename = '/' . preg_replace($patron, '', $lang) . '_' . preg_replace($patron, '', $dic) . '.json';
+			$filename = '/' . preg_replace($patron, '', $lang) . '_' . preg_replace($patron, '', $cat) . '.json';
+			if (strlen($this -> getConf("LocalizePath")) && is_dir($this -> getConf("LocalizePath"))) 
+				$filename = $this->getConf("LocalizePath").$filename;
+			else 
+				$filename = $this -> webapp . '/localize'.$filename;
 
-			// If I have defined a specific Path out of the webapp I can write from external service.
-			if (strlen($this -> getConf("LocalizePath")) && is_dir($this -> getConf("LocalizePath"))) {
-
-				// Try to get the dictionary dinamically if ApiDictionaryURL is defined and to write locally
-				if (strlen($this -> getConf("ApiDictionaryURL")) 
-				    && (!is_file($this -> getConf("LocalizePath") . $filename) || isset($_GET['reloadDictionaries']))) {
-					if (!strlen($_GET['reloadDictionaries']) || $dic == $_GET['reloadDictionaries']) {
-
-						$content = json_decode($this -> getCloudServiceResponse($this -> getConf("ApiDictionaryURL") . '/' . rawurlencode($dic) . "/$lang"));
+			// Evaluating to write the json file form a external service.
+			if(!$this->error)
+			if($this->getConf('CloudServiceDictionary') && strlen($this->getConf('CloudServiceKey'))) 
+				if(!is_file($filename) || isset($_GET['reloadDictionaries']))
+					if (!strlen($_GET['reloadDictionaries']) || $cat == $_GET['reloadDictionaries']) {
+						$content = json_decode($this -> getCloudServiceResponse('dictionary/cat/' . rawurlencode($cat) . "/$lang",array('API_KEY'=>$this->getConf('CloudServiceKey'))));	
 						if (!empty($content) && $content -> success) {
-								
 							$dic = array();
 							foreach ($content->data as $key => $value) {
 								$dic[$value -> key] = $value -> $lang;
 							}
-							file_put_contents($this -> getConf("LocalizePath") . $filename, json_encode($dic));
-							 
-							__addPerformance('file_put_contents: ',$this -> getConf("LocalizePath") . $filename,'time');
+							try {
+								$ret = @file_put_contents($filename, json_encode($dic));
+							}catch(Exception $e) {
+								$_errMsg = $e->getMessage();
+							}
+							if($ret===false) {
+								$this->setError(error_get_last());
+								if(strlen($_errMsg)) $this->addError($_errMsg);
+								__addPerformance('ERROR file_put_contents for cat='.$cat,$filename,'time');
+							} else
 							unset($dic);
+						} else {
+							_printe($this->getCloudServiceURL('dictionary/cat/' . rawurlencode($dic) . "/$lang"),$content);
 						}
 					}
-				}
-
-				// Read the dictionary if the file exist
-				if (is_file($this -> getConf("LocalizePath") . $filename)) {
-					$ret =  json_decode(file_get_contents($this -> getConf("LocalizePath") . $filename));
-					if(is_object($this -> _cache['object']) ) {
-						$this->setCache($_qHash,$ret);
-					}
-					return($ret);
-									}
-			} else {
-				if (is_file($this -> webapp . '/localize' . $filename)) {
-					$ret =  json_decode($this -> webapp . '/localize' . $filename);
-					if(is_object($this -> _cache['object']) ) {
-						$this->setCache($_qHash,$ret);
-					}
-					return($ret);
-				}
-			}
-			return (json_decode('{}'));
+			
+			// Returning file
+			if(is_file($filename)) return(json_decode(file_get_contents($filename)));
+			else return(json_decode('{}'));
 		}
 
-		function setPageContent($key, $content) { $this -> _pageContent[$key] = $content;
-		}
-
-		function addPageContent($key, $content) { $this -> _pageContent[$key] .= $content;
-		}
-
-		function getPageContent($key) {
-			return (htmlentities($this -> _pageContent[$key], ENT_SUBSTITUTE));
-		}
-
-		function getRawPageContent($key) {
-			return ($this -> _pageContent[$key]);
-		}
+		/*
+		 * DEPRECATED Functions to show contents
+		 */
+		function setPageContent($key, $content) { $this -> _pageContent[$key] = $content; }
+		function addPageContent($key, $content) { $this -> _pageContent[$key] .= $content; }
+		function getPageContent($key) { return (htmlentities($this -> _pageContent[$key], ENT_SUBSTITUTE)); }
+		function getRawPageContent($key) { return ($this -> _pageContent[$key]); }
 		
 
 		/**
