@@ -67,6 +67,7 @@ if (!defined("_ADNBP_CLASS_")) {
 		var $_dicKeys = array();
 		var $_pageContent = array();
 		var $_charset = "UTF-8";
+		var $url = null;
 		var $_url = '';
 		var $_urlParams = '';
 		var $_urlParts = array();
@@ -133,6 +134,14 @@ if (!defined("_ADNBP_CLASS_")) {
 				list($this -> _url, $this -> _urlParams) = explode('?', $_SERVER['REQUEST_URI'], 2);
 			else
 				$this -> _url = $_SERVER['REQUEST_URI'];
+			
+			$this->url['https'] = $_SERVER['HTTPS'];
+			$this->url['host'] = $_SERVER['HTTP_HOST'];
+			$this->url['url'] = $this -> _url;
+			$this->url['url_full'] = $_SERVER['REQUEST_URI'];
+			$this->url['host_url'] = (($_SERVER['HTTPS']=='on')?'https':'http').'://'.$_SERVER['HTTP_HOST'];
+			$this->url['host_url_full'] = (($_SERVER['HTTPS']=='on')?'https':'http').'://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+			$this->url['script_name'] = $_SERVER['SCRIPT_NAME'];
 
 			$this -> _scriptPath = $_SERVER['SCRIPT_NAME'];
 			$this -> _ip = $_SERVER['REMOTE_ADDR'];
@@ -646,6 +655,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
 		function pushMenu($var) { $this -> _menu[] = $var; }
 		function setSessionVar($var, $value) { $_SESSION['adnbpSessionVar_' . $var] = $value; }
+		function deleteSessionVar($var) { unset($_SESSION['adnbpSessionVar_' . $var]); }
 		function getSessionVar($var) {
 			return ((isset($_SESSION['adnbpSessionVar_' . $var])) ? $_SESSION['adnbpSessionVar_' . $var] : null);
 		}
