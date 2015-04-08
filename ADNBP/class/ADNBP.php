@@ -758,11 +758,12 @@ if (!defined("_ADNBP_CLASS_")) {
 							if($ret===false) {
 								$this->setError(error_get_last());
 								if(strlen($_errMsg)) $this->addError($_errMsg);
-								__addPerformance('ERROR file_put_contents for cat='.$cat,$filename,'time');
+								__addPerformance('ERROR writing file readDictionaryKeys cat='.$cat,$filename,'time');
 							} else
 							unset($dic);
 						} else {
-							_printe($this->getCloudServiceURL('dictionary/cat/' . rawurlencode($dic) . "/$lang"),$content);
+							$this->setError('readDictionaryKeys cat='.$cat.' error='.json_encode($content));
+							__addPerformance('ERROR CloudServiceResponse readDictionaryKeys cat='.$cat,'','time');
 						}
 					}
 			
@@ -1039,18 +1040,21 @@ if (!defined("_ADNBP_CLASS_")) {
 			return ($str);
 		}
 
+		function getSubstitutionsTags($str) {
+			$ret = null;
+			if(strlen(trim($str))) {
+				$_expr = "((?!}}).)*";
+				preg_match_all('/{{(' . $_expr . ')}}/s', $str, $ret);
+			}
+			return $ret;
+		}
+
 		/*
-		 * String with {{lang:...}} codes to apply in a language
+		 * String with {{lang:...}} or {{dic:Cat,code}} will be translated
 		 */
 		function applyTranslations($str, $lang) {
-			if (!strlen($lang))
-				return ($str);
-			$str = trim($str);
-			// erase no desired chars
-
-			unset($matchs);
-			$_expr = "((?!}}).)*";
-			preg_match_all('/{{(' . $_expr . ')}}/s', $str, $matchs);
+			if (!strlen($lang) || !strlen(trim($str))) return ($str);
+			$matchs = $this->getSubstitutionsTags($str);
 			if (is_array($matchs[0]))
 				for ($i = 0, $tr = count($matchs[0]); $i < $tr; $i++)
 					if (strpos($matchs[1][$i], 'lang:') !== false) {
@@ -1084,13 +1088,14 @@ if (!defined("_ADNBP_CLASS_")) {
 			return ($str);
 		}
 
+		
+
 		/*
 		 * String with {{var}} to find substitutions with $_REQUEST['var']
 		 */
 		function applyVarsSubsitutions($str) {
-			unset($matchs);
-			$_expr = "((?!}}).)*";
-			preg_match_all('/{{(' . $_expr . ')}}/s', $str, $matchs);
+			if (!strlen(trim($str))) return ($str);
+			$matchs = $this->getSubstitutionsTags($str);
 			if (is_array($matchs[0]))
 				for ($i = 0, $tr = count($matchs[0]); $i < $tr; $i++) {
 					// if not there is Variables

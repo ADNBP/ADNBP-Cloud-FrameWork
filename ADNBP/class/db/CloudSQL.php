@@ -159,7 +159,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 			} else {
 				$this->setError("No DB server or DB name provided. ");
 			}
-			
+			__addPerformance('db connect. Class:'.__CLASS__,__FILE__);
 			// Read dates with current timezone.
 			if(!$this->error()) $this->command("set time_zone='%s'",array(date("P")));
 			return($this->_dblink);
