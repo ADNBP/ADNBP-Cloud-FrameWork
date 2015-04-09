@@ -44,7 +44,7 @@ if(!strlen($api->service)) {
     $ret = array();
     $ret['success'] = ($api->error)?false:true;
     $ret['status'] = $api->getReturnCode();
-    $ret['url']=(($_SERVER['HTTPS']=='on')?'https://':'http://').$_SERVER['HTTP_HOST'].'/'.$_SERVER['REQUEST_URI'];
+    $ret['url']=(($_SERVER['HTTPS']=='on')?'https://':'http://').$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
 	if(isset($api->formParams['debug'])) {
 		$ret['header'] = $api->getHeader();
         $ret['method'] = $api->method;
