@@ -109,12 +109,7 @@ switch ($service) {
         $pageContent =  str_replace("{source}", htmlentities(file_get_contents($this->_rootpath."/ADNBP/class/sms/logic/SMS.php")),$pageContent);
        break;
     case 'File':
-       $this->setConf("pageCode","File");
-       $pageContent = $memcache->get("CFFile");
-       if(!strlen($pageContent) || isset($_GET['nocache'])) {
-           $pageContent = $this->getCloudServiceResponse("templates/File");
-           $memcache->set("CFFile","$pageContent");
-       }
+        $pageContent = $this->getCloudServiceResponse("templates/File");
         include_once($this->_rootpath."/ADNBP/class/io/logic/File.php");
 
         $pageContent =  str_replace("{value}", htmlentities($_GET['path']),$pageContent);

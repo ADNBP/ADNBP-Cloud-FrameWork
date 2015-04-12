@@ -1,6 +1,53 @@
 <?php
-use \google\appengine\api\app_identity\AppIdentityService;
-use \google\appengine\api\cloud_storage\CloudStorageTools;
+
+$filename = 'test/hello.txt';
+// Load class and create the object.
+$this->loadClass("io/File");
+$file = new File(); // Takes de deault buchet.
+
+
+echo "<li>Bucket: gs://".$file->bucket;
+$file->deleAllFiles();
+echo "<li>File vars:";
+	echo "<blockquote><pre>".print_r($file->vars,true)."</pre></blockquote>";
+
+// Reading files
+echo "<li>Files:";
+	echo "<blockquote><pre>".print_r($file->getFiles(),true)."</pre></blockquote>";
+
+// Writing file
+$file->putContents($filename,'Hellow World');
+echo "<li>Writing  file <a href='".$file->getPublicUrl($filename)."'>gs://$file->bucket/$filename</a>. Result: ".(($file->error)?"FAIL":"OK");
+if($file->error) {
+	echo "<pre>".print_r($file->errorMsg,true)."</pre>";
+} else {
+	echo "<li>file content:<br/><blockquote><pre>".$file->getContents('hello.txt')."</pre></blockquote>";
+}
+
+
+
+if($file->uploaded) {
+	$file->manageUploadFiles();
+	echo "<li>Uploaded files:";
+	 echo "<pre>".print_r($file->uploadedFiles,true)."</pre>";
+	
+}
+// echo "<pre>".print_r($_FILES,true)."</pre>";
+
+
+?>
+<hr>
+<form action="<?=$file->getUploadUrl()?>" enctype="multipart/form-data" method="post">
+    Files to upload: <br>
+   <input type="file" name="uploaded_files" size="40">
+   <input type="submit" value="Send">
+</form>
+
+<?php
+exit;
+
+
+
 
 if(!strlen($_GET['path'])) {
     

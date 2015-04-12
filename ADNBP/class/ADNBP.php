@@ -18,28 +18,6 @@
  * @package com.adnbp.framework
  */
 
-function _print() { __print(func_get_args());}
-function _printe() { __print(array_merge(func_get_args(), array('exit')));}
-function __print($args) {
-	echo "<pre>";
-	for ($i = 0, $tr = count($args); $i < $tr; $i++) {
-		if ($args[$i] === "exit")
-			exit ;
-		echo "\n<li>[$i]: ";
-		if (is_array($args[$i]))
-			echo print_r($args[$i], true);
-		else if (is_object($args[$i]))
-			echo var_dump($args[$i]);
-		else if (is_bool($args[$i]))
-			echo($args[$i]) ? 'true' : 'false';
-		else if (is_null($args[$i]))
-			echo 'NULL';
-		else
-			echo $args[$i];
-	}
-	echo "</pre>";
-}
-
 if (!defined("_ADNBP_CLASS_")) {
 	define("_ADNBP_CLASS_", TRUE);
 
@@ -54,10 +32,9 @@ if (!defined("_ADNBP_CLASS_")) {
 
 	class ADNBP {
 
-		var $_version = "2015_Apr_05";
+		var $_version = "2015_Apr_11";
 		var $_conf = array();
 		var $_menu = array();
-		var $_sessionVarsFromGet = array();
 		var $_lang = "en";
 		var $_langsSupported = array("en" => "true");
 		var $_parseDic = "";
@@ -78,7 +55,7 @@ if (!defined("_ADNBP_CLASS_")) {
 		var $_userLanguages = array();
 		var $_basename = '';
 		var $_isAuth = false;
-		var $_defaultCFURL = "https://cloud.adnbp.com/api";
+		var $_defaultCFURL = "/api";
 		var $_webapp = '';
 		var $_webappURL = '';
 		var $_rootpath = '';
@@ -164,13 +141,14 @@ if (!defined("_ADNBP_CLASS_")) {
 				include_once ($this -> _webapp . "/config/config.php");
 				$_configs.=$this -> _webappURL.'/config/config.php - ';
 			} 
+
 			// load bucket config values. Use this to keep safely passwords etc.. in a external bucket only accesible by admin
 			if (strlen($this -> getConf('ConfigPath')) && is_file($this -> getConf('ConfigPath') . "/config.php")) {
 				include_once ($this -> getConf('ConfigPath') . "/config.php");
 				$_configs.=$this -> getConf('ConfigPath') . "/config.php";
 			}
 			// For development purpose find local_config.php. Don't forget to add **/local_config.php in .gitignore
-			if ($_SERVER['SERVER_NAME'] == 'localhost') {
+			if ($this->is('development')) {
 				if (is_file($this -> _rootpath . "/local_config.php")) {
 					include_once ($this -> _rootpath . "/local_config.php");
 					$_configs.='/local_config.php - ';
@@ -513,6 +491,22 @@ if (!defined("_ADNBP_CLASS_")) {
 			$this -> setConf("requireAuth", $namespace);
 			if (isset($_GET['logout'])) $this->setAuth(false);
 		}		 
+
+		function is($key) {
+			switch ($key) {
+				case 'development':
+					return(stripos($_SERVER['SERVER_SOFTWARE'], 'Development')!==false);
+					break;
+				case 'production':
+					return(stripos($_SERVER['SERVER_SOFTWARE'], 'Development')===false);
+					break;
+				case 'auth':
+					return($this->isAuth());
+					break;
+				default:
+					break;
+			}
+		}
 
 		function isAuth($namespace = '') {
 			if (!strlen($namespace)) $namespace = $this -> getConf("requireAuth");

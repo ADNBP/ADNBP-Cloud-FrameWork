@@ -15,8 +15,8 @@ if(!strlen($api->service)) {
     if(strlen($this->getConf("ApiPath"))) 
         if(is_file($this->getConf("ApiPath").'/'.$api->service.".php"))
             $__includePath = $this->getConf("ApiPath").'/'.$api->service.".php";
-        elseif(is_file($this->_rootpath."/ADNBP/logic/api/".$api->service.".php"))
-            $__includePath = $this->_rootpath."/ADNBP/logic/api/".$api->service.".php";
+        elseif(is_file($this->_rootpath."/ADNBP/api/".$api->service.".php"))
+            $__includePath = $this->_rootpath."/ADNBP/api/".$api->service.".php";
     
     //  If there is no path found lets try under logic/api
     if($__includePath=='')
@@ -24,8 +24,8 @@ if(!strlen($api->service)) {
             $__includePath = $this->_webapp."/api/".$api->service.".php";
 	   elseif(is_file($this->_webapp."/logic/api/".$api->service.".php"))
             $__includePath = $this->_webapp."/logic/api/".$api->service.".php";
-       elseif(is_file($this->_rootpath."/ADNBP/logic/api/".$api->service.".php"))
-            $__includePath =  $this->_rootpath."/ADNBP/logic/api/".$api->service.".php";
+       elseif(is_file($this->_rootpath."/ADNBP/api/".$api->service.".php"))
+            $__includePath =  $this->_rootpath."/ADNBP/api/".$api->service.".php";
     
     //Now include the file or show the error
     if(strlen($__includePath)) {
