@@ -492,7 +492,8 @@ if (!defined("_ADNBP_CLASS_")) {
 			if (isset($_GET['logout'])) $this->setAuth(false);
 		}		 
 
-		function is($key) {
+		function is($key,$params='') {
+			$ret = false;
 			switch ($key) {
 				case 'development':
 					return(stripos($_SERVER['SERVER_SOFTWARE'], 'Development')!==false);
@@ -503,9 +504,22 @@ if (!defined("_ADNBP_CLASS_")) {
 				case 'auth':
 					return($this->isAuth());
 					break;
+				case 'dirReadble':
+					if(strlen($params)) return(is_dir($params));
+					break;
+				case 'dirRewritable':
+					if(strlen($params)) try {
+						if(@mkdir($params.'/__tmp__')) {
+							rmdir($params.'/__tmp__');
+							return(true);
+						}
+					} catch(Exception $e) {
+					}
+					break;
 				default:
 					break;
 			}
+			return $ret;
 		}
 
 		function isAuth($namespace = '') {

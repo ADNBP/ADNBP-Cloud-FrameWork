@@ -1,5 +1,4 @@
 <?php
-__addPerformance('INI logic/api ',__FILE__);
 $this->loadClass("api/RESTful");
 $api = new RESTful();
 if(!strlen($api->service)) {
@@ -29,7 +28,7 @@ if(!strlen($api->service)) {
     
     //Now include the file or show the error
     if(strlen($__includePath)) {
-    	__addPerformance('including ',$__includePath);
+    	__addPerformance('including '.$__includePath,__FILE__);
         include_once $__includePath;
     	__addPerformance('ending ',$__includePath);
     } else {

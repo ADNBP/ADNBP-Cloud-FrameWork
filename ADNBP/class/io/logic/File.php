@@ -13,7 +13,7 @@ echo "<li>File vars:";
 
 // Reading files
 echo "<li>Files:";
-	echo "<blockquote><pre>".print_r($file->getFiles(),true)."</pre></blockquote>";
+	echo "<blockquote><pre>".print_r($file->scanDir(),true)."</pre></blockquote>";
 
 // Writing file
 $file->putContents($filename,'Hellow World');
