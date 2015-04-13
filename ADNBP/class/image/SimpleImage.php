@@ -45,6 +45,14 @@ class SimpleImage {
 		$this->image=null;
 		if ($filename) {
 			$this->load($filename);
+			if(strlen($width) && strlen($height)) {
+				$this->resize($width, $height);
+			} else if(strlen($width) ){
+				$this->fit_to_width($width);
+				
+			}else if(strlen($height) ){
+				$this->fit_to_height($height);
+			}
 		} elseif ($width) {
 			$this->create($width, $height, $color);
 		}
@@ -61,7 +69,7 @@ class SimpleImage {
 	 */
 	function __destruct() {
 		if ($this->image) {
-			imagedestroy($this->image);
+			@imagedestroy($this->image);
 		}
 	}
 	
@@ -239,6 +247,9 @@ class SimpleImage {
 		$this->width = $width;
 		$this->height = $height;
 		$this->image = imagecreatetruecolor($width, $height);
+		
+
+
 		$this->original_info = array(
 			'width' => $width,
 			'height' => $height,
@@ -249,6 +260,11 @@ class SimpleImage {
 		);
 		if ($color) {
 			$this->fill($color);
+		} else {
+			imagealphablending($this->image, false);
+			imagesavealpha($this->image, true);
+			$trans_layer_overlay = imagecolorallocatealpha($this->image, 220, 220, 220, 127);
+			imagefill($this->image, 0, 0, $trans_layer_overlay);
 		}
 		
 		return $this;

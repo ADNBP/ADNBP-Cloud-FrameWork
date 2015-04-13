@@ -43,6 +43,9 @@ if (!defined ("_bucket_CLASS_") ) {
 				if(!$this->uploadedFiles['error']) {
 					if(!strlen($dest)) $dest = 'gs://'.$this->bucket.'/'.$this->uploadedFiles['name'];
 					try {
+						if($public) {
+							stream_context_set_default(array('gs'=>array('acl'=>'public-read')));
+						}
 						if(@move_uploaded_file($this->uploadedFiles['tmp_name'],$dest) === false) {
 							$this->setError(error_get_last());
 						} else {
@@ -59,10 +62,13 @@ if (!defined ("_bucket_CLASS_") ) {
 		}
 		
 		function getPublicUrl($file) {
+			global $adnbp;
 			$ret = 'bucket missing';
 			if(strlen($this->bucket)) {
-				if(strpos($file,'gs://')!==0 ) $file = 'gs://'.$this->bucket.'/';
-				$ret =  CloudStorageTools::getPublicUrl($file,false);
+				if(strpos($file,'gs://')!==0 ) {
+					$ret  = $adnbp->url['host_url_full'].str_replace($_SERVER['DOCUMENT_ROOT'], '',$file);
+				} else
+					$ret =  CloudStorageTools::getPublicUrl($file,false);
 			} return $ret;
 		}
 		function scan() {
