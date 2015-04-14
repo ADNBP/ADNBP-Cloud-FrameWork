@@ -115,6 +115,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			$this->url['https'] = $_SERVER['HTTPS'];
 			$this->url['host'] = $_SERVER['HTTP_HOST'];
 			$this->url['url'] = $this -> _url;
+			$this->url['params'] = $this -> _urlParams;
 			$this->url['url_full'] = $_SERVER['REQUEST_URI'];
 			$this->url['host_url'] = (($_SERVER['HTTPS']=='on')?'https':'http').'://'.$_SERVER['HTTP_HOST'];
 			$this->url['host_url_full'] = (($_SERVER['HTTPS']=='on')?'https':'http').'://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];

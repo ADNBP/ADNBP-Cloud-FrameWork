@@ -45,14 +45,17 @@ if (!defined ("_RESTfull_CLASS_") ) {
 			   if(count($_POST))  $this->formParams = (count($this->formParams))?array_merge($this->formParams,$_POST):$_POST;
 			   if(strlen($_POST['_raw_input_'])) $this->formParams = (count($this->formParams))?array_merge($this->formParams,json_decode($_POST['_raw_input_'],true)):json_decode($_POST['_raw_input_'],true);
 			   if(strlen($_GET['_raw_input_'])) $this->formParams = (count($this->formParams))?array_merge($this->formParams,json_decode($_GET['_raw_input_'],true)):json_decode($_GET['_raw_input_'],true);
+			   
+			   // raw data.
 			   $input = file_get_contents("php://input");
 			   if(strlen($input)) {
 			   		$this->formParams['_raw_input_'] = $input;
-				    if(is_object(json_decode($input)))
+				   
+				    if(is_object(json_decode($input))) {
 				    	$input_array = json_decode($input,true); 
-					else
+					} else {
 				    	parse_str($input,$input_array); 
-					
+					}
 				    if(is_array($input_array))
 				   		$this->formParams = array_merge($this->formParams, $input_array);
 					else {
@@ -114,7 +117,7 @@ if (!defined ("_RESTfull_CLASS_") ) {
 		function checkMandatoryParam($pos,$msg='') {
 			if(!isset($this->params[$pos]) || !strlen($this->params[$pos])) {
 				$this->error = 400;
-				$this->errorMsg = ($msg=='')?'Method '.$this->method.' is not supported':$msg;
+				$this->errorMsg = ($msg=='')?'param '.$pos.' is mandatory':$msg;
 			}
 		    return($this->error === 0);	
 		}	

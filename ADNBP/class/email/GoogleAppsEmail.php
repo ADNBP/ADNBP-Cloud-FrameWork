@@ -58,6 +58,8 @@ require_once(dirname(__FILE__) . '/mimePart.php');
        function setSubject($txt) { $this->_data['subject'] = $txt; }
        function setTextBody($txt) { $this->_data['textBody'] = $txt; }
        function setText($txt) { $this->_data['textBody'] = $txt; }
+       function setCc($cc) { $this->_data['cc'] = $cc; }
+       function setBcc($bcc) { $this->_data['bcc'] = $bcc; }
        
        function setTo($txt) { $this->_data['to'] = $txt; }
        
@@ -90,8 +92,9 @@ require_once(dirname(__FILE__) . '/mimePart.php');
                $this->_sendgridmail     = new SendGrid\Mail();
            }
            return($_ret);
-           
-       }
+           // $this->_sendgridmail->addCc($email);
+           // $this->_sendgridmail->addBcc($email);
+        }
        
        function checkValidEmail($email) {
            
@@ -154,6 +157,8 @@ require_once(dirname(__FILE__) . '/mimePart.php');
                if(strlen($this->_data['htmlBody'])) $this->_sendgridmail->setHtml($this->_data['htmlBody']);
                if(strlen($this->_data['textBody'])) $this->_sendgridmail->setText($this->_data['textBody']);
                $this->_sendgridmail->setTos($to);
+			   if(strlen($this->_data['cc'])) $this->_sendgridmail->setCc($this->_data['cc']);
+			   if(strlen($this->_data['bcc'])) $this->_sendgridmail->setBcc($this->_data['bcc']);
                $res = $this->_sendgrid->send($this->_sendgridmail);
 
                if($res === FALSE) {
@@ -173,11 +178,13 @@ require_once(dirname(__FILE__) . '/mimePart.php');
            } else {
                
                $message = new Message();
-               $message->setSender($this->_data[sender]);
-               $message->setSubject($this->_data[subject]);
-               if(strlen($this->_data[htmlBody])) $message->setHtmlBody($this->_data[htmlBody]);
-               if(strlen($this->_data[textBody])) $message->setTextBody($this->_data[textBody]);
-               
+               $message->setSender($this->_data['sender']);
+               $message->setSubject($this->_data['subject']);
+               if(strlen($this->_data['htmlBody'])) $message->setHtmlBody($this->_data['htmlBody']);
+               if(strlen($this->_data['textBody'])) $message->setTextBody($this->_data['textBody']);
+               //if(strlen($this->_data['cc'])) $message->setCc($this->_data['cc']);
+               //if(strlen($this->_data['bcc'])) $message->setBcc($this->_data['bcc']);
+                              
                $message->addTo($to);
                
                 try {
