@@ -40,6 +40,7 @@ define('OPAUTH_LIB_DIR', $this->_rootpath.'/ADNBP/class/auth/opauth/lib/Opauth/'
         	if(strlen($this->getSessionVar("redirectOnAuth"))) {
         		$ret = $this->getSessionVar("redirectOnAuth");
 				$this->setSessionVar("redirectOnAuth",'');
+				$_SESSION['opauth']['_redirect_'] = $ret;
 				$this->urlRedirect($this->_url,$ret);
         	}
         }
