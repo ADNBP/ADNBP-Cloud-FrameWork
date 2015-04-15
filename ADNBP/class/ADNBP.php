@@ -94,8 +94,10 @@ if (!defined("_ADNBP_CLASS_")) {
 
 			// Temporary bug workaround
 			// https://code.google.com/p/googleappengine/issues/detail?id=11695#c6
-			apc_delete('_ah_app_identity_:https://www.googleapis.com/auth/devstorage.read_only');
-			apc_delete('_ah_app_identity_:https://www.googleapis.com/auth/devstorage.read_write');
+			if($this->is("production")) {
+				 apc_delete('_ah_app_identity_:https://www.googleapis.com/auth/devstorage.read_only');
+				 apc_delete('_ah_app_identity_:https://www.googleapis.com/auth/devstorage.read_write');
+			}
 			 
 
 			// $this->_webapp = dirname(dirname(__FILE__))."/webapp";
@@ -345,86 +347,81 @@ if (!defined("_ADNBP_CLASS_")) {
 		function getCloudServiceResponse($rute, $data = null, $verb = 'GET', $extraheaders = null, $raw = false) {
 			__addPerformance('Start getCloudServiceResponse: ',"$rute " . (($data===null)?'{no params}':'{with params}'),'note');
 			
-			// Creating the final URL
-			if (strpos($rute, 'http') !== false)
-				$_url = $rute;
-			else {
-				$_url = $this -> getCloudServiceURL($rute);
+			// Creating the final URL.
+			if (strpos($rute, 'http') !== false) $_url = $rute;
+			else  $_url = $this -> getCloudServiceURL($rute);
+			
+			// Workaround to avoid EOF: https://code.google.com/p/googleappengine/issues/detail?id=11772&q=certificate%20invalid%20or%20non-existent&colspec=ID%20Type%20Component%20Status%20Stars%20Summary%20Language%20Priority%20Owner%20Log
+			$options = array('ssl' => array('verify_peer' => false, 'allow_self_signed' => true));
+			
+			// Avoid long waits
+			$options['http']['ignore_errors'] ='1';
+			$options['http']['header'] = 'Connection: close' . "\r\n";
+
+			// Automatic send header for X-CLOUDFRAMEWORK-SECURITY if it is defined in config
+			if (strlen($this -> getConf("CloudServiceId")) && strlen($this -> getConf("CloudServiceSecret"))) 
+				$options['http']['header'] .= 'X-CLOUDFRAMEWORK-SECURITY: ' . $this->generateCloudFrameWorkSecurityString($this -> getConf("CloudServiceId"),microtime(true),$this -> getConf("CloudServiceSecret")) . "\r\n";
+			
+			// Extra Headers
+			if ($extraheaders !== null && is_array($extraheaders)) {
+				foreach ($extraheaders as $key => $value) {
+					$options['http']['header'] .= $key . ': ' . $value . "\r\n";
+				}
+			}	
+			
+			// Method
+			$options['http']['method'] = $verb;
+						
+			// Content-type
+			if($verb != 'GET')
+			if(stripos($options['http']['header'], 'Content-type')===false) {
+				if($raw) {
+					$options['http']['header'] .= 'Content-type: application/json' . "\r\n";
+				} else {
+					$options['http']['header'] .= 'Content-type: application/x-www-form-urlencoded' . "\r\n";
+				}
 			}
 
-			$_errMsg = '';
-			if($verb=='GET') {
-				$options = array('http' => array('method' => 'GET', 'ignore_errors' => '1', ));
-				if ($extraheaders !== null && is_array($extraheaders)) {
-					foreach ($extraheaders as $key => $value) {
-						$options['http']['header'] .= $key . ': ' . $value . "\r\n";
+			// Build contents received in $data as an array
+			if(is_array($data))
+				if($verb=='GET') {
+					if (is_array($data)) {
+							if(strpos($_url, '?')===false) $_url.='?';
+							else $_url.='&';
+							foreach ($data as $key => $value) $_url .= $key . '=' . urlencode($value) . '&';
 					}
-				}
-
-				if ($verb === null)
-					$verb = 'GET';
-				$_extraGET = '?';
-				if (is_array($data)) {
-					$_url .= '?';
-					foreach ($data as $key => $value)
-						$_url .= $key . '=' . urlencode($value) . '&';
-				}
-
-				// Automatic send header for X-CLOUDFRAMEWORK-SECURITY if it is defined in config
-				if (strlen($this -> getConf("CloudServiceId")) && strlen($this -> getConf("CloudServiceSecret"))) 
-					$options['http']['header'] .= 'X-CLOUDFRAMEWORK-SECURITY: ' . $this->generateCloudFrameWorkSecurityString($this -> getConf("CloudServiceId"),microtime(true),$this -> getConf("CloudServiceSecret")) . "\r\n";
-
-				$options['http']['header'] .= 'Connection: close' . "\r\n";
-				$context = stream_context_create($options);
-				try {
-					$ret = @file_get_contents($_url, false, $context);
-				} catch(Exception $e) {
-					$_errMsg = $e->getMessage();
-				}
-				
-				if($ret===false) {
-					$this->setError(error_get_last());
-					if(strlen($_errMsg)) $this->addError($_errMsg);
-				}
-
-			} else {
-				if(!strlen($verb)) $verb = 'POST';
-				if (!$raw) {
-					$build_data = http_build_query($data);
-					$options = array('http' => array('header' => "Content-type: application/x-www-form-urlencoded\r\n", 'method' => $verb, 'ignore_errors' => '1', 'content' => $build_data, ));
 				} else {
-					$build_data = json_encode($data);
-					$options = array('http' => array('header' => "Content-type: application/raw\r\n", 'method' => $verb, 'ignore_errors' => '1', 'content' => $build_data, ));
-				}
-
-				if ($extraheaders !== null && is_array($extraheaders)) {
-					foreach ($extraheaders as $key => $value) {
-						$options['http']['header'] .= $key . ': ' . $value . "\r\n";
+					if ($raw) {
+						if(stripos($options['http']['header'], 'application/json')!==false) 
+							$build_data = json_encode($data);
+						else
+							$build_data = $data;
+					} else {
+						$build_data = http_build_query($data);
 					}
+					$options['http']['content'] = $build_data;
+					
+					// You have to calculate the Content-Length to run as script
+					$options['http']['header'] .= sprintf('Content-Length: %d', strlen($build_data)) . "\r\n";
+					
 				}
 
-				// You have to calculate the Content-Length to run as script
-				$options['http']['header'] .= sprintf('Content-Length: %d', strlen($build_data)) . "\r\n";
 
 
-				// Automatic send header for X-CLOUDFRAMEWORK-SECURITY if it is defined in config
-				if (strlen($this -> getConf("CloudServiceId")) && strlen($this -> getConf("CloudServiceSecret"))) 
-					$options['http']['header'] .= 'X-CLOUDFRAMEWORK-SECURITY: ' . $this->generateCloudFrameWorkSecurityString($this -> getConf("CloudServiceId"),microtime(true),$this -> getConf("CloudServiceSecret")) . "\r\n";
 
-				$options['http']['header'] .= 'Connection: close' . "\r\n";
-				$context = stream_context_create($options);
-				try {
-					$ret = @file_get_contents($_url, false, $context);
-				} catch(Exception $e) {
-					$_errMsg = $e->getMessage();
-				}
-				if($ret===false) {
-					$this->setError(error_get_last());
-					if(strlen($_errMsg)) $this->addError($_errMsg);
-				}
-			} 
-			__addPerformance('Received getCloudServiceResponse: ');
+			// Context creation
+			$context = stream_context_create($options);
 			
+			try {
+				$ret = @file_get_contents($_url, false, $context);
+				if($ret===false) $this->addError(error_get_last());
+			} catch(Exception $e) {
+				$this->addError(error_get_last());
+				$this->addError($e->getMessage());
+			}
+			
+			 
+			__addPerformance('Received getCloudServiceResponse: ');
 			return ($ret);
 		}
 

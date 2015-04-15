@@ -33,9 +33,9 @@ if(!strlen($api->service)) {
     	__addPerformance('ending ',$__includePath);
     } else {
     	if(strlen($this->getConf("ApiPath")))
-    		$api->setError(404,'Unknow file '.$api->service.' in bucket '.$this->getConf("ApiPath"));
+    		$api->setError('Unknow file '.$api->service.' in bucket '.$this->getConf("ApiPath"),404);
 		else 
-			$api->setError(404,'Unknow file '.$api->service.' in '.$this->_url);
+			$api->setError('Unknow file '.$api->service.' in '.$this->_url,404);
 		
     }
 
