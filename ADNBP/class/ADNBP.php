@@ -99,7 +99,10 @@ if (!defined("_ADNBP_CLASS_")) {
 				 apc_delete('_ah_app_identity_:https://www.googleapis.com/auth/devstorage.read_write');
 			}
 			 
-
+			// https url EOF
+			// Temporary bug workaround
+			$default_opts = array('ssl' => array('verify_peer' => false, 'allow_self_signed' => true));
+			stream_context_set_default($default_opts);
 			// $this->_webapp = dirname(dirname(__FILE__))."/webapp";
 			// $this->_rootpath = dirname(dirname(dirname(__FILE__)));
 			if (!strlen($rootpath))
