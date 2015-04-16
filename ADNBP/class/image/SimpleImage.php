@@ -1126,9 +1126,14 @@ class SimpleImage {
 	 * 
 	 */ 
 	protected function get_meta_data() {
-		//gather meta data
+		// reading image source to avoid imagecreatefromgif
 		if(empty($this->imagestring)) {
-			$info = getimagesize($this->filename);
+			$this->imagestring = file_get_contents($this->filename);
+			$this->image = imagecreatefromstring($this->imagestring);
+		}
+		/* // Deprecated
+		if(empty($this->imagestring)) {
+			$info = getimagesizefromstring(file_get_contents($this->filename));
 			
 			switch ($info['mime']) {
 				case 'image/gif':
@@ -1144,7 +1149,9 @@ class SimpleImage {
 					throw new Exception('Invalid image: '.$this->filename);
 					break;
 			}
-		} elseif (function_exists('getimagesizefromstring')) {
+		} else
+		*/
+		if (function_exists('getimagesizefromstring')) {
 			$info = getimagesizefromstring($this->imagestring);
 		} else {
 			throw new Exception('PHP 5.4 is required to use method getimagesizefromstring');
