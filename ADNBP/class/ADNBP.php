@@ -749,48 +749,54 @@ if (!defined("_ADNBP_CLASS_")) {
 		function t1line ($dic, $key, $raw = false, $lang = '') { return(preg_replace('/(\n|\r)/', ' ', $this->t($dic, $key, $raw, $lang ))); }
 
 		function readDictionaryKeys($cat, $lang = '') {
+			__addPerformance('init readDictionaryKeys : ');
 			// Lang to read
 			if ($lang == '') $lang = $this -> _lang;
 			
 			// Where the filename is: Security control because we write local files
-			$patron = '/[^a-zA-Z0-9_-]+/';
-			$filename = '/' . preg_replace($patron, '', $lang) . '_' . preg_replace($patron, '', $cat) . '.json';
-			if (strlen($this -> getConf("LocalizePath")) && is_dir($this -> getConf("LocalizePath"))) 
-				$filename = $this->getConf("LocalizePath").$filename;
-			else 
-				$filename = $this -> webapp . '/localize'.$filename;
-
-			// Evaluating to write the json file form a external service.
-			if(!$this->error)
-			if($this->getConf('CloudServiceDictionary') && strlen($this->getConf('CloudServiceKey'))) 
-				if(!is_file($filename) || isset($_GET['reloadDictionaries']))
-					if (!strlen($_GET['reloadDictionaries']) || $cat == $_GET['reloadDictionaries']) {
-						$content = json_decode($this -> getCloudServiceResponse('dictionary/cat/' . rawurlencode($cat) . "/$lang",array('API_KEY'=>$this->getConf('CloudServiceKey'))));	
-						if (!empty($content) && $content -> success) {
-							$dic = array();
-							foreach ($content->data as $key => $value) {
-								$dic[$value -> key] = $value -> $lang;
-							}
-							try {
-								$ret = @file_put_contents($filename, json_encode($dic));
-							}catch(Exception $e) {
-								$_errMsg = $e->getMessage();
-							}
-							if($ret===false) {
-								$this->setError(error_get_last());
-								if(strlen($_errMsg)) $this->addError($_errMsg);
-								__addPerformance('ERROR writing file readDictionaryKeys cat='.$cat,$filename,'time');
-							} else
-							unset($dic);
-						} else {
-							$this->setError('readDictionaryKeys cat='.$cat.' error='.json_encode($content));
-							__addPerformance('ERROR CloudServiceResponse readDictionaryKeys cat='.$cat,'','time');
-						}
-					}
+			$filename = '/' . preg_replace('/[^a-zA-Z0-9_-]+/', '', $lang) . '_' . preg_replace('/[^a-zA-Z0-9_-]+/', '', $cat) . '.json';
+			if (strlen($this -> getConf("LocalizePath")) )  $filename = $this->getConf("LocalizePath").$filename;
+			else  $filename = $this -> webapp . '/localize'.$filename;
 			
-			// Returning file
-			if(is_file($filename)) return(json_decode(file_get_contents($filename)));
-			else return(json_decode('{}'));
+
+			// Return json file.
+			$ret ='{}';
+			if(!isset($_GET['reloadDictionaries']) || !$this->getConf('CloudServiceDictionary') || !$this->getConf('CloudServiceKey')) {
+				$ret = @file_get_contents($filename);
+				if($ret!== false) {
+					__addPerformance('ret readDictionaryKeys direct from file : '.$filename);
+					return(json_decode($ret));
+				} else {
+					$this->addLog('Error reading '.$filename.': '.error_get_last());
+				}
+			} 
+			
+			// Return file generating it from a service.
+			if($this->getConf('CloudServiceDictionary') && $this->getConf('CloudServiceKey')) {
+				$ret = json_decode($this -> getCloudServiceResponse('dictionary/cat/' . rawurlencode($cat) . "/$lang",array('API_KEY'=>$this->getConf('CloudServiceKey'))));	
+				if (!empty($ret) && $ret -> success) {
+					foreach ($ret->data as $key => $value) {
+						$dic[$value -> key] = $value -> $lang;
+					}
+					$ret = json_encode($dic); unset($dic);
+					try {
+						$res = @file_put_contents($filename, $ret);
+					}catch(Exception $e) {
+						$this->addError($e->getMessage());
+					}
+					
+					if($res===false) {
+						$this->addError(error_get_last());
+						__addPerformance('ERROR writing file readDictionaryKeys cat='.$cat,$filename,'time');
+						$filename='';
+					} 
+				} else {
+					$ret = '{}';
+					$this->addError('readDictionaryKeys cat='.$cat.' error='.json_encode($ret));
+					__addPerformance('ERROR CloudServiceResponse readDictionaryKeys cat='.$cat,'','time');
+				}
+			}
+			return(json_decode($ret));
 		}
 
 		/*
@@ -927,19 +933,23 @@ if (!defined("_ADNBP_CLASS_")) {
 				if (!strlen($this -> getConf("top"))) {
 					if (is_file($this -> _webapp . "/templates/top.php")){
 						include ($this -> _webapp . "/templates/top.php");
+						__addPerformance('Load Top template: ',$this -> _webapp . "/templates/top.php");
 					} elseif (is_file("./ADNBP/templates/top.php"))
 						include ("./ADNBP/templates/top.php");
+						__addPerformance('Load Top template: ',"./ADNBP/templates/top.php");
 				} else {
 					if (is_file($this -> _webapp . "/templates/" . $this -> getConf("top"))) {
 						include ($this -> _webapp . "/templates/" . $this -> getConf("top"));
+						__addPerformance('Load Top template: ',$this -> _webapp . "/templates/" . $this -> getConf("top"));
 					} else if (is_file($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("top"))) {
 						include ($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("top"));
+						__addPerformance('Load Top template: ',$this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("top"));
 					} else
 						echo "No top file found: " . $this -> getConf("top");
 
 				}
 			}
-			__addPerformance('Load Top template: ');
+			
 
 		// Load template
 			if (!$this -> getConf("notemplate") && !isset($_GET['__notemplate'])) {
