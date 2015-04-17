@@ -5,7 +5,7 @@
 // Try to keep safe this file and don't share with anyone
 // Use $this->setConf("<var>",<value>) for all config vars.
 
-// CloudServiceUrl. Default is: http://cloud.adnbp.com/api. Uncomment to point local server
+// CloudServiceUrl. Default is: /api. Uncomment to point local server
 // $this->setConf("CloudServiceUrl","/api");
 
 // $this->setConf("GoogleMapsAPI",true);

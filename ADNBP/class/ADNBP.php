@@ -17,6 +17,8 @@
  * @author Hector López <hlopez@adnbp.com>
  * @package com.adnbp.framework
  */
+ 
+ // IF YOU ARE GOING TO CONNECT WITH OTHER APPENGINES USE THE APPSPOT.COM
 
 if (!defined("_ADNBP_CLASS_")) {
 	define("_ADNBP_CLASS_", TRUE);
