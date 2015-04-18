@@ -28,9 +28,9 @@ if(!strlen($api->service)) {
     
     //Now include the file or show the error
     if(strlen($__includePath)) {
-    	__addPerformance('including '.$__includePath,__FILE__);
+    	__p('including '.$__includePath,__FILE__);
         include_once $__includePath;
-    	__addPerformance('ending ',$__includePath);
+    	__p('ending ',$__includePath);
     } else {
     	if(strlen($this->getConf("ApiPath")))
     		$api->setError('Unknow file '.$api->service.' in bucket '.$this->getConf("ApiPath"),404);
@@ -87,11 +87,11 @@ if(!strlen($api->service)) {
 	// the following line is deprectated
 	$api->sendHeaders();
 	// Output Value
-	__addPerformance('END logic/api ');
+	__p('END logic/api ');
     switch ($api->contentTypeReturn) {
         case 'JSON':
-  			if(isset($api->formParams['__performance']))
-				$ret['__perfomance'] = $this->__performance;
+  			if(isset($api->formParams['__p']))
+				$ret['__p'] = __p();
             die(json_encode($ret));    
 			               
             break;

@@ -34,7 +34,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
 	class ADNBP {
 
-		var $_version = "2015_Apr_11";
+		var $_version = "2015_Apr_18";
 		var $_conf = array();
 		var $_menu = array();
 		var $_lang = "en";
@@ -69,7 +69,6 @@ if (!defined("_ADNBP_CLASS_")) {
 		var $_cache = null;
 		var $_format = array();
 		var $_mobileDetect = null;
-		var $__performance = null;
 		var $_referer=null;
 		var $_log = array();
 		var $_date = null;
@@ -78,14 +77,12 @@ if (!defined("_ADNBP_CLASS_")) {
 		 * Constructor
 		 */
 		function ADNBP($session = true, $sessionId = '', $rootpath = '') {
-			global $__performance;
-			$this->__performance = &$__performance;
 			if ($session) {
 				if (strlen($sessionId))
 					session_id($sessionId);
 				session_start();
 			}
-			__addPerformance('session_start. Construct Class:'.__CLASS__,__FILE__);
+			__p('session_start. Construct Class:'.__CLASS__,__FILE__);
 			// If the call is just to KeepSession
 			if (strpos($this -> _url, '/CloudFrameWorkService/keepSession') !== false) {
 				header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
@@ -166,7 +163,7 @@ if (!defined("_ADNBP_CLASS_")) {
 					$_configs.=$this -> _webappURL.'/local_config.php - ';
 				}
 			}
-			__addPerformance('LOADED CONFIGS: ', $_configs);unset($_configs);
+			__p('LOADED CONFIGS: ', $_configs);unset($_configs);
 
 			// About timeZone, Date & Number format
 			$this->_timeZoneSystemDefault = array(date_default_timezone_get(),date('Y-m-d h:i:s'),date("P"),time());
@@ -249,7 +246,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			if ($_ip == '::1' || $_ip == '127.0.0.1') $_ip = '';
 			if(strlen($_ip)) $_ip = 'ip='.$_ip;
 
-			__addPerformance('Calling getGeoPlugin('.$ip.')','http://www.geoplugin.net/php.gp?' . $_ip,'time');
+			__p('Calling getGeoPlugin('.$ip.')','http://www.geoplugin.net/php.gp?' . $_ip,'time');
 			return (unserialize(@file_get_contents('http://www.geoplugin.net/php.gp?' . $_ip)));
 		}
 
@@ -266,7 +263,7 @@ if (!defined("_ADNBP_CLASS_")) {
 				$this -> _geoData[$ip] = array();
 				$data['source_ip'] = $ip;
 				$data = array_merge($data,$this -> getGeoPlugin($ip));
-				__addPerformance('receiving getGeoPlugin('.$ip.')','','time');
+				__p('receiving getGeoPlugin('.$ip.')','','time');
 				
 
 				foreach ($data as $key => $value) {
@@ -350,7 +347,7 @@ if (!defined("_ADNBP_CLASS_")) {
 		 * Call External Cloud Service 
 		 */
 		function getCloudServiceResponse($rute, $data = null, $verb = 'GET', $extraheaders = null, $raw = false) {
-			__addPerformance('Start getCloudServiceResponse: ',"$rute " . (($data===null)?'{no params}':'{with params}'),'note');
+			__p('Start getCloudServiceResponse: ',"$rute " . (($data===null)?'{no params}':'{with params}'),'note');
 			
 			// Creating the final URL.
 			if (strpos($rute, 'http') !== false) $_url = $rute;
@@ -426,7 +423,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			}
 			
 			 
-			__addPerformance('Received getCloudServiceResponse: ');
+			__p('Received getCloudServiceResponse: ');
 			return ($ret);
 		}
 
@@ -749,7 +746,7 @@ if (!defined("_ADNBP_CLASS_")) {
 		function t1line ($dic, $key, $raw = false, $lang = '') { return(preg_replace('/(\n|\r)/', ' ', $this->t($dic, $key, $raw, $lang ))); }
 
 		function readDictionaryKeys($cat, $lang = '') {
-			__addPerformance('init readDictionaryKeys : ');
+			__p('init readDictionaryKeys : ','','note');
 			// Lang to read
 			if ($lang == '') $lang = $this -> _lang;
 			
@@ -764,7 +761,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			if(!isset($_GET['reloadDictionaries']) || !$this->getConf('CloudServiceDictionary') || !$this->getConf('CloudServiceKey')) {
 				$ret = @file_get_contents($filename);
 				if($ret!== false) {
-					__addPerformance('ret readDictionaryKeys direct from file : '.$filename);
+					__p('ret readDictionaryKeys direct from file : '.$filename);
 					return(json_decode($ret));
 				} else {
 					$this->addLog('Error reading '.$filename.': '.error_get_last());
@@ -787,13 +784,13 @@ if (!defined("_ADNBP_CLASS_")) {
 					
 					if($res===false) {
 						$this->addError(error_get_last());
-						__addPerformance('ERROR writing file readDictionaryKeys cat='.$cat,$filename,'time');
+						__p('ERROR writing file readDictionaryKeys cat='.$cat,$filename,'time');
 						$filename='';
 					} 
 				} else {
 					$ret = '{}';
 					$this->addError('readDictionaryKeys cat='.$cat.' error='.json_encode($ret));
-					__addPerformance('ERROR CloudServiceResponse readDictionaryKeys cat='.$cat,'','time');
+					__p('ERROR CloudServiceResponse readDictionaryKeys cat='.$cat,'','time');
 				}
 			}
 			return(json_decode($ret));
@@ -895,34 +892,34 @@ if (!defined("_ADNBP_CLASS_")) {
 			if (is_file($this -> _webapp . "/localize/global.txt")) {
 				$this -> _parseDic = file_get_contents($this -> _webapp . "/localize/global.txt");
 				$this -> _parseDic();
-				__addPerformance('Load and parse dics ',$this -> _webappURL . "/localize/global.txt",'memory');
+				__p('Load and parse dics ',$this -> _webappURL . "/localize/global.txt",'memory');
 			}
 
 			if (strlen($this -> getConf("dictionary")))
 				if (is_file($this -> _webapp . "/localize/" . $this -> getConf("dictionary") . ".txt")) {
 					$this -> _parseDic = file_get_contents($this -> _webapp . "/localize/" . $this -> getConf("dictionary") . ".txt");
 					$this -> _parseDic();
-					__addPerformance('Load and parse dics ',$this -> _webappURL . "/localize/" . $this -> getConf("dictionary") . ".txt",'memory');
+					__p('Load and parse dics ',$this -> _webappURL . "/localize/" . $this -> getConf("dictionary") . ".txt",'memory');
 				}
 
 		// Create the object to control Auth
 			$this -> checkAuth();
-			__addPerformance('checkAuth');
+			__p('checkAuth');
 			
 		// Load Logic
 			if (!strlen($this -> getConf("logic"))) {
 				if (is_file($this -> _webapp . "/logic/" . $this -> _basename)) {
 					include ($this -> _webapp . "/logic/" . $this -> _basename);
-					__addPerformance('Logic file: ',$this -> _webappURL. "/logic/" . $this -> _basename);
+					__p('Logic file: ',$this -> _webappURL. "/logic/" . $this -> _basename);
 				} elseif (is_file($this -> _rootpath . "/ADNBP/logic/" . $this -> _basename)) {
 					include ($this -> _rootpath . "/ADNBP/logic/" . $this -> _basename);
-					__addPerformance('Logic file: ',"/ADNBP/logic/" . $this -> _basename);
+					__p('Logic file: ',"/ADNBP/logic/" . $this -> _basename);
 				}
 
 			} else {
 				if (is_file($this -> _webapp . "/logic/" . $this -> getConf("logic"))) {
 					include ($this -> _webapp . "/logic/" . $this -> getConf("logic"));
-					__addPerformance('Logic file: ',$this -> _webappURL. "/logic/" . $this -> getConf("logic"));
+					__p('Logic file: ',$this -> _webappURL. "/logic/" . $this -> getConf("logic"));
 				} else {
 					$output = "No logic Found";
 				}
@@ -933,17 +930,17 @@ if (!defined("_ADNBP_CLASS_")) {
 				if (!strlen($this -> getConf("top"))) {
 					if (is_file($this -> _webapp . "/templates/top.php")){
 						include ($this -> _webapp . "/templates/top.php");
-						__addPerformance('Load Top template: ',$this -> _webapp . "/templates/top.php");
+						__p('Load Top template: ',$this -> _webapp . "/templates/top.php");
 					} elseif (is_file("./ADNBP/templates/top.php"))
 						include ("./ADNBP/templates/top.php");
-						__addPerformance('Load Top template: ',"./ADNBP/templates/top.php");
+						__p('Load Top template: ',"./ADNBP/templates/top.php");
 				} else {
 					if (is_file($this -> _webapp . "/templates/" . $this -> getConf("top"))) {
 						include ($this -> _webapp . "/templates/" . $this -> getConf("top"));
-						__addPerformance('Load Top template: ',$this -> _webapp . "/templates/" . $this -> getConf("top"));
+						__p('Load Top template: ',$this -> _webapp . "/templates/" . $this -> getConf("top"));
 					} else if (is_file($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("top"))) {
 						include ($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("top"));
-						__addPerformance('Load Top template: ',$this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("top"));
+						__p('Load Top template: ',$this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("top"));
 					} else
 						echo "No top file found: " . $this -> getConf("top");
 
@@ -964,21 +961,21 @@ if (!defined("_ADNBP_CLASS_")) {
 					if (!$this -> getConf("template")) {
 						if (is_file("./templates/" . $this -> _basename)){
 							include ("./templates/" . $this -> _basename);
-							__addPerformance('Load main template: ',"./templates/". $this -> _basename);
+							__p('Load main template: ',"./templates/". $this -> _basename);
 							
 						} elseif (is_file($this -> _rootpath . "/ADNBP/templates/" . $this -> _basename)){
 							include ($this -> _rootpath . "/ADNBP/templates/" . $this -> _basename);
-							__addPerformance('Load main template: ',"/ADNBP/templates/". $this -> _basename);
+							__p('Load main template: ',"/ADNBP/templates/". $this -> _basename);
 						} elseif ($this -> getConf("logic") == "nologic") {
 
 						}
 					} else {
 						if (is_file($this -> _webapp . "/templates/" . $this -> getConf("template"))){
 							include ($this -> _webapp . "/templates/" . $this -> getConf("template"));
-							__addPerformance('Load main template: ',$this -> _webappURL."/templates/". $this -> getConf("template"));
+							__p('Load main template: ',$this -> _webappURL."/templates/". $this -> getConf("template"));
 						} elseif (is_file($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("template"))){
 							include ($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("template"));
-							__addPerformance('Load main template: ',"/ADNBP/templates/". $this -> getConf("template"));
+							__p('Load main template: ',"/ADNBP/templates/". $this -> getConf("template"));
 						} else
 							echo "No template found: " . $this -> getConf("template");
 					}
@@ -1002,7 +999,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
 				}
 			}
-			__addPerformance('Load Bottom and END '.__CLASS__.'-'.__FUNCTION__);
+			__p('Load Bottom and END '.__CLASS__.'-'.__FUNCTION__);
 			
 		}
 

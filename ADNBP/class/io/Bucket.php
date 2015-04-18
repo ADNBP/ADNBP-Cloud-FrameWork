@@ -76,7 +76,7 @@ if (!defined ("_bucket_CLASS_") ) {
 			$tmp = scandir('gs://'.$this->bucket);
 			foreach ($tmp as $key => $value) {
 				$ret[$value] = array('type'=>(is_file('gs://'.$this->bucket.'/'.$value))?'file':'dir');
-				if(isset($_REQUEST['__performance'])) __addPerformance('is_dir: '.'gs://'.$this->bucket.'/'.$value);
+				if(isset($_REQUEST['__performance'])) __p('is_dir: '.'gs://'.$this->bucket.'/'.$value);
 			}
 			return($ret);
 		}
