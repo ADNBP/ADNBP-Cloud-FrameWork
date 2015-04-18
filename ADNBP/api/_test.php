@@ -16,11 +16,11 @@ if($this->getConf("dbName")) {
 
 
 if(strlen($this->getConf("LocalizePath"))) {
-	  $__p->init('test','LocalizePath');
+	  $__p->init('test','LocalizePath scandir');
       $ret = scandir($this->getConf("LocalizePath"));
 	  $errMsg='';
 	  if(!is_array($ret)) $errMsg = error_get_last();
-	  $__p->end('test','LocalizePath',is_array($ret),$errMsg);
+	  $__p->end('test','LocalizePath scandir',is_array($ret),$this->getConf("LocalizePath").': '.$errMsg);
 }
 
 if(strlen($this->getCloudServiceUrl())) {
