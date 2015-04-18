@@ -1,4 +1,6 @@
 <?php
+global $__p;
+$__p->init('include_logic',$this->_url);
 $this->loadClass("api/RESTful");
 $api = new RESTful();
 if(!strlen($api->service)) {
@@ -28,9 +30,9 @@ if(!strlen($api->service)) {
     
     //Now include the file or show the error
     if(strlen($__includePath)) {
-    	__p('including '.$__includePath,__FILE__);
+    	$__p->init('include_logic',$__includePath);
         include_once $__includePath;
-    	__p('ending ',$__includePath);
+    	$__p->end('include_logic',$__includePath);
     } else {
     	if(strlen($this->getConf("ApiPath")))
     		$api->setError('Unknow file '.$api->service.' in bucket '.$this->getConf("ApiPath"),404);
@@ -44,6 +46,8 @@ if(!strlen($api->service)) {
     $ret['success'] = ($api->error)?false:true;
     $ret['status'] = $api->getReturnCode();
     $ret['url']=(($_SERVER['HTTPS']=='on')?'https://':'http://').$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+	if(strlen($__includePath)) $ret['time']=$__p->data['init']['include_logic'][$__includePath]['time'];
+	
 	if(isset($api->formParams['debug'])) {
 		$ret['header'] = $api->getHeader();
         $ret['method'] = $api->method;
@@ -88,10 +92,13 @@ if(!strlen($api->service)) {
 	$api->sendHeaders();
 	// Output Value
 	__p('END logic/api ');
+	$__p->end('include_logic',$this->_url);
     switch ($api->contentTypeReturn) {
         case 'JSON':
   			if(isset($api->formParams['__p']))
 				$ret['__p'] = __p();
+            
+            $ret['_totTime'] = $__p->data['init']['include_logic'][$this->_url]['time'];
             die(json_encode($ret));    
 			               
             break;

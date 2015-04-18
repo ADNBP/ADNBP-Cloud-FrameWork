@@ -213,6 +213,208 @@ if (!defined("_ADNBP_CLASS_")) {
 
 			// Set to lang conf var the current lang
 			$this -> setConf("lang", $this -> _lang);
+			
+			// Activate cache of dics
+			if($this->getConf('CacheDics')) $this->loadCacheDics();
+
+		}
+
+		/**
+		 * Run method
+		 */
+		function run() {
+			__p('run. ','','note');
+			
+			$this -> _basename = basename($this -> _url);
+			$scriptname = basename($this -> _scriptPath);
+		// Find out the template based in the URL
+			//if URL has CloudFrameWork* & /api has an special treatment
+			if (strpos($this -> _url, '/CloudFrameWork') !== false || strpos($this -> _url, '/api') === 0) {
+
+				$this -> setConf("setLanguageByPath", f);
+				list($foo, $this -> _basename, $foo) = explode('/', $this -> _url, 3);
+				$this -> _basename .= ".php";
+				// add .php extension to the basename in order to find logic and templates.
+
+				if (strpos($this -> _url, '/api/') === 0 && $this -> _url != '/api/') {
+					$this -> setConf("notemplate", true);
+				} else {
+					$this -> requireAuth();
+					$this -> setConf("top", (strlen($this -> getConf("portalHTMLTop"))) ? $this -> getConf("portalHTMLTop") : "CloudFrameWorkTop.php");
+					$this -> setConf("bottom", (strlen($this -> getConf("portalHTMLBottom"))) ? $this -> getConf("portalHTMLBottom") : "CloudFrameWorkBottom.php");
+					if (is_file($this -> _rootpath . "/ADNBP/templates/" . $this -> _basename)) {
+						$this -> setConf("template", $this -> _basename);
+					}
+
+				}
+
+			} 
+			// else if getConf("notemplate") is not defined
+			else if (!$this -> getConf("notemplate")) {
+				if (is_file($this -> _webapp . "/config/menu.php"))
+					include ($this -> _webapp . "/config/menu.php");
+
+				// looking for a match
+				for ($i = 0, $_found = false, $tr = count($this -> _menu); $i < $tr && !$_found; $i++) {
+					// Support for /{lang}/perm-link path
+					if (strpos($this -> _menu[$i]['path'], "{lang}"))
+						$this -> _menu[$i]['path'] = str_replace("{lang}", $this -> _lang, $this -> _menu[$i]['path']);
+
+					if (strpos($this -> _menu[$i]['path'], "{*}")) {
+						$this -> _menu[$i]['path'] = str_replace("{*}", '', $this -> _menu[$i]['path']);
+						if (strpos($this -> _url, $this -> _menu[$i]['path']) === 0)
+							$_found = true;
+
+					} else if ($this -> _menu[$i]['path'] == $this -> _url || (!empty($this -> _menu[$i][$this -> getConf("lang") . "_path"]) && $this -> _menu[$i][$this -> getConf("lang") . "_path"] == $this -> _url))
+						$_found = true;
+
+					if ($_found)
+						foreach ($this->_menu[$i] as $key => $value) {
+							$this -> setConf($key, $value);
+						}
+
+					if (!$this -> getConf("notemplate") && !strlen($this -> getConf("top"))) {
+						$this -> setConf("top", (strlen($this -> getConf("portalHTMLTop"))) ? $this -> getConf("portalHTMLTop") : "CloudFrameWorkTop.php");
+						$this -> setConf("bottom", (strlen($this -> getConf("portalHTMLBottom"))) ? $this -> getConf("portalHTMLBottom") : "CloudFrameWorkBottom.php");
+					}
+				}
+
+				// If not found in the menu and it doens't have a local template desactive topbottom
+
+				if (!$_found && is_file($this -> _webapp . "/templates/" . $this -> _basename . ".php")) {
+					$this -> _basename .= ".php";
+				}
+
+			}
+
+			// if it is a permilink
+			if ($scriptname == "adnbppl.php") {
+				if (!strlen($this -> getConf("template")) && !$this -> getConf("notemplate")) {
+
+					if (is_file($this -> _webapp . "/templates/" . $this -> _basename) || is_file($this -> _rootpath . "/ADNBP/templates/" . $this -> _basename))
+						$this -> setConf("template", $this -> _basename);
+					elseif (is_file($this -> _webapp . "/logic/" . $this -> _basename) || is_file($this -> _rootpath . "/ADNBP/logic/" . $this -> _basename))
+						$this -> setConf("template", "CloudFrameWorkBasic.php");
+					elseif (is_file($this -> _webapp . "/templates/404.php") && strpos($this -> _url, '/CloudFrameWork') === false)
+						$this -> setConf("template", "404.php");
+					else
+						$this -> setConf("template", "CloudFrameWork404.php");
+				}
+			}
+
+
+		// Create the object to control Auth
+			$this -> checkAuth();
+			__p('checkAuth'."\n\n");
+		// Load Logic
+			$_file = false;
+			if (!strlen($this -> getConf("logic"))) {
+				if (is_file($this -> _webapp . "/logic/" . $this -> _basename)) {
+					$_file = ($this -> _webapp . "/logic/" . $this -> _basename);
+				} elseif (is_file($this -> _rootpath . "/ADNBP/logic/" . $this -> _basename)) {
+					$_file = ($this -> _rootpath . "/ADNBP/logic/" . $this -> _basename);
+				}
+
+			} else {
+				if (is_file($this -> _webapp . "/logic/" . $this -> getConf("logic"))) {
+					$_file = ($this -> _webapp . "/logic/" . $this -> getConf("logic"));
+				} else {
+					$output = "No logic Found";
+				}
+			}
+			if($_file) {
+				__p('Including logic file: ',$_file,'note');
+				include ($_file);
+				__p('Included logic file: '."\n\n");
+			}
+		// Load top
+			$_file = false;
+			if (!$this -> getConf("notopbottom") && !$this -> getConf("notemplate") && !isset($_GET['__notop'])) {
+				if (!strlen($this -> getConf("top"))) {
+					if (is_file($this -> _webapp . "/templates/top.php")){
+						$_file =  ($this -> _webapp . "/templates/top.php");
+					} elseif (is_file("./ADNBP/templates/top.php"))
+						$_file =  ("./ADNBP/templates/top.php");
+				} else {
+					if (is_file($this -> _webapp . "/templates/" . $this -> getConf("top"))) {
+						$_file =  ($this -> _webapp . "/templates/" . $this -> getConf("top"));
+					} else if (is_file($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("top"))) {
+						$_file =  ($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("top"));
+					} else
+						echo "No top file found: " . $this -> getConf("top");
+
+				}
+			}
+			if($_file) {
+				__p('Including top html: ',$_file,'note');
+				include ($_file);
+				__p('Included top html: '."\n\n");
+			}			
+
+		// Load template
+			$_file = false;		
+			if (!$this -> getConf("notemplate") && !isset($_GET['__notemplate'])) {
+				// Content of template is stored in a var 'templateVarContent'
+				if (strlen($this -> getConf("templateVarContent"))) {
+					$var = $this -> getConf("templateVarContent");
+					// exist a var with the content of the template
+					echo $$var;
+
+					// Content of template is stored in a file defined in template
+				} else {
+					if (!$this -> getConf("template")) {
+						if (is_file("./templates/" . $this -> _basename)){
+							$_file =   ("./templates/" . $this -> _basename);
+							
+						} elseif (is_file($this -> _rootpath . "/ADNBP/templates/" . $this -> _basename)){
+							$_file =   ($this -> _rootpath . "/ADNBP/templates/" . $this -> _basename);
+						} elseif ($this -> getConf("logic") == "nologic") {
+
+						}
+					} else {
+						if (is_file($this -> _webapp . "/templates/" . $this -> getConf("template"))){
+							$_file =   ($this -> _webapp . "/templates/" . $this -> getConf("template"));
+						} elseif (is_file($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("template"))){
+							$_file =   ($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("template"));
+						} else
+							echo "No template found: " . $this -> getConf("template");
+					}
+				}
+			}
+			if($_file) {
+				__p('Including main html: ',$_file,'note');
+				include ($_file);
+				__p('Included main html: '."\n\n");
+			}			
+			
+		// Load Bottom
+			$_file = false;		
+			if (!$this -> getConf("notopbottom") && !$this -> getConf("notemplate") && !isset($_GET['__nobottom'])) {
+				if (!strlen($this -> getConf("bottom"))) {
+					if (is_file($this -> _webapp . "/templates/bottom.php"))
+						$_file =  ($this -> _webapp . "/templates/bottom.php");
+					elseif (is_file($this -> _rootpath . "/ADNBP/templates/bottom.php"))
+						$_file =  ($this -> _rootpath . "/ADNBP/templates/bottom.php");
+				} else {
+					if (is_file($this -> _webapp . "/templates/" . $this -> getConf("bottom")))
+						$_file =  ($this -> _webapp . "/templates/" . $this -> getConf("bottom"));
+					elseif (is_file($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("bottom")))
+						$_file =  ($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("bottom"));
+					else
+						echo "No bottom file found: " . $this -> getConf("bottom");
+
+				}
+			}
+			if($_file) {
+				__p('Including bottom html: ',$_file,'note');
+				include ($_file);
+				__p('Included bottom html: '."\n\n");
+			}			
+			// Cache dics.
+			if($this->getConf('CacheDics')) $this->saveCacheDics();
+			__p('End Run '.__CLASS__.'-'.__FUNCTION__);
+			
+			
 		}
 
 		function version() {
@@ -680,64 +882,25 @@ if (!defined("_ADNBP_CLASS_")) {
 			return ($this -> _url);
 		}
 
-		/**
-		 *  Parse string to dictionary
-		 */
-		function _parseDic() {
-			$_ok = true;
-			if (strpos($this -> _parseDic, "ADNBP_DIC_FILE") !== null)
-				list($foo, $this -> _parseDic) = explode("ADNBP_DIC_FILE", $this -> _parseDic, 2);
-
-			if (strpos($this -> _parseDic, "adnbp_dic_languages") !== null)
-				list($foo, $this -> _parseDic) = explode("adnbp_dic_languages=", $this -> _parseDic, 2);
-
-			list($langs, $this -> _parseDic) = explode("adnbp_dic_var=", $this -> _parseDic, 2);
-			if (strlen($langs))
-				$lang = explode(",", $this -> _parseDic, 2);
-
-			if (strpos($this -> _parseDic, "adnbp_dic_var=") !== null)
-				do {
-					$content = '';
-					list($content, $this -> _parseDic) = explode("adnbp_dic_var=", $this -> _parseDic, 2);
-					$translates = explode("<=>", $content);
-					$var = trim($translates[0]);
-					if (strlen($var))
-						for ($i = 1, $tr = count($translates); $i < $tr; $i++) {
-							list($lang, $translate) = explode(",", $translates[$i], 2);
-							$this -> setDicContent($var, trim($translate), $lang);
-						}
-					// if(!strlen($this->getDicContent($var))) $this->setDicContent($var,$translate);  // put a default value for current lang
-
-				} while(strlen($this->_parseDic) && strpos($this->_parseDic, "adnbp_dic_var=")!==null);
-		}
-
-		// Dictionaries in method 1.
-		function setDicContent($key, $content, $lang = "") {
-			if (!strlen($lang))
-				$lang = $this -> _lang;
-			$this -> _dic[$key][$lang] = $content;
-		}
-
-		function getDicContent($key, $lang = "") {
-			if (!strlen($lang))
-				$lang = $this -> _lang;
-			return ((strlen($this -> _dic[$key][$lang])) ? $this -> _dic[$key][$lang] : $key);
-		}
-
-		function getDicContentInHTML($key, $lang = "") {
-			if (!strlen($lang))
-				$lang = $this -> _lang;
-			return ((strlen($this -> _dic[$key][$lang])) ? str_replace("\n", "<br />", htmlentities($this -> _dic[$key][$lang], ENT_COMPAT | ENT_HTML401, $this -> _charset)) : htmlentities($key));
-		}
+		
 
 		// Dictionaries in method 2
+		function sett($dic, $key, $data,$convertHtml = false) {
+			if (!strlen($lang)) $lang = $this -> _lang;
+			$this -> _dicKeys[$dic]->$key = ($convertHtml)?htmlentities($data):$data;
+			$this -> dics[$dic] = true;
+		}
+		function ist($dic, $key, $data) {
+			return(isset($this ->_dicKeys[$dic]->$key));
+		}
 		function t($dic, $key, $raw = false, $lang = '') {
 			// Lang to read
 			if (!strlen($lang)) $lang = $this -> _lang;
 
 			// Load dictionary repository
 			if (!isset($this -> dics[$dic])) {
-				$this -> _dicKeys[$dic] = $this -> readDictionaryKeys($dic, $lang);
+				if(!isset($this -> _dicKeys[$dic]))
+					$this -> _dicKeys[$dic] = $this -> readDictionaryKeys($dic, $lang);
 				$this -> dics[$dic] = true;
 			}
 			$ret = isset($this -> _dicKeys[$dic] -> $key) ? $this -> _dicKeys[$dic] -> $key : $dic . '-' . $key;
@@ -761,7 +924,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			if(!isset($_GET['reloadDictionaries']) || !$this->getConf('CloudServiceDictionary') || !$this->getConf('CloudServiceKey')) {
 				$ret = @file_get_contents($filename);
 				if($ret!== false) {
-					__p('ret readDictionaryKeys direct from file : '.$filename);
+					__p('ret readDictionaryKeys() from json: ',$filename);
 					return(json_decode($ret));
 				} else {
 					$this->addLog('Error reading '.$filename.': '.error_get_last());
@@ -784,15 +947,14 @@ if (!defined("_ADNBP_CLASS_")) {
 					
 					if($res===false) {
 						$this->addError(error_get_last());
-						__p('ERROR writing file readDictionaryKeys cat='.$cat,$filename,'time');
 						$filename='';
 					} 
 				} else {
 					$ret = '{}';
 					$this->addError('readDictionaryKeys cat='.$cat.' error='.json_encode($ret));
-					__p('ERROR CloudServiceResponse readDictionaryKeys cat='.$cat,'','time');
 				}
 			}
+			__p('ret readDictionaryKeys() form service: ',$filename);
 			return(json_decode($ret));
 		}
 
@@ -805,203 +967,7 @@ if (!defined("_ADNBP_CLASS_")) {
 		function getRawPageContent($key) { return ($this -> _pageContent[$key]); }
 		
 
-		/**
-		 * Run method
-		 */
-		function run() {
-
-			$this -> _basename = basename($this -> _url);
-			$scriptname = basename($this -> _scriptPath);
-		// Find out the template based in the URL
-			//if URL has CloudFrameWork* & /api has an special treatment
-			if (strpos($this -> _url, '/CloudFrameWork') !== false || strpos($this -> _url, '/api') === 0) {
-
-				$this -> setConf("setLanguageByPath", f);
-				list($foo, $this -> _basename, $foo) = explode('/', $this -> _url, 3);
-				$this -> _basename .= ".php";
-				// add .php extension to the basename in order to find logic and templates.
-
-				if (strpos($this -> _url, '/api/') === 0 && $this -> _url != '/api/') {
-					$this -> setConf("notemplate", true);
-				} else {
-					$this -> requireAuth();
-					$this -> setConf("top", (strlen($this -> getConf("portalHTMLTop"))) ? $this -> getConf("portalHTMLTop") : "CloudFrameWorkTop.php");
-					$this -> setConf("bottom", (strlen($this -> getConf("portalHTMLBottom"))) ? $this -> getConf("portalHTMLBottom") : "CloudFrameWorkBottom.php");
-					if (is_file($this -> _rootpath . "/ADNBP/templates/" . $this -> _basename)) {
-						$this -> setConf("template", $this -> _basename);
-					}
-
-				}
-
-			} 
-			// else if getConf("notemplate") is not defined
-			else if (!$this -> getConf("notemplate")) {
-				if (is_file($this -> _webapp . "/config/menu.php"))
-					include ($this -> _webapp . "/config/menu.php");
-
-				// looking for a match
-				for ($i = 0, $_found = false, $tr = count($this -> _menu); $i < $tr && !$_found; $i++) {
-					// Support for /{lang}/perm-link path
-					if (strpos($this -> _menu[$i]['path'], "{lang}"))
-						$this -> _menu[$i]['path'] = str_replace("{lang}", $this -> _lang, $this -> _menu[$i]['path']);
-
-					if (strpos($this -> _menu[$i]['path'], "{*}")) {
-						$this -> _menu[$i]['path'] = str_replace("{*}", '', $this -> _menu[$i]['path']);
-						if (strpos($this -> _url, $this -> _menu[$i]['path']) === 0)
-							$_found = true;
-
-					} else if ($this -> _menu[$i]['path'] == $this -> _url || (!empty($this -> _menu[$i][$this -> getConf("lang") . "_path"]) && $this -> _menu[$i][$this -> getConf("lang") . "_path"] == $this -> _url))
-						$_found = true;
-
-					if ($_found)
-						foreach ($this->_menu[$i] as $key => $value) {
-							$this -> setConf($key, $value);
-						}
-
-					if (!$this -> getConf("notemplate") && !strlen($this -> getConf("top"))) {
-						$this -> setConf("top", (strlen($this -> getConf("portalHTMLTop"))) ? $this -> getConf("portalHTMLTop") : "CloudFrameWorkTop.php");
-						$this -> setConf("bottom", (strlen($this -> getConf("portalHTMLBottom"))) ? $this -> getConf("portalHTMLBottom") : "CloudFrameWorkBottom.php");
-					}
-				}
-
-				// If not found in the menu and it doens't have a local template desactive topbottom
-
-				if (!$_found && is_file($this -> _webapp . "/templates/" . $this -> _basename . ".php")) {
-					$this -> _basename .= ".php";
-				}
-
-			}
-
-			// if it is a permilink
-			if ($scriptname == "adnbppl.php") {
-				if (!strlen($this -> getConf("template")) && !$this -> getConf("notemplate")) {
-
-					if (is_file($this -> _webapp . "/templates/" . $this -> _basename) || is_file($this -> _rootpath . "/ADNBP/templates/" . $this -> _basename))
-						$this -> setConf("template", $this -> _basename);
-					elseif (is_file($this -> _webapp . "/logic/" . $this -> _basename) || is_file($this -> _rootpath . "/ADNBP/logic/" . $this -> _basename))
-						$this -> setConf("template", "CloudFrameWorkBasic.php");
-					elseif (is_file($this -> _webapp . "/templates/404.php") && strpos($this -> _url, '/CloudFrameWork') === false)
-						$this -> setConf("template", "404.php");
-					else
-						$this -> setConf("template", "CloudFrameWork404.php");
-				}
-			}
-
-		// Dictionaries deprecated
-			// Insert global dictionary - deprectated
-			if (is_file($this -> _webapp . "/localize/global.txt")) {
-				$this -> _parseDic = file_get_contents($this -> _webapp . "/localize/global.txt");
-				$this -> _parseDic();
-				__p('Load and parse dics ',$this -> _webappURL . "/localize/global.txt",'memory');
-			}
-
-			if (strlen($this -> getConf("dictionary")))
-				if (is_file($this -> _webapp . "/localize/" . $this -> getConf("dictionary") . ".txt")) {
-					$this -> _parseDic = file_get_contents($this -> _webapp . "/localize/" . $this -> getConf("dictionary") . ".txt");
-					$this -> _parseDic();
-					__p('Load and parse dics ',$this -> _webappURL . "/localize/" . $this -> getConf("dictionary") . ".txt",'memory');
-				}
-
-		// Create the object to control Auth
-			$this -> checkAuth();
-			__p('checkAuth');
-			
-		// Load Logic
-			if (!strlen($this -> getConf("logic"))) {
-				if (is_file($this -> _webapp . "/logic/" . $this -> _basename)) {
-					include ($this -> _webapp . "/logic/" . $this -> _basename);
-					__p('Logic file: ',$this -> _webappURL. "/logic/" . $this -> _basename);
-				} elseif (is_file($this -> _rootpath . "/ADNBP/logic/" . $this -> _basename)) {
-					include ($this -> _rootpath . "/ADNBP/logic/" . $this -> _basename);
-					__p('Logic file: ',"/ADNBP/logic/" . $this -> _basename);
-				}
-
-			} else {
-				if (is_file($this -> _webapp . "/logic/" . $this -> getConf("logic"))) {
-					include ($this -> _webapp . "/logic/" . $this -> getConf("logic"));
-					__p('Logic file: ',$this -> _webappURL. "/logic/" . $this -> getConf("logic"));
-				} else {
-					$output = "No logic Found";
-				}
-			}
-
-		// Load top
-			if (!$this -> getConf("notopbottom") && !$this -> getConf("notemplate") && !isset($_GET['__notop'])) {
-				if (!strlen($this -> getConf("top"))) {
-					if (is_file($this -> _webapp . "/templates/top.php")){
-						include ($this -> _webapp . "/templates/top.php");
-						__p('Load Top template: ',$this -> _webapp . "/templates/top.php");
-					} elseif (is_file("./ADNBP/templates/top.php"))
-						include ("./ADNBP/templates/top.php");
-						__p('Load Top template: ',"./ADNBP/templates/top.php");
-				} else {
-					if (is_file($this -> _webapp . "/templates/" . $this -> getConf("top"))) {
-						include ($this -> _webapp . "/templates/" . $this -> getConf("top"));
-						__p('Load Top template: ',$this -> _webapp . "/templates/" . $this -> getConf("top"));
-					} else if (is_file($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("top"))) {
-						include ($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("top"));
-						__p('Load Top template: ',$this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("top"));
-					} else
-						echo "No top file found: " . $this -> getConf("top");
-
-				}
-			}
-			
-
-		// Load template
-			if (!$this -> getConf("notemplate") && !isset($_GET['__notemplate'])) {
-				// Content of template is stored in a var 'templateVarContent'
-				if (strlen($this -> getConf("templateVarContent"))) {
-					$var = $this -> getConf("templateVarContent");
-					// exist a var with the content of the template
-					echo $$var;
-
-					// Content of template is stored in a file defined in template
-				} else {
-					if (!$this -> getConf("template")) {
-						if (is_file("./templates/" . $this -> _basename)){
-							include ("./templates/" . $this -> _basename);
-							__p('Load main template: ',"./templates/". $this -> _basename);
-							
-						} elseif (is_file($this -> _rootpath . "/ADNBP/templates/" . $this -> _basename)){
-							include ($this -> _rootpath . "/ADNBP/templates/" . $this -> _basename);
-							__p('Load main template: ',"/ADNBP/templates/". $this -> _basename);
-						} elseif ($this -> getConf("logic") == "nologic") {
-
-						}
-					} else {
-						if (is_file($this -> _webapp . "/templates/" . $this -> getConf("template"))){
-							include ($this -> _webapp . "/templates/" . $this -> getConf("template"));
-							__p('Load main template: ',$this -> _webappURL."/templates/". $this -> getConf("template"));
-						} elseif (is_file($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("template"))){
-							include ($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("template"));
-							__p('Load main template: ',"/ADNBP/templates/". $this -> getConf("template"));
-						} else
-							echo "No template found: " . $this -> getConf("template");
-					}
-				}
-			}
-			
-			
-			if (!$this -> getConf("notopbottom") && !$this -> getConf("notemplate") && !isset($_GET['__nobottom'])) {
-				if (!strlen($this -> getConf("bottom"))) {
-					if (is_file($this -> _webapp . "/templates/bottom.php"))
-						include ($this -> _webapp . "/templates/bottom.php");
-					elseif (is_file($this -> _rootpath . "/ADNBP/templates/bottom.php"))
-						include ($this -> _rootpath . "/ADNBP/templates/bottom.php");
-				} else {
-					if (is_file($this -> _webapp . "/templates/" . $this -> getConf("bottom")))
-						include ($this -> _webapp . "/templates/" . $this -> getConf("bottom"));
-					elseif (is_file($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("bottom")))
-						include ($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("bottom"));
-					else
-						echo "No bottom file found: " . $this -> getConf("bottom");
-
-				}
-			}
-			__p('Load Bottom and END '.__CLASS__.'-'.__FUNCTION__);
-			
-		}
+		
 
 		
 		function checkAuth() {
@@ -1218,16 +1184,6 @@ if (!defined("_ADNBP_CLASS_")) {
 						$this -> _cache['object'] = new MemoryCache($str);
 					}
 					break;
-				default:
-					if (!strlen(trim($str)))
-						$str = 'ADNBP GLOBAL';
-					$this -> _cache['object'] = new Memcache;
-					$this -> _cache['str'] = $str;
-					if (strlen($this -> _cache['object'] -> get($str)))
-						$this -> _cache['data'] = unserialize(gzuncompress($this -> _cache['object'] -> get($str)));
-					else
-						$this -> _cache['data'] = array();
-					break;
 			}
 		}
 
@@ -1241,33 +1197,22 @@ if (!defined("_ADNBP_CLASS_")) {
 				case 'memory':
 					$this -> _cache['object']->set($str,$data);
 					break;
-				default:
-					$this -> _cache['data'][$str] = gzcompress(serialize($data));
-					$this -> saveCache();					
-					break;
 			}
 
 		}
 
 		function getCache($str) {
-			if ($this -> _cache === null)
-				return (null);
+			if ($this -> _cache === null) return (null);
 
 			switch ($this -> _cache['type']) {
 				case 'memory':
 					return($this -> _cache['object']->get($str));
 					break;
-				default:
-					if (!isset($this -> _cache['data'][$str]))
-						return (null);
-					return (unserialize(gzuncompress($this -> _cache['data'][$str])));
-					break;
 			}
 		}
 		
 		function getCacheTime($str) {
-			if ($this -> _cache === null)
-				return (null);
+			if ($this -> _cache === null) return (null);
 
 			switch ($this -> _cache['type']) {
 				case 'memory':
@@ -1276,28 +1221,19 @@ if (!defined("_ADNBP_CLASS_")) {
 			}
 		}
 		
-		/*
-		 * Deprecated
-		 */
-		function resetCache() {
-			if ($this -> _cache === null)
-				return (null);
-			if($this -> _cache['type']!='memoryOld') return false;
-			
-			$this -> _cache['data'] = array();
-			$this -> saveCache();
+		function loadCacheDics() {
+			if ($this -> _cache === null) $this->initCache();
+			if(!isset($_REQUEST['reloadCache'])) {
+				$key = 'loadCacheDics: '.$this->_url.'-'.$this->_lang;
+				$this -> _dicKeys = $this->getCache(hash('md5',$key));
+			}
 		}
-		/*
-		 * Deprecated
-		 */	
-		function saveCache() {
-			if ($this -> _cache === null)
-				return (null);
-			if($this -> _cache['type']!='memoryOld') return false;
-
-			$this -> _cache['data']['_microtime_'] = microtime(true);
-			$this -> _cache['object'] -> set($this -> _cache['str'], gzcompress(serialize($this -> _cache['data'])));
-		}
+		function saveCacheDics() {
+			if ($this -> _cache === null) return (null);
+			$key = 'loadCacheDics: '.$this->_url.'-'.$this->_lang;
+			$this->setCache(hash('md5',$key),$this -> _dicKeys);
+		}		
+		
 
 		/*
 		 * Manage User Roles
