@@ -29,23 +29,26 @@ if (!defined ("_Performance_CLASS_") ) {
 			if (strlen($file)) $file = " ($file)";
 			
 			$_mem = memory_get_usage() / (1024 * 1024) - $this->data['lastMemory'];
-			if ($type=='all' || $type=='memory' || $_GET['data'] == $this->data['lastIndex']) {
+			if ($type=='all' || $type=='endnote'|| $type=='memory' || $_GET['data'] == $this->data['lastIndex']) {
 				 $line .=  number_format(round($_mem, 3), 3) . ' Mb';
 				$this->data['lastMemory'] = memory_get_usage() / (1024 * 1024);
 			}
+			
 			$_time = microtime(true) - $this->data['lastMicrotime'];
-			if ($type=='all' || $type=='time' || $_GET['data'] == $this->data['lastIndex']) {
+			if ($type=='all' || $type=='endnote'|| $type=='time' || $_GET['data'] == $this->data['lastIndex']) {
 				$line .= (($line=='[')?'':', ').  (round($_time, 3)) . ' secs';
 				$this->data['lastMicrotime'] = microtime(true);
 			}
 			$line .= '] '.$title;
-			$this->data['info'][] = (($type != 'note')?'[' . number_format(round(memory_get_usage() / (1024 * 1024), 3), 3) . ' Mb, '
+			$line = (($type != 'note')?'[' . number_format(round(memory_get_usage() / (1024 * 1024), 3), 3) . ' Mb, '
 				. (round(microtime(true) - $this->data['initMicrotime'], 3))
 				.' secs] / ':'').$line.$file;
+			if($type=='endnote') $line = "[$type] ".$line;
+			$this->data['info'][] = $line;
 			
 			if($title) {
 				$this->data['titles'][$title]['mem'] = $_mem;
-				$this->data['titles'][$title]['time'] = (isset($this->data['titles'][$title]['time']))?$this->data['titles'][$title]['time']:0 + $_time;
+				$this->data['titles'][$title]['time'] += $_time;
 			}
 			
 			if (isset($_GET['__p']) && $_GET['__p'] == $this->data['lastIndex']) {
@@ -89,10 +92,16 @@ function __sp($title = '', $top = "<!--\n", $bottom = "\n-->") {
 	}
 	echo $top;
 	echo $title;
+	$spaces = "";
 	foreach ($__p->data['info'] as $key => $value) {
+		if(is_string($value) && strpos($value, '[endnote]')!==false) $spaces = substr($spaces, 0,-2);
+		echo $spaces;
 		echo ((is_string($value))?$value:print_r($value,true))."\n";
+		if(is_string($value) && strpos($value, '[note]')!==false) $spaces .= "  ";
+		if(is_string($value) && strpos($value, '[endnote]')!==false) echo "\n";
+		
 	}
-	echo "\n\n";
+	echo "\n\nTOTALS:\n";
 	foreach ($__p->data['titles'] as $key => $value) {
 		echo "[$key] : ".round($value['mem'],3).' Mb / '.round($value['time'],3)." secs.\n";
 	}

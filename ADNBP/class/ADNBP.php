@@ -305,7 +305,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
 		// Create the object to control Auth
 			$this -> checkAuth();
-			__p('checkAuth'."\n\n");
+			__p('checkAuth');
 		// Load Logic
 			$_file = false;
 			if (!strlen($this -> getConf("logic"))) {
@@ -325,7 +325,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			if($_file) {
 				__p('Including logic file: ',$_file,'note');
 				include ($_file);
-				__p('Included logic file: '."\n\n");
+				__p('Including logic file: ','','endnote');
 			}
 		// Load top
 			$_file = false;
@@ -348,7 +348,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			if($_file) {
 				__p('Including top html: ',$_file,'note');
 				include ($_file);
-				__p('Included top html: '."\n\n");
+				__p('Including top html: ','','endnote');
 			}			
 
 		// Load template
@@ -384,7 +384,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			if($_file) {
 				__p('Including main html: ',$_file,'note');
 				include ($_file);
-				__p('Included main html: '."\n\n");
+				__p('Including main html: ','','endnote');
 			}			
 			
 		// Load Bottom
@@ -408,7 +408,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			if($_file) {
 				__p('Including bottom html: ',$_file,'note');
 				include ($_file);
-				__p('Included bottom html: '."\n\n");
+				__p('Including bottom html: ','','endnote');
 			}			
 			// Cache dics.
 			if($this->getConf('CacheDics')) $this->saveCacheDics();
@@ -549,7 +549,7 @@ if (!defined("_ADNBP_CLASS_")) {
 		 * Call External Cloud Service 
 		 */
 		function getCloudServiceResponse($rute, $data = null, $verb = 'GET', $extraheaders = null, $raw = false) {
-			__p('Start getCloudServiceResponse: ',"$rute " . (($data===null)?'{no params}':'{with params}'),'note');
+			__p('getCloudServiceResponse: ',"$rute " . (($data===null)?'{no params}':'{with params}'),'note');
 			
 			// Creating the final URL.
 			if (strpos($rute, 'http') !== false) $_url = $rute;
@@ -625,7 +625,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			}
 			
 			 
-			__p('Received getCloudServiceResponse: ');
+			__p('getCloudServiceResponse: ','','endnote');
 			return ($ret);
 		}
 
