@@ -4,11 +4,12 @@ $api->checkMethod('GET,POST,DELETE');
 if(!$api->error && $api->method=='GET' && $api->params[0]=='source') die(file_get_contents(__FILE__));
 
 // Only works in development for security reasons.
-if(!$api->error && !$this->is('development')) $api->setError('this test function only works in development',401);
-
+// if(!$api->error && !$this->is('development')) $api->setError('this test function only works in development',401);
 if(!$api->error) {
 	$this->loadClass("io/Bucket");
-	$bucket = new Bucket($_GET['bucket']);
+	$_bucketPath = 'adnbp-cloud-framwork-public/upload';
+	$bucket = new Bucket($_bucketPath);
+	
 	switch ($api->method) {
 		case 'GET':
 			if(!strlen($api->params[0])) {

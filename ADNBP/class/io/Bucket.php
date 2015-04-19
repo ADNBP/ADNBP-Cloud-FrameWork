@@ -20,15 +20,28 @@ if (!defined ("_bucket_CLASS_") ) {
    			if(strlen($bucket)) $this->bucket = $bucket;
 			else $this->bucket = CloudStorageTools::getDefaultGoogleStorageBucketName();
 			
+			
 			$this->vars['upload_max_filesize'] = ini_get('upload_max_filesize');
 			$this->vars['max_file_uploads'] = ini_get('max_file_uploads');
 			$this->vars['file_uploads'] = ini_get('file_uploads');
 			$this->vars['default_bucket'] = $this->bucket;
 			$this->vars['retUploadUrl'] = $adnbp->_url;
 			
-			if(count($_FILES) && count($_FILES['uploaded_files'])) {
-				$this->uploadedFiles = $_FILES['uploaded_files'];
-				$this->uploaded = true;
+			
+			if(count($_FILES)) {
+				foreach ($_FILES as $key => $value) {
+					if(is_array($value['name'])) {
+						for($j=0,$tr2=count($value['name']);$j<$tr2;$j++) {
+							foreach ($value as $key2 => $value2) {
+								$this->uploadedFiles[$key][$j][$key2] = $value[$key2][$j];
+							}
+						}
+					} else {
+						$this->uploadedFiles[$key][0] = $value;
+					}
+					$this->uploaded = true;
+				}
+				
 			}
 			
    		}
@@ -36,29 +49,42 @@ if (!defined ("_bucket_CLASS_") ) {
 		function deleteUploadFiles() {
 			if(strlen($_FILES['uploaded_files']['tmp_name'])) unlink($_FILES['uploaded_files']['tmp_name']);
 		}
-		function manageUploadFiles($dest='',$public=true) {
+		function manageUploadFiles($dest_bucket='',$public=true) {
 			// $gs_name = $_FILES['uploaded_files']['tmp_name'];
 			// move_uploaded_file($gs_name, 'gs://my_bucket/new_file.txt');
 			if($this->uploaded)  {
-				if(!$this->uploadedFiles['error']) {
-					if(!strlen($dest)) $dest = 'gs://'.$this->bucket.'/'.$this->uploadedFiles['name'];
-					try {
-						if($public) {
-							stream_context_set_default(array('gs'=>array('acl'=>'public-read')));
+				foreach ($this->uploadedFiles as $key => $files) {
+					for($i=0,$tr=count($files);$i<$tr;$i++) {
+						$value = $files[$i];
+						if(!$value['error']) {
+							if(!strlen($dest_bucket)) $dest = 'gs://'.$this->bucket.'/'.$value['name'];
+							else $dest.'/'.$value['name'];
+							try {
+								if($public) {
+									stream_context_set_default(array('gs'=>array('acl'=>'public-read')));
+								}
+								if(copy($value['tmp_name'],$dest)) {
+									$this->uploadedFiles[$key][$i]['movedTo'] = $dest;
+									if($public)
+										$this->uploadedFiles[$key][$i]['publicUrl'] = $this->getPublicUrl($dest);
+								} else {
+									$this->addError(error_get_last());
+									$this->uploadedFiles[$key][$i]['error'] = $this->errorMsg;
+								}
+								
+								
+							}catch(Exception $e) {
+									$this->addError($e->getMessage());
+									$this->addError(error_get_last());
+									$this->uploadedFiles[$key][$i]['error'] = $this->errorMsg;
+							}
 						}
-						if(@move_uploaded_file($this->uploadedFiles['tmp_name'],$dest) === false) {
-							$this->setError(error_get_last());
-						} else {
-							$this->uploadedFiles['movedTo'] = $dest;
-							if($public)
-								$this->uploadedFiles['publicUrl'] = $this->getPublicUrl($dest);
-						}
-					}catch(Exception $e) {
-							$this->setError($e->getMessage());
-							$this->setError(error_get_last());
 					}
+					
 				}
+				
 			}
+			return($this->uploadedFiles);
 		}
 		
 		function getPublicUrl($file) {
@@ -71,23 +97,26 @@ if (!defined ("_bucket_CLASS_") ) {
 					$ret =  CloudStorageTools::getPublicUrl($file,false);
 			} return $ret;
 		}
-		function scan() {
+		function scan($path='') {
 			$ret = array();
-			$tmp = scandir('gs://'.$this->bucket);
+			$tmp = scandir('gs://'.$this->bucket.$path);
 			foreach ($tmp as $key => $value) {
-				$ret[$value] = array('type'=>(is_file('gs://'.$this->bucket.'/'.$value))?'file':'dir');
-				if(isset($_REQUEST['__performance'])) __p('is_dir: '.'gs://'.$this->bucket.'/'.$value);
+				$ret[$value] = array('type'=>(is_file('gs://'.$this->bucket.$path.'/'.$value))?'file':'dir');
+				if(isset($_REQUEST['__p'])) __p('is_dir: '.'gs://'.$this->bucket.$path.'/'.$value);
 			}
 			return($ret);
 		}
-		function fastScan() {
-			return(scandir('gs://'.$this->bucket));
+		function fastScan($path='') {
+			return(scandir('gs://'.$this->bucket.$path));
 		}
 		
-		function deleAllFiles() {
-			$files = $this->fastScan();
+		function deleAllFiles($path='') { $this->deleteFiles($path,'*');}
+		function deleteFiles($path='',$file) {
+			if(is_array($file)) $files=$file;	
+			else if($file == '*') $files = $this->fastScan($path);
+			else $file[] = file;
 			foreach ($files as $key => $value) {
-				$value = 'gs://'.$this->bucket.'/'.$value;
+				$value = 'gs://'.$this->bucket.$path.'/'.$value;
 				$ret[$value] = 'ignored';
 				if(is_file($value)) {
 					$ret[$value] = 'deleting: '.unlink($value);
@@ -95,33 +124,58 @@ if (!defined ("_bucket_CLASS_") ) {
 			}
 			return($ret);
 		}
+		
+		function rmdir($dir,$path='')  {
+			$value = 'gs://'.$this->bucket.$path.$dir;
+			$ret = false;
+			try {
+				$ret = rmdir($value);
+			} catch(Exception $e) {
+					$this->addError($e->getMessage());
+					$this->addError(error_get_last());
+			}
+			return $ret;
+		}
+
+		function mkdir($dir,$path='')  {
+			$value = 'gs://'.$this->bucket.$path.$dir;
+			$ret = false;
+			try {
+				$ret = @mkdir($value);
+			} catch(Exception $e) {
+					$this->addError($e->getMessage());
+					$this->addError(error_get_last());
+			}
+			return $ret;
+		}
+
 				
-		function putContents($file, $data, $ctype = 'text/plain' ) {
+		function putContents($file, $data, $path='',$ctype = 'text/plain' ) {
 			
 			$options = array('gs' => array('Content-Type' => $ctype));
 			$ctx = stream_context_create($options);
 			
 			$ret = false;
 			try{
-				if(@file_put_contents('gs://'.$this->bucket.'/'.$file, $data,0,$ctx) === false) {
-					$this->setError(error_get_last());
+				if(@file_put_contents('gs://'.$this->bucket.$path.'/'.$file, $data,0,$ctx) === false) {
+					$this->addError(error_get_last());
 				}
 			} catch(Exception $e) {
-					$this->setError($e->getMessage());
-					$this->setError(error_get_last());
+					$this->addError($e->getMessage());
+					$this->addError(error_get_last());
 			}
 		}
 
-		function getContents($file) {
+		function getContents($file,$path='') {
 			$ret = '';
 			try{
-				$ret = @file_get_contents('gs://'.$this->bucket.'/'.$file);
+				$ret = @file_get_contents('gs://'.$this->bucket.$path.'/'.$file);
 				if($ret=== false) {
-					$this->setError(error_get_last());
+					$this->addError(error_get_last());
 				}
 			} catch(Exception $e) {
-					$this->setError($e->getMessage());
-					$this->setError(error_get_last());
+					$this->addError($e->getMessage());
+					$this->addError(error_get_last());
 			}
 			return($ret);
 		}
@@ -132,7 +186,12 @@ if (!defined ("_bucket_CLASS_") ) {
 			return($upload_url);
 		}	
 		
+
 		function setError($msg) {
+			$this->errorMsg = array();
+			$this->addError($msg);
+		}
+		function addError($msg) {
 			$this->error = true;
 			$this->errorMsg[] = $msg;
 		}
