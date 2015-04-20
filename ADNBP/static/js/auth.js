@@ -10,14 +10,22 @@
 
 $(document).ready(function() {
 	
+	$('#CloudServiceInputUser').focus();
 	// Action to send Auth info to Cloud Service FrameWork
+	$('#CloudServiceInputPassword').on('keypress', function(e){
+		if(e.which == 13) {
+			$('#CloudServiceAuthButton').trigger('click');
+    	}
+	});
+	
 	$('#CloudServiceAuthButton').on('click', function(){
 		var textButton = $('#CloudServiceAuthButton').text();
-		
 		if(!formInputValidate('email',$('#CloudServiceInputUser').val())) {
-			alert('User incorrect. '+$('#CloudServiceInputUser').val()+' has to be a valid email.');
+			$('#CloudServiceMsg').text('User incorrect. '+$('#CloudServiceInputUser').val()+' has to be a valid email.');
+			$('#CloudServiceInputUser').focus();
 		} else if($('#CloudServiceInputPassword').val().length < 2 ) {
-			alert('Password has less than 2 chars.');
+			$('#CloudServiceMsg').text('Password has less than 2 chars.');
+			$('#CloudServiceInputPassword').focus();
 		} else {
 			$('#CloudServiceAuthButton').text( $('#CloudServiceAuthButton').attr('data-sending'));
 			$.post('/api/auth'
@@ -27,13 +35,14 @@ $(document).ready(function() {
 			 } 
 			,function(ret) {
 				if(ret.success) {
-					document.location = document.location.href;
+					$('#CloudServiceAuthButton').text( 'loading.. wait');
+					document.location = '/en/portal';
 				} else {
-					alert(ret.error.message);
+					$('#CloudServiceMsg').text(ret.error.message);
 				}
 				$('#CloudServiceAuthButton').text( textButton);
 		   }).fail(function(err) {
-		   		alert(err.responseJSON.error.message);
+		   		$('#CloudServiceMsg').text(err.responseJSON.error.message);
 		   		if(err.status==404) {
 		   			$('#CloudServiceInputUser').focus();		   			
 		   		}else if(err.status==401) {
