@@ -251,8 +251,10 @@ if (!defined("_ADNBP_CLASS_")) {
 			} 
 			// else if getConf("notemplate") is not defined
 			else if (!$this -> getConf("notemplate")) {
+				__p('Menu files. ','','note');
 				if (is_file($this -> _webapp . "/config/menu.php"))
 					include ($this -> _webapp . "/config/menu.php");
+				__p('Menu files. ',$this -> _webapp . "/config/menu.php",'endnote');
 
 				// looking for a match
 				for ($i = 0, $_found = false, $tr = count($this -> _menu); $i < $tr && !$_found; $i++) {
@@ -304,8 +306,9 @@ if (!defined("_ADNBP_CLASS_")) {
 
 
 		// Create the object to control Auth
-			$this -> checkAuth();
-			__p('checkAuth');
+			__p('checkAuth','','note');
+					$this -> checkAuth();
+			__p('checkAuth','','endnote');
 		// Load Logic
 			$_file = false;
 			if (!strlen($this -> getConf("logic"))) {
@@ -909,7 +912,7 @@ if (!defined("_ADNBP_CLASS_")) {
 		function t1line ($dic, $key, $raw = false, $lang = '') { return(preg_replace('/(\n|\r)/', ' ', $this->t($dic, $key, $raw, $lang ))); }
 
 		function readDictionaryKeys($cat, $lang = '') {
-			__p('init readDictionaryKeys : ','','note');
+			__p('readDictionaryKeys : ','','note');
 			// Lang to read
 			if ($lang == '') $lang = $this -> _lang;
 			
@@ -924,7 +927,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			if(!isset($_GET['reloadDictionaries']) || !$this->getConf('CloudServiceDictionary') || !$this->getConf('CloudServiceKey')) {
 				$ret = @file_get_contents($filename);
 				if($ret!== false) {
-					__p('ret readDictionaryKeys() from json: ',$filename);
+					__p('readDictionaryKeys : ',$filename,'endnote');
 					return(json_decode($ret));
 				} else {
 					$this->addLog('Error reading '.$filename.': '.error_get_last());
@@ -954,7 +957,7 @@ if (!defined("_ADNBP_CLASS_")) {
 					$this->addError('readDictionaryKeys cat='.$cat.' error='.json_encode($ret));
 				}
 			}
-			__p('ret readDictionaryKeys() form service: ',$filename);
+			__p('readDictionaryKeys : ',$filename,'endnote');
 			return(json_decode($ret));
 		}
 
