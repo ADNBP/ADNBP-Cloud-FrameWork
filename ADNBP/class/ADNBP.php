@@ -214,6 +214,9 @@ if (!defined("_ADNBP_CLASS_")) {
 			// Set to lang conf var the current lang
 			$this -> setConf("lang", $this -> _lang);
 			
+			// Active cache.
+			if($this->getConf('activeCache')) $this->initCache();
+			
 			// Activate cache of dics
 			if($this->getConf('CacheDics')) $this->loadCacheDics();
 
@@ -888,15 +891,25 @@ if (!defined("_ADNBP_CLASS_")) {
 		
 
 		// Dictionaries in method 2
-		function sett($dic, $key, $data,$convertHtml = false) {
-			if (!strlen($lang)) $lang = $this -> _lang;
-			$this -> _dicKeys[$dic]->$key = ($convertHtml)?htmlentities($data):$data;
-			$this -> dics[$dic] = true;
+		function sett($data,$dic, $key='' ,$convertHtml = false) {
+			if(!strlen($key)) {
+				$this -> _dicKeys['__internal__'][$dic] = $data;
+			} else {
+				if (!strlen($lang)) $lang = $this -> _lang;
+				$this -> _dicKeys[$dic]->$key = ($convertHtml)?htmlentities($data):$data;
+				$this -> dics[$dic] = true;
+			}
 		}
-		function ist($dic, $key, $data) {
-			return(isset($this ->_dicKeys[$dic]->$key));
+		function ist($dic, $key='', $data) {
+			if(!strlen($key)) return(isset($this -> _dicKeys['__internal__'][$dic]));
+			else return(isset($this ->_dicKeys[$dic]->$key));
 		}
-		function t($dic, $key, $raw = false, $lang = '') {
+		function t($dic, $key='', $raw = false, $lang = '') {
+			
+			// Internal contents
+			if(!strlen($key))  return((isset($this -> _dicKeys['__internal__'][$dic]))?$this -> _dicKeys['__internal__'][$dic]:'{'.$dic.'}');
+			
+
 			// Lang to read
 			if (!strlen($lang)) $lang = $this -> _lang;
 
@@ -921,10 +934,10 @@ if (!defined("_ADNBP_CLASS_")) {
 			if (strlen($this -> getConf("LocalizePath")) )  $filename = $this->getConf("LocalizePath").$filename;
 			else  $filename = $this -> webapp . '/localize'.$filename;
 			
-
 			// Return json file.
 			$ret ='{}';
 			if(!isset($_GET['reloadDictionaries']) || !$this->getConf('CloudServiceDictionary') || !$this->getConf('CloudServiceKey')) {
+				
 				$ret = @file_get_contents($filename);
 				if($ret!== false) {
 					__p('readDictionaryKeys : ',$filename,'endnote');
@@ -933,6 +946,7 @@ if (!defined("_ADNBP_CLASS_")) {
 					$this->addLog('Error reading '.$filename.': '.error_get_last());
 				}
 			} 
+			
 			
 			// Return file generating it from a service.
 			if($this->getConf('CloudServiceDictionary') && $this->getConf('CloudServiceKey')) {
@@ -1242,9 +1256,10 @@ if (!defined("_ADNBP_CLASS_")) {
 		 * Manage User Roles
 		 */
 
-		function setRole($rolId, $rolName, $org = '') {
-			if (!strlen($org))
-				$org = $this -> getAuthUserData("currentOrganizationId");
+		function setRole($rolId, $rolName='', $org = '') {
+			if (!strlen($org)) $org = $this -> getAuthUserData("currentOrganizationId");
+			if (!strlen($rolName)) $rolName = $rolId;
+			
 			$_userRoles = $this -> getSessionVar("UserRoles");
 			if (empty($_userRoles))
 				$_userRoles = array();
@@ -1255,8 +1270,7 @@ if (!defined("_ADNBP_CLASS_")) {
 		}
 
 		function hasRoleId($rolId, $org = '') {
-			if (!strlen($org))
-				$org = $this -> getAuthUserData("currentOrganizationId");
+			if (!strlen($org)) $org = $this -> getAuthUserData("currentOrganizationId");
 			$_userRoles = $this -> getSessionVar("UserRoles");
 			if (empty($_userRoles))
 				$_userRoles = array();
