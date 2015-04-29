@@ -273,6 +273,10 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 			}
 			return(vsprintf($q, $joins));
 		}
+		
+		function scapeValue($value) {
+			return($this->_db->real_escape_string($value));
+		}
         
         function getQueryFromSearch ($search,$fields=false,$joints="=",$operators="AND") {
            $ret = '1=1'; 
