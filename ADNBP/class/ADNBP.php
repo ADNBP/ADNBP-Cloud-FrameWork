@@ -555,11 +555,11 @@ if (!defined("_ADNBP_CLASS_")) {
 		 * Call External Cloud Service 
 		 */
 		function getCloudServiceResponse($rute, $data = null, $verb = 'GET', $extraheaders = null, $raw = false) {
-			__p('getCloudServiceResponse: ',"$rute " . (($data===null)?'{no params}':'{with params}'),'note');
-			
 			// Creating the final URL.
 			if (strpos($rute, 'http') !== false) $_url = $rute;
 			else  $_url = $this -> getCloudServiceURL($rute);
+
+			__p('getCloudServiceResponse: ',"$_url " . (($data===null)?'{no params}':'{with params}'),'note');
 			
 			// Workaround to avoid EOF: https://code.google.com/p/googleappengine/issues/detail?id=11772&q=certificate%20invalid%20or%20non-existent&colspec=ID%20Type%20Component%20Status%20Stars%20Summary%20Language%20Priority%20Owner%20Log
 			$options = array('ssl' => array('verify_peer' => false, 'allow_self_signed' => true));
@@ -615,7 +615,6 @@ if (!defined("_ADNBP_CLASS_")) {
 					$options['http']['header'] .= sprintf('Content-Length: %d', strlen($build_data)) . "\r\n";
 					
 				}
-
 
 
 
@@ -937,16 +936,18 @@ if (!defined("_ADNBP_CLASS_")) {
 			// Return json file.
 			$ret ='{}';
 			if(!isset($_GET['reloadDictionaries']) || !$this->getConf('CloudServiceDictionary') || !$this->getConf('CloudServiceKey')) {
-				
-				$ret = @file_get_contents($filename);
-				if($ret!== false) {
-					__p('readDictionaryKeys : ',$filename,'endnote');
-					return(json_decode($ret));
-				} else {
-					$this->addLog('Error reading '.$filename.': '.error_get_last());
+				try {
+					$ret = @file_get_contents($filename);
+					if($ret!== false) {
+						__p('readDictionaryKeys : ',$filename,'endnote');
+						return(json_decode($ret));
+					} else {
+						$this->addLog('Error reading '.$filename.': '.error_get_last());
+					}
+				}catch(Exception $e) {
+						$this->addLog('Error reading '.$filename.': '.$e->getMessage().' '.error_get_last());
 				}
 			} 
-			
 			
 			// Return file generating it from a service.
 			if($this->getConf('CloudServiceDictionary') && $this->getConf('CloudServiceKey')) {
