@@ -204,7 +204,12 @@ if (!defined ("_bucket_CLASS_") ) {
 		function saveFromSource($source, $filename, $path='',$public=true) {
 			$ok = false;
 			try{
-				$ret = @file_get_contents($source);
+				if(strpos($source, 'data:')===0) {
+					list($foo,$data) = explode(",",$source,2);
+					$ret = @base64_decode($data);
+				} else {
+					$ret = @file_get_contents($source);
+				}
 				if($ret=== false) {
 					$this->addError(error_get_last());
 				} else {
