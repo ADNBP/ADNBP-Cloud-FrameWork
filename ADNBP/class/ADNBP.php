@@ -800,20 +800,19 @@ if (!defined("_ADNBP_CLASS_")) {
 		
 		// time, has to to be microtime().
 		function generateCloudFrameWorkSecurityString($_id,$_time='',$secret='') {
-			
 			$ret = null;
 			if(!strlen($secret)) {
 				$secArr = $this->getConf('CLOUDFRAMEWORK-ID-'.$_id);
 				if(isset($secArr['secret'])) $secret =$secArr['secret'];
 			}
 			if(!strlen($secret)) {
-					$this->addLog('conf-var CLOUDFRAMEWORK-SECRET-'.$_id.' missing.');
+					$this->addLog('conf-var CLOUDFRAMEWORK-ID-'.$_id.' missing.');
 			} else {
 				if(!strlen($_time)) $_time = microtime(true);
 				$date = new DateTime(null, new DateTimeZone('UTC'));
 				$_time += $date->getOffset();
 				$ret = $_id.'__UTC__'.$_time;
-				$ret .= '__'.hash_hmac('sha1',$ret,$this->getConf('CLOUDFRAMEWORK-SECRET-'.$_id));
+				$ret .= '__'.hash_hmac('sha1',$ret,$secret);
 			}
 			return $ret;
 		}
