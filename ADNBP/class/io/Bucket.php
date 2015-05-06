@@ -13,14 +13,12 @@ if (!defined ("_bucket_CLASS_") ) {
 		var $errorMsg = array();
 		var $max = array();
 		var $uploadedFiles = array();
-		var $uploaded = false;
+		var $isUploaded = false;
 		
    		function Bucket($bucket='') {
    			global $adnbp;
    			if(strlen($bucket)) $this->bucket = $bucket;
 			else $this->bucket = CloudStorageTools::getDefaultGoogleStorageBucketName();
-			
-			
 			$this->vars['upload_max_filesize'] = ini_get('upload_max_filesize');
 			$this->vars['max_file_uploads'] = ini_get('max_file_uploads');
 			$this->vars['file_uploads'] = ini_get('file_uploads');
@@ -39,11 +37,9 @@ if (!defined ("_bucket_CLASS_") ) {
 					} else {
 						$this->uploadedFiles[$key][0] = $value;
 					}
-					$this->uploaded = true;
+					$this->isUploaded = true;
 				}
-				
 			}
-			
    		}
 		
 		function deleteUploadFiles() {
@@ -52,7 +48,7 @@ if (!defined ("_bucket_CLASS_") ) {
 		function manageUploadFiles($dest_bucket='',$public=true) {
 			// $gs_name = $_FILES['uploaded_files']['tmp_name'];
 			// move_uploaded_file($gs_name, 'gs://my_bucket/new_file.txt');
-			if($this->uploaded)  {
+			if($this->isUploaded)  {
 				foreach ($this->uploadedFiles as $key => $files) {
 					for($i=0,$tr=count($files);$i<$tr;$i++) {
 						$value = $files[$i];
@@ -125,8 +121,8 @@ if (!defined ("_bucket_CLASS_") ) {
 			return($ret);
 		}
 		
-		function rmdir($dir,$path='')  {
-			$value = 'gs://'.$this->bucket.$path.$dir;
+		function rmdir($path='')  {
+			$value = 'gs://'.$this->bucket.$path;
 			$ret = false;
 			try {
 				$ret = rmdir($value);
@@ -137,10 +133,32 @@ if (!defined ("_bucket_CLASS_") ) {
 			return $ret;
 		}
 
-		function mkdir($dir,$path='')  {
-			$value = 'gs://'.$this->bucket.$path.$dir;
+		function mkdir($path='')  {
+			$value = 'gs://'.$this->bucket.$path;
 			$ret = false;
 			try {
+				$ret = @mkdir($value);
+			} catch(Exception $e) {
+					$this->addError($e->getMessage());
+					$this->addError(error_get_last());
+			}
+			return $ret;
+		}
+		
+		function isDir($path='')  {
+			$value = 'gs://'.$this->bucket.$path;
+			return(is_dir($value));
+		}
+		
+		function isFile($file='')  {
+			$value = 'gs://'.$this->bucket.$file;
+			return(is_file($value));
+		}
+		
+		function isMkdir($path='')  {
+			$value = 'gs://'.$this->bucket.$path;
+			$ret = is_dir($value);
+			if(!$ret) try {
 				$ret = @mkdir($value);
 			} catch(Exception $e) {
 					$this->addError($e->getMessage());
