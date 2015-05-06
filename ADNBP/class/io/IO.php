@@ -19,7 +19,7 @@ if (!defined ("_bucket_CLASS_") ) {
    		function IO($folder='') {
    			global $adnbp;
    			if(strlen($folder)) {
-   				if(strpos($folder, 'gs://')) $this->folderPref ='gs://';
+   				if(strpos($folder, 'gs://')!==false) $this->folderPref ='gs://';
    				$this->folder = str_replace('gs://', '', $folder);
 			} else {
 				$this->folderPref = 'gs://';
