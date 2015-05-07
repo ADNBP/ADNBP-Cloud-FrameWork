@@ -1227,7 +1227,16 @@ if (!defined("_ADNBP_CLASS_")) {
 					break;
 			}
 		}
-		
+
+		function deleteCache($str) {
+			if ($this -> _cache === null) return (null);
+			switch ($this -> _cache['type']) {
+				case 'memory':
+					return($this -> _cache['object']->delete($str));
+					break;
+			}
+		}
+				
 		function getCacheTime($str) {
 			if ($this -> _cache === null) return (null);
 
