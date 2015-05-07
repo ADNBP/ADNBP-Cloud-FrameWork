@@ -205,8 +205,8 @@ if (!defined ("_bucket_CLASS_") ) {
 			$ok = false;
 			try{
 				if(strpos($source, 'data:')===0) {
-					list($foo,$data) = explode(",",$source,2);
-					$ret = @base64_decode($data);
+					list($foo,$source) = explode(",",$source,2);
+					$ret = @base64_decode($source);
 				} else {
 					$ret = @file_get_contents($source);
 				}
