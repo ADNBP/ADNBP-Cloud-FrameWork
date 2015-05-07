@@ -63,7 +63,7 @@ if (!defined ("_bucket_CLASS_") ) {
 			if(strlen($_FILES['uploaded_files']['tmp_name'])) unlink($_FILES['uploaded_files']['tmp_name']);
 		}
 
-		function saveUploadFile($form_field,$pos,$filename='',$dest='',$public=true) {
+		function saveUploadFile($form_field,$pos,$filename='',$path='',$public=true) {
 			$ret = false;
 			if(is_array($this->uploadedFiles[$form_field][$pos])) {
 					
@@ -74,8 +74,7 @@ if (!defined ("_bucket_CLASS_") ) {
 				
 				// Filename
 				if(!strlen($filename)) $filename = $this->uploadedFiles[$form_field][$pos]['name'];
-				if(!strlen($dest)) $dest = $this->folderPref.$this->folder.'/'.$filename;
-				else $dest.='/'.$filename;
+				$dest = $this->folderPref.$this->folder.$path.'/'.$filename;
 				$value = $this->uploadedFiles[$form_field][$pos];
 				try {
 					if(copy($value['tmp_name'],$dest)) {
