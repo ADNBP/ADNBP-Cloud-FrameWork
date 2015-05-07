@@ -66,9 +66,13 @@ if (!defined ("_bucket_CLASS_") ) {
 		function saveUploadFile($form_field,$pos,$filename='',$dest='',$public=true) {
 			$ret = false;
 			if(is_array($this->uploadedFiles[$form_field][$pos])) {
-				if($public) {
-					stream_context_set_default(array('gs'=>array('acl'=>'public-read')));
-				}
+					
+				// Context	
+				$context = array('gs'=>array('Content-Type' =>$this->uploadedFiles[$form_field][$pos]['type']));
+				if($public)  $context['gs']['acl'] = 'public-read';
+				stream_context_set_default($context);
+				
+				// Filename
 				if(!strlen($filename)) $filename = $this->uploadedFiles[$form_field][$pos]['name'];
 				if(!strlen($dest)) $dest = $this->folderPref.$this->folder.'/'.$filename;
 				else $dest.='/'.$filename;
