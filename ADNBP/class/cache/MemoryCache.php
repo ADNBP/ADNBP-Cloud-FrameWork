@@ -25,6 +25,12 @@ class MemoryCache {
 		$this -> _object ->set($this->str.'-'.$str,serialize($info));
 		return true;
 	}
+	function delete($str) {
+		if(!strlen(trim($str))) return false;
+		$this -> _object ->delete($this->str.'-'.$str);
+		return true;
+	}
+
 	function get($str,$expireTime=-1) {
 		if(!strlen(trim($str))) return false;
 		$info = $this -> _object ->get($this->str.'-'.$str);
