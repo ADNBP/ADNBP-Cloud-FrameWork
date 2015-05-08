@@ -225,7 +225,7 @@ if (!defined ("_bucket_CLASS_") ) {
 			return $ok;
 		}
 				
-		function putContents($file, $data, $path='',$public=true,$ctype = '' ) {
+		function putContents($filename, $data, $path='',$public=true,$ctype = '' ) {
 			
 			// $ctype could be: text/plain f.e.
 			$options = array();
@@ -235,7 +235,7 @@ if (!defined ("_bucket_CLASS_") ) {
 			
 			$ret = false;
 			try{
-				if(@file_put_contents($this->folderPref.$this->folder.$path.'/'.$file, $data,0,$ctx) === false) {
+				if(@file_put_contents($this->folderPref.$this->folder.$path.'/'.$filename, $data,0,$ctx) === false) {
 					$this->addError(error_get_last());
 				} else $ret = true;
 			} catch(Exception $e) {
