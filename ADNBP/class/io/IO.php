@@ -110,17 +110,22 @@ if (!defined ("_bucket_CLASS_") ) {
 			return($this->uploadedFiles);
 		}
 		
-		function getPublicUrl($file) {
+		function getPublicUrl($filename, $path='') {
 			global $adnbp;
-			$ret = 'bucket missing';
 			
-			if(strlen($this->folder)) {
-				if(strpos($file,'gs://')!==0 ) {
-					$ret  = $adnbp->url['host_url_full'].str_replace($_SERVER['DOCUMENT_ROOT'], '',$file);
-				} else
-					$ret =  CloudStorageTools::getPublicUrl($file,false);
-			} return $ret;
+			if(strpos($filename,'gs://')!==0 ) {
+				$filename = $this->folderPref.$this->folder.$path.'/'.$filename;
+			}
+			
+			if(strpos($filename,'gs://')!==0 ) {
+				$ret  = $adnbp->url['host_url_full'].str_replace($_SERVER['DOCUMENT_ROOT'], '',$filename);
+			} else {
+				$ret =  CloudStorageTools::getPublicUrl($filename,false);
+			}
+
+			return $ret;
 		}
+		
 		function scan($path='') {
 			$ret = array();
 			$tmp = scandir($this->folderPref.$this->folder.$path);
@@ -207,16 +212,30 @@ if (!defined ("_bucket_CLASS_") ) {
 		function saveFromSource($source, $filename, $path='',$public=true) {
 			$ok = false;
 			try{
+				$ret=false;
+				$error='';
 				if(strpos($source, 'data:')===0) {
-					list($foo,$source) = explode(",",$source,2);
-					$ret = @base64_decode($source);
+					list($header,$source) = explode(",",$source,2);
+					$header = str_replace('data:', '', $header);
+					list($ctype,$encoded) = explode(";",$header,2);
+					if($encoded == 'base64')
+						$ret = @base64_decode($source);
+					else {
+						$error = 'data: with no base64 format';
+					}
 				} else {
-					$ret = @file_get_contents($source);
+					$ch = curl_init();
+					curl_setopt($ch, CURLOPT_URL, $source);
+					curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+					$ret = curl_exec ($ch);
+					$error = curl_error($ch); 
+					curl_close ($ch);
+					$ctype = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
 				}
 				if($ret=== false) {
-					$this->addError(error_get_last());
+					$this->addError($error);
 				} else {
-					$ok = $this->putContents($filename,$ret,$path,$public);
+					$ok = $this->putContents($filename,$ret,$path,$public,$ctype);
 				}
 			} catch(Exception $e) {
 					$this->addError($e->getMessage());
