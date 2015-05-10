@@ -669,16 +669,20 @@ if (!defined("_ADNBP_CLASS_")) {
 			return $res;
 		}
 
-		function getRequestFingerPrint() {
+		function getRequestFingerPrint($extra='') {
 			$ret['ip'] = 	$this -> _ip = $_SERVER['REMOTE_ADDR'];
 			$ret['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
 			$ret['http_referer'] = $this->_referer;
-			$ret['script_hash'] = sha1($_SERVER['HTTP_HOST']
-									.' - '.$_SERVER['SCRIPT_FILENAME']
-									.' - '.$_SERVER['SERVER_SOFTWARE']);
-			$ret['geoData'] = $this->getGeoData();
-			unset($ret['geoData']['source_ip']);
-			unset($ret['geoData']['credit']);
+			$ret['time'] = date('Ymdhis');
+			$ret['host'] = $_SERVER['HTTP_HOST'];
+			$ret['script'] = $this->_url;
+			$ret['software'] = $_SERVER['SERVER_SOFTWARE'];
+			if($extra=='geodata') {
+				$ret['geoData'] = $this->getGeoData();
+				unset($ret['geoData']['source_ip']);
+				unset($ret['geoData']['credit']);
+			}
+			$ret['hash'] = sha1(implode(",",$ret));
 			return($ret);
 		}
 
@@ -1125,6 +1129,13 @@ if (!defined("_ADNBP_CLASS_")) {
 			$str = str_replace('-', '_', $str);
 			return ((isset($_SERVER['HTTP_' . $str])) ? $_SERVER['HTTP_' . $str] : '');
 		}
+		function getHeaders() {
+			$ret = array();
+			foreach ($_SERVER as $key => $value) if(strpos($key, 'HTTP_')===0) {
+				$ret[str_replace('HTTP_','', $key)] = $value;
+			}
+			return($ret);
+		}
 
 		/*
 		 *  Valida a field with different Types
@@ -1143,20 +1154,6 @@ if (!defined("_ADNBP_CLASS_")) {
 			}
 		}
 
-		/*
-		 *  Error Handle
-		 */
-		function setError($errorMsg) {
-			$this -> errorMsg = array();
-			$this->addError($errorMsg);
-		}
-		function addError($errorMsg) {
-			$this -> error = true;
-			$this -> errorMsg[] = $errorMsg;			
-		}
-		
-		function addLog($msg) { $this -> _log[] = $msg; }
-		function getLog() { return $this->_log; }
 		
 		/*
 		 * Time Performce
@@ -1333,21 +1330,55 @@ if (!defined("_ADNBP_CLASS_")) {
 		}
 
 		function isMobile() {
-			$this -> _checkDetectMobile();
+			if (!is_object($this -> _mobileDetect)) $this -> _checkDetectMobile();
 			return ($this -> _mobileDetect -> isMobile());
 		}
 
 		function isTablet() {
-			$this -> _checkDetectMobile();
+			if (!is_object($this -> _mobileDetect)) $this -> _checkDetectMobile();
 			return ($this -> _mobileDetect -> isTablet());
 
 		}
 
 		function isDetect($key) {
-			$this -> _checkDetectMobile();
+			if (!is_object($this -> _mobileDetect)) $this -> _checkDetectMobile();
 			return ($this -> _mobileDetect -> {'is'.$key}());
 		}
-
+		
+		/* ERROR & LOG FUNCTIONS */
+		
+		function setError($errorMsg) {
+			$this -> errorMsg = array();
+			$this->addError($errorMsg);
+		}
+		function addError($errorMsg) {
+			$this -> error = true;
+			$this -> errorMsg[] = $errorMsg;			
+		}
+		
+		function addLog($msg) { $this -> _log[] = $msg; }
+		function getLog() { return $this->_log; }
+				
+		function sendLog($type,$cat,$subcat,$title,$text='',$app='') {
+			if(!$this->getConf('CloudServiceLog') && !$this->getConf('LogPath')) return false;
+			if(!strlen($app)) $app = $this->url['host'];
+			$app = str_replace(' ', '_', $app);
+			$params['id'] = $this->getConf('CloudServiceId');
+			$params['cat'] = $cat;
+			$params['subcat'] = $subcat;
+			$params['title'] = $title;
+			$params['text'] = $text.((strlen($text))?"\n\n":'');
+			if($this -> error) $params['text'] .= "Errors: ".json_encode($this -> errorMsg)."\n\n";
+			if(count($this -> _log)) $params['text'] .= "Errors: ".json_encode($this -> errorMsg);
+			$params['ip'] = $this->_ip;
+			$params['fingerprint'] = json_encode($this->getRequestFingerPrint());
+			if($this->getConf('CloudServiceLog')){
+				$ret = json_decode($this->getCloudServiceResponse('queue/log/'.urlencode($app).'/'.urlencode($type),$params,'POST'));
+				return($ret);
+			} else {
+				return('Sending to LogPath not yet implemented');
+			}
+		}
 	}
 
 }
