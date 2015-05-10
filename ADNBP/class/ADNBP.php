@@ -1374,6 +1374,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			$params['fingerprint'] = json_encode($this->getRequestFingerPrint());
 			if($this->getConf('CloudServiceLog')){
 				$ret = json_decode($this->getCloudServiceResponse('queue/log/'.urlencode($app).'/'.urlencode($type),$params,'POST'));
+				if(!$ret->success) $this->addError($ret);
 				return($ret);
 			} else {
 				return('Sending to LogPath not yet implemented');

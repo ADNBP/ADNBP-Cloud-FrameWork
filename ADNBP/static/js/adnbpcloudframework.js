@@ -45,3 +45,8 @@ function formInputValidate(type,value) {
 }
 // getURIParameter("id")  // returns the last id or null if not present
 // getURIParameter("id", true) // returns an array of all ids
+
+function sendToConsole(title,data) {
+	console.log(title);
+	console.log(data);
+}
