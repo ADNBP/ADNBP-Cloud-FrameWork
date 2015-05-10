@@ -2,10 +2,12 @@
 // we receive: $command and $data
 switch ($command) {
 	case 'check':
-		
-		if(strlen($this->getHeader('X-CLOUDFRAMEWORK-TOKEN'))) $type ='CLOUDFRAMEWORK';
-		elseif(strlen($_REQUEST['API_KEY'])) $type = 'API_KEY';
-		else {
+	case 'API_KEY':
+	case 'CLOUDFRAMEWORK':
+		$type = false;
+		if(($command=='CLOUDFRAMEWORK' || $command=='check') && strlen($this->getHeader('X-CLOUDFRAMEWORK-TOKEN'))) $type ='CLOUDFRAMEWORK';
+		if(($command=='API_KEY' || $command=='check') && strlen($_REQUEST['API_KEY'])) $type = 'API_KEY';
+		if(!$type) {
 			$this->setAuth(false);
 			$this->addLog( 'we spect a X-CLOUDFRAMEWORK-TOKEN or API_KEY form-param. User session has been destroyed.');	
 			return false;		
