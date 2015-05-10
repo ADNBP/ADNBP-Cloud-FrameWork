@@ -679,7 +679,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 				        	if($this->_page >= $ret['num_pages'] && $this->_page >0) $this->_page = $ret['num_pages']-1;
 				        	$ret['current_page'] = $this->_page;
 							$ret['offset'] = ($this->_page * $this->_limit).",$this->_limit";
-	                        $_q = "select ".((action == "getPagedDistinctRecords")?'distinct ':'')."$selectFields from $table main where ".$value['selectWhere'].$order;
+	                        $_q = "select ".(($action == "getPagedDistinctRecords")?'distinct ':'')."$selectFields from $table main where ".$value['selectWhere'].$order;
                             $_q .=" limit ".$ret['offset'];
                             
                             $ret2 = $this->getDataFromQuery($_q,$value['values']);
