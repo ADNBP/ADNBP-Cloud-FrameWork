@@ -1359,7 +1359,7 @@ if (!defined("_ADNBP_CLASS_")) {
 		function addLog($msg) { $this -> _log[] = $msg; }
 		function getLog() { return $this->_log; }
 				
-		function sendLog($type,$cat,$subcat,$title,$text='',$app='') {
+		function sendLog($type,$cat,$subcat,$title,$text='',$email='',$app='') {
 			if(!$this->getConf('CloudServiceLog') && !$this->getConf('LogPath')) return false;
 			if(!strlen($app)) $app = $this->url['host'];
 			$app = str_replace(' ', '_', $app);
@@ -1372,6 +1372,11 @@ if (!defined("_ADNBP_CLASS_")) {
 			if(count($this -> _log)) $params['text'] .= "Errors: ".json_encode($this -> errorMsg);
 			$params['ip'] = $this->_ip;
 			$params['fingerprint'] = json_encode($this->getRequestFingerPrint());
+			
+			// Tell the service to send email of the report.
+			if(strlen($email) && $this->validateField($email,'email'))
+				$params['email'] = $email;
+			//_printe($app,$text,$params);
 			if($this->getConf('CloudServiceLog')){
 				$ret = json_decode($this->getCloudServiceResponse('queue/log/'.urlencode($app).'/'.urlencode($type),$params,'POST'));
 				if(!$ret->success) $this->addError($ret);
