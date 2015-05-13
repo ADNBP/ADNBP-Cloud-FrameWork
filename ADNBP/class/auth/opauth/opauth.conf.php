@@ -63,6 +63,10 @@ $config = array(
 			'key' => $this->getConf("TwitterOauth_KEY"),
 			'secret' => $this->getConf("TwitterOauth_SECRET")
 		),
+		'VKontakte' => array(
+		    'app_id' => $this->getConf("VKontakteOauth_APP_ID"),
+		    'app_secret' => $this->getConf("VKontakteOauth_APP_SECRET")
+		)
 			
 	),
 );
