@@ -37,10 +37,10 @@ if (!defined ("_RESTfull_CLASS_") ) {
 			
 			// $this->requestHeaders = apache_request_headers();
 			$this->method = (strlen($_SERVER['REQUEST_METHOD']))?$_SERVER['REQUEST_METHOD']:'GET';
-		    if($this->method=='GET' )
+		    if($this->method=='GET' ) {
 			  $this->formParams = &$_GET;
-			else {
-			  
+               if(strlen($_GET['_raw_input_'])) $this->formParams = (count($this->formParams))?array_merge($this->formParams,json_decode($_GET['_raw_input_'],true)):json_decode($_GET['_raw_input_'],true);
+			} else {
 			   if(count($_GET))  $this->formParams = (count($this->formParams))?array_merge($this->formParam,$_GET):$_GET;
 			   if(count($_POST))  $this->formParams = (count($this->formParams))?array_merge($this->formParams,$_POST):$_POST;
 			   if(strlen($_POST['_raw_input_'])) $this->formParams = (count($this->formParams))?array_merge($this->formParams,json_decode($_POST['_raw_input_'],true)):json_decode($_POST['_raw_input_'],true);

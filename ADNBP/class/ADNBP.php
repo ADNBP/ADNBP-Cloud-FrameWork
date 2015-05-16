@@ -1052,6 +1052,29 @@ if (!defined("_ADNBP_CLASS_")) {
 			$str = str_replace('CURRENT_DATE', date('Y-m-d'), $str);
 			$str = str_replace('{DirectoryOrganization_Id}', $this -> getAuthUserData("currentOrganizationId"), $str);
 			$str = str_replace('{OrganizationsInGroupId}', (strlen($this -> getAuthUserData("currentOrganizationsInGroupId"))) ? $this -> getAuthUserData("currentOrganizationsInGroupId") : $this -> getAuthUserData("currentOrganizationId"), $str);
+			
+            // Replaces getting info from  getAuthUserData
+			if(strpos($str, '{AuthUserData.')!==false) {
+			    $parts = explode('{AuthUserData.', $str);
+                unset($parts[0]);
+                
+                foreach ($parts as $key => $tag) {
+                    $tag = preg_replace('/}.*/','',$tag);
+                    $subparts = explode('.', $tag);
+                    
+                    $value = $this->getAuthUserData($subparts[0]);
+                    unset($subparts[0]);
+                    foreach ($subparts as $key2 => $value2) {
+                        if(is_array($value)) $value = $value[$value2];
+                        elseif(is_object($value)) $value = $value->{$value2};
+                        else {
+                            $value=null;
+                            break;
+                        }
+                    }
+                    $str = str_replace('{AuthUserData.'.$tag.'}',$value,$str);
+                }
+			}
 			return ($str);
 		}
 
