@@ -4,7 +4,7 @@
 */
 
 function autoSizeTextArea(ele,w,h) { ele.style.height = 'auto'; ele.style.height = h ; ele.style.width = w ;}
-
+function sleep(milliseconds) { var start = new Date().getTime(); for (var i = 0; i < 1e7; i++) { if ((new Date().getTime() - start) > milliseconds){  break;  } } }
 // KEEEP SESSION
 var _adnbpKeepSession=0;  // Put a value > 0 and call keepSession to maintain the session. 120 (recommended)
 function keepSession() { if(_adnbpKeepSession>0) {setInterval (calTokeepSession, _adnbpKeepSession);}}
