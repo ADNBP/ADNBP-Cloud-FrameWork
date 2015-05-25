@@ -48,7 +48,9 @@ $config = array(
 		
 		'Facebook' => array(
 			'app_id' => $this->getConf("FacebookOauth_APP_ID"),
-			'app_secret' => $this->getConf("FacebookOauth_APP_SECRET")
+			'app_secret' => $this->getConf("FacebookOauth_APP_SECRET"),
+			'scope' => $this->getConf("FacebookOauth_SCOPE")
+			
 		),
 		
 		'Google' => array(
