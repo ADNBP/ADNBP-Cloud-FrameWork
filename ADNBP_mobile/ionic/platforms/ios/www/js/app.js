@@ -3,7 +3,7 @@
 // angular.module is a global place for creating, registering and retrieving Angular modules
 // 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
 // the 2nd parameter is an array of 'requires'
-var app = angular.module('adnbp', ['ionic', 'adnbp.controllers']);
+var app = angular.module('adnbp', ['ionic', 'ngCordova','adnbp.controllers']);
 
 app.run(function($ionicPlatform) {
   $ionicPlatform.ready(function() {
@@ -18,6 +18,17 @@ app.run(function($ionicPlatform) {
   });
 });
 
+// http://blog.ionic.io/oauth-ionic-ngcordova/
+app.controller("OauthExample", function($scope, $cordovaOauth) {
+    $scope.googleLogin = function() {
+        $cordovaOauth.google("CLIENT_ID_HERE", ["https://www.googleapis.com/auth/urlshortener", "https://www.googleapis.com/auth/userinfo.email"]).then(function(result) {
+            console.log(JSON.stringify(result));
+        }, function(error) {
+            console.log(error);
+        });
+    };
+
+});
 
 app.config(function($stateProvider, $urlRouterProvider) {
 	

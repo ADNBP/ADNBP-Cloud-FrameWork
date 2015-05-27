@@ -4,8 +4,8 @@ adnbp.controller('LoginCtrl',function($scope,$state) {
 	
 	
 	$scope.title = 'Template login.html';
-	$scope.user = {name:"",password:""};
-	$scope.loginResult = { msg: "" };
+	$scope.user = {username:"",password:""};
+	$scope.loginResult = { msg: "Log-in" };
 	
 	$scope.fbLogin = function () {
 		$state.go('app.main');
@@ -16,7 +16,8 @@ adnbp.controller('LoginCtrl',function($scope,$state) {
 	};
 	
 	$scope.signIn = function (data) {
-		$state.go('app.main');
+		if(data.username=="admin") $state.go('app.main');
+		else $scope.loginResult.msg = "wrong user";
 		
 	};
 
@@ -26,11 +27,11 @@ adnbp.controller('AppCtrl', function($scope, $state,$ionicModal, $timeout) {
 
   $scope.title = 'Menu';
   $scope.menuItems = [
-    { title: 'Search', url: '#/app/search' },
-    { title: 'Browse', url: '#/app/browse' },
-    { title: 'Playlist', url: '#/app/playlists' },
-    { title: 'Config', url: '#/app/main' },
-    { title: 'Logout', click: 'logout();' }
+    { icon:"ion-search", title: 'Search', url: '#/app/search' },
+    { icon:"ion-ios-browsers", title: 'Browse', url: '#/app/browse' },
+    { icon:"ion-play", title: 'Playlist', url: '#/app/playlists' },
+    { icon:"ion-gear-a", title: 'Config', url: '#/app/main' },
+    { icon:"ion-log-out", title: 'Logout', click: 'logout();' }
   ];
   
   $scope.logout = function() {
