@@ -44,6 +44,7 @@
 		8D50CFB9EDC5486B8D84A7A5 /* CDVLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E0E6E564334B4DB79AEECA53 /* CDVLogger.m */; };
 		A901F6A951FC477BB4FC2FC3 /* CDVDevice.m in Sources */ = {isa = PBXBuildFile; fileRef = F6C4806CB72B40D9853A6F95 /* CDVDevice.m */; };
 		01E688D89535427688E17EA7 /* CDVSplashScreen.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C70829C8A1941D3BFC9BABA /* CDVSplashScreen.m */; };
+		1AC8E9ED14D84E83A31410B1 /* CDVInAppBrowser.m in Sources */ = {isa = PBXBuildFile; fileRef = 1896FED8AAE64543A3AB5427 /* CDVInAppBrowser.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -119,6 +120,8 @@
 		DD35958E804D4A36A9758F94 /* CDVDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "CDVDevice.h"; path = "cordova-plugin-device/CDVDevice.h"; sourceTree = "<group>"; fileEncoding = 4; };
 		2C70829C8A1941D3BFC9BABA /* CDVSplashScreen.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = "CDVSplashScreen.m"; path = "cordova-plugin-splashscreen/CDVSplashScreen.m"; sourceTree = "<group>"; fileEncoding = 4; };
 		12982E4E37FF4E12989AE3B8 /* CDVSplashScreen.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "CDVSplashScreen.h"; path = "cordova-plugin-splashscreen/CDVSplashScreen.h"; sourceTree = "<group>"; fileEncoding = 4; };
+		1896FED8AAE64543A3AB5427 /* CDVInAppBrowser.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = "CDVInAppBrowser.m"; path = "cordova-plugin-inappbrowser/CDVInAppBrowser.m"; sourceTree = "<group>"; fileEncoding = 4; };
+		2543572E3A954CA59BF61CB6 /* CDVInAppBrowser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "CDVInAppBrowser.h"; path = "cordova-plugin-inappbrowser/CDVInAppBrowser.h"; sourceTree = "<group>"; fileEncoding = 4; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -227,6 +230,8 @@
 				DD35958E804D4A36A9758F94 /* CDVDevice.h */,
 				2C70829C8A1941D3BFC9BABA /* CDVSplashScreen.m */,
 				12982E4E37FF4E12989AE3B8 /* CDVSplashScreen.h */,
+				1896FED8AAE64543A3AB5427 /* CDVInAppBrowser.m */,
+				2543572E3A954CA59BF61CB6 /* CDVInAppBrowser.h */,
 			);
 			name = Plugins;
 			path = "adnbp/Plugins";
@@ -416,6 +421,7 @@
 				8D50CFB9EDC5486B8D84A7A5 /* CDVLogger.m in Sources */,
 				A901F6A951FC477BB4FC2FC3 /* CDVDevice.m in Sources */,
 				01E688D89535427688E17EA7 /* CDVSplashScreen.m in Sources */,
+				1AC8E9ED14D84E83A31410B1 /* CDVInAppBrowser.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
