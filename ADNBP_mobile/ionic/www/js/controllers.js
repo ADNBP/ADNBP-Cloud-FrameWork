@@ -1,33 +1,37 @@
-angular.module('adnbp.controllers', [])
+var adnbp = angular.module('adnbp.controllers', []);
 
-.controller('LoginCtrl',function($scope,$state) {
+adnbp.controller('LoginCtrl',function($scope,$state) {
 	
 	
-	$scope.title = 'Menu';
-
-	$scope.user = {name:"",password:""};
+	$scope.title = 'Template login.html';
+	$scope.user = {username:"",password:""};
+	$scope.loginResult = { msg: "Log-in" };
 	
 	$scope.fbLogin = function () {
 		$state.go('app.main');
 	};
 	
 	$scope.googleLogin = function () {
-		alert('Google');
+		$state.go('app.main');
 	};
 	
+	$scope.signIn = function (data) {
+		if(data.username=="admin") $state.go('app.main');
+		else $scope.loginResult.msg = "wrong user";
+		
+	};
 
-})
+});
 
-.controller('AppCtrl', function($scope, $ionicModal, $timeout) {
+adnbp.controller('AppCtrl', function($scope, $state,$ionicModal, $timeout) {
 
   $scope.title = 'Menu';
   $scope.menuItems = [
-    { title: 'Login', click: 'login();' },
-    { title: 'Search', url: '#/app/search' },
-    { title: 'Browse', url: '#/app/browse' },
-    { title: 'Playlist', url: '#/app/playlists' },
-    { title: 'Config', url: '#/app/config' },
-    { title: 'Logout', url: '#/home/login' }
+    { icon:"ion-search", title: 'Search', url: '#/app/search' },
+    { icon:"ion-ios-browsers", title: 'Browse', url: '#/app/browse' },
+    { icon:"ion-play", title: 'Playlist', url: '#/app/playlists' },
+    { icon:"ion-gear-a", title: 'Config', url: '#/app/main' },
+    { icon:"ion-log-out", title: 'Logout', click: 'logout();' }
   ];
   
   $scope.logout = function() {
@@ -67,11 +71,11 @@ angular.module('adnbp.controllers', [])
 
 
 
-})
+});
 
 
 
-.controller('PlaylistsCtrl', function($scope) {
+adnbp.controller('PlaylistsCtrl', function($scope) {
   $scope.playlists = [
     { title: 'A1', id: 1 },
     { title: 'A2', id: 2 },
@@ -80,12 +84,12 @@ angular.module('adnbp.controllers', [])
     { title: 'A5', id: 5 },
     { title: 'A6', id: 6 }
   ];
-})
+});
 
-.controller('PlaylistCtrl', function($scope, $stateParams) {
-})
+adnbp.controller('PlaylistCtrl', function($scope, $stateParams) {
+});
 
-.controller('Config', function($scope) {
+adnbp.controller('Config', function($scope) {
 
   $scope.settingsList = [
     { text: "Wireless", checked: true },
@@ -101,5 +105,3 @@ angular.module('adnbp.controllers', [])
   $scope.emailNotification = 'Subscribed';
   
 });
-
-;

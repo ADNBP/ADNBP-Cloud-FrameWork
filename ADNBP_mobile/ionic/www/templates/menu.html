@@ -25,7 +25,7 @@
 	  <!-- Menu list from menuItems AppCtrl.menuItems[title,url,click] -->
       <ion-list >
           <ion-item menu-close  ng-click="{{item.click}}" href="{{item.url}}" ng-repeat="item in menuItems">
-          {{item.title}} <a class="icon-right ion-chevron-right"></a>
+          <i class="icon {{item.icon}}"></i> {{item.title}}
         </ion-item>
         
       </ion-list>
