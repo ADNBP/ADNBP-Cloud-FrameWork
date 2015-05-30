@@ -1,25 +1,56 @@
 var adnbp = angular.module('adnbp.controllers', []);
 
-adnbp.controller('LoginCtrl',function($scope,$state) {
+adnbp.controller('LoginCtrl',function($scope,$state, $ionicPopup, AuthService) {
 	
 	
 	$scope.title = 'Template login.html';
 	$scope.user = {username:"",password:""};
 	$scope.loginResult = { msg: "Log-in" };
 	
+	
+	
 	$scope.fbLogin = function () {
-		$state.go('app.main');
+		$state.go('app.browse');
 	};
 	
 	$scope.googleLogin = function () {
-		$state.go('app.main');
+		$state.go('app.browse');
 	};
 	
 	$scope.signIn = function (data) {
-		if(data.username=="admin") $state.go('app.main');
-		else $scope.loginResult.msg = "wrong user";
+		if(data.username !='') {
+			AuthService(data.username,data.password)
+			// OK
+			.then(function(authenticated) {
+		      $state.go('app.main', {}, {reload: true});
+		      $scope.setCurrentUsername(data.username);
+		    }, 
+		    // ERR
+		    function(err) {
+		      var alertPopup = $ionicPopup.alert({
+		        title: 'Login failed!',
+		        template: 'Please check your credentials!'
+		      });
+		    });
+		} else {
+			$scope.loginResult.msg = "wrong user";
+		}
+		// if(data.username=="admin") $state.go('app.main');
+		// else $scope.loginResult.msg = "wrong user";
 		
 	};
+
+});
+
+// http://blog.ionic.io/oauth-ionic-ngcordova/
+app.controller("OauthExample", function($scope, $cordovaOauth) {
+    $scope.googleLogin = function() {
+        $cordovaOauth.google("CLIENT_ID_HERE", ["https://www.googleapis.com/auth/urlshortener", "https://www.googleapis.com/auth/userinfo.email"]).then(function(result) {
+            console.log(JSON.stringify(result));
+        }, function(error) {
+            console.log(error);
+        });
+    };
 
 });
 
@@ -30,7 +61,7 @@ adnbp.controller('AppCtrl', function($scope, $state,$ionicModal, $timeout) {
     { icon:"ion-search", title: 'Search', url: '#/app/search' },
     { icon:"ion-ios-browsers", title: 'Browse', url: '#/app/browse' },
     { icon:"ion-play", title: 'Playlist', url: '#/app/playlists' },
-    { icon:"ion-gear-a", title: 'Config', url: '#/app/main' },
+    { icon:"ion-gear-a", title: 'Config', url: '#/app/config' },
     { icon:"ion-log-out", title: 'Logout', click: 'logout();' }
   ];
   
