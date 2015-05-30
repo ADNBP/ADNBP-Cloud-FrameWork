@@ -1,13 +1,51 @@
 // Services
-app.service('AuthService', function($q, $http, USER_ROLES) {
+app.service('AuthService', function($q, $http, USER_ROLES,API_URLS) {
   var LOCAL_TOKEN_KEY = 'yourTokenKey';
+
+  var userData = {};
   var username = '';
+  var lastUserName = '';
   var isAuthenticated = false;
   var role = '';
   var authToken;
+  var fingerprint ='angularClient';
+ 
+   var login = function(name, pw) {
+  	lastUserName = name;  // Keep the last email used
+    window.localStorage.setItem("lastUserName", lastUserName);
+    console.log("stored lastUserName: "+lastUserName);
+  	
+    return $q(function(resolve, reject) {
+    	if(name.length  < 1) reject('Login Failed.');
+    	else {
+    		var req = {
+				 method: 'POST',
+				 url: API_URLS.login,
+				 data:  {user:name,password:pw, clientfingerprint:fingerprint}
+				};
+	    	$http(req).
+			  success(function(data, status, headers, config) {
+		        storeUserCredentials(name + '.yourServerToken');
+		        resolve('Login success.');
+			  	
+			    // this callback will be called asynchronously
+			    // when the response is available
+			  }).
+			  error(function(data, status, headers, config) {
+			  	console.log(data);
+			  	reject('Login Failed.');
+			  });
+		  }
+
+    });
+  };
+ 
+ 
  
   function loadUserCredentials() {
     var token = window.localStorage.getItem(LOCAL_TOKEN_KEY);
+    lastUserName = window.localStorage.getItem("lastUserName");
+    console.log("loaded lastUserName: "+lastUserName);
     if (token) {
       useCredentials(token);
     }
@@ -15,6 +53,7 @@ app.service('AuthService', function($q, $http, USER_ROLES) {
  
   function storeUserCredentials(token) {
     window.localStorage.setItem(LOCAL_TOKEN_KEY, token);
+    
     useCredentials(token);
   }
  
@@ -42,18 +81,7 @@ app.service('AuthService', function($q, $http, USER_ROLES) {
     window.localStorage.removeItem(LOCAL_TOKEN_KEY);
   }
  
-  var login = function(name, pw) {
-    return $q(function(resolve, reject) {
-      if ((name == 'admin' && pw == '1') || (name == 'user' && pw == '1')) {
-        // Make a request and receive your auth token from your server
-        storeUserCredentials(name + '.yourServerToken');
-        resolve('Login success.');
-      } else {
-        reject('Login Failed.');
-      }
-    });
-  };
- 
+
   var logout = function() {
     destroyUserCredentials();
   };
@@ -72,21 +100,8 @@ app.service('AuthService', function($q, $http, USER_ROLES) {
     logout: logout,
     isAuthorized: isAuthorized,
     isAuthenticated: function() {return isAuthenticated;},
+    lastUserName: lastUserName,
     username: function() {return username;},
     role: function() {return role;}
   };
-}).factory('AuthInterceptor', function ($rootScope, $q, AUTH_EVENTS) {
-  return {
-    responseError: function (response) {
-      $rootScope.$broadcast({
-        401: AUTH_EVENTS.notAuthenticated,
-        403: AUTH_EVENTS.notAuthorized
-      }[response.status], response);
-      return $q.reject(response);
-    }
-  };
-})
- 
-.config(function ($httpProvider) {
-  $httpProvider.interceptors.push('AuthInterceptor');
 });

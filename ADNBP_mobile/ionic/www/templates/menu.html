@@ -27,6 +27,10 @@
           <ion-item menu-close  ng-click="{{item.click}}" href="{{item.url}}" ng-repeat="item in menuItems">
           <i class="icon {{item.icon}}"></i> {{item.title}}
         </ion-item>
+
+          <ion-item menu-close  ng-click="logout();" >
+          <i class="icon {{logoutMenu.icon}}"></i> {{logoutMenu.title}} {{username}}
+        </ion-item>
         
       </ion-list>
     </ion-content>

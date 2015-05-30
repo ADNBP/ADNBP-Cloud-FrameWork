@@ -1,10 +1,8 @@
-var adnbp = angular.module('adnbp.controllers', []);
-
-adnbp.controller('LoginCtrl',function($scope,$state, $ionicPopup, AuthService) {
+app.controller('LoginCtrl',function($scope,$state, $ionicPopup, AuthService) {
 	
 	
 	$scope.title = 'Template login.html';
-	$scope.user = {username:"",password:""};
+	$scope.user = {username:AuthService.lastUserName,password:""};
 	$scope.loginResult = { msg: "Log-in" };
 	
 	
@@ -18,11 +16,12 @@ adnbp.controller('LoginCtrl',function($scope,$state, $ionicPopup, AuthService) {
 	};
 	
 	$scope.signIn = function (data) {
+		
 		if(data.username !='') {
-			AuthService(data.username,data.password)
+			AuthService.login(data.username,data.password)
 			// OK
 			.then(function(authenticated) {
-		      $state.go('app.main', {}, {reload: true});
+		      $state.go('app.browse', {}, {reload: true});
 		      $scope.setCurrentUsername(data.username);
 		    }, 
 		    // ERR
@@ -39,6 +38,8 @@ adnbp.controller('LoginCtrl',function($scope,$state, $ionicPopup, AuthService) {
 		// else $scope.loginResult.msg = "wrong user";
 		
 	};
+	
+	if(AuthService.isAuthenticated()) $state.go('app.browse');
 
 });
 
@@ -54,18 +55,24 @@ app.controller("OauthExample", function($scope, $cordovaOauth) {
 
 });
 
-adnbp.controller('AppCtrl', function($scope, $state,$ionicModal, $timeout) {
+app.controller('AppCtrl', function($scope, $state,$ionicModal, $timeout,AuthService) {
 
+  if(!AuthService.isAuthenticated()) $state.go('home.login');
+  
   $scope.title = 'Menu';
+  $scope.logoutMenu = {icon: 'ion-log-out',title:'Logout'};
+  $scope.username = AuthService.username();
+  
   $scope.menuItems = [
     { icon:"ion-search", title: 'Search', url: '#/app/search' },
     { icon:"ion-ios-browsers", title: 'Browse', url: '#/app/browse' },
     { icon:"ion-play", title: 'Playlist', url: '#/app/playlists' },
     { icon:"ion-gear-a", title: 'Config', url: '#/app/config' },
-    { icon:"ion-log-out", title: 'Logout', click: 'logout();' }
   ];
   
   $scope.logout = function() {
+  	$scope.username = "not assigned 2";
+  	AuthService.logout();
   	$state.go('home.login');
   };
   
@@ -100,13 +107,15 @@ adnbp.controller('AppCtrl', function($scope, $state,$ionicModal, $timeout) {
     }, 1000);
   };
 
-
+  $scope.setCurrentUsername = function(name) {
+    $scope.username = name;
+  };
 
 });
 
 
 
-adnbp.controller('PlaylistsCtrl', function($scope) {
+app.controller('PlaylistsCtrl', function($scope) {
   $scope.playlists = [
     { title: 'A1', id: 1 },
     { title: 'A2', id: 2 },
@@ -117,10 +126,13 @@ adnbp.controller('PlaylistsCtrl', function($scope) {
   ];
 });
 
-adnbp.controller('PlaylistCtrl', function($scope, $stateParams) {
+app.controller('PlaylistCtrl', function($scope, $stateParams) {
 });
 
-adnbp.controller('Config', function($scope) {
+app.controller('Config', function($scope,$state,AuthService) {
+	
+  if(!AuthService.isAuthenticated()) $state.go('home.login');
+
 
   $scope.settingsList = [
     { text: "Wireless", checked: true },

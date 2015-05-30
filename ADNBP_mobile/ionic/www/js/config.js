@@ -8,6 +8,20 @@
 	  admin: 'admin_role',
 	  public: 'public_role'
 	});
+	
+	app.constant('API_URLS', {
+	  login: 'http://localhost:9080/api/auth'
+	});
+
+// It's also possible to override the OPTIONS request (was only tested in Chrome):
+// If not any post outside the domain is converted to OPTIONS call
+app.config(['$httpProvider', function ($httpProvider) {
+  //Reset headers to avoid OPTIONS request (aka preflight)
+  $httpProvider.defaults.headers.common = {};
+  $httpProvider.defaults.headers.post = {};
+  $httpProvider.defaults.headers.put = {};
+  $httpProvider.defaults.headers.patch = {};
+}]);
 
 // Navigation Menu
 app.config(function($stateProvider, $urlRouterProvider,USER_ROLES) {
@@ -33,8 +47,7 @@ app.config(function($stateProvider, $urlRouterProvider,USER_ROLES) {
   .state('app', {
     url: "/app",
     abstract: true,
-    templateUrl: "templates/menu.html",
-    controller: 'AppCtrl'
+    templateUrl: "templates/menu.html"
   })
 
   .state('app.config', {
@@ -87,5 +100,5 @@ app.config(function($stateProvider, $urlRouterProvider,USER_ROLES) {
     }
   });
   // if none of the above states are matched, use this as the fallback
-  $urlRouterProvider.otherwise('/home/login');
+  	$urlRouterProvider.otherwise('/home/login');
 });
