@@ -10,7 +10,9 @@
 	});
 	
 	app.constant('API_URLS', {
-	  login: 'http://localhost:9080/api/auth'
+	  loginUrl: 'http://localhost:9080/api/auth',
+	  loginUserField: 'user',
+	  loginPasswordField: 'password'
 	});
 
 // It's also possible to override the OPTIONS request (was only tested in Chrome):
@@ -22,6 +24,7 @@ app.config(['$httpProvider', function ($httpProvider) {
   $httpProvider.defaults.headers.put = {};
   $httpProvider.defaults.headers.patch = {};
 }]);
+
 
 // Navigation Menu
 app.config(function($stateProvider, $urlRouterProvider,USER_ROLES) {
@@ -62,7 +65,21 @@ app.config(function($stateProvider, $urlRouterProvider,USER_ROLES) {
     	}
     }
   })
-  
+
+  .state('app.mydata', {
+    url: "/mydata",
+    views: {
+      'menuContent': {
+        templateUrl: "templates/mydata.html",
+        controller: 'MydataCtrl',
+        resolve: { myData: function(AuthService) { return AuthService.userData;}}
+      },
+      data: {
+      	authorizedRoles: [USER_ROLES.admin]
+    	}
+    }
+  })
+    
   .state('app.search', {
     url: "/search",
     views: {

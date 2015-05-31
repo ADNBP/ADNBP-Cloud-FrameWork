@@ -1,11 +1,14 @@
-app.controller('LoginCtrl',function($scope,$state, $ionicPopup, AuthService) {
+// LOGIN
+app.controller('LoginCtrl',function($scope,$rootScope,$state, $ionicPopup, $ionicLoading,AuthService,ADNBP) {
 	
 	
 	$scope.title = 'Template login.html';
 	$scope.user = {username:AuthService.lastUserName,password:""};
-	$scope.loginResult = { msg: "Log-in" };
+	$scope.signInSemaphore = false;
+	$scope.userData = {public:ADNBP.userData,isAuth:ADNBP.isAuth,private:ADNBP.userAuthData};
 	
-	
+	var counter = (typeof $scope.userData.public['counter']=='undefined')?0:$scope.userData.public['counter'];
+
 	
 	$scope.fbLogin = function () {
 		$state.go('app.browse');
@@ -16,24 +19,35 @@ app.controller('LoginCtrl',function($scope,$state, $ionicPopup, AuthService) {
 	};
 	
 	$scope.signIn = function (data) {
+		counter++;
+		ADNBP.setKey('counter',counter);
 		
+		
+		if($scope.signInSemaphore) return false;
 		if(data.username !='') {
+			$scope.signInSemaphore = true;
+			
+			
+			ADNBP.signOut();
 			AuthService.login(data.username,data.password)
 			// OK
 			.then(function(authenticated) {
+			  $scope.signInSemaphore = false;
+			  
+			  ADNBP.signIn(data.username,'peding to assign');
+			  
 		      $state.go('app.browse', {}, {reload: true});
 		      $scope.setCurrentUsername(data.username);
 		    }, 
 		    // ERR
 		    function(err) {
+		      $scope.signInSemaphore = false;
 		      var alertPopup = $ionicPopup.alert({
 		        title: 'Login failed!',
 		        template: 'Please check your credentials!'
 		      });
 		    });
-		} else {
-			$scope.loginResult.msg = "wrong user";
-		}
+		} 
 		// if(data.username=="admin") $state.go('app.main');
 		// else $scope.loginResult.msg = "wrong user";
 		
@@ -55,7 +69,8 @@ app.controller("OauthExample", function($scope, $cordovaOauth) {
 
 });
 
-app.controller('AppCtrl', function($scope, $state,$ionicModal, $timeout,AuthService) {
+// APP and Main menu
+app.controller('AppCtrl', function($scope, $state,$ionicModal, $timeout,AuthService,ADNBP) {
 
   if(!AuthService.isAuthenticated()) $state.go('home.login');
   
@@ -67,12 +82,14 @@ app.controller('AppCtrl', function($scope, $state,$ionicModal, $timeout,AuthServ
     { icon:"ion-search", title: 'Search', url: '#/app/search' },
     { icon:"ion-ios-browsers", title: 'Browse', url: '#/app/browse' },
     { icon:"ion-play", title: 'Playlist', url: '#/app/playlists' },
-    { icon:"ion-gear-a", title: 'Config', url: '#/app/config' },
+    { icon:"ion-gear-a", title: 'Config', click: 'updateData();', url: '#/app/config' },
+    { icon:"ion-gear-a", title: 'MyData', url: '#/app/mydata' },
   ];
   
   $scope.logout = function() {
   	$scope.username = "not assigned 2";
   	AuthService.logout();
+  	ADNBP.signOut();
   	$state.go('home.login');
   };
   
@@ -113,7 +130,18 @@ app.controller('AppCtrl', function($scope, $state,$ionicModal, $timeout,AuthServ
 
 });
 
-
+// My OwnData
+app.controller('MydataCtrl', function($scope, $state,$ionicModal, $timeout,AuthService,ADNBP) {
+	console.log('MydataCtrl');
+	$scope.title = "Settings";
+	if(!ADNBP.isAuth) $state.go('home.login');
+	$scope.userData = {public:ADNBP.userData,isAuth:ADNBP.isAuth,private:ADNBP.userAuthData};
+	
+	$scope.updateData = function() {
+		console.log('reloading '+JSON.stringify(AuthService.userData));
+		$scope.userData = AuthService.userData;
+  	};
+});
 
 app.controller('PlaylistsCtrl', function($scope) {
   $scope.playlists = [

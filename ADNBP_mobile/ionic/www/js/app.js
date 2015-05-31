@@ -18,4 +18,12 @@ app.run(function($ionicPlatform) {
   });
 });
 
+app.run(function($rootScope, $ionicLoading) {
+  $rootScope.$on('loading:show', function() {
+    $ionicLoading.show({template: 'loading..'});
+  });
 
+  $rootScope.$on('loading:hide', function() {
+    $ionicLoading.hide();
+  });
+});

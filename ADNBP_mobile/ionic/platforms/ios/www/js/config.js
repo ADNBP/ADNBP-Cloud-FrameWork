@@ -1,16 +1,30 @@
-// http://blog.ionic.io/oauth-ionic-ngcordova/
-app.controller("OauthExample", function($scope, $cordovaOauth) {
-    $scope.googleLogin = function() {
-        $cordovaOauth.google("CLIENT_ID_HERE", ["https://www.googleapis.com/auth/urlshortener", "https://www.googleapis.com/auth/userinfo.email"]).then(function(result) {
-            console.log(JSON.stringify(result));
-        }, function(error) {
-            console.log(error);
-        });
-    };
+// System constans
+	app.constant('AUTH_EVENTS', {
+	  notAuthenticated: 'auth-not-authenticated',
+	  notAuthorized: 'auth-not-authorized'
+	});
+	 
+	app.constant('USER_ROLES', {
+	  admin: 'admin_role',
+	  public: 'public_role'
+	});
+	
+	app.constant('API_URLS', {
+	  login: 'http://localhost:9080/api/auth'
+	});
 
-});
+// It's also possible to override the OPTIONS request (was only tested in Chrome):
+// If not any post outside the domain is converted to OPTIONS call
+app.config(['$httpProvider', function ($httpProvider) {
+  //Reset headers to avoid OPTIONS request (aka preflight)
+  $httpProvider.defaults.headers.common = {};
+  $httpProvider.defaults.headers.post = {};
+  $httpProvider.defaults.headers.put = {};
+  $httpProvider.defaults.headers.patch = {};
+}]);
 
-app.config(function($stateProvider, $urlRouterProvider) {
+// Navigation Menu
+app.config(function($stateProvider, $urlRouterProvider,USER_ROLES) {
 	
   // HOME INTRO
   $stateProvider 
@@ -33,15 +47,27 @@ app.config(function($stateProvider, $urlRouterProvider) {
   .state('app', {
     url: "/app",
     abstract: true,
-    templateUrl: "templates/menu.html",
-    controller: 'AppCtrl'
+    templateUrl: "templates/menu.html"
   })
 
+  .state('app.config', {
+    url: "/config",
+    views: {
+      'menuContent': {
+        templateUrl: "templates/config.html",
+        controller: 'Config'
+      },
+      data: {
+      	authorizedRoles: [USER_ROLES.admin]
+    	}
+    }
+  })
+  
   .state('app.search', {
     url: "/search",
     views: {
       'menuContent': {
-        templateUrl: "templates/search.html"
+        template: "<ion-view view-title='Search'>Searching</ion-view>"
       }
     }
   })
@@ -50,7 +76,7 @@ app.config(function($stateProvider, $urlRouterProvider) {
     url: "/browse",
     views: {
       'menuContent': {
-        templateUrl: "templates/browse.html"
+        template: "<ion-view view-title='Browsing'>Browsing</ion-view>"
       }
     }
   })
@@ -68,21 +94,11 @@ app.config(function($stateProvider, $urlRouterProvider) {
     url: "/playlists/:playlistId",
     views: {
       'menuContent': {
-        templateUrl: "templates/playlist.html",
+        templateUrl: "templates/playlists.html",
         controller: 'PlaylistCtrl'
-      }
-    }
-  })
-  
-  .state('app.main', {
-    url: "/main",
-    views: {
-      'menuContent': {
-        templateUrl: "templates/config.html",
-        controller: 'Config'
       }
     }
   });
   // if none of the above states are matched, use this as the fallback
-  $urlRouterProvider.otherwise('/home/login');
+  	$urlRouterProvider.otherwise('/home/login');
 });
