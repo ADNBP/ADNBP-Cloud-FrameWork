@@ -121,8 +121,7 @@ if (!defined ("_bucket_CLASS_") ) {
 			}
 			
 			if(strpos($filename,'gs://')!==0 ) {
-				$filename = $this->folderPref.$this->folder.$path.'/'.$filename;
-				$ret  = $adnbp->url['host_url_full'].str_replace($_SERVER['DOCUMENT_ROOT'], '',$filename);
+				$ret  = $adnbp->url['host_url'].str_replace($_SERVER['DOCUMENT_ROOT'], '',$filename);
 			} else {
 				$ret =  CloudStorageTools::getPublicUrl($filename,false);
 			}
