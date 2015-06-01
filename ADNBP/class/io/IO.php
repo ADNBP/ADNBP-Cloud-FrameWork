@@ -110,14 +110,18 @@ if (!defined ("_bucket_CLASS_") ) {
 			return($this->uploadedFiles);
 		}
 		
-		function getPublicUrl($filename, $path='') {
+		function getPublicUrl($filename='', $path='') {
 			global $adnbp;
 			
 			if(strpos($filename,'gs://')!==0 ) {
-				$filename = $this->folderPref.$this->folder.$path.'/'.$filename;
+				if(strlen($filename))
+					$filename = $this->folderPref.$this->folder.$path.'/'.$filename;
+				else 
+					$filename = $this->folderPref.$this->folder.$path;
 			}
 			
 			if(strpos($filename,'gs://')!==0 ) {
+				$filename = $this->folderPref.$this->folder.$path.'/'.$filename;
 				$ret  = $adnbp->url['host_url_full'].str_replace($_SERVER['DOCUMENT_ROOT'], '',$filename);
 			} else {
 				$ret =  CloudStorageTools::getPublicUrl($filename,false);
