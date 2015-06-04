@@ -29,10 +29,17 @@ if (!defined ("_RESTfull_CLASS_") ) {
         	
 			// Rules for Cross-Domain AJAX
 			// https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS
-			header("Access-Control-Allow-Origin: *");
+			header("Access-Control-Allow-Origin: ".((strlen($_SERVER['HTTP_REFERER']))?preg_replace('/\/$/', '', $_SERVER['HTTP_REFERER']):'*'));
 			header("Access-Control-Allow-Methods: POST,GET,PUT");
-			header("Access-Control-Allow-Headers: Content-Type");
+			header("Access-Control-Allow-Headers: Content-Type,X-CloudFramWork-Token,X-CloudFramWork-AuthToken");
+            header("Access-Control-Allow-Credentials: true");
 			header('Access-Control-Max-Age: 1000');
+            
+            // To avoid angular Cross-Reference
+            if($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+               header( "HTTP/1.1 200 OK" );
+               exit();
+            }
         	
 			
 			// $this->requestHeaders = apache_request_headers();

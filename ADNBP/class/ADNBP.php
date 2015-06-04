@@ -77,11 +77,15 @@ if (!defined("_ADNBP_CLASS_")) {
 		 * Constructor
 		 */
 		function ADNBP($session = true, $sessionId = '', $rootpath = '') {
-			if ($session) {
-				if (strlen($sessionId))
-					session_id($sessionId);
-				session_start();
-			}
+		    
+            // HTTP_REFERER
+            $this->_referer = $_SERVER['HTTP_REFERER'];
+            if(!strlen($this->_referer)) $this->_referer = $_SERVER['SERVER_NAME'];
+            
+            
+			if ($session) $this->sessionStart($sessionId);
+			    
+                
 			__p('session_start. Construct Class:'.__CLASS__,__FILE__);
 			// If the call is just to KeepSession
 			if (strpos($this -> _url, '/CloudFrameWorkService/keepSession') !== false) {
@@ -130,9 +134,6 @@ if (!defined("_ADNBP_CLASS_")) {
 			$this -> _userAgent = $_SERVER['HTTP_USER_AGENT'];
 			$this -> _urlParts = explode('/',$this-> _url);
 
-			// HTTP_REFERER
-			$this->_referer = $_SERVER['HTTP_REFERER'];
-			if(!strlen($this->_referer)) $this->_referer = $_SERVER['SERVER_NAME'];
 
 			$_configs ='';
 			//  Use this file to assign webApp. $this->setWebApp(""); if not ADNBP/webapp will be included
@@ -163,7 +164,22 @@ if (!defined("_ADNBP_CLASS_")) {
 					$_configs.=$this -> _webappURL.'/local_config.php - ';
 				}
 			}
-			__p('LOADED CONFIGS: ', $_configs);unset($_configs);
+			__p('LOADED CONFIGS: ', $_configs); unset($_configs);
+			
+			// Check if the Auth comes from X-CloudFramWork-AuthToken and there is a hacking.
+			if(strlen($this->getHeader('X-CloudFramWork-AuthToken'))) {
+			    if($this->isAuth() && $this->getAuthUserData('token')!=$this->getHeader('X-CloudFramWork-AuthToken')) {
+			            
+			        $this->sendLog('access','Hacking','X-CloudFramWork-AuthToken','Ilegal token '.$this->getHeader('X-CloudFramWork-AuthToken')
+			            ,'Error comparing with internal token: '.$this->getAuthUserData('token').' for user: '.$this->getAuthUserData('email'),$this->getConf('CloudServiceLogEmail'));
+			       
+                    session_destroy();
+                    $_SESSION = array();
+                    session_regenerate_id();
+                    $this->setAuth(false);
+                    die('Trying to violate CloudFrameWork Security. The Internet authorities have been reported');
+                }
+            }
 
 			// About timeZone, Date & Number format
 			$this->_timeZoneSystemDefault = array(date_default_timezone_get(),date('Y-m-d h:i:s'),date("P"),time());
@@ -221,6 +237,40 @@ if (!defined("_ADNBP_CLASS_")) {
 			if($this->getConf('CacheDics')) $this->loadCacheDics();
 
 		}
+
+        function sessionStart($sessionId='') {
+            
+            // Init session (generally by cookies)
+            if(!strlen($this->getHeader('X-CloudFramWork-AuthToken'))) {
+                if (strlen($sessionId))
+                    session_id($sessionId);
+                session_start();
+                
+            // Init session by X-CloudFramWork-AuthToken
+            } else {
+                $securityFailed = false;
+                // Checking security based in fingerprint. X-CloudFramWork-AuthToken
+                if(strlen($this->getHeader('X-CloudFramWork-AuthToken'))) {
+                   list($sessionId,$hash) = explode("_",$this->getHeader('X-CloudFramWork-AuthToken'),2);
+                   $fp = (object) $this->getRequestFingerPrint();
+                   
+                   // Security Attack from other computer
+                   if($fp->hash != $hash) {
+                       $sessionId = '';
+                       $securityFailed = true;
+                   } 
+                }
+                 if (strlen($sessionId))
+                    session_id($sessionId);
+                session_start();
+                
+                if($securityFailed) {
+                    session_destroy();
+                    $_SESSION = array();
+                    session_regenerate_id() ;
+                } 
+            }
+        }
 
 		/**
 		 * Run method
@@ -312,6 +362,8 @@ if (!defined("_ADNBP_CLASS_")) {
 			__p('checkAuth','','note');
 					$this -> checkAuth();
 			__p('checkAuth','','endnote');
+            
+            
 		// Load Logic
 			$_file = false;
 			if (!strlen($this -> getConf("logic"))) {
@@ -673,9 +725,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			$ret['ip'] = 	$this -> _ip = $_SERVER['REMOTE_ADDR'];
 			$ret['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
 			$ret['http_referer'] = $this->_referer;
-			$ret['time'] = date('Ymdhis');
 			$ret['host'] = $_SERVER['HTTP_HOST'];
-			$ret['script'] = $this->_url;
 			$ret['software'] = $_SERVER['SERVER_SOFTWARE'];
 			if($extra=='geodata') {
 				$ret['geoData'] = $this->getGeoData();
@@ -683,6 +733,8 @@ if (!defined("_ADNBP_CLASS_")) {
 				unset($ret['geoData']['credit']);
 			}
 			$ret['hash'] = sha1(implode(",",$ret));
+            $ret['time'] = date('Ymdhis');
+            $ret['script'] = $this->_url;
 			return($ret);
 		}
 
@@ -743,6 +795,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			}
 			return ($this -> _isAuth[$namespace]['auth'] === true);
 		}
+  
 				
 		// To set true or false
 		function setAuth($bool, $namespace = '') {
