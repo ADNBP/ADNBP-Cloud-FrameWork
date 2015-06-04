@@ -10,9 +10,9 @@
 	});
 	
 	app.constant('API_URLS', {
-	  loginUrl: 'http://localhost:9080/api/auth',
-	  loginUserField: 'user',
-	  loginPasswordField: 'password'
+	  //credentials: 'http://localhost:9080/api/cf_credentials',
+	  credentials: 'https://cloud.adnbp.com/api/cf_credentials',
+	  mobile: 'https://cloud.adnbp.com/api/cf_mobile'
 	});
 
 // It's also possible to override the OPTIONS request (was only tested in Chrome):
@@ -23,6 +23,8 @@ app.config(['$httpProvider', function ($httpProvider) {
   $httpProvider.defaults.headers.post = {};
   $httpProvider.defaults.headers.put = {};
   $httpProvider.defaults.headers.patch = {};
+   $httpProvider.defaults.useXDomain = true;
+
 }]);
 
 

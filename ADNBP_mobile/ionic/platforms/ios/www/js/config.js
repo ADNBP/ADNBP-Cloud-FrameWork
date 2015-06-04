@@ -10,7 +10,9 @@
 	});
 	
 	app.constant('API_URLS', {
-	  login: 'http://localhost:9080/api/auth'
+	  //credentials: 'http://localhost:9080/api/cf_credentials',
+	  credentials: 'https://cloud.adnbp.com/api/cf_credentials',
+	  mobile: 'https://cloud.adnbp.com/api/cf_mobile'
 	});
 
 // It's also possible to override the OPTIONS request (was only tested in Chrome):
@@ -21,7 +23,10 @@ app.config(['$httpProvider', function ($httpProvider) {
   $httpProvider.defaults.headers.post = {};
   $httpProvider.defaults.headers.put = {};
   $httpProvider.defaults.headers.patch = {};
+   $httpProvider.defaults.useXDomain = true;
+
 }]);
+
 
 // Navigation Menu
 app.config(function($stateProvider, $urlRouterProvider,USER_ROLES) {
@@ -62,7 +67,21 @@ app.config(function($stateProvider, $urlRouterProvider,USER_ROLES) {
     	}
     }
   })
-  
+
+  .state('app.mydata', {
+    url: "/mydata",
+    views: {
+      'menuContent': {
+        templateUrl: "templates/mydata.html",
+        controller: 'MydataCtrl',
+        resolve: { myData: function(AuthService) { return AuthService.userData;}}
+      },
+      data: {
+      	authorizedRoles: [USER_ROLES.admin]
+    	}
+    }
+  })
+    
   .state('app.search', {
     url: "/search",
     views: {

@@ -84,3 +84,101 @@
 2015-05-30 16:19:43.981 adnbp[46531:26885883] CDVPlugin class CDVDevice (pluginName: Device) does not exist.
 2015-05-30 16:19:43.981 adnbp[46531:26885883] ERROR: Plugin 'Device' not found, or is not a CDVPlugin. Check your plugin mapping in config.xml.
 2015-05-30 16:19:43.982 adnbp[46531:26885883] -[CDVCommandQueue executePending] [Line 159] FAILED pluginJSON = ["Device1680695534","Device","getDeviceInfo",[]]
+2015-06-04 20:07:51.704 adnbp[58746:32606017] DiskCookieStorage changing policy from 2 to 0, cookie file: file:///Users/adrianmm/Library/Developer/CoreSimulator/Devices/DE12D5B5-89F0-4589-B88B-B92FFCFF3900/data/Containers/Data/Application/88743F6A-B286-4235-868C-12C2EF8B90D2/Library/Cookies/Cookies.binarycookies
+2015-06-04 20:07:51.927 adnbp[58746:32606017] Apache Cordova native platform version 3.8.0 is starting.
+2015-06-04 20:07:51.928 adnbp[58746:32606017] Multi-tasking -> Device: YES, App: YES
+2015-06-04 20:07:51.941 adnbp[58746:32606017] Unlimited access to network resources
+2015-06-04 20:07:52.215 adnbp[58746:32606017] CDVPlugin class IonicKeyboard (pluginName: keyboard) does not exist.
+2015-06-04 20:07:52.215 adnbp[58746:32606017] [CDVTimer][keyboard] 0.119030ms
+2015-06-04 20:07:52.215 adnbp[58746:32606017] CDVPlugin class CDVSplashScreen (pluginName: splashscreen) does not exist.
+2015-06-04 20:07:52.215 adnbp[58746:32606017] [CDVTimer][splashscreen] 0.095010ms
+2015-06-04 20:07:52.215 adnbp[58746:32606017] [CDVTimer][TotalPluginStartup] 0.668049ms
+2015-06-04 20:07:52.404 adnbp[58746:32606017] Resetting plugins due to page load.
+2015-06-04 20:07:52.716 adnbp[58746:32606017] Finished load of: file:///Users/adrianmm/Library/Developer/CoreSimulator/Devices/DE12D5B5-89F0-4589-B88B-B92FFCFF3900/data/Containers/Bundle/Application/50E9D719-FEEA-43B2-B582-D416A579D6C2/adnbp.app/www/index.html#/home/login
+2015-06-04 20:07:52.865 adnbp[58746:32606017] CDVPlugin class CDVDevice (pluginName: Device) does not exist.
+2015-06-04 20:07:52.865 adnbp[58746:32606017] ERROR: Plugin 'Device' not found, or is not a CDVPlugin. Check your plugin mapping in config.xml.
+2015-06-04 20:07:52.866 adnbp[58746:32606017] -[CDVCommandQueue executePending] [Line 159] FAILED pluginJSON = ["Device1964779660","Device","getDeviceInfo",[]]
+2015-06-04 20:07:55.486 adnbp[58746:32606017] CDVPlugin class IonicKeyboard (pluginName: Keyboard) does not exist.
+2015-06-04 20:07:55.486 adnbp[58746:32606017] ERROR: Plugin 'Keyboard' not found, or is not a CDVPlugin. Check your plugin mapping in config.xml.
+2015-06-04 20:07:55.486 adnbp[58746:32606017] -[CDVCommandQueue executePending] [Line 159] FAILED pluginJSON = ["INVALID","Keyboard","close",[]]
+2015-06-04 20:07:55.486 adnbp[58746:32606017] CDVPlugin class IonicKeyboard (pluginName: Keyboard) does not exist.
+2015-06-04 20:07:55.486 adnbp[58746:32606017] ERROR: Plugin 'Keyboard' not found, or is not a CDVPlugin. Check your plugin mapping in config.xml.
+2015-06-04 20:07:55.486 adnbp[58746:32606017] -[CDVCommandQueue executePending] [Line 159] FAILED pluginJSON = ["INVALID","Keyboard","close",[]]
+2015-06-04 20:07:57.605 adnbp[58746:32606017] CDVPlugin class IonicKeyboard (pluginName: Keyboard) does not exist.
+2015-06-04 20:07:57.605 adnbp[58746:32606017] ERROR: Plugin 'Keyboard' not found, or is not a CDVPlugin. Check your plugin mapping in config.xml.
+2015-06-04 20:07:57.605 adnbp[58746:32606017] -[CDVCommandQueue executePending] [Line 159] FAILED pluginJSON = ["INVALID","Keyboard","close",[]]
+2015-06-04 20:07:57.605 adnbp[58746:32606017] CDVPlugin class IonicKeyboard (pluginName: Keyboard) does not exist.
+2015-06-04 20:07:57.605 adnbp[58746:32606017] ERROR: Plugin 'Keyboard' not found, or is not a CDVPlugin. Check your plugin mapping in config.xml.
+2015-06-04 20:07:57.605 adnbp[58746:32606017] -[CDVCommandQueue executePending] [Line 159] FAILED pluginJSON = ["INVALID","Keyboard","close",[]]
+2015-06-04 20:07:57.605 adnbp[58746:32606017] CDVPlugin class IonicKeyboard (pluginName: Keyboard) does not exist.
+2015-06-04 20:07:57.605 adnbp[58746:32606017] ERROR: Plugin 'Keyboard' not found, or is not a CDVPlugin. Check your plugin mapping in config.xml.
+2015-06-04 20:07:57.605 adnbp[58746:32606017] -[CDVCommandQueue executePending] [Line 159] FAILED pluginJSON = ["INVALID","Keyboard","close",[]]
+2015-06-04 20:08:27.907 adnbp[58746:32606017] CDVPlugin class IonicKeyboard (pluginName: Keyboard) does not exist.
+2015-06-04 20:08:27.907 adnbp[58746:32606017] ERROR: Plugin 'Keyboard' not found, or is not a CDVPlugin. Check your plugin mapping in config.xml.
+2015-06-04 20:08:27.907 adnbp[58746:32606017] -[CDVCommandQueue executePending] [Line 159] FAILED pluginJSON = ["INVALID","Keyboard","close",[]]
+2015-06-04 20:08:27.907 adnbp[58746:32606017] CDVPlugin class IonicKeyboard (pluginName: Keyboard) does not exist.
+2015-06-04 20:08:27.908 adnbp[58746:32606017] ERROR: Plugin 'Keyboard' not found, or is not a CDVPlugin. Check your plugin mapping in config.xml.
+2015-06-04 20:08:27.908 adnbp[58746:32606017] -[CDVCommandQueue executePending] [Line 159] FAILED pluginJSON = ["INVALID","Keyboard","close",[]]
+2015-06-04 20:08:32.499 adnbp[58746:32606017] CDVPlugin class IonicKeyboard (pluginName: Keyboard) does not exist.
+2015-06-04 20:08:32.499 adnbp[58746:32606017] ERROR: Plugin 'Keyboard' not found, or is not a CDVPlugin. Check your plugin mapping in config.xml.
+2015-06-04 20:08:32.500 adnbp[58746:32606017] -[CDVCommandQueue executePending] [Line 159] FAILED pluginJSON = ["INVALID","Keyboard","close",[]]
+2015-06-04 20:08:32.500 adnbp[58746:32606017] CDVPlugin class IonicKeyboard (pluginName: Keyboard) does not exist.
+2015-06-04 20:08:32.500 adnbp[58746:32606017] ERROR: Plugin 'Keyboard' not found, or is not a CDVPlugin. Check your plugin mapping in config.xml.
+2015-06-04 20:08:32.500 adnbp[58746:32606017] -[CDVCommandQueue executePending] [Line 159] FAILED pluginJSON = ["INVALID","Keyboard","close",[]]
+2015-06-04 20:08:32.500 adnbp[58746:32606017] CDVPlugin class IonicKeyboard (pluginName: Keyboard) does not exist.
+2015-06-04 20:08:32.500 adnbp[58746:32606017] ERROR: Plugin 'Keyboard' not found, or is not a CDVPlugin. Check your plugin mapping in config.xml.
+2015-06-04 20:08:32.500 adnbp[58746:32606017] -[CDVCommandQueue executePending] [Line 159] FAILED pluginJSON = ["INVALID","Keyboard","close",[]]
+2015-06-04 20:08:32.500 adnbp[58746:32606017] CDVPlugin class IonicKeyboard (pluginName: Keyboard) does not exist.
+2015-06-04 20:08:32.500 adnbp[58746:32606017] ERROR: Plugin 'Keyboard' not found, or is not a CDVPlugin. Check your plugin mapping in config.xml.
+2015-06-04 20:08:32.500 adnbp[58746:32606017] -[CDVCommandQueue executePending] [Line 159] FAILED pluginJSON = ["INVALID","Keyboard","close",[]]
+2015-06-04 20:22:11.386 adnbp[58746:32655853] Communications error: <OS_xpc_error: <error: 0x2f545f4> { count = 1, contents =
+	"XPCErrorDescription" => <string: 0x2f5483c> { length = 22, contents = "Connection interrupted" }
+}>
+2015-06-04 20:24:11.104 adnbp[59792:32663274] DiskCookieStorage changing policy from 2 to 0, cookie file: file:///Users/adrianmm/Library/Developer/CoreSimulator/Devices/DE12D5B5-89F0-4589-B88B-B92FFCFF3900/data/Containers/Data/Application/F40D6EB3-9B49-499A-9B20-64097F6E2E0F/Library/Cookies/Cookies.binarycookies
+2015-06-04 20:24:11.235 adnbp[59792:32663274] Apache Cordova native platform version 3.8.0 is starting.
+2015-06-04 20:24:11.235 adnbp[59792:32663274] Multi-tasking -> Device: YES, App: YES
+2015-06-04 20:24:11.237 adnbp[59792:32663274] Unlimited access to network resources
+2015-06-04 20:24:11.298 adnbp[59792:32663274] CDVPlugin class IonicKeyboard (pluginName: keyboard) does not exist.
+2015-06-04 20:24:11.298 adnbp[59792:32663274] [CDVTimer][keyboard] 0.135005ms
+2015-06-04 20:24:11.298 adnbp[59792:32663274] CDVPlugin class CDVSplashScreen (pluginName: splashscreen) does not exist.
+2015-06-04 20:24:11.298 adnbp[59792:32663274] [CDVTimer][splashscreen] 0.113010ms
+2015-06-04 20:24:11.298 adnbp[59792:32663274] [CDVTimer][TotalPluginStartup] 0.512004ms
+2015-06-04 20:24:11.355 adnbp[59792:32663274] Resetting plugins due to page load.
+2015-06-04 20:24:11.486 adnbp[59792:32663274] Finished load of: file:///Users/adrianmm/Library/Developer/CoreSimulator/Devices/DE12D5B5-89F0-4589-B88B-B92FFCFF3900/data/Containers/Bundle/Application/0D4951A7-96A6-402C-9569-85E15396B357/adnbp.app/www/index.html#/home/login
+2015-06-04 20:24:11.582 adnbp[59792:32663274] CDVPlugin class CDVDevice (pluginName: Device) does not exist.
+2015-06-04 20:24:11.582 adnbp[59792:32663274] ERROR: Plugin 'Device' not found, or is not a CDVPlugin. Check your plugin mapping in config.xml.
+2015-06-04 20:24:11.583 adnbp[59792:32663274] -[CDVCommandQueue executePending] [Line 159] FAILED pluginJSON = ["Device1743691183","Device","getDeviceInfo",[]]
+2015-06-04 20:24:23.036 adnbp[59792:32663274] CDVPlugin class IonicKeyboard (pluginName: Keyboard) does not exist.
+2015-06-04 20:24:23.036 adnbp[59792:32663274] ERROR: Plugin 'Keyboard' not found, or is not a CDVPlugin. Check your plugin mapping in config.xml.
+2015-06-04 20:24:23.037 adnbp[59792:32663274] -[CDVCommandQueue executePending] [Line 159] FAILED pluginJSON = ["INVALID","Keyboard","close",[]]
+2015-06-04 20:24:23.037 adnbp[59792:32663274] CDVPlugin class IonicKeyboard (pluginName: Keyboard) does not exist.
+2015-06-04 20:24:23.037 adnbp[59792:32663274] ERROR: Plugin 'Keyboard' not found, or is not a CDVPlugin. Check your plugin mapping in config.xml.
+2015-06-04 20:24:23.037 adnbp[59792:32663274] -[CDVCommandQueue executePending] [Line 159] FAILED pluginJSON = ["INVALID","Keyboard","close",[]]
+2015-06-04 20:24:25.495 adnbp[59792:32663274] CDVPlugin class IonicKeyboard (pluginName: Keyboard) does not exist.
+2015-06-04 20:24:25.495 adnbp[59792:32663274] ERROR: Plugin 'Keyboard' not found, or is not a CDVPlugin. Check your plugin mapping in config.xml.
+2015-06-04 20:24:25.495 adnbp[59792:32663274] -[CDVCommandQueue executePending] [Line 159] FAILED pluginJSON = ["INVALID","Keyboard","close",[]]
+2015-06-04 20:24:25.495 adnbp[59792:32663274] CDVPlugin class IonicKeyboard (pluginName: Keyboard) does not exist.
+2015-06-04 20:24:25.495 adnbp[59792:32663274] ERROR: Plugin 'Keyboard' not found, or is not a CDVPlugin. Check your plugin mapping in config.xml.
+2015-06-04 20:24:25.495 adnbp[59792:32663274] -[CDVCommandQueue executePending] [Line 159] FAILED pluginJSON = ["INVALID","Keyboard","close",[]]
+2015-06-04 20:24:25.495 adnbp[59792:32663274] CDVPlugin class IonicKeyboard (pluginName: Keyboard) does not exist.
+2015-06-04 20:24:25.495 adnbp[59792:32663274] ERROR: Plugin 'Keyboard' not found, or is not a CDVPlugin. Check your plugin mapping in config.xml.
+2015-06-04 20:24:25.495 adnbp[59792:32663274] -[CDVCommandQueue executePending] [Line 159] FAILED pluginJSON = ["INVALID","Keyboard","close",[]]
+2015-06-04 20:24:26.410 adnbp[59792:32663274] CDVPlugin class IonicKeyboard (pluginName: Keyboard) does not exist.
+2015-06-04 20:24:26.410 adnbp[59792:32663274] ERROR: Plugin 'Keyboard' not found, or is not a CDVPlugin. Check your plugin mapping in config.xml.
+2015-06-04 20:24:26.410 adnbp[59792:32663274] -[CDVCommandQueue executePending] [Line 159] FAILED pluginJSON = ["INVALID","Keyboard","close",[]]
+2015-06-04 20:24:26.410 adnbp[59792:32663274] CDVPlugin class IonicKeyboard (pluginName: Keyboard) does not exist.
+2015-06-04 20:24:26.410 adnbp[59792:32663274] ERROR: Plugin 'Keyboard' not found, or is not a CDVPlugin. Check your plugin mapping in config.xml.
+2015-06-04 20:24:26.411 adnbp[59792:32663274] -[CDVCommandQueue executePending] [Line 159] FAILED pluginJSON = ["INVALID","Keyboard","close",[]]
+2015-06-04 20:24:28.349 adnbp[59792:32663274] CDVPlugin class IonicKeyboard (pluginName: Keyboard) does not exist.
+2015-06-04 20:24:28.350 adnbp[59792:32663274] ERROR: Plugin 'Keyboard' not found, or is not a CDVPlugin. Check your plugin mapping in config.xml.
+2015-06-04 20:24:28.350 adnbp[59792:32663274] -[CDVCommandQueue executePending] [Line 159] FAILED pluginJSON = ["INVALID","Keyboard","close",[]]
+2015-06-04 20:24:28.350 adnbp[59792:32663274] CDVPlugin class IonicKeyboard (pluginName: Keyboard) does not exist.
+2015-06-04 20:24:28.350 adnbp[59792:32663274] ERROR: Plugin 'Keyboard' not found, or is not a CDVPlugin. Check your plugin mapping in config.xml.
+2015-06-04 20:24:28.350 adnbp[59792:32663274] -[CDVCommandQueue executePending] [Line 159] FAILED pluginJSON = ["INVALID","Keyboard","close",[]]
+2015-06-04 20:24:28.350 adnbp[59792:32663274] CDVPlugin class IonicKeyboard (pluginName: Keyboard) does not exist.
+2015-06-04 20:24:28.350 adnbp[59792:32663274] ERROR: Plugin 'Keyboard' not found, or is not a CDVPlugin. Check your plugin mapping in config.xml.
+2015-06-04 20:24:28.350 adnbp[59792:32663274] -[CDVCommandQueue executePending] [Line 159] FAILED pluginJSON = ["INVALID","Keyboard","close",[]]
+2015-06-04 20:24:28.350 adnbp[59792:32663274] CDVPlugin class IonicKeyboard (pluginName: Keyboard) does not exist.
+2015-06-04 20:24:28.350 adnbp[59792:32663274] ERROR: Plugin 'Keyboard' not found, or is not a CDVPlugin. Check your plugin mapping in config.xml.
+2015-06-04 20:24:28.350 adnbp[59792:32663274] -[CDVCommandQueue executePending] [Line 159] FAILED pluginJSON = ["INVALID","Keyboard","close",[]]
+2015-06-04 20:27:18.898 adnbp[59792:32669482] Terminating since there is no system app.

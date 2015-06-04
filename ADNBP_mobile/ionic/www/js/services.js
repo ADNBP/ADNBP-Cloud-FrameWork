@@ -1,7 +1,6 @@
 // Common models for all controllers
-app.factory('ADNBP', function() {
-
-	//window.localStorage.removeItem('ADBP_UserData');
+app.factory('ADNBP', function($rootScope) {
+	// window.localStorage.removeItem('ADBP_UserData');
 	var userData = window.localStorage.getItem('ADBP_UserData');
 	if(userData !== null) userData = JSON.parse(userData);
 	else userData = {public:{data:{}},auth:{isAuth:false,data:{}}};
@@ -10,24 +9,112 @@ app.factory('ADNBP', function() {
 	var updateData = function () { 
 		window.localStorage.setItem('ADBP_UserData',JSON.stringify(userData)); 
 		console.log('saving: '+JSON.stringify(userData));
+		//$rootScope.$apply();
 	};
-	
 	return {
-		userData: userData.public.data,
+		userData: userData,
 		setKey: function (key,data) { userData.public.data[key] = data; updateData(); }, 
 		getKey: function (key) { return (typeof userData.public.data[key] == 'undefined' )?null:userData.public.data[key];},
-		
-		userAuthData: userData.auth.data,
 		isAuth: userData.auth.isAuth,
-		signIn: function (user,token) { userData.auth.isAuth = true; userData.auth.data['user']=user; userData.auth.data['token']=token; updateData();},
-		signOut: function() {userData.auth.data = {}; userData.auth.isAuth = false ; updateData();},
+		setAuth: function (b) { userData.auth.isAuth = b;updateData();},
+		signIn: function (user,data) { 
+			userData.auth.isAuth = true; 
+			userData.auth.data['user']=data; 
+			updateData();
+		},
+		signOut: function() {if(userData.auth.isAuth) { userData.auth.data = {}; userData.auth.isAuth = false ;updateData();}},
 		setAuthKey: function (key,data) { userData.auth.data[key] = data; userData.auth.isAuth = true ; updateData(); }, 
-		getAuthKey: function (key) { return (typeof userData.auth.data[key] == 'undefined' )?null:userData.auth.data[key];}
+		getAuthKey: function (key) { return (typeof userData.auth.data[key] == 'undefined' )?null:userData.auth.data[key];},
+		setMenu: function(menu) { userData.auth.data['menu']=menu;updateData();}
 	};
 });
 
 // Auth Services
-app.service('AuthService', function($q, $http, $rootScope,USER_ROLES,API_URLS) {
+app.service('AuthService', function($q, $http,$rootScope,API_URLS) {
+
+   var semaphore = false;
+   var fingerprint = 'angularService';
+   
+   var authUser = function(name, pw) {
+   	    $http.defaults.headers.common = {};
+    	return $q(function(resolve, reject) {
+	    	if(semaphore) {
+	    		reject('The proccess is still running.');
+	    	} else {
+	    		semaphore = true;
+	    		var req = {
+					 method: 'POST',
+					 withCredentials: true,
+					 
+					 url: API_URLS.credentials+'/signin',
+					 data:  {user:name,password:pw}
+					};
+				$rootScope.$broadcast('loading:show');	
+		    	$http(req).
+				  success(function(ret, status, headers, config) {
+				  	semaphore = false;  // Allow new petitions
+	    			$rootScope.$broadcast('loading:hide');
+	    			if(ret.success) {
+			        	resolve(ret.data.user);
+			        }else 
+			        	reject(ret);
+				  }).
+				  error(function(ret, status, headers, config) {
+				  	semaphore = false;
+				  	$rootScope.$broadcast('loading:hide');
+				  	reject(ret);
+				  });
+			  }
+
+   		});
+  };
+  
+  var logOut = function() {
+  	  $http.get(API_URLS.credentials+'?logout');
+  	  $http.defaults.headers.common = {};
+  };
+  
+  var readMenu = function() {
+    	return $q(function(resolve, reject) {
+	    	if(semaphore) {
+	    		reject('The proccess is still running.');
+	    	} else {
+	    		semaphore = true;
+	    		var req = {
+					 method: 'GET',
+					 url: API_URLS.mobile+'/menu/ionic'
+					};
+				$rootScope.$broadcast('loading:show');	
+		    	$http(req).
+				  success(function(ret, status, headers, config) {
+				  	semaphore = false;  // Allow new petitions
+	    			$rootScope.$broadcast('loading:hide');
+	    			if(ret.success)
+			        	resolve(ret.data);
+			        else 
+			        	reject(ret);
+				  }).
+				  error(function(ret, status, headers, config) {
+				  	semaphore = false;
+				  	$rootScope.$broadcast('loading:hide');
+				  	reject(ret);
+				  });
+			  }
+
+   		});
+  };
+ 
+ 
+  return {
+    authUser: authUser,
+    logOut: logOut,
+    readMenu: readMenu,
+    semaphore: semaphore
+  };
+});
+
+// Auth Services
+app.service('OldAuthService', function($q, $http, $rootScope,USER_ROLES,API_URLS) {
   var LOCAL_TOKEN_KEY = 'yourTokenKey';
   var LOCAL_USERDATA_KEY = 'UserData';
 
