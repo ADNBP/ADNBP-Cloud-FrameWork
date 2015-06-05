@@ -9,8 +9,9 @@
 	  public: 'public_role'
 	});
 	
+	// http://localhost:9080
+	// https://cloud.adnbp.com
 	app.constant('API_URLS', {
-	  //credentials: 'http://localhost:9080/api/cf_credentials',
 	  credentials: 'https://cloud.adnbp.com/api/cf_credentials',
 	  mobile: 'https://cloud.adnbp.com/api/cf_mobile'
 	});

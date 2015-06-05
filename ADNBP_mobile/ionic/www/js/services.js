@@ -28,14 +28,10 @@ app.factory('ADNBP', function($rootScope) {
 		setMenu: function(menu) { userData.auth.data['menu']=menu;updateData();}
 	};
 });
-
 // Auth Services
 app.service('AuthService', function($q, $http,$rootScope,API_URLS) {
-
-   var semaphore = false;
-   var fingerprint = 'angularService';
-   
-   var authUser = function(name, pw) {
+  var semaphore = false;
+  var authUser = function(name, pw) {
    	    $http.defaults.headers.common = {};
     	return $q(function(resolve, reject) {
 	    	if(semaphore) {
@@ -68,12 +64,11 @@ app.service('AuthService', function($q, $http,$rootScope,API_URLS) {
 
    		});
   };
-  
   var logOut = function() {
   	  $http.get(API_URLS.credentials+'?logout');
   	  $http.defaults.headers.common = {};
   };
-  
+  // Read menu service
   var readMenu = function() {
     	return $q(function(resolve, reject) {
 	    	if(semaphore) {
@@ -103,123 +98,10 @@ app.service('AuthService', function($q, $http,$rootScope,API_URLS) {
 
    		});
   };
- 
- 
   return {
     authUser: authUser,
     logOut: logOut,
     readMenu: readMenu,
     semaphore: semaphore
-  };
-});
-
-// Auth Services
-app.service('OldAuthService', function($q, $http, $rootScope,USER_ROLES,API_URLS) {
-  var LOCAL_TOKEN_KEY = 'yourTokenKey';
-  var LOCAL_USERDATA_KEY = 'UserData';
-
-  var userData = {};
-  var username = '';
-  var lastUserName = '';
-  var isAuthenticated = false;
-  var role = '';
-  var authToken;
-  var fingerprint ='angularClient';
-  var loginSemaphore = false;
- 
-   var login = function(name, pw) {
-   	
-   	if(!loginSemaphore) {
-	  	lastUserName = name;  // Keep the last email used
-	    window.localStorage.setItem("lastUserName", lastUserName);
-    }
-  	
-    return $q(function(resolve, reject) {
-    	if(loginSemaphore) {
-    		reject('The proccess is still running.');
-    	} else {
-    		loginSemaphore = true;
-    		destroyUserCredentials();
-    		var req = {
-				 method: 'POST',
-				 url: API_URLS.loginUrl,
-				 data:  {user:name,password:pw, clientfingerprint:fingerprint}
-				};
-			$rootScope.$broadcast('loading:show');	
-	    	$http(req).
-			  success(function(data, status, headers, config) {
-			  	loginSemaphore = false;  // Allow new petitions
-			  	window.localStorage.setItem(LOCAL_TOKEN_KEY, name + '.yourServerToken');
-    			window.localStorage.setItem(LOCAL_USERDATA_KEY, JSON.stringify(data));
-    			loadUserCredentials();
-    			$rootScope.$broadcast('loading:hide');
-		        resolve('Login success.');
-			  	
-			    // this callback will be called asynchronously
-			    // when the response is available
-			  }).
-			  error(function(data, status, headers, config) {
-			  	loginSemaphore = false;
-			  	console.log('Error login.');
-			  	console.log(config);
-			  	$rootScope.$broadcast('loading:hide');
-			  	reject('Login Failed.');
-			  });
-		  }
-
-    });
-  };
- 
- 
-  function loadUserCredentials() {
-  	
-    authToken = window.localStorage.getItem(LOCAL_TOKEN_KEY);
-    lastUserName = window.localStorage.getItem("lastUserName");
-    console.log("loaded lastUserName: "+lastUserName);
-    if (authToken) {
-    	username = authToken.split('.')[0];
-    	isAuthenticated = true;
-	    userData = JSON.parse(window.localStorage.getItem(LOCAL_USERDATA_KEY));
-	    $http.defaults.headers.common['X-Auth-Token'] = authToken;
-	     role = USER_ROLES.admin;
-	    console.log('User data loaded with token: '+authToken);
-    }
-
-  }
- 
-  function destroyUserCredentials() {
-    authToken = undefined;
-    username = '';
-    isAuthenticated = false;
-    userData = {};
-    $http.defaults.headers.common['X-Auth-Token'] = undefined;
-    window.localStorage.removeItem(LOCAL_TOKEN_KEY);
-    window.localStorage.removeItem(LOCAL_USERDATA_KEY);
-    console.log('User data destroyed');
-  }
- 
-
-  var logout = function() {
-    destroyUserCredentials();
-  };
- 
-  var isAuthorized = function(authorizedRoles) {
-    if (!angular.isArray(authorizedRoles)) {
-      authorizedRoles = [authorizedRoles];
-    }
-    return (isAuthenticated && authorizedRoles.indexOf(role) !== -1);
-  };
- 
-  loadUserCredentials();
- 
-  return {
-    login: login,
-    logout: logout,
-    isAuthorized: isAuthorized,
-    isAuthenticated: function() {return isAuthenticated;},
-    lastUserName: lastUserName,
-    userData: userData,
-    username: function() {return username;},
-    role: function() {return role;}
   };
 });
