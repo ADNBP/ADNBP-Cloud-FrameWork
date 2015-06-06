@@ -1,5 +1,5 @@
 // LOGIN
-app.controller('LoginCtrl',function($scope,$state, $http,$ionicPopup, AuthService,ADNBP) {
+app.controller('LoginCtrl',function($scope,$state,$http,$ionicPopup, $cordovaOauth,AuthService,ADNBP) {
 	
 	$scope.title = 'Template login.html';
 	$scope.userData = ADNBP.userData;
@@ -15,7 +15,15 @@ app.controller('LoginCtrl',function($scope,$state, $http,$ionicPopup, AuthServic
 	};
 	
 	$scope.googleLogin = function() {
-		alert('not implemented yet');
+		$cordovaOauth.google("679953635351-fqa3ei4a09qc1qah3hkpj2f1v1hu6u8g.apps.googleusercontent.com", ["email","profile"]).then(function(result) {
+		   ADNBP.signIn('ouathGoogle',result);
+		}, function(error) {
+			var alertPopup = $ionicPopup.alert({
+			        title: 'Login failed!',
+			        template: 'Please check your credentials!'
+			});
+		    console.log("Error -> " + error);
+		});
 	};
 	
 	$scope.signIn = function (data) {
