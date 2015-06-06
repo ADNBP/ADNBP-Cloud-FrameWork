@@ -8,6 +8,13 @@ module.exports = [
         ]
     },
     {
+        "file": "plugins/com.synconset.cordovaHTTP/www/cordovaHTTP.js",
+        "id": "com.synconset.cordovaHTTP.CordovaHttpPlugin",
+        "clobbers": [
+            "plugins.CordovaHttpPlugin"
+        ]
+    },
+    {
         "file": "plugins/cordova-plugin-console/www/console-via-logger.js",
         "id": "cordova-plugin-console.console",
         "clobbers": [
@@ -29,13 +36,6 @@ module.exports = [
         ]
     },
     {
-        "file": "plugins/cordova-plugin-splashscreen/www/splashscreen.js",
-        "id": "cordova-plugin-splashscreen.SplashScreen",
-        "clobbers": [
-            "navigator.splashscreen"
-        ]
-    },
-    {
         "file": "plugins/cordova-plugin-inappbrowser/www/inappbrowser.js",
         "id": "cordova-plugin-inappbrowser.inappbrowser",
         "clobbers": [
@@ -44,10 +44,10 @@ module.exports = [
         ]
     },
     {
-        "file": "plugins/com.synconset.cordovaHTTP/www/cordovaHTTP.js",
-        "id": "com.synconset.cordovaHTTP.CordovaHttpPlugin",
+        "file": "plugins/cordova-plugin-splashscreen/www/splashscreen.js",
+        "id": "cordova-plugin-splashscreen.SplashScreen",
         "clobbers": [
-            "plugins.CordovaHttpPlugin"
+            "navigator.splashscreen"
         ]
     },
     {
@@ -184,12 +184,12 @@ module.exports.metadata =
 // TOP OF METADATA
 {
     "com.ionic.keyboard": "1.0.4",
+    "com.synconset.cordovaHTTP": "0.1.4",
     "cordova-plugin-console": "1.0.0",
     "cordova-plugin-device": "1.0.0",
+    "cordova-plugin-inappbrowser": "1.0.1-dev",
     "cordova-plugin-splashscreen": "2.0.0",
     "cordova-plugin-whitelist": "1.0.0",
-    "cordova-plugin-inappbrowser": "1.0.1-dev",
-    "com.synconset.cordovaHTTP": "0.1.4",
     "org.apache.cordova.file": "0.2.5"
 }
 // BOTTOM OF METADATA

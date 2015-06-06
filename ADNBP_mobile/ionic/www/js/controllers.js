@@ -1,87 +1,4 @@
-// LOGIN
-app.controller('LoginCtrl',function($scope,$state, $http,$ionicPopup, AuthService,ADNBP) {
-	
-	$scope.title = 'Template login.html';
-	$scope.userData = ADNBP.userData;
-	$scope.user = {username:ADNBP.getKey('lastUserName'),password:""};
-	var semaphore = false;
-	
-	$scope.fbLogin = function () {
-		$state.go('app.browse');
-	};
-	
-	$scope.googleLogin = function () {
-		$state.go('app.browse');
-	};
-	
-	$scope.check = function() {
-		
-		//$http.defaults.headers.common.X_CF_SESSION_ID = ADNBP.getKey('session_id');
-		
-		$http.get('http://localhost:9080/api/cf_credentials').
-		  success(function(data, status, headers, config) {
-		  	console.log(data);
-		  }).
-		  error(function(data, status, headers, config) {
-		    // called asynchronously if an error occurs
-		    // or server returns response with an error status.
-		  });
-	};
-	
-	$scope.signIn = function (data) {
-		if(semaphore) return false;
-		ADNBP.signOut();
-		if(data.username !='') {
-			console.log('Trying to auth '+data.username);
-			ADNBP.setKey('lastUserName',data.username);
-			
-			semaphore = true;
-			AuthService.authUser(data.username,data.password)
-			// OK
-			.then(function(ret) {
-			  ADNBP.signIn(data.username,ret);
-			  $http.defaults.headers.common['X-CloudFramWork-AuthToken'] = ret.token;
-			  semaphore = false;
-			  $scope.readMenu();
-			}, 
-		    // ERR
-		    function(err) {
-			      semaphore = false;
-			      var alertPopup = $ionicPopup.alert({
-			        title: 'Login failed!',
-			        template: 'Please check your credentials!'
-			      });
-		    });
-		} 
-	};
 
-	$scope.readMenu = function () {
-		if(semaphore) return false;
-		if(!$scope.userData.auth.isAuth) return false;
-		semaphore = true;
-		AuthService.readMenu()
-		// OK
-		.then(function(data) {
-		  semaphore = false;
-	      $state.go('app.browse');
-	      $scope.setMenuItems(data);
-		}, 
-	    // ERR
-	    function(err) {
-		      semaphore = false;
-		      ADNBP.signOut();
-		      var alertPopup = $ionicPopup.alert({
-		        title: 'Reading menu Failed!',
-		        template: 'Please check your credentials!'
-		      });
-	    });
-	};
-	
-
-	
-	if($scope.userData.auth.isAuth) $state.go('app.browse');
-
-});
 
 // http://blog.ionic.io/oauth-ionic-ngcordova/
 app.controller("OauthExample", function($scope, $cordovaOauth) {
@@ -96,27 +13,49 @@ app.controller("OauthExample", function($scope, $cordovaOauth) {
 });
 
 // APP and Main menu
-app.controller('AppCtrl', function($scope, $state,$ionicModal, $timeout,AuthService,ADNBP) {
-
+app.controller('AppCtrl', function($scope, $state,$ionicModal,$ionicPopup, $timeout,AuthService,ADNBP) {
+  var semaphore = {reloadMenu:false};
   $scope.userData = ADNBP.userData;
-  
   $scope.title = 'Menu';
   $scope.logoutMenu = {icon: 'ion-log-out',title:'Logout'};
   
+  // MENU SCOPE
   $scope.menuItems = [];
   $scope.setMenuItems = function (data) { $scope.menuItems = data;};
-  
-  /*
-  $scope.readMenu = function  () {
-	  	$scope.menuItems = [
-	    { icon:"ion-search", title: 'Search', url: '#/app/search' },
-	    { icon:"ion-ios-browsers", title: 'Browse', url: '#/app/browse' },
-	    { icon:"ion-play", title: 'Playlist', url: '#/app/playlists' },
-	    { icon:"ion-gear-a", title: 'Config', click: 'updateData();', url: '#/app/config' },
-	    { icon:"ion-gear-a", title: 'MyData', url: '#/app/mydata' },
-	  ];
-  };
-  */
+  $scope.reloadMenu = function () {
+		if(semaphore.reloadMenu) return false;
+		if(!$scope.userData.auth.isAuth) return false;
+		semaphore = true;
+		AuthService.readMenu()
+		// OK
+		.then(function(data) {
+		  semaphore.reloadMenu = false;
+	      
+	      // assign json menu
+	      $scope.setMenuItems(data.menu); 
+	      
+	      // Assign States
+	      angular.forEach(data.states, function(value, key) {
+	      	  // avoid to reload too times the states
+			  if($state.get(key) == null) {
+		      	  console.log('loading '+key);
+				  app.stateProvider.state(key, value);
+			  }
+		   });
+	      
+	      console.log('Menu reloaded');
+		}, 
+	    // ERR
+	    function(err) {
+	    	  console.log('Error reading menu');
+		      semaphore.reloadMenu = false;
+		      var alertPopup = $ionicPopup.alert({
+		        title: 'Reading menu Failed!',
+		        template: 'Please check your credentials!'
+		      });
+	    });
+	};
+
   $scope.logout = function() {
   	ADNBP.signOut();
   	AuthService.logOut();
@@ -124,7 +63,7 @@ app.controller('AppCtrl', function($scope, $state,$ionicModal, $timeout,AuthServ
   	$state.go('home.login');
   	$scope.$apply;
   };
-  
+  /*
   // Form data for the login modal
   $scope.loginData = {};
   
@@ -155,10 +94,7 @@ app.controller('AppCtrl', function($scope, $state,$ionicModal, $timeout,AuthServ
       $scope.closeLogin();
     }, 1000);
   };
-
-  $scope.setCurrentUsername = function(name) {
-    $scope.username = name;
-  };
+  */
 
 });
 

@@ -1,31 +1,18 @@
-<ion-view view-title="Sign-In">
-        <ion-header-bar align-title="center" class="bar-stable">
-  		<h1 class="title">{{title}}</h1>
-		</ion-header-bar>
+<ion-view view-title="Sign-In" id="welcome-view" hide-nav-bar="true">
+   
 
-	<ion-content class="padding">
-		<button class="button button-block icon-left ion-social-facebook facebook-blue" ng-click="fbLogin()">Facebook</button>
-		<button class="button button-block icon-left ion-social-googleplus googleplus-red" ng-click="googleLogin()">Google+</button>
+	<ion-content >
+		<div  class="logo-welcome"></div>
+        <div class="login-btns">
+            <div id="social-links">
+                <ul>
+ 	                <li ng-click="fbLogin()"><span class="ifacebook"><img src="http://techiedreams.com/demos/oauth-ionic-angular/img/social-icons/facebook.png"></span><a href="#" class="afacebook">sign in with facebook</a></li>
+                    <li ng-click="gplusLogin()"><span class="igoogleplus"><img src="http://techiedreams.com/demos/oauth-ionic-angular/img/social-icons/googleplus.png"></span><a href="#" class="agoogleplus">sign in with google+</a></li>
+                </ul>
+            </div>
+            <hr id="login-divider" />
+        </div>
 
-	<!--
-		<div class="card">
-			<div class="item item-divider">
-	    	Users Facebook data, after login
-	  		</div>
-		 	 <div class="item item-text-wrap">
-		    {{fbData}}
-  			</div>
-		</div>
-
-		<div class="card">
-			<div class="item item-divider">
-	    	Users Google+ data, after login
-	  		</div>
-		  	<div class="item item-text-wrap">
-		    {{googleData}}
-  			</div>
-		</div>
-   -->
   		 <div class="list">
             <label class="item item-input">
               <span class="input-label">Username</span>
@@ -39,13 +26,9 @@
               Sign-In
             </button>
           </div>
-          
-          <div class="item">
-			   <pre ng-bind="userData | json"></pre> 
-		  </div>
 
-             <button class="button button-block button-positive" ng-click="check()">
-              Check
+             <button class="button button-block button-positive" ng-click="test()">
+             test
             </button>
           		
 	</ion-content>

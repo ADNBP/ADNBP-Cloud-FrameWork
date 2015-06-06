@@ -9,10 +9,12 @@
 	  public: 'public_role'
 	});
 	
+	// http://localhost:9080
+	// https://cloud.adnbp.com
 	app.constant('API_URLS', {
-	  //credentials: 'http://localhost:9080/api/cf_credentials',
-	  credentials: 'https://cloud.adnbp.com/api/cf_credentials',
-	  mobile: 'https://cloud.adnbp.com/api/cf_mobile'
+	  base: 'https://cloud.adnbp.com',
+	  credentials: '/api/cf_credentials',
+	  mobile: '/api/cf_mobile'
 	});
 
 // It's also possible to override the OPTIONS request (was only tested in Chrome):
@@ -23,14 +25,15 @@ app.config(['$httpProvider', function ($httpProvider) {
   $httpProvider.defaults.headers.post = {};
   $httpProvider.defaults.headers.put = {};
   $httpProvider.defaults.headers.patch = {};
-   $httpProvider.defaults.useXDomain = true;
+  $httpProvider.defaults.useXDomain = true;
 
 }]);
 
 
 // Navigation Menu
-app.config(function($stateProvider, $urlRouterProvider,USER_ROLES) {
-	
+app.config(function($stateProvider, $urlRouterProvider,API_URLS) {
+
+  app.stateProvider = $stateProvider; // Delegate to dynamic reload
   // HOME INTRO
   $stateProvider 
   .state('home', {
@@ -42,7 +45,7 @@ app.config(function($stateProvider, $urlRouterProvider,USER_ROLES) {
     url: "/login",
     views: {
       'loginContent': {
-	    templateUrl: "templates/login.html",
+	    templateUrl: API_URLS.base+API_URLS.mobile+'/template/ionic/login',
 	    controller: 'LoginCtrl'
       }
     }
@@ -53,7 +56,16 @@ app.config(function($stateProvider, $urlRouterProvider,USER_ROLES) {
     url: "/app",
     abstract: true,
     templateUrl: "templates/menu.html"
-  })
+  })  
+  .state('app.home', {
+    url: "/home",
+    views: {
+      'menuContent': {
+        template: "<ion-view view-title='Home'>Home</ion-view>"
+      }
+    }
+  });
+  /*
 
   .state('app.config', {
     url: "/config",
@@ -118,6 +130,7 @@ app.config(function($stateProvider, $urlRouterProvider,USER_ROLES) {
       }
     }
   });
+  */
   // if none of the above states are matched, use this as the fallback
   	$urlRouterProvider.otherwise('/home/login');
 });

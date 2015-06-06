@@ -42,7 +42,7 @@ app.service('AuthService', function($q, $http,$rootScope,API_URLS) {
 					 method: 'POST',
 					 withCredentials: true,
 					 
-					 url: API_URLS.credentials+'/signin',
+					 url: API_URLS.base+API_URLS.credentials+'/signin',
 					 data:  {user:name,password:pw}
 					};
 				$rootScope.$broadcast('loading:show');	
@@ -65,7 +65,7 @@ app.service('AuthService', function($q, $http,$rootScope,API_URLS) {
    		});
   };
   var logOut = function() {
-  	  $http.get(API_URLS.credentials+'?logout');
+  	  $http.get(API_URLS.base+API_URLS.credentials+'?logout');
   	  $http.defaults.headers.common = {};
   };
   // Read menu service
@@ -77,7 +77,7 @@ app.service('AuthService', function($q, $http,$rootScope,API_URLS) {
 	    		semaphore = true;
 	    		var req = {
 					 method: 'GET',
-					 url: API_URLS.mobile+'/menu/ionic'
+					 url: API_URLS.base+API_URLS.mobile+'/menu/ionic'
 					};
 				$rootScope.$broadcast('loading:show');	
 		    	$http(req).

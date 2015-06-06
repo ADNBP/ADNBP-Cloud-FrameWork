@@ -17,18 +17,24 @@
   <!-- INIT LEFT MENU -->
   <ion-side-menu side="left">
   
-    <ion-header-bar class="bar bar-header bar-positive">
-      <h1 class="title">{{title}}</h1>
-    </ion-header-bar>
+
     <ion-content>
 
 	  <!-- Menu list from menuItems AppCtrl.menuItems[title,url,click] -->
+	    <a class="item item-avatar" href="#" ng-click="reloadMenu();">
+	      <img ng-src="{{userData.auth.data.user.avatar}}">
+	      <h2>{{userData.auth.data.user.name}}</h2>
+	      <p>{{userData.auth.data.user.email}}</p>
+	    </a>      
       <ion-list >
           <ion-item menu-close  ng-click="{{item.click}}" href="{{item.url}}" ng-repeat="item in menuItems">
           <i class="icon {{item.icon}}"></i> {{item.title}}
         </ion-item>
 
-          <ion-item menu-close  ng-click="logout();" >
+          <ion-item   ng-click="reloadMenu();" >
+          <i class="icon ion-refresh"></i> reload Menu
+        </ion-item>
+          <ion-item  ng-click="logout();" >
           <i class="icon {{logoutMenu.icon}}"></i> {{logoutMenu.title}} {{username}}
         </ion-item>
         
