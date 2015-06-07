@@ -31,19 +31,20 @@ app.factory('ADNBP', function($rootScope) {
 // Auth Services
 app.service('AuthService', function($q, $http,$rootScope,API_URLS) {
   var semaphore = false;
-  var authUser = function(name, pw) {
+  var authUser = function(credentials) {
    	    $http.defaults.headers.common = {};
     	return $q(function(resolve, reject) {
 	    	if(semaphore) {
 	    		reject('The proccess is still running.');
+	    	} else if(credentials.user =="" && credentials.provider=="") {
+	    		reject('Missing user or provider in credentials');
 	    	} else {
 	    		semaphore = true;
 	    		var req = {
 					 method: 'POST',
 					 withCredentials: true,
-					 
 					 url: API_URLS.base+API_URLS.credentials+'/signin',
-					 data:  {user:name,password:pw}
+					 data:  credentials
 					};
 				$rootScope.$broadcast('loading:show');	
 		    	$http(req).
