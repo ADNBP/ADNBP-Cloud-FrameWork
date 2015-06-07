@@ -1,17 +1,3 @@
-
-
-// http://blog.ionic.io/oauth-ionic-ngcordova/
-app.controller("OauthExample", function($scope, $cordovaOauth) {
-    $scope.googleLogin = function() {
-        $cordovaOauth.google("CLIENT_ID_HERE", ["https://www.googleapis.com/auth/urlshortener", "https://www.googleapis.com/auth/userinfo.email"]).then(function(result) {
-            console.log(JSON.stringify(result));
-        }, function(error) {
-            console.log(error);
-        });
-    };
-
-});
-
 // APP and Main menu
 app.controller('AppCtrl', function($scope, $state,$ionicModal,$ionicPopup, $timeout,AuthService,ADNBP) {
   var semaphore = {reloadMenu:false};
@@ -98,6 +84,11 @@ app.controller('AppCtrl', function($scope, $state,$ionicModal,$ionicPopup, $time
 
 });
 
+app.controller('listCtrl',function($scope,$state) {
+	$scope.data = $state.current.data;
+	console.log($state.current);
+});
+	
 // My OwnData
 app.controller('MydataCtrl', function($scope, $state,$ionicModal, $timeout,ADNBP) {
 	$scope.ADNBP = ADNBP;
@@ -118,8 +109,8 @@ app.controller('PlaylistsCtrl', function($scope) {
 app.controller('PlaylistCtrl', function($scope, $stateParams) {
 });
 
-app.controller('Config', function($scope,$state,AuthService) {
-	
+app.controller('Config', function($scope,$state,ADNBP) {
+  $scope.userData = ADNBP.userData;
   if(!$scope.userData.auth.isAuth) $state.go('home.login');
 
 

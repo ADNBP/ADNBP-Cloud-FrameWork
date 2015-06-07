@@ -31,7 +31,7 @@ if (!defined ("_RESTfull_CLASS_") ) {
 			// https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS
 			header("Access-Control-Allow-Origin: ".((strlen($_SERVER['HTTP_ORIGIN']))?preg_replace('/\/$/', '', $_SERVER['HTTP_ORIGIN']):'*'));
 			header("Access-Control-Allow-Methods: POST,GET,PUT");
-			header("Access-Control-Allow-Headers: Content-Type,X-CloudFramWork-Token,X-CloudFramWork-AuthToken");
+			header("Access-Control-Allow-Headers: Content-Type,X-CloudFramWork-Token,X-CloudFrameWork-AuthToken");
             header("Access-Control-Allow-Credentials: true");
 			header('Access-Control-Max-Age: 1000');
             

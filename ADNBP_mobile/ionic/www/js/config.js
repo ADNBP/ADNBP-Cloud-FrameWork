@@ -12,7 +12,7 @@
 	// http://localhost:9080
 	// https://cloud.adnbp.com
 	app.constant('API_URLS', {
-	  base: 'https://cloud.adnbp.com',
+	  base: 'http://localhost:9080',
 	  credentials: '/api/cf_credentials',
 	  mobile: '/api/cf_mobile'
 	});
