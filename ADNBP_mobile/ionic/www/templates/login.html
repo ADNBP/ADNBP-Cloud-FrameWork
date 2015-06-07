@@ -21,10 +21,12 @@
               <span class="input-label">Password</span>
               <input type="password"  ng-model="user.password">
             </label>
-             <button class="button button-block button-positive" ng-click="signIn(user)">
+             <button class="button button-block button-positive" ng-click="userPasswordLogin()">
               Sign-In
             </button>
           </div>
-
+		<div class="item">
+			    <pre ng-bind="userData | json"></pre> 
+		</div>
 	</ion-content>
  </ion-view>

@@ -113,3 +113,119 @@
 2015-06-06 19:29:49.769 adnbp[74502:35090555] Finished load of: file:///Users/adrianmm/Library/Developer/CoreSimulator/Devices/DE12D5B5-89F0-4589-B88B-B92FFCFF3900/data/Containers/Bundle/Application/56E7B2A8-671D-4EDD-BFA2-A266A5D3A1CD/adnbp.app/www/index.html#/home/login
 2015-06-06 19:29:51.098 adnbp[74502:35090555] Setting the WebView's frame to {{0, 0}, {375, 646}}
 2015-06-06 19:29:51.116 adnbp[74502:35090555] THREAD WARNING: ['InAppBrowser'] took '103.659912' ms. Plugin should use a background thread.
+2015-06-06 20:44:29.507 adnbp[75713:35326985] Apache Cordova native platform version 3.8.0 is starting.
+2015-06-06 20:44:29.509 adnbp[75713:35326985] Multi-tasking -> Device: YES, App: YES
+2015-06-06 20:44:29.523 adnbp[75713:35326985] Unlimited access to network resources
+2015-06-06 20:44:29.798 adnbp[75713:35326985] [CDVTimer][keyboard] 0.051022ms
+2015-06-06 20:44:29.938 adnbp[75713:35326985] [CDVTimer][splashscreen] 140.241027ms
+2015-06-06 20:44:29.938 adnbp[75713:35326985] [CDVTimer][TotalPluginStartup] 140.858948ms
+2015-06-06 20:44:30.081 adnbp[75713:35326985] Resetting plugins due to page load.
+2015-06-06 20:44:30.379 adnbp[75713:35326985] Finished load of: file:///Users/adrianmm/Library/Developer/CoreSimulator/Devices/DE12D5B5-89F0-4589-B88B-B92FFCFF3900/data/Containers/Bundle/Application/366C85CF-166D-44F3-A732-BED9E68125D0/adnbp.app/www/index.html#/home/login
+2015-06-06 20:44:37.781 adnbp[75713:35326985] Setting the WebView's frame to {{0, 0}, {375, 623}}
+2015-06-06 20:44:37.798 adnbp[75713:35326985] THREAD WARNING: ['InAppBrowser'] took '117.706055' ms. Plugin should use a background thread.
+2015-06-06 20:45:58.776 adnbp[75713:35326985] Error -> The sign in flow was canceled
+2015-06-06 20:46:00.150 adnbp[75713:35326985] Setting the WebView's frame to {{0, 0}, {375, 623}}
+2015-06-06 20:46:00.152 adnbp[75713:35326985] THREAD WARNING: ['InAppBrowser'] took '40.389893' ms. Plugin should use a background thread.
+2015-06-06 20:49:08.825 adnbp[76248:35345047] Apache Cordova native platform version 3.8.0 is starting.
+2015-06-06 20:49:08.826 adnbp[76248:35345047] Multi-tasking -> Device: YES, App: YES
+2015-06-06 20:49:08.829 adnbp[76248:35345047] Unlimited access to network resources
+2015-06-06 20:49:08.903 adnbp[76248:35345047] [CDVTimer][keyboard] 0.047028ms
+2015-06-06 20:49:08.915 adnbp[76248:35345047] [CDVTimer][splashscreen] 11.836946ms
+2015-06-06 20:49:08.916 adnbp[76248:35345047] [CDVTimer][TotalPluginStartup] 12.198985ms
+2015-06-06 20:49:08.982 adnbp[76248:35345047] Resetting plugins due to page load.
+2015-06-06 20:49:09.145 adnbp[76248:35345047] Finished load of: file:///Users/adrianmm/Library/Developer/CoreSimulator/Devices/DE12D5B5-89F0-4589-B88B-B92FFCFF3900/data/Containers/Bundle/Application/7E381798-B00A-495E-9AB0-A44D178568E2/adnbp.app/www/index.html#/home/login
+2015-06-06 20:49:16.087 adnbp[76248:35345047] Setting the WebView's frame to {{0, 0}, {375, 623}}
+2015-06-06 20:49:16.091 adnbp[76248:35345047] THREAD WARNING: ['InAppBrowser'] took '82.425293' ms. Plugin should use a background thread.
+2015-06-06 20:49:21.617 adnbp[76248:35345047] Error -> The sign in flow was canceled
+2015-06-06 20:49:24.846 adnbp[76248:35345047] Setting the WebView's frame to {{0, 0}, {375, 623}}
+2015-06-06 20:49:24.849 adnbp[76248:35345047] THREAD WARNING: ['InAppBrowser'] took '43.915039' ms. Plugin should use a background thread.
+2015-06-06 20:49:45.368 adnbp[76248:35345047] Response Object -> {"access_token":"ya29.igHN3I9omNWiAwDLQo4Vi62gP1Y6Nu9662FX7-_7hbG4wl7wwsolRTwIzdVXkKtObolf4-07oFlClw","token_type":"Bearer","expires_in":"3600"}
+2015-06-06 20:49:45.374 adnbp[76248:35345047] webView:didFailLoadWithError - -1004: Could not connect to the server.
+2015-06-06 20:55:13.168 adnbp[76248:35368676] Terminating since there is no system app.
+2015-06-06 20:55:33.150 adnbp[76811:35370263] Apache Cordova native platform version 3.8.0 is starting.
+2015-06-06 20:55:33.150 adnbp[76811:35370263] Multi-tasking -> Device: YES, App: YES
+2015-06-06 20:55:33.152 adnbp[76811:35370263] Unlimited access to network resources
+2015-06-06 20:55:33.218 adnbp[76811:35370263] [CDVTimer][keyboard] 0.049949ms
+2015-06-06 20:55:33.248 adnbp[76811:35370263] [CDVTimer][splashscreen] 30.247033ms
+2015-06-06 20:55:33.248 adnbp[76811:35370263] [CDVTimer][TotalPluginStartup] 30.571997ms
+2015-06-06 20:55:33.293 adnbp[76811:35370263] Resetting plugins due to page load.
+2015-06-06 20:55:33.437 adnbp[76811:35370263] Finished load of: file:///Users/adrianmm/Library/Developer/CoreSimulator/Devices/DE12D5B5-89F0-4589-B88B-B92FFCFF3900/data/Containers/Bundle/Application/2FBC6F99-0519-4028-ACA8-BBF400A00AC3/adnbp.app/www/index.html#/home/login
+2015-06-06 20:55:43.843 adnbp[76811:35370263] Setting the WebView's frame to {{0, 0}, {375, 623}}
+2015-06-06 20:55:43.848 adnbp[76811:35370263] THREAD WARNING: ['InAppBrowser'] took '70.863037' ms. Plugin should use a background thread.
+2015-06-06 20:56:02.903 adnbp[76811:35370263] webView:didFailLoadWithError - -1004: Could not connect to the server.
+2015-06-06 20:56:02.912 adnbp[76811:35370263] saving: {"public":{"data":{"lastUserName":"am@adnry.com"}},"auth":{"isAuth":true,"data":{"user":{"access_token":"ya29.igEBu7H11P8gqHQA_9mWKGQ0mAtIc1inY2YkmmjEI5IZubjEJqJyAKsF9xPXMV0kQgEXcxoR1vzAlA","token_type":"Bearer","expires_in":"3600"}}}}
+2015-06-06 21:00:11.088 adnbp[76811:35370263] Setting the WebView's frame to {{0, 0}, {375, 623}}
+2015-06-06 21:00:11.091 adnbp[76811:35370263] THREAD WARNING: ['InAppBrowser'] took '41.160156' ms. Plugin should use a background thread.
+2015-06-06 21:00:29.030 adnbp[76811:35370263] Error -> The sign in flow was canceled
+2015-06-06 21:05:13.535 adnbp[77381:35412428] Apache Cordova native platform version 3.8.0 is starting.
+2015-06-06 21:05:13.536 adnbp[77381:35412428] Multi-tasking -> Device: YES, App: YES
+2015-06-06 21:05:13.537 adnbp[77381:35412428] Unlimited access to network resources
+2015-06-06 21:05:13.604 adnbp[77381:35412428] [CDVTimer][keyboard] 0.042975ms
+2015-06-06 21:05:13.633 adnbp[77381:35412428] [CDVTimer][splashscreen] 29.345989ms
+2015-06-06 21:05:13.633 adnbp[77381:35412428] [CDVTimer][TotalPluginStartup] 29.647052ms
+2015-06-06 21:05:13.689 adnbp[77381:35412428] Resetting plugins due to page load.
+2015-06-06 21:05:13.828 adnbp[77381:35412428] Finished load of: file:///Users/adrianmm/Library/Developer/CoreSimulator/Devices/DE12D5B5-89F0-4589-B88B-B92FFCFF3900/data/Containers/Bundle/Application/1A01E741-37FA-42B9-9B12-909605102AE4/adnbp.app/www/index.html#/home/login
+2015-06-06 21:05:14.868 adnbp[77381:35412428] loading app.intro
+2015-06-06 21:05:14.868 adnbp[77381:35412428] loading app.config
+2015-06-06 21:05:14.868 adnbp[77381:35412428] Menu reloaded
+2015-06-06 21:05:17.875 adnbp[77381:35412428] saving: {"public":{"data":{"lastUserName":"am@adnry.com"}},"auth":{"isAuth":false,"data":{}}}
+2015-06-06 21:05:26.047 adnbp[77381:35412428] Setting the WebView's frame to {{0, 0}, {375, 623}}
+2015-06-06 21:05:26.051 adnbp[77381:35412428] THREAD WARNING: ['InAppBrowser'] took '97.857910' ms. Plugin should use a background thread.
+2015-06-06 21:05:54.484 adnbp[77381:35412428] webView:didFailLoadWithError - -1004: Could not connect to the server.
+2015-06-06 21:05:54.495 adnbp[77381:35412428] saving: {"public":{"data":{"lastUserName":"am@adnry.com"}},"auth":{"isAuth":true,"data":{"user":{"access_token":"ya29.igHRiTOgbGPwO-NtrtxwKqGW80b6SaxEl18CU2dtihZIsiB5VPCEqvcK1_iNW-OWslpfC1pz3681Tg","token_type":"Bearer","expires_in":"3600"}}}}
+2015-06-06 21:48:20.252 adnbp[78264:35572683] Apache Cordova native platform version 3.8.0 is starting.
+2015-06-06 21:48:20.253 adnbp[78264:35572683] Multi-tasking -> Device: YES, App: YES
+2015-06-06 21:48:20.254 adnbp[78264:35572683] Unlimited access to network resources
+2015-06-06 21:48:20.317 adnbp[78264:35572683] [CDVTimer][keyboard] 0.045955ms
+2015-06-06 21:48:20.334 adnbp[78264:35572683] [CDVTimer][splashscreen] 16.817033ms
+2015-06-06 21:48:20.335 adnbp[78264:35572683] [CDVTimer][TotalPluginStartup] 17.127991ms
+2015-06-06 21:48:20.378 adnbp[78264:35572683] Resetting plugins due to page load.
+2015-06-06 21:48:21.476 adnbp[78264:35572683] loading app.intro
+2015-06-06 21:48:21.476 adnbp[78264:35572683] loading app.config
+2015-06-06 21:48:21.476 adnbp[78264:35572683] Menu reloaded
+2015-06-06 21:48:23.808 adnbp[78264:35572683] Finished load of: file:///Users/adrianmm/Library/Developer/CoreSimulator/Devices/DE12D5B5-89F0-4589-B88B-B92FFCFF3900/data/Containers/Bundle/Application/37066BEE-5A78-46BD-BDC9-1D0A71288CE5/adnbp.app/www/index.html#/app/home
+2015-06-06 21:48:29.780 adnbp[78264:35572683] saving: {"public":{"data":{"lastUserName":"am@adnry.com"}},"auth":{"isAuth":false,"data":{}}}
+2015-06-06 21:48:35.467 adnbp[78264:35572683] Setting the WebView's frame to {{0, 0}, {375, 623}}
+2015-06-06 21:48:35.471 adnbp[78264:35572683] THREAD WARNING: ['InAppBrowser'] took '49.217773' ms. Plugin should use a background thread.
+2015-06-06 21:49:06.278 adnbp[78264:35572683] webView:didFailLoadWithError - -1004: Could not connect to the server.
+2015-06-06 21:49:06.280 adnbp[78264:35572683] saving: {"public":{"data":{"lastUserName":"am@adnry.com","access_token":"ya29.igH2GymgstoopUDZqpDdNo_ebyMTGrhtdul1iBlGt_xumrIiuZzmxlxJPWRhoVTBp5icCuPxTYBgtA"}},"auth":{"isAuth":false,"data":{}}}
+2015-06-06 21:49:06.280 adnbp[78264:35572683] saving: {"public":{"data":{"lastUserName":"am@adnry.com","access_token":"ya29.igH2GymgstoopUDZqpDdNo_ebyMTGrhtdul1iBlGt_xumrIiuZzmxlxJPWRhoVTBp5icCuPxTYBgtA","token_type":"Bearer"}},"auth":{"isAuth":false,"data":{}}}
+2015-06-06 21:55:01.290 adnbp[78831:35604437] Apache Cordova native platform version 3.8.0 is starting.
+2015-06-06 21:55:01.291 adnbp[78831:35604437] Multi-tasking -> Device: YES, App: YES
+2015-06-06 21:55:01.293 adnbp[78831:35604437] Unlimited access to network resources
+2015-06-06 21:55:01.357 adnbp[78831:35604437] [CDVTimer][keyboard] 0.046968ms
+2015-06-06 21:55:01.373 adnbp[78831:35604437] [CDVTimer][splashscreen] 15.846968ms
+2015-06-06 21:55:01.373 adnbp[78831:35604437] [CDVTimer][TotalPluginStartup] 16.173005ms
+2015-06-06 21:55:01.428 adnbp[78831:35604437] Resetting plugins due to page load.
+2015-06-06 21:55:01.573 adnbp[78831:35604437] Finished load of: file:///Users/adrianmm/Library/Developer/CoreSimulator/Devices/DE12D5B5-89F0-4589-B88B-B92FFCFF3900/data/Containers/Bundle/Application/4BAC957B-C7B8-4B64-A03D-253DECEB8029/adnbp.app/www/index.html#/home/login
+2015-06-06 21:55:09.168 adnbp[78831:35604437] Setting the WebView's frame to {{0, 0}, {375, 623}}
+2015-06-06 21:55:09.172 adnbp[78831:35604437] THREAD WARNING: ['InAppBrowser'] took '52.708984' ms. Plugin should use a background thread.
+2015-06-06 21:55:29.173 adnbp[78831:35604437] webView:didFailLoadWithError - -1004: Could not connect to the server.
+2015-06-06 21:55:29.180 adnbp[78831:35604437] saving: {"public":{"data":{"lastUserName":"am@adnry.com","access_token":"ya29.igGiSVpLtDFmrnWAyPXBa3O1Xk-w-9zE52GcMRoaYzOVD6F7TQwn_XFrCbIs82THbadATpKzxS7Tdw","token_type":"Bearer"}},"auth":{"isAuth":false,"data":{}}}
+2015-06-06 21:55:29.180 adnbp[78831:35604437] saving: {"public":{"data":{"lastUserName":"am@adnry.com","access_token":"ya29.igGiSVpLtDFmrnWAyPXBa3O1Xk-w-9zE52GcMRoaYzOVD6F7TQwn_XFrCbIs82THbadATpKzxS7Tdw","token_type":"Bearer"}},"auth":{"isAuth":false,"data":{}}}
+2015-06-06 21:55:29.560 adnbp[78831:35604437] saving: {"public":{"data":{"lastUserName":"am@adnry.com","access_token":"ya29.igGiSVpLtDFmrnWAyPXBa3O1Xk-w-9zE52GcMRoaYzOVD6F7TQwn_XFrCbIs82THbadATpKzxS7Tdw","token_type":"Bearer"}},"auth":{"isAuth":true,"data":{"user":{"issued_to":"679953635351-fqa3ei4a09qc1qah3hkpj2f1v1hu6u8g.apps.googleusercontent.com","audience":"679953635351-fqa3ei4a09qc1qah3hkpj2f1v1hu6u8g.apps.googleusercontent.com","user_id":"114196698276793299467","scope":"https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile","expires_in":3600,"email":"am@adnry.com","verified_email":true,"access_type":"online"}}}}
+2015-06-07 06:09:17.193 adnbp[78831:35604437] Setting the WebView's frame to {{0, 0}, {375, 623}}
+2015-06-07 06:09:17.196 adnbp[78831:35604437] THREAD WARNING: ['InAppBrowser'] took '43.393066' ms. Plugin should use a background thread.
+2015-06-07 06:09:45.012 adnbp[78831:35604437] saving: {"public":{"data":{"lastUserName":"am@adnry.com","access_token":"ya29.iwEA8Lwfmhs9k_RIgcOFACca8KWPxNMNyRINf8vE1gEdyRroQuBC9KnUD6zGnZAkdcGzDw8Kai5EDg","token_type":"Bearer"}},"auth":{"isAuth":true,"data":{"user":{"issued_to":"679953635351-fqa3ei4a09qc1qah3hkpj2f1v1hu6u8g.apps.googleusercontent.com","audience":"679953635351-fqa3ei4a09qc1qah3hkpj2f1v1hu6u8g.apps.googleusercontent.com","user_id":"114196698276793299467","scope":"https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile","expires_in":3600,"email":"am@adnry.com","verified_email":true,"access_type":"online"}}}}
+2015-06-07 06:09:45.012 adnbp[78831:35604437] saving: {"public":{"data":{"lastUserName":"am@adnry.com","access_token":"ya29.iwEA8Lwfmhs9k_RIgcOFACca8KWPxNMNyRINf8vE1gEdyRroQuBC9KnUD6zGnZAkdcGzDw8Kai5EDg","token_type":"Bearer"}},"auth":{"isAuth":true,"data":{"user":{"issued_to":"679953635351-fqa3ei4a09qc1qah3hkpj2f1v1hu6u8g.apps.googleusercontent.com","audience":"679953635351-fqa3ei4a09qc1qah3hkpj2f1v1hu6u8g.apps.googleusercontent.com","user_id":"114196698276793299467","scope":"https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile","expires_in":3600,"email":"am@adnry.com","verified_email":true,"access_type":"online"}}}}
+2015-06-07 06:09:45.012 adnbp[78831:35604437] webView:didFailLoadWithError - -1004: Could not connect to the server.
+2015-06-07 06:09:45.347 adnbp[78831:35604437] saving: {"public":{"data":{"lastUserName":"am@adnry.com","access_token":"ya29.iwEA8Lwfmhs9k_RIgcOFACca8KWPxNMNyRINf8vE1gEdyRroQuBC9KnUD6zGnZAkdcGzDw8Kai5EDg","token_type":"Bearer"}},"auth":{"isAuth":true,"data":{"user":{"issued_to":"679953635351-fqa3ei4a09qc1qah3hkpj2f1v1hu6u8g.apps.googleusercontent.com","audience":"679953635351-fqa3ei4a09qc1qah3hkpj2f1v1hu6u8g.apps.googleusercontent.com","user_id":"114196698276793299467","scope":"https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile","expires_in":3599,"email":"am@adnry.com","verified_email":true,"access_type":"online"}}}}
+2015-06-07 07:31:49.270 adnbp[80118:36006949] Apache Cordova native platform version 3.8.0 is starting.
+2015-06-07 07:31:49.271 adnbp[80118:36006949] Multi-tasking -> Device: YES, App: YES
+2015-06-07 07:31:49.272 adnbp[80118:36006949] Unlimited access to network resources
+2015-06-07 07:31:49.335 adnbp[80118:36006949] [CDVTimer][keyboard] 0.048041ms
+2015-06-07 07:31:49.362 adnbp[80118:36006949] [CDVTimer][splashscreen] 26.822031ms
+2015-06-07 07:31:49.362 adnbp[80118:36006949] [CDVTimer][TotalPluginStartup] 27.116954ms
+2015-06-07 07:31:49.417 adnbp[80118:36006949] Resetting plugins due to page load.
+2015-06-07 07:31:49.540 adnbp[80118:36006949] Finished load of: file:///Users/adrianmm/Library/Developer/CoreSimulator/Devices/DE12D5B5-89F0-4589-B88B-B92FFCFF3900/data/Containers/Bundle/Application/1F42CC91-AC21-4A09-96C5-0D86FCEF538E/adnbp.app/www/index.html#/home/login
+2015-06-07 07:31:50.281 adnbp[80118:36006949] loading app.intro
+2015-06-07 07:31:50.281 adnbp[80118:36006949] loading app.config
+2015-06-07 07:31:50.281 adnbp[80118:36006949] Menu reloaded
+2015-06-07 07:31:54.854 adnbp[80118:36006949] saving: {"public":{"data":{"lastUserName":"am@adnry.com","access_token":"ya29.iwEA8Lwfmhs9k_RIgcOFACca8KWPxNMNyRINf8vE1gEdyRroQuBC9KnUD6zGnZAkdcGzDw8Kai5EDg","token_type":"Bearer"}},"auth":{"isAuth":false,"data":{}}}
+2015-06-07 07:31:56.420 adnbp[80118:36006949] Setting the WebView's frame to {{0, 0}, {375, 623}}
+2015-06-07 07:31:56.424 adnbp[80118:36006949] THREAD WARNING: ['InAppBrowser'] took '55.629150' ms. Plugin should use a background thread.
+2015-06-07 07:32:11.336 adnbp[80118:36006949] webView:didFailLoadWithError - -1004: Could not connect to the server.
+2015-06-07 07:32:11.338 adnbp[80118:36006949] Trying to auth with Google
+2015-06-07 07:32:12.055 adnbp[80118:36006949] saving: {"public":{"data":{"lastUserName":"am@adnry.com","access_token":"ya29.iwEA8Lwfmhs9k_RIgcOFACca8KWPxNMNyRINf8vE1gEdyRroQuBC9KnUD6zGnZAkdcGzDw8Kai5EDg","token_type":"Bearer"}},"auth":{"isAuth":true,"data":{"user":{"token":"1dffb251b9004d8e249c12bb29983348_e38ac27218fc4385cf18ea6360544647c31affb5","user_id":"1_1","user_uid":"am@adnry.com","org_id":"1","avatar":"https://lh3.googleusercontent.com/-yEs3rKn_qk0/AAAAAAAAAAI/AAAAAAAAAk8/U7TDdmuxYo0/photo.jpg","name":"Adrian Martinez","email":"am@adnry.com","fingerprint":{"ip":"87.218.55.26","user_agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 8_3 like Mac OS X) AppleWebKit/600.1.4 (KHTML, like Gecko) Mobile/12F69 (2056453648)","http_referer":"cloud.adnbp.com","host":"cloud.adnbp.com","software":"Google App Engine/1.9.21","hash":"e38ac27218fc4385cf18ea6360544647c31affb5","time":"20150607073211","script":"/api/cf_credentials/signin"}}}}}
+2015-06-07 07:32:12.481 adnbp[80118:36006949] Menu reloaded
+2015-06-07 07:32:29.624 adnbp[80118:36006949] saving: {"public":{"data":{"lastUserName":"am@adnry.com","access_token":"ya29.iwEA8Lwfmhs9k_RIgcOFACca8KWPxNMNyRINf8vE1gEdyRroQuBC9KnUD6zGnZAkdcGzDw8Kai5EDg","token_type":"Bearer"}},"auth":{"isAuth":false,"data":{}}}

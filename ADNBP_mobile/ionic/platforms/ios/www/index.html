@@ -15,6 +15,7 @@
     <script src="cordova.js"></script>
     <script src="lib/ionic/js/ionic.bundle.js"></script>
     <script src="js/ng-cordova.min.js"></script>
+    <script src="js/ng-cordova-oauth.min.js"></script>
 
     <script src="js/app.js"></script>
 	<script src="js/services.js"></script>
@@ -23,48 +24,7 @@
     <script src="js/controller-login.js"></script>
     
     <script>
-    // - See more at: http://techiedreams.com/facebook-and-google-oauth-with-ionic-and-angularjs/#sthash.A55Zieev.dpuf
-        
-        // Facebbok OAuth init
-            window.fbAsyncInit = function () {
-                FB.init({
-                    appId: '1529225140628860', // Replace the App ID with yours
-                    status: true, // check login status
-                    cookie: true, // enable cookies to allow the server to access the session
-                    xfbml: true  // parse XFBML
-                });
-            };
- 
-            // Load the SDK asynchronously
-            (function (d) {
-                var js, id = 'facebook-jssdk', ref = d.getElementsByTagName('script')[0];
-                if (d.getElementById(id)) {
-                    return;
-                }
-                js = d.createElement('script');
-                js.id = id;
-                js.async = true;
-                js.src = "//connect.facebook.net/en_US/all.js";
-                ref.parentNode.insertBefore(js, ref);
-            }(document));
-            // Facebbok OAuth init - END
-	    
-        // Google OAuth Init
-        (function () {
-            var po = document.createElement('script');
-            po.type = 'text/javascript';
-            po.async = true;
-            po.src = 'https://apis.google.com/js/client.js?onload=onLoadCallback';
-            var s = document.getElementsByTagName('script')[0];
-                s.parentNode.insertBefore(po, s);
-            })();
- 
-            function onLoadCallback() {
-                // Replace the API key with yours
-            gapi.client.setApiKey('AIzaSyBuz7DGIFzfMM3tFBKUl5S6t0rozS1ypl0');
-            gapi.client.load('plus', 'v1', function () {
-            });
-        }
+    
         document.addEventListener("deviceready", onDeviceReady, false);
 		function onDeviceReady() {
 		    window.open = cordova.InAppBrowser.open;
