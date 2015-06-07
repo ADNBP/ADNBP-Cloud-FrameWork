@@ -54,7 +54,7 @@ app.controller('LoginCtrl',function($scope,$state,$http,$ionicPopup, $cordovaOau
 			// OK
 			.then(function(ret) {
 			  ADNBP.signIn(ret.email,ret);
-			  $http.defaults.headers.common['X-CloudFramWork-AuthToken'] = ret.token;
+			  $http.defaults.headers.common['X-CloudFrameWork-AuthToken'] = ret.token;
 			  semaphore = false;
 			  $state.go('app.home');
 	          $scope.reloadMenu();

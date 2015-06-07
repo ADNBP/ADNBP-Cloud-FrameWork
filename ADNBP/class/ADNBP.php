@@ -166,11 +166,11 @@ if (!defined("_ADNBP_CLASS_")) {
 			}
 			__p('LOADED CONFIGS: ', $_configs); unset($_configs);
 			
-			// Check if the Auth comes from X-CloudFramWork-AuthToken and there is a hacking.
-			if(strlen($this->getHeader('X-CloudFramWork-AuthToken'))) {
-			    if($this->isAuth() && $this->getAuthUserData('token')!=$this->getHeader('X-CloudFramWork-AuthToken')) {
+			// Check if the Auth comes from X-CloudFrameWork-AuthToken and there is a hacking.
+			if(strlen($this->getHeader('X-CloudFrameWork-AuthToken'))) {
+			    if($this->isAuth() && $this->getAuthUserData('token')!=$this->getHeader('X-CloudFrameWork-AuthToken')) {
 			            
-			        $this->sendLog('access','Hacking','X-CloudFramWork-AuthToken','Ilegal token '.$this->getHeader('X-CloudFramWork-AuthToken')
+			        $this->sendLog('access','Hacking','X-CloudFrameWork-AuthToken','Ilegal token '.$this->getHeader('X-CloudFrameWork-AuthToken')
 			            ,'Error comparing with internal token: '.$this->getAuthUserData('token').' for user: '.$this->getAuthUserData('email'),$this->getConf('CloudServiceLogEmail'));
 			       
                     session_destroy();
@@ -241,17 +241,17 @@ if (!defined("_ADNBP_CLASS_")) {
         function sessionStart($sessionId='') {
             
             // Init session (generally by cookies)
-            if(!strlen($this->getHeader('X-CloudFramWork-AuthToken'))) {
+            if(!strlen($this->getHeader('X-CloudFrameWork-AuthToken'))) {
                 if (strlen($sessionId))
                     session_id($sessionId);
                 session_start();
                 
-            // Init session by X-CloudFramWork-AuthToken
+            // Init session by X-CloudFrameWork-AuthToken
             } else {
                 $securityFailed = false;
-                // Checking security based in fingerprint. X-CloudFramWork-AuthToken
-                if(strlen($this->getHeader('X-CloudFramWork-AuthToken'))) {
-                   list($sessionId,$hash) = explode("_",$this->getHeader('X-CloudFramWork-AuthToken'),2);
+                // Checking security based in fingerprint. X-CloudFrameWork-AuthToken
+                if(strlen($this->getHeader('X-CloudFrameWork-AuthToken'))) {
+                   list($sessionId,$hash) = explode("_",$this->getHeader('X-CloudFrameWork-AuthToken'),2);
                    $fp = (object) $this->getRequestFingerPrint();
                    
                    // Security Attack from other computer
