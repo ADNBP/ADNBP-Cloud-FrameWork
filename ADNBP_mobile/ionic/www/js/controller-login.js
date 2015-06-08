@@ -72,6 +72,7 @@ app.controller('LoginCtrl',function($scope,$state,$http,$ionicPopup, $cordovaOau
 
 	if($scope.userData.auth.isAuth) {
 		$state.go('app.home');
+		$http.defaults.headers.common['X-CloudFrameWork-AuthToken'] = $scope.userData.auth.data.user.token;
 	    $scope.reloadMenu();
 	}
 

@@ -3,7 +3,7 @@
 // angular.module is a global place for creating, registering and retrieving Angular modules
 // 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
 // the 2nd parameter is an array of 'requires'
-var app = angular.module('adnbp', ['ionic']);
+var app = angular.module('adnbp', ['ionic','ngCordova','ngCordovaOauth']);
 
 app.run(function($ionicPlatform) {
   $ionicPlatform.ready(function() {
@@ -15,6 +15,7 @@ app.run(function($ionicPlatform) {
     if(window.StatusBar) {
       StatusBar.styleDefault();
     }
+    
   });
 });
 
@@ -26,4 +27,10 @@ app.run(function($rootScope, $ionicLoading) {
   $rootScope.$on('loading:hide', function() {
     $ionicLoading.hide();
   });
+});
+
+app.run(function($rootScope, $state) {
+ 	$rootScope.$on('$stateChangeStart', function (event, next, current) {
+ 		// alert(next.name);	
+	});
 });

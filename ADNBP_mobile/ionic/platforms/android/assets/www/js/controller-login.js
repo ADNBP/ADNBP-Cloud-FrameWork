@@ -1,42 +1,60 @@
 // LOGIN
-app.controller('LoginCtrl',function($scope,$state, $http,$ionicPopup, AuthService,ADNBP) {
+app.controller('LoginCtrl',function($scope,$state,$http,$ionicPopup, $cordovaOauth,AuthService,ADNBP) {
 	
 	$scope.title = 'Template login.html';
 	$scope.userData = ADNBP.userData;
-	$scope.user = {username:ADNBP.getKey('lastUserName'),password:""};
+	$scope.user = {user:ADNBP.getKey('lastUserName'),password:"",provider:"",token:""};
 	var semaphore = false;
 	
-	$scope.googleLogin = function () {
-		$state.go('app.home');
-	};
-	
-	$scope.check = function() {
-		
-		//$http.defaults.headers.common.X_CF_SESSION_ID = ADNBP.getKey('session_id');
-		
-		$http.get('http://localhost:9080/api/cf_credentials').
-		  success(function(data, status, headers, config) {
-		  	console.log(data);
-		  }).
-		  error(function(data, status, headers, config) {
-		    // called asynchronously if an error occurs
-		    // or server returns response with an error status.
-		  });
-	};
-	
-	$scope.signIn = function (data) {
+	$scope.googleLogin = function() {
 		if(semaphore) return false;
-		ADNBP.signOut();
-		if(data.username !='') {
-			console.log('Trying to auth '+data.username);
-			ADNBP.setKey('lastUserName',data.username);
-			
+		semaphore = true;
+		$cordovaOauth.google("679953635351-fqa3ei4a09qc1qah3hkpj2f1v1hu6u8g.apps.googleusercontent.com", ["email","profile"]).then(function(result) {
+		   $scope.user.provider = 'Google';
+		   $scope.user.token = result.access_token;
+		   $scope.user.user = ""; 
+		   $scope.user.password = ""; 
+		   semaphore = false;
+		   $scope.signIn();
+		}, function(error) {
+		   semaphore = false;
+		   var alertPopup = $ionicPopup.alert({
+			        title: 'Google auth canceled!',
+			        template: 'Try again'
+			});
+		    console.log("Error -> " + error);
+		});
+	};
+	
+	$scope.userPasswordLogin = function() {
+		if(semaphore) return false;
+		if($scope.user.user !='' && $scope.user.password != '') {
+		   $scope.user.provider = '';
+		   $scope.user.token = '';
+		   $scope.signIn();
+		} else {
+			var alertPopup = $ionicPopup.alert({
+			        title: 'Signin missing fields',
+			        template: 'Please complet user and password.'
+			     });
+		}
+	};
+	
+	$scope.signIn = function () {
+		if(semaphore) return false;
+		if($scope.user.user !='' || $scope.user.provider != '') {
+			ADNBP.signOut();
+			if($scope.user.user !='') {
+				console.log('Trying to auth with '+$scope.user.user);
+				ADNBP.setKey('lastUserName',$scope.user.user);
+			} else
+				console.log('Trying to auth with '+$scope.user.provider);
 			semaphore = true;
-			AuthService.authUser(data.username,data.password)
+			AuthService.authUser($scope.user)
 			// OK
 			.then(function(ret) {
-			  ADNBP.signIn(data.username,ret);
-			  $http.defaults.headers.common['X-CloudFramWork-AuthToken'] = ret.token;
+			  ADNBP.signIn(ret.email,ret);
+			  $http.defaults.headers.common['X-CloudFrameWork-AuthToken'] = ret.token;
 			  semaphore = false;
 			  $state.go('app.home');
 	          $scope.reloadMenu();
@@ -54,7 +72,11 @@ app.controller('LoginCtrl',function($scope,$state, $http,$ionicPopup, AuthServic
 
 	if($scope.userData.auth.isAuth) {
 		$state.go('app.home');
+		$http.defaults.headers.common['X-CloudFrameWork-AuthToken'] = $scope.userData.auth.data.user.token;
 	    $scope.reloadMenu();
 	}
+
+
+
 
 });

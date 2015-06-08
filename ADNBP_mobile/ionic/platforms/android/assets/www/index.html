@@ -15,12 +15,22 @@
     <script src="cordova.js"></script>
     <script src="lib/ionic/js/ionic.bundle.js"></script>
     <script src="js/ng-cordova.min.js"></script>
+    <script src="js/ng-cordova-oauth.min.js"></script>
 
     <script src="js/app.js"></script>
 	<script src="js/services.js"></script>
     <script src="js/config.js"></script>
     <script src="js/controllers.js"></script>
     <script src="js/controller-login.js"></script>
+    
+    <script>
+    
+        document.addEventListener("deviceready", onDeviceReady, false);
+		function onDeviceReady() {
+		    window.open = cordova.InAppBrowser.open;
+		}
+    </script>
+
     
  
 

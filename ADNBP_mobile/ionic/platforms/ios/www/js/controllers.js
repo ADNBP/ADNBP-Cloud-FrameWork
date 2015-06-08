@@ -1,19 +1,5 @@
-
-
-// http://blog.ionic.io/oauth-ionic-ngcordova/
-app.controller("OauthExample", function($scope, $cordovaOauth) {
-    $scope.googleLogin = function() {
-        $cordovaOauth.google("CLIENT_ID_HERE", ["https://www.googleapis.com/auth/urlshortener", "https://www.googleapis.com/auth/userinfo.email"]).then(function(result) {
-            console.log(JSON.stringify(result));
-        }, function(error) {
-            console.log(error);
-        });
-    };
-
-});
-
 // APP and Main menu
-app.controller('AppCtrl', function($scope, $state,$ionicModal,$ionicPopup, $timeout,AuthService,ADNBP) {
+app.controller('AppCtrl', function($scope, $state,$http, $window,$ionicModal,$ionicPopup, $timeout,AuthService,ADNBP) {
   var semaphore = {reloadMenu:false};
   $scope.userData = ADNBP.userData;
   $scope.title = 'Menu';
@@ -60,9 +46,18 @@ app.controller('AppCtrl', function($scope, $state,$ionicModal,$ionicPopup, $time
   	ADNBP.signOut();
   	AuthService.logOut();
   	$scope.setMenuItems([]);
-  	$state.go('home.login');
   	$scope.$apply;
+  	$state.go('home.login');
+  	$window.location.reload();
   };
+  
+  // If reload the page check if I am auth and keep the Auth Token
+  if(!$scope.userData.auth.isAuth) {
+		$state.go('home.login');
+  } else {
+		$http.defaults.headers.common['X-CloudFrameWork-AuthToken'] = $scope.userData.auth.data.user.token;
+	    $scope.reloadMenu();
+  }
   /*
   // Form data for the login modal
   $scope.loginData = {};
@@ -98,6 +93,33 @@ app.controller('AppCtrl', function($scope, $state,$ionicModal,$ionicPopup, $time
 
 });
 
+app.controller('listCtrl',function($scope,$state,$ionicPopup,ADNBP) {
+	console.log($state.current);
+	$scope.data = $state.current.data;
+    $scope.loadItems = function() {
+    	if(typeof $state.current.data.apiurl == "undefined") return false;
+    	ADNBP.apiGet($state.current.data.apiurl)
+		.then(function(data) {
+			$scope.data.items = data;
+	        console.log('Loaded: '+ $state.current.data.apiurl);
+	        console.log(data);
+		}, 
+	    // ERR
+	    function(err) {
+	    	  console.log('Error reading '+ $state.current.data.apiurl);
+		      var alertPopup = $ionicPopup.alert({
+		        title: 'Reading api Failed!',
+		        template: 'Please check '+ $state.current.data.apiurl
+		      });
+	    });
+    };
+    
+    $scope.loadItems();
+});
+
+app.controller('listItemCtrl',function($scope,$state,$stateParams) {
+});
+	
 // My OwnData
 app.controller('MydataCtrl', function($scope, $state,$ionicModal, $timeout,ADNBP) {
 	$scope.ADNBP = ADNBP;
@@ -118,8 +140,8 @@ app.controller('PlaylistsCtrl', function($scope) {
 app.controller('PlaylistCtrl', function($scope, $stateParams) {
 });
 
-app.controller('Config', function($scope,$state,AuthService) {
-	
+app.controller('Config', function($scope,$state,ADNBP) {
+  $scope.userData = ADNBP.userData;
   if(!$scope.userData.auth.isAuth) $state.go('home.login');
 
 

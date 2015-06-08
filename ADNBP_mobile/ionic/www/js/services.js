@@ -1,5 +1,5 @@
 // Common models for all controllers
-app.factory('ADNBP', function($rootScope) {
+app.factory('ADNBP', function($rootScope,$q,$http) {
 	// window.localStorage.removeItem('ADBP_UserData');
 	var userData = window.localStorage.getItem('ADBP_UserData');
 	if(userData !== null) userData = JSON.parse(userData);
@@ -11,6 +11,34 @@ app.factory('ADNBP', function($rootScope) {
 		console.log('saving: '+JSON.stringify(userData));
 		//$rootScope.$apply();
 	};
+	
+	var apiGet = function (apiUrl,params) {
+		return $q(function(resolve, reject) {
+			var req = {
+				 method: 'GET',
+				 withCredentials: true,
+				 url: apiUrl,
+				 data:  params
+				};
+			$rootScope.$broadcast('loading:show');	
+	    	$http(req).
+			  success(function(ret, status, headers, config) {
+			  	semaphore = false;  // Allow new petitions
+				$rootScope.$broadcast('loading:hide');
+				console.log(ret);
+				if(ret.success) {
+		        	resolve(ret.data);
+		        }else 
+		        	reject(ret);
+			  }).
+			  error(function(ret, status, headers, config) {
+			  	semaphore = false;
+			  	$rootScope.$broadcast('loading:hide');
+			  	reject(ret);
+			  });
+		 });
+	};
+	
 	return {
 		userData: userData,
 		setKey: function (key,data) { userData.public.data[key] = data; updateData(); }, 
@@ -25,7 +53,8 @@ app.factory('ADNBP', function($rootScope) {
 		signOut: function() {if(userData.auth.isAuth) { userData.auth.data = {}; userData.auth.isAuth = false ;updateData();}},
 		setAuthKey: function (key,data) { userData.auth.data[key] = data; userData.auth.isAuth = true ; updateData(); }, 
 		getAuthKey: function (key) { return (typeof userData.auth.data[key] == 'undefined' )?null:userData.auth.data[key];},
-		setMenu: function(menu) { userData.auth.data['menu']=menu;updateData();}
+		setMenu: function(menu) { userData.auth.data['menu']=menu;updateData();},
+		apiGet: apiGet
 	};
 });
 // Auth Services

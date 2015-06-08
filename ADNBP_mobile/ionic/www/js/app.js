@@ -33,4 +33,11 @@ app.run(function($rootScope, $state) {
  	$rootScope.$on('$stateChangeStart', function (event, next, current) {
  		// alert(next.name);	
 	});
+	$rootScope.$on('$stateChangeSuccess',  function(event, toState, toParams, fromState, fromParams){ 
+		// console.log(toState);
+		/*
+		if(typeof $scope.loadItems != "undefined")
+			$scope.loadItems();
+		*/
+	});
 });
