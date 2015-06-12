@@ -174,12 +174,19 @@ if (!defined ("_RESTfull_CLASS_") ) {
 			
 		}
 		
-		function setReturnResponse($value) {
-			 $this->returnData = $value; 
+		function setReturnResponse($response) {
+			 $this->returnData = $response; 
 		}
+        function updateReturnResponse($response) {
+            if(is_array($this->returnData))
+            foreach ($this->returnData as $key => $value) {
+                if(!isset($response[$key])) $response[$key] = $value;
+            }
+            $this->returnData = $response; 
+        }
 
-		function setReturnData($value) {
-			 $this->returnData['data'] = $value; 
+		function setReturnData($data) {
+			 $this->returnData['data'] = $data; 
 		}
 		function addReturnData($value) {
 			 if(!isset($this->returnData['data'])) $this->setReturnData($value);
