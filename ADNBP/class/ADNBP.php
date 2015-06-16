@@ -34,7 +34,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
 	class ADNBP {
 
-		var $_version = "2015_Apr_18";
+		var $_version = "2015_Jun_15";
 		var $_conf = array();
 		var $_menu = array();
 		var $_lang = "en";
