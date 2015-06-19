@@ -11,7 +11,7 @@ if(!$api->error)
 
 // Detecting extra security
 if(!$api->error && strlen($this->getHeader('X-CLOUDFRAMEWORK-SECURITY'))) 
-	if(!$this->checkCloudFrameWorkSecurity('test',3600))  $api->setError($this->getLog(),401);
+	if(!$this->checkCloudFrameWorkSecurity(3600,'test'))  $api->setError($this->getLog(),401);
  
 
  // Auth privileges for api/test/checkauth

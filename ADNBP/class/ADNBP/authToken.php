@@ -28,6 +28,7 @@ switch ($command) {
 					} elseif($this->getAuthUserData('tokenData')->hash_fingerprint != $_hasFingerPrint) {
 							$this->addLog("Fingerprint doesn't match. Security violation. This call will generate security protocol to evaluate an attack.");
 					} else {
+                        
 						return(true);
 					}
 					$this->setAuth(false);

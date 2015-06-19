@@ -815,7 +815,7 @@ if (!defined("_ADNBP_CLASS_")) {
 		}
 
 		// Check checkCloudFrameWorkSecurity
-		function checkCloudFrameWorkSecurity($id='',$maxSeconds=0,$secret='') {
+		function checkCloudFrameWorkSecurity($maxSeconds=0,$id='',$secret='') {
 			if(!strlen($this->getHeader('X-CLOUDFRAMEWORK-SECURITY'))) 
 				$this->addLog( 'X-CLOUDFRAMEWORK-SECURITY missing.');
 			else {
@@ -848,7 +848,9 @@ if (!defined("_ADNBP_CLASS_")) {
 					} elseif($maxSeconds >0 && $maxSeconds <= $secs) {
 						$this->addLog('Security String has reached maxtime: '.$maxSeconds.' seconds');
 					} else {
-						return(true);
+					    $secArr['SECURITY-ID'] = $_id;
+                        $secArr['SECURITY-EXPIRATION'] = ($maxSeconds)?$secs:$maxSeconds;
+						return($secArr);
 					}
 				}
 			}
