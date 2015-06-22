@@ -3,19 +3,34 @@
 // You have to look in GoogleAppEngineLauncher where is the API Url if you want to work in local
 // The credentials has been created in the https://console.developers.google.com/project/apps~{dataset-id}/apiui/credential 
 
-
 $google_api_config = array(
   'namespace' => 'adnbp',
   'application-id' => $this->getConf("GoogleCloudProjectName"),
   'service-account-name' => $this->getConf("ServiceAccountEmailAddress"),
-  'private-key' => is_file($this->_webapp.'/config/key.p12')?file_get_contents($this->_webapp.'/config/key.p12'):'',
+  'private-key' => is_file($this->getConf("GoogleCloudPrivateKey"))?file_get_contents($this->getConf("GoogleCloudPrivateKey")):'',
   'dataset-id' => $this->getConf("GoogleCloudProjectId")
 );
+
+if(!strlen($google_api_config['private-key'])) die('private-key missing');
+if(!strlen($google_api_config['dataset-id'])) die('dataset-id missing');
+if(!strlen($google_api_config['service-account-name'])) die('service-account-name missing');
+
+
+$this->loadClass("Google/Client");
+$this->loadClass("io/gds/Gateway");
+$obj_client = GDS\Gateway::createGoogleClient($this->getConf("GoogleCloudProjectName"), $this->getConf("ServiceAccountEmailAddress"), $this->getConf("GoogleCloudPrivateKey"));
+
+//$obj_client = GDS\Gateway::createGoogleClient(APP_NAME, ACCOUNT_NAME, KEY_FILE);
+
+_printe('end');
+
+
+
+
 
 $this->loadClass("io/DatastoreService");
 
 //$ds = new DatastoreService($google_api_config);
-
 
 $this->loadClass("io/DatastoreService");
 

@@ -429,12 +429,15 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 
 
 		function getSecuredSqlString($ret) {
-			$ret = str_ireplace("delete ", '', $ret);			
-			$ret = str_ireplace(";", '', $ret);			
-			$ret = str_ireplace("insert ", '', $ret);
-			$ret = str_ireplace("from  ", '', $ret);
-			$ret = str_ireplace("replace  ", '', $ret);
-			$ret = str_ireplace("truncate  ", '', $ret);
+		    if(strlen($ret)) {
+    			$ret = str_ireplace("delete ", '', $ret);			
+    			$ret = str_ireplace(";", '', $ret);			
+    			$ret = str_ireplace("insert ", '', $ret);
+    			$ret = str_ireplace("from ", '', $ret);
+    			$ret = str_ireplace("replace ", '', $ret);
+    			$ret = str_ireplace("truncate ", '', $ret);
+                $ret = str_ireplace("drop ", '', $ret);
+			}
 			return($ret);
 						
 		}
@@ -598,7 +601,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                     $tables[$table]['updateWhereValues'][] = $data[$field];
                 }
 				
-                
+                // SELECT WHERE CONSTRUCTION
                 if($data[$field] !='%') {
                     if($data[$field]=="_empty_") {
                         $tables[$table]['selectWhere'] .= $and." ($field IS NULL OR LENGTH($field)=0) ";

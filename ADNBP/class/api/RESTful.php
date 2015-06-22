@@ -24,6 +24,7 @@ if (!defined ("_RESTfull_CLASS_") ) {
 		
 		var $service ='';
 		var $serviceParam ='';
+        var $org_id='';
         
         function RESTful ($apiUrl='/api') {
         	
@@ -232,7 +233,28 @@ if (!defined ("_RESTfull_CLASS_") ) {
 	    	}
 			return($ret);
 		}	
-	
+	    
+	    function checkCloudFrameWorkSecurity($time=0,$id='') {
+	        global $adnbp;
+	        $ret = false;
+	        $info = $adnbp->checkCloudFrameWorkSecurity($time); // Max. 10 min for the Security Token and return $this->getConf('CLOUDFRAMEWORK-ID-'.$id);
+            if($info===false) $this->setError($adnbp->getLog(),401);
+            else {
+                $ret=true;
+                $response['SECURITY-ID'] = $info['SECURITY-ID'];
+                $response['SECURITY-EXPIRATION'] = ($info['SECURITY-EXPIRATION'])?round($info['SECURITY-EXPIRATION']).' secs':'none';
+                $this->setReturnResponse($response);
+            }
+            return $ret;
+	    }
+        function getCloudFrameWorkSecurityInfo() {
+            global $adnbp;
+            if(isset($this->returnData['SECURITY-ID'])) {
+                return $adnbp->getConf('CLOUDFRAMEWORK-ID-'.$this->returnData['SECURITY-ID']);
+            } else 
+                return false;
+        }
+	    
 
     } // Class
 }

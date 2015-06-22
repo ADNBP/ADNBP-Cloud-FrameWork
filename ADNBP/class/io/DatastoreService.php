@@ -6,8 +6,12 @@
 // 1.0-alpha paths
 set_include_path(get_include_path() . PATH_SEPARATOR . dirname(__FILE__).'/..');
 
+require_once 'Google/Service.php';
+require_once 'Google/Collection.php';
 require_once 'Google/Client.php';
 require_once 'Google/Auth/AssertionCredentials.php';
+require_once 'Google/Service/Resource.php';
+require_once 'Google/Service/Resource.php';
 require_once 'Google/Service/Datastore.php';
 
 final class DatastoreService {
@@ -94,7 +98,8 @@ final class DatastoreService {
     $client = new Google_Client();
     $client->setApplicationName($options['application-id']);
     // 1.0-alpha version
-    $client->setAssertionCredentials(new Google_Auth_AssertionCredentials(
+    _printe('ee');
+        $client->setAssertionCredentials(new Google_Auth_AssertionCredentials(
       $options['service-account-name'],
       self::$scopes,
       $options['private-key']));
