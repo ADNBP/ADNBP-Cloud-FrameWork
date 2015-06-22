@@ -18,9 +18,24 @@ if(!strlen($google_api_config['service-account-name'])) die('service-account-nam
 
 $this->loadClass("Google/Client");
 $this->loadClass("io/gds/Gateway");
-$obj_client = GDS\Gateway::createGoogleClient($this->getConf("GoogleCloudProjectName"), $this->getConf("ServiceAccountEmailAddress"), $this->getConf("GoogleCloudPrivateKey"));
+$this->loadClass("io/gds/Schema");
+$this->loadClass("io/gds/Entity");
+$this->loadClass("io/gds/Store");
+$this->loadClass("io/gds/Mapper");
 
+
+$obj_client = GDS\Gateway::createGoogleClient($this->getConf("GoogleCloudProjectName"), $this->getConf("ServiceAccountEmailAddress"), $this->getConf("GoogleCloudPrivateKey"));
+$obj_gateway = new GDS\Gateway($obj_client, 'Test_Book');
+$obj_book_store = new GDS\Store($obj_gateway, 'Book');
 //$obj_client = GDS\Gateway::createGoogleClient(APP_NAME, ACCOUNT_NAME, KEY_FILE);
+
+
+$obj_book = new GDS\Entity();
+$obj_book->title = 'Romeo and Juliet';
+$obj_book->author = 'William Shakespeare';
+$obj_book->isbn = '1840224339';
+// Write it to Datastore
+$obj_book_store->upsert($obj_book);
 
 _printe('end');
 
