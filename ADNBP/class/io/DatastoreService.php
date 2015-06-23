@@ -98,7 +98,6 @@ final class DatastoreService {
     $client = new Google_Client();
     $client->setApplicationName($options['application-id']);
     // 1.0-alpha version
-    _printe('ee');
         $client->setAssertionCredentials(new Google_Auth_AssertionCredentials(
       $options['service-account-name'],
       self::$scopes,

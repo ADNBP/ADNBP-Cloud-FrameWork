@@ -14,41 +14,63 @@ $google_api_config = array(
 if(!strlen($google_api_config['private-key'])) die('private-key missing');
 if(!strlen($google_api_config['dataset-id'])) die('dataset-id missing');
 if(!strlen($google_api_config['service-account-name'])) die('service-account-name missing');
+if(true) {
+
+    $this->loadClass("Google/Client");
+    $this->loadClass("io/gds/Gateway");
+    $this->loadClass("io/gds/Schema");
+    $this->loadClass("io/gds/Entity");
+    $this->loadClass("io/gds/Store");
+    $this->loadClass("io/gds/Mapper");
+    
+    
+    $obj_client = GDS\Gateway::createGoogleClient($this->getConf("GoogleCloudProjectId"), $this->getConf("ServiceAccountEmailAddress"), $this->getConf("GoogleCloudPrivateKey"));
+    $obj_gateway = new GDS\Gateway($obj_client,$this->getConf("GoogleCloudProjectId"),'adnbp' );
+    
+    
+    $obj_schema = (new GDS\Schema('Logs'))
+       ->addInteger('DirectoryOrganization_Id')
+       ->addString('App')
+       ->addString('Cat')
+       ->addString('Subcat')
+       ->addString('Title')
+       ->addDatetime('DateTime')
+       ->addString('Action')
+       ->addString('Info',false)
+       ->addString('IP')
+       ->addString('FingerPrint')
+              ;
+   $obj_log_store = new GDS\Store($obj_gateway, $obj_schema);
+    
+    $obj_log = new GDS\Entity();
+    $obj_log->DirectoryOrganization_Id = 1;
+    $obj_log->App = $this->url['host'];
+    $obj_log->Cat = 'TESTING';
+    $obj_log->Subcat = $this->url['url'];
+    $obj_log->Title = 'Manual insert for test';
+    $obj_log->DateTime = new DateTime();
+    $obj_log->Action = 'insert';
+    $obj_log->Info = 'Testing data store';
+    $obj_log->IP = $this->_ip;
+    $obj_log->FingerPrint = json_encode($this->getRequestFingerPrint());
+            
+        // Write it to Datastore
+    $obj_log_store->upsert($obj_log);
+    _print( $obj_log_store->fetchAll());
+    
+    /*
+    $obj_store->fetchOne();     // Gets the first book
+    $obj_store->fetchAll();     // Gets all books
+    $obj_store->fetchPage(10);  // Gets the first 10 books
+    */
+    
+    _printe('end');
 
 
-$this->loadClass("Google/Client");
-$this->loadClass("io/gds/Gateway");
-$this->loadClass("io/gds/Schema");
-$this->loadClass("io/gds/Entity");
-$this->loadClass("io/gds/Store");
-$this->loadClass("io/gds/Mapper");
-
-
-$obj_client = GDS\Gateway::createGoogleClient($this->getConf("GoogleCloudProjectName"), $this->getConf("ServiceAccountEmailAddress"), $this->getConf("GoogleCloudPrivateKey"));
-$obj_gateway = new GDS\Gateway($obj_client, 'Test_Book');
-$obj_book_store = new GDS\Store($obj_gateway, 'Book');
-//$obj_client = GDS\Gateway::createGoogleClient(APP_NAME, ACCOUNT_NAME, KEY_FILE);
-
-
-$obj_book = new GDS\Entity();
-$obj_book->title = 'Romeo and Juliet';
-$obj_book->author = 'William Shakespeare';
-$obj_book->isbn = '1840224339';
-// Write it to Datastore
-$obj_book_store->upsert($obj_book);
-
-_printe('end');
-
-
-
+}
 
 
 $this->loadClass("io/DatastoreService");
-
-//$ds = new DatastoreService($google_api_config);
-
-$this->loadClass("io/DatastoreService");
-
 
 function create_entity() {
   $entity = new Google_Service_Datastore_Entity();
@@ -79,11 +101,15 @@ function create_test_request() {
 }
 if(strlen($google_api_config['private-key'])) {
         
+            
+        
     $output =  "Connected!\n\n";
+    
     DatastoreService::setInstance(new DatastoreService($google_api_config));
     try {
         // test the config and connectivity by creating a test entity, building
         // a commit request for that entity, and creating/updating it in the datastore
+        
         $req = create_test_request();
         DatastoreService::getInstance()->commit($req);
     }
@@ -95,6 +121,7 @@ if(strlen($google_api_config['private-key'])) {
 
 }
 
+_printe($output);
 $output .= file_get_contents(__FILE__);
 
 ?>
