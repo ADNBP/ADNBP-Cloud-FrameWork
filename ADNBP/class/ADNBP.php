@@ -841,7 +841,7 @@ if (!defined("_ADNBP_CLASS_")) {
 					}elseif(!strlen($_time) || !strlen($_token)) {
 						$this->addLog('wrong X-CLOUDFRAMEWORK-SECURITY format.');
 						// We allow an error of 2 min
-					} elseif($secs <120 ) {
+					} elseif($secs < -120 ) {
 						 $this->addLog('Bad microtime format. Negative value got: '.$secs.'. Check the clock of the client side.');
 					} elseif(strlen($id) && $id != $_id) {
 						$this->addLog($_id.' ID is not allowed');
