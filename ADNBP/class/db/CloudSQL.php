@@ -437,6 +437,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
     			$ret = str_ireplace("replace ", '', $ret);
     			$ret = str_ireplace("truncate ", '', $ret);
                 $ret = str_ireplace("drop ", '', $ret);
+                $ret = str_ireplace('[[', '', $ret);
 			}
 			return($ret);
 						
@@ -603,29 +604,56 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 				
                 // SELECT WHERE CONSTRUCTION
                 if($data[$field] !='%') {
+                    $_extra='';
                     if($data[$field]=="_empty_") {
                         $tables[$table]['selectWhere'] .= $and." ($field IS NULL OR LENGTH($field)=0) ";
                     } else if($data[$field]=="_noempty_") {
                         $tables[$table]['selectWhere'] .= $and." ($field IS NOT NULL AND LENGTH($field)>0) ";
                     } else {
-    					$joint = ' = ';
-    					$_selecWhereFieldError = false;
-    					if(strpos($data[$field], '%')!==false) $joint = ' LIKE ';
-    					else if($fieldTypes[$field]['isNum']) {
-    						if(!is_numeric(trim($data[$field]))) {
-    							$joint=' ';
-    						}
-    					}
+                        
+                        // Allow especial query values
+                        if(stripos($data[$field],'[[')===0) {
+                            list($joint,$data[$field]) = explode(' ', $data[$field],2);
+                            $joint = ' '.$this->getSecuredSqlString($joint).' ';
+                        } else {
+        					$joint = ' = ';
+        					$_selecWhereFieldError = false;
+        					if(strpos($data[$field], '%')!==false) $joint = ' LIKE ';
+        					else if($fieldTypes[$field]['isNum']) {
+        						if(!is_numeric(trim($data[$field]))) {
+        							$joint=' ';
+        						}
+        					}
+                        }
+                        
+                        // Evaluating OR values
+                        while(strpos($data[$field],' _or_')!== false) {
+                            list($orvalue,$data[$field]) = explode(' _or_', $data[$field],2);
+                            $tables[$table]['values'][] = $orvalue;
+                            $_extra.=$field.$joint.(($fieldTypes[$field]['isNum'])?"%s":"'%s'").' OR ';
+                            list($joint,$data[$field]) = explode(' ', $data[$field],2);
+                            if(!strlen($joint)) $joint=' = ';
+                            $joint = ' '.$this->getSecuredSqlString($joint).' '; 
+                        }
+                        
+                        // Evaluating AND values
+                        while(strpos($data[$field],' _and_')!== false) {
+                            list($orvalue,$data[$field]) = explode(' _and_', $data[$field],2);
+                            $tables[$table]['values'][] = $orvalue;
+                            $_extra.=$field.$joint.(($fieldTypes[$field]['isNum'])?"%s":"'%s'").' AND ';
+                            list($joint,$data[$field]) = explode(' ', $data[$field],2);
+                            if(!strlen($joint)) $joint=' = ';
+                            $joint = ' '.$this->getSecuredSqlString($joint).' '; 
+                        }
                         
                         if(!$_selecWhereFieldError ) {
-                            $tables[$table]['selectWhere'] .= $and.$field.$joint.(($fieldTypes[$field]['isNum'])?"%s":"'%s'");
+                            $tables[$table]['selectWhere'] .= $and.'('.$_extra.$field.$joint.(($fieldTypes[$field]['isNum'])?"%s":"'%s'").')';
                             $tables[$table]['values'][] = $data[$field];
                         }
                     }
                 }
             }
-			
-
+            //_printe($tables[$table]);
             foreach ($tables as $key => $value) {
                 switch ($action) {
                     case 'getFieldTypes':
