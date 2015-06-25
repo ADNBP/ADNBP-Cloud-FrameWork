@@ -568,9 +568,10 @@ if (!defined("_ADNBP_CLASS_")) {
 		 * Class Loader
 		 */
 		function loadClass($class) {
-            
 			if (is_file(dirname(__FILE__) . "/" . $class . ".php"))
 				include_once (dirname(__FILE__) . "/" . $class . ".php");
+            elseif (is_file($this->_webapp. "/class/" . $class . ".php"))
+                include_once ($this->_webapp . "/class/" . $class . ".php");
 			else
 				die("$class not found");
 		}
