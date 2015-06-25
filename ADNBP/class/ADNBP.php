@@ -88,7 +88,7 @@ if (!defined("_ADNBP_CLASS_")) {
                 
 			__p('session_start. Construct Class:'.__CLASS__,__FILE__);
 			// If the call is just to KeepSession
-			if (strpos($this -> _url, '/CloudFrameWorkService/keepSession') !== false) {
+			if (strpos($_SERVER['REQUEST_URI'], '/CloudFrameWorkService/keepSession') !== false) {
 				header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
 				header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // past date en el pasado
 				$bg = (isset($_GET['bg']) && strlen($_GET['bg'])) ? $_GET['bg'] : 'FFFFFF';
@@ -644,6 +644,7 @@ if (!defined("_ADNBP_CLASS_")) {
 					$options['http']['header'] .= 'Content-type: application/x-www-form-urlencoded' . "\r\n";
 				}
 			}
+			
 
 			// Build contents received in $data as an array
 			if(is_array($data))
@@ -1108,6 +1109,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			$str = str_replace('CURRENT_DATE', date('Y-m-d'), $str);
 			$str = str_replace('{DirectoryOrganization_Id}', $this -> getAuthUserData("currentOrganizationId"), $str);
 			$str = str_replace('{OrganizationsInGroupId}', (strlen($this -> getAuthUserData("currentOrganizationsInGroupId"))) ? $this -> getAuthUserData("currentOrganizationsInGroupId") : $this -> getAuthUserData("currentOrganizationId"), $str);
+            $str = str_replace('{organizations_scope}', (strlen($this -> getAuthUserData("organizations_scope"))) ? $this -> getAuthUserData("organizations_scope") : $this -> getAuthUserData("currentOrganizationId"), $str);
 			
             // Replaces getting info from  getAuthUserData
 			if(strpos($str, '{AuthUserData.')!==false) {
