@@ -841,8 +841,9 @@ if (!defined("_ADNBP_CLASS_")) {
 						$this->addLog('conf-var CLOUDFRAMEWORK-ID-'.$_id.' missing or it is not a righ CLOUDFRAMEWORK array.');
 					}elseif(!strlen($_time) || !strlen($_token)) {
 						$this->addLog('wrong X-CLOUDFRAMEWORK-SECURITY format.');
-					} elseif($secs <=0 ) {
-						 $this->addLog('Bad microtime format. Negative value got. Check the clock of the client side.');
+						// We allow an error of 2 min
+					} elseif($secs < -120 ) {
+						 $this->addLog('Bad microtime format. Negative value got: '.$secs.'. Check the clock of the client side.');
 					} elseif(strlen($id) && $id != $_id) {
 						$this->addLog($_id.' ID is not allowed');
 					}  elseif($this->getHeader('X-CLOUDFRAMEWORK-SECURITY') != $this->generateCloudFrameWorkSecurityString($_id,$_time,$secret)) {
