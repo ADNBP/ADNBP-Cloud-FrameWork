@@ -1450,6 +1450,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			$params['cat'] = $cat;
 			$params['subcat'] = $subcat;
 			$params['title'] = $title;
+            if(!is_string($text)) $text = json_encode($text);
 			$params['text'] = $text.((strlen($text))?"\n\n":'');
 			if($this -> error) $params['text'] .= "Errors: ".json_encode($this -> errorMsg)."\n\n";
 			if(count($this -> _log)) $params['text'] .= "Errors: ".json_encode($this -> errorMsg);
