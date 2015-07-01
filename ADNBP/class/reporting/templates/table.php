@@ -1,4 +1,5 @@
 <article class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+<?php if(!$simple) {?>
     <!-- Widget ID (each widget will need unique ID)-->
     <div class="jarviswidget jarviswidget-color-blueDark" id="wid-id-<?=$key?>" data-widget-editbutton="false">
         <!-- widget options:
@@ -29,13 +30,14 @@
     
             </div>
             <!-- end widget edit box -->
+<?php } ?>
     
             <!-- widget content -->
             <div class="widget-body">
                 <p><?=htmlentities($data->subtitle)?></p>
                 <div class="table-responsive">
                 
-                    <table class="table table-bordered">
+                    <table id="report-<?=$key?>" class="table table-striped table-bordered">
                         <thead>
                             <tr>
                                 <?php if(is_array($data->columns)) foreach ($data->columns as $key => $value) {?>
@@ -46,8 +48,19 @@
                         <tbody>
                             <?php if(is_array($data->rows)) foreach ($data->rows as $key => $value) {?>
                             <tr>
-                                <?php if($value) foreach ($value as $key2 => $value2) {?>
-                                <td><?=htmlentities($value2)?></td>    
+                                <?php if($value) foreach ($value as $key2 => $cell) {
+	                                	$align = $cell['align'];
+										if(!$align && (isset($cell['currency']))) $align='right';
+                                	?>
+                                <td <?=($align)?'class="text-'.$align.'"':''?>><?php
+                                	if(isset($cell['currency'])) $cell['value'] = $adnbp->numberFormat($cell['value'],2).' '.$cell['currency'];
+									// save echo
+									$cell['value'] =htmlentities($cell['value']);
+									if(isset($cell['bold'])) $cell['value'] = '<strong>'.$cell['value'].'</strong>';
+									if(isset($cell['small'])) $cell['value'] = '<small>'.$cell['value'].'</small>';
+									echo $cell['value'];
+									
+                                ?></td>
                                 <?php } ?>
                             </tr>
                             <?php } ?>
@@ -55,8 +68,10 @@
                     </table>
                     
                 </div>
+                
             </div>
             <!-- end widget content -->
+<?php if(!$simple) {?>
     
         </div>
         <!-- end widget div -->
@@ -65,5 +80,6 @@
     <!-- end widget -->
 
 
+<?php } ?>
 </article>
 <!-- WIDGET END -->

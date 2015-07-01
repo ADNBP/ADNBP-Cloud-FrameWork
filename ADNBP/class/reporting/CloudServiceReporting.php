@@ -18,6 +18,8 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
             
         }
         function output() {
+        	global $adnbp;
+			$_tables = false;
             ob_start();
             foreach ($this->data as $key => $data) {
                 $type = $data['type'];
@@ -25,9 +27,17 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                 if($type=='header') 
                     include __DIR__.'/templates/header.php';
                 elseif($type=='table') {
+                	$simple = false;
                     include __DIR__.'/templates/table.php';
+					$_tables = true;
+                }
+                elseif($type=='simpleTable') {
+                	$simple = true;
+                    include __DIR__.'/templates/table.php';
+					$_tables = true;
                 }
             }
+			if($_tables) include __DIR__.'/templates/tablejsbottom.php';
             return ob_get_clean();
 
         }
