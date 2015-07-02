@@ -603,6 +603,10 @@ if (!defined("_ADNBP_CLASS_")) {
 			}	
 			return($ret);
 		}
+        
+        function hash($value) {
+            return(hash('md5',$value));
+        }
 		
 		
 		/**
@@ -760,7 +764,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
 		function is($key,$params='') {
 			$ret = false;
-			switch ($key) {
+			switch (strtolower($key)) {
 				case 'development':
 					return(stripos($_SERVER['SERVER_SOFTWARE'], 'Development')!==false);
 					break;
