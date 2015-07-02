@@ -52,12 +52,13 @@
 	                                	$align = $cell['align'];
 										if(!$align && (isset($cell['currency']))) $align='right';
                                 	?>
-                                <td <?=($align)?'class="text-'.$align.'"':''?>><?php
+                                <td<?=($align)?' class="text-'.$align.'"':''?><?=($cell['anchor'])?' id="'.htmlentities($cell['anchor']).'"':''?>><?php
                                 	if(isset($cell['currency'])) $cell['value'] = $adnbp->numberFormat($cell['value'],2).' '.$cell['currency'];
 									// save echo
 									$cell['value'] =htmlentities($cell['value']);
 									if(isset($cell['bold'])) $cell['value'] = '<strong>'.$cell['value'].'</strong>';
 									if(isset($cell['small'])) $cell['value'] = '<small>'.$cell['value'].'</small>';
+                                    if(isset($cell['link'])) $cell['value'] = '<a href="'.htmlentities($cell['link']).'">'.$cell['value'].'</a>';
 									echo $cell['value'];
 									
                                 ?></td>
