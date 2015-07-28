@@ -84,18 +84,27 @@
             break;
         default:
 			// This allow to create own services in each WebServer
-            if(strlen($service) && is_file($this->_webapp."/logic/CloudFrameWorkService/".$service.".php"))
-                include_once $this->_webapp."/logic/CloudFrameWorkService/".$service.".php";
-            else {
+			$_found = false;
+            if(strlen($service)) {
+            	if(is_file($this->_webapp."/logic/CloudFrameWorkService/".$service.".php")) {
+            		$_found = true;
+                	include_once $this->_webapp."/logic/CloudFrameWorkService/".$service.".php";
+                } elseif(strlen($this->getConf("ExtraLogicPath")) && is_file($this->getConf("ExtraLogicPath")."/CloudFrameWorkService/".$service.".php")) {
+                	$_found = true;
+					include_once $this->getConf("ExtraLogicPath")."/CloudFrameWorkService/".$service.".php";
+                }
+            } 
+            
+            if(!$_found) {
+            	$this -> setConf("templateVarContent", "output");
+				$output = '<h1 align="center">Service not found.</h1>';
                 // Show the APIs of the portal
-                
-            	$this->setConf("notemplate",false);
-            	include_once $this->_rootpath."/ADNBP/logic/api/apiDoc.php";
-            	if(is_file($this->_webapp."/logic/api/apiDoc.php"))  include_once $this->_webapp."/logic/api/apiDoc.php";
-				$this->setConf("template","api.php");
+            	//$this->setConf("notemplate",false);
+            	//include_once $this->_rootpath."/ADNBP/logic/apiDoc.php";
+            	//if(is_file($this->_webapp."/logic/api/apiDoc.php"))  include_once $this->_webapp."/logic/api/apiDoc.php";
+				//$this->setConf("template","api.php");
 
             }
             break;
     }
-
 ?>

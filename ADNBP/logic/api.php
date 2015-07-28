@@ -50,7 +50,7 @@ if(!strlen($api->service)) {
     if(strlen($__includePath)) $ret['time']=$__p->data['init']['include_logic'][$__includePath]['time'];
 	
 	if(isset($api->formParams['debug'])) {
-		$ret['header'] = $api->getHeader();
+		$ret['header'] = $api->getResponseHeader();
 		$ret['session'] = session_id();
 		$ret['ip']=$this->_ip;
         $ret['user_agent']=($this->userAgent!=null)?$this->userAgent:$api->requestHeaders['User-Agent'];

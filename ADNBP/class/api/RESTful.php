@@ -151,8 +151,23 @@ if (!defined ("_RESTfull_CLASS_") ) {
 					break;
 			}
 		}
+		
+		function getRequestHeader($str) {
+            $str = strtoupper($str);
+            $str = str_replace('-', '_', $str);
+            return ((isset($_SERVER['HTTP_' . $str])) ? $_SERVER['HTTP_' . $str] : '');
+        }
+        function getResponseHeaders() {
+            $ret = array();
+            foreach ($_SERVER as $key => $value) if(strpos($key, 'HTTP_')===0) {
+                $ret[str_replace('HTTP_','', $key)] = $value;
+            }
+            return($ret);
+        }
+		
+		
 		function sendHeaders() {
-			$header = $this->getHeader();
+			$header = $this->getResponseHeader();
 			if(strlen($header)) header($header);
 			switch ($this->contentTypeReturn) {
 				case 'JSON':
@@ -200,7 +215,8 @@ if (!defined ("_RESTfull_CLASS_") ) {
 		
 		function getReturnCode() { return(($this->error)?$this->error:$this->ok); }
 		function setReturnCode($code) { $this->ok=$code; }
-		function getHeader() {
+		
+        function getResponseHeader() {
 			 switch ($this->getReturnCode()) {
 	            case 201:
 	                $ret = ("HTTP/1.0 201 Created");

@@ -88,7 +88,7 @@ if (!defined("_ADNBP_CLASS_")) {
                 
 			__p('session_start. Construct Class:'.__CLASS__,__FILE__);
 			// If the call is just to KeepSession
-			if (strpos($this -> _url, '/CloudFrameWorkService/keepSession') !== false) {
+			if (strpos($_SERVER['REQUEST_URI'], '/CloudFrameWorkService/keepSession') !== false) {
 				header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
 				header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // past date en el pasado
 				$bg = (isset($_GET['bg']) && strlen($_GET['bg'])) ? $_GET['bg'] : 'FFFFFF';
@@ -577,9 +577,10 @@ if (!defined("_ADNBP_CLASS_")) {
 		 * Class Loader
 		 */
 		function loadClass($class) {
-            
 			if (is_file(dirname(__FILE__) . "/" . $class . ".php"))
 				include_once (dirname(__FILE__) . "/" . $class . ".php");
+            elseif (is_file($this->_webapp. "/class/" . $class . ".php"))
+                include_once ($this->_webapp . "/class/" . $class . ".php");
 			else
 				die("$class not found");
 		}
@@ -611,6 +612,10 @@ if (!defined("_ADNBP_CLASS_")) {
 			}	
 			return($ret);
 		}
+        
+        function hash($value) {
+            return(hash('md5',$value));
+        }
 		
 		
 		/**
@@ -653,6 +658,7 @@ if (!defined("_ADNBP_CLASS_")) {
 					$options['http']['header'] .= 'Content-type: application/x-www-form-urlencoded' . "\r\n";
 				}
 			}
+			
 
 			// Build contents received in $data as an array
 			if(is_array($data))
@@ -767,7 +773,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
 		function is($key,$params='') {
 			$ret = false;
-			switch ($key) {
+			switch (strtolower($key)) {
 				case 'development':
 					return(stripos($_SERVER['SERVER_SOFTWARE'], 'Development')!==false);
 					break;
@@ -1115,6 +1121,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			$str = str_replace('CURRENT_DATE', date('Y-m-d'), $str);
 			$str = str_replace('{DirectoryOrganization_Id}', $this -> getAuthUserData("currentOrganizationId"), $str);
 			$str = str_replace('{OrganizationsInGroupId}', (strlen($this -> getAuthUserData("currentOrganizationsInGroupId"))) ? $this -> getAuthUserData("currentOrganizationsInGroupId") : $this -> getAuthUserData("currentOrganizationId"), $str);
+            $str = str_replace('{organizations_scope}', (strlen($this -> getAuthUserData("organizations_scope"))) ? $this -> getAuthUserData("organizations_scope") : $this -> getAuthUserData("currentOrganizationId"), $str);
 			
             // Replaces getting info from  getAuthUserData
 			if(strpos($str, '{AuthUserData.')!==false) {
@@ -1453,6 +1460,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			$params['cat'] = $cat;
 			$params['subcat'] = $subcat;
 			$params['title'] = $title;
+            if(!is_string($text)) $text = json_encode($text);
 			$params['text'] = $text.((strlen($text))?"\n\n":'');
 			if($this -> error) $params['text'] .= "Errors: ".json_encode($this -> errorMsg)."\n\n";
 			if(count($this -> _log)) $params['text'] .= "Errors: ".json_encode($this -> errorMsg);
