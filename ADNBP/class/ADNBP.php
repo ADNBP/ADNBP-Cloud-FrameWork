@@ -505,25 +505,34 @@ if (!defined("_ADNBP_CLASS_")) {
 			if (!strlen($_ip) || $_ip == 'REMOTE') $_ip = $this -> _ip;
 			if ($_ip == '::1' || $_ip == '127.0.0.1') $_ip = '';
 			if(strlen($_ip)) $_ip = 'ip='.$_ip;
-
+			// Patch to avoid 
 			__p('Calling getGeoPlugin('.$ip.')','http://www.geoplugin.net/php.gp?' . $_ip,'time');
-			return (unserialize(@file_get_contents('http://www.geoplugin.net/php.gp?' . $_ip)));
+			return (unserialize($this->getCloudServiceResponseCache('http://www.geoplugin.net/php.gp?' . $_ip)));
+		}
+		
+		function getGeoIP($ip = 'REMOTE') {
+			$_ip = $ip;
+			if (!strlen($_ip) || $_ip == 'REMOTE') $_ip = $this -> _ip;
+			if ($_ip == '::1' || $_ip == '127.0.0.1') $_ip = '';
+			if(strlen($_ip)) $_ip = 'ip='.$_ip;
+			__p('Calling getGeoIP('.$ip.')','https://1-dot-adnbp-first-web-site.appspot.com/api/cf_geoip?' . $_ip,'time');
+			$ret = json_decode($this->getCloudServiceResponseCache('https://1-dot-adnbp-first-web-site.appspot.com/api/cf_geoip?' . $_ip),true);
+			// Patch to avoid 
+			return ($ret['data']);
 		}
 
 		function readGeoData($ip = '', $reload = false) {
 			if(!strlen($ip)) $ip=$this->_ip;
 			if(!strlen($ip)) $ip='REMOTE';
 
-			if (isset($this -> _geoData['reloaded'][$ip]) || !$reload || $this -> _geoData === null || !is_array($this -> _geoData[$ip]))
+			if ($this -> _geoData === null || !is_array($this -> _geoData[$ip] || !isset($this -> _geoData['reloaded'][$ip]) || !$reload ))
 				$this -> _geoData[$ip] = $this -> getSessionVar('geoPluggin_' . $ip);
 			
-			
-			if (!isset($this -> _geoData['reloaded'][$ip]) &&
-			    ($reload || $this -> _geoData === null || !is_array($this -> _geoData[$ip])) || !count($this -> _geoData[$ip])) {
+			if ( ($reload || $this -> _geoData === null || !is_array($this -> _geoData[$ip])) || !count($this -> _geoData[$ip])) {
 				$this -> _geoData[$ip] = array();
 				$data['source_ip'] = $ip;
-				$data = array_merge($data,$this -> getGeoPlugin($ip));
-				__p('receiving getGeoPlugin('.$ip.')','','time');
+				$data = array_merge($data,$this -> getGeoIP($ip));
+				__p('receiving getGeoIP('.$ip.')','','time');
 				
 
 				foreach ($data as $key => $value) {
@@ -841,7 +850,7 @@ if (!defined("_ADNBP_CLASS_")) {
 					}elseif(!strlen($_time) || !strlen($_token)) {
 						$this->addLog('wrong X-CLOUDFRAMEWORK-SECURITY format.');
 						// We allow an error of 2 min
-					} elseif($secs < -120 ) {
+					} elseif(false && $secs < -120 ) {
 						 $this->addLog('Bad microtime format. Negative value got: '.$secs.'. Check the clock of the client side.');
 					} elseif(strlen($id) && $id != $_id) {
 						$this->addLog($_id.' ID is not allowed');
@@ -935,9 +944,6 @@ if (!defined("_ADNBP_CLASS_")) {
 			return ((isset($_SESSION['adnbpSessionVar_' . $var])) ? $_SESSION['adnbpSessionVar_' . $var] : null);
 		}
 
-		function getGeoPluginInfo($var) {
-			return ((isset($_country['geoplugin_' . $var])) ? $_country['geoplugin_' . $var] : false);
-		}
 
 		function getURLBasename() {
 			return (basename($this -> _url));
