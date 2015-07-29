@@ -510,13 +510,14 @@ if (!defined("_ADNBP_CLASS_")) {
 			return (unserialize($this->getCloudServiceResponseCache('http://www.geoplugin.net/php.gp?' . $_ip)));
 		}
 		
-		function getGeoIP($ip = 'REMOTE') {
+		function getGeoCityIP($ip = 'REMOTE') {
 			$_ip = $ip;
 			if (!strlen($_ip) || $_ip == 'REMOTE') $_ip = $this -> _ip;
 			if ($_ip == '::1' || $_ip == '127.0.0.1') $_ip = '';
 			if(strlen($_ip)) $_ip = 'ip='.$_ip;
-			__p('Calling getGeoIP('.$ip.')','https://1-dot-adnbp-first-web-site.appspot.com/api/cf_geoip?' . $_ip,'time');
-			$ret = json_decode($this->getCloudServiceResponseCache('https://1-dot-adnbp-first-web-site.appspot.com/api/cf_geoip?' . $_ip),true);
+			__p('Calling getGeoCityIP('.$ip.')','https://1-dot-adnbp-first-web-site.appspot.com/api/cf_geocityip?' . $_ip,'time');
+			
+			$ret = json_decode($this->getCloudServiceResponseCache('https://1-dot-adnbp-first-web-site.appspot.com/api/cf_geocityip?' . $_ip),true);
 			// Patch to avoid 
 			return ($ret['data']);
 		}
@@ -526,20 +527,15 @@ if (!defined("_ADNBP_CLASS_")) {
 			if(!strlen($ip)) $ip='REMOTE';
 
 			if ($this -> _geoData === null || !is_array($this -> _geoData[$ip] || !isset($this -> _geoData['reloaded'][$ip]) || !$reload ))
-				$this -> _geoData[$ip] = $this -> getSessionVar('geoPluggin_' . $ip);
+				$this -> _geoData[$ip] = $this -> getSessionVar('geoCityIPCF_' . $ip);
 			
 			if ( ($reload || $this -> _geoData === null || !is_array($this -> _geoData[$ip])) || !count($this -> _geoData[$ip])) {
 				$this -> _geoData[$ip] = array();
 				$data['source_ip'] = $ip;
-				$data = array_merge($data,$this -> getGeoIP($ip));
+				$data = array_merge($data,$this -> getGeoCityIP($ip));
+				$this -> _geoData[$ip] = $data;
 				__p('receiving getGeoIP('.$ip.')','','time');
-				
-
-				foreach ($data as $key => $value) {
-					$key = str_replace('geoplugin_', '', $key);
-					$this -> _geoData[$ip][$key] = $value;
-				}
-				$this -> setSessionVar('geoPluggin_' . $ip, $this -> _geoData[$ip]);
+				$this -> setSessionVar('geoCityIPCF_' . $ip, $this -> _geoData[$ip]);
 				
 				//avoid to call service twice in the same script
 				$this -> _geoData['reloaded'][$ip] = true;
@@ -570,7 +566,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			if(!strlen($ip)) $ip='REMOTE';
 
 			$this -> _geoData[$ip][$var] = $value;
-			$this -> setSessionVar('geoPluggin_' . $ip, $this -> _geoData[$ip]);
+			$this -> setSessionVar('geoCityIPCF_' . $ip, $this -> _geoData[$ip]);
 		}
 		
 		/**
