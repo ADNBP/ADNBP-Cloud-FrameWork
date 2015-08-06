@@ -19,6 +19,7 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
         }
         function output() {
         	global $adnbp;
+			$types = array('barcode'=>false);
 			$_tables = false;
             ob_start();
             foreach ($this->data as $key => $data) {
@@ -36,8 +37,15 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                     include __DIR__.'/templates/table.php';
 					$_tables = true;
                 }
+				elseif($type=='barcode') {
+					
+					_printe($data->data);
+					$barcode = array('element'=>'barcode'.$key);
+					
+                    include __DIR__.'/templates/barcode.php';
+                }
             }
-			if($_tables) include __DIR__.'/templates/tablejsbottom.php';
+			include __DIR__.'/templates/tablejsbottom.php';
             return ob_get_clean();
 
         }
