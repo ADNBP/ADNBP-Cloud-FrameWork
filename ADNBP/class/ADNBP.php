@@ -123,6 +123,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			$this->url['https'] = $_SERVER['HTTPS'];
 			$this->url['host'] = $_SERVER['HTTP_HOST'];
 			$this->url['url'] = $this -> _url;
+			$this->url['parts'] = explode('/', substr($this -> _url, 1));
 			$this->url['params'] = $this -> _urlParams;
 			$this->url['url_full'] = $_SERVER['REQUEST_URI'];
 			$this->url['host_url'] = (($_SERVER['HTTPS']=='on')?'https':'http').'://'.$_SERVER['HTTP_HOST'];
@@ -292,7 +293,7 @@ if (!defined("_ADNBP_CLASS_")) {
 				if (strpos($this -> _url, '/api/') === 0 && $this -> _url != '/api/') {
 					$this -> setConf("notemplate", true);
 				} else {
-					$this -> requireAuth();
+					$this -> activeAuth();
 					$this -> setConf("top", (strlen($this -> getConf("portalHTMLTop"))) ? $this -> getConf("portalHTMLTop") : "CloudFrameWorkTop.php");
 					$this -> setConf("bottom", (strlen($this -> getConf("portalHTMLBottom"))) ? $this -> getConf("portalHTMLBottom") : "CloudFrameWorkBottom.php");
 					if (is_file($this -> _rootpath . "/ADNBP/templates/" . $this -> _basename)) {
@@ -342,6 +343,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
 			}
 
+			
 			// if it is a permilink
 			if ($scriptname == "adnbppl.php") {
 				if (!strlen($this -> getConf("template")) && !$this -> getConf("notemplate")) {
@@ -362,7 +364,15 @@ if (!defined("_ADNBP_CLASS_")) {
 			__p('checkAuth','','note');
 					$this -> checkAuth();
 			__p('checkAuth','','endnote');
-            
+
+		//_printe($_found,$this->getConf('requireAuth'),$this->_url);
+		// if requiredAuth and not Auth... Redirects
+		if($this->getConf('requireAuth') && !$this->isAuth()) {
+			$this->setSessionVar('requireAuthURL', $_SERVER['REQUEST_URI']);
+			if(strlen($this->getConf('noAuthRedirectURL'))) {
+				$this->urlRedirect($this->getConf('noAuthRedirectURL'));
+			} else die('Only auth users has access to this page.');
+		}	            
             
 		// Load Logic
 			$_file = false;
@@ -759,11 +769,11 @@ if (!defined("_ADNBP_CLASS_")) {
 		/**
 		 * Auth functions
 		 */
-
-		// To active Auth you have to call requireAuth([{namespace}]) 		
-		function requireAuth($namespace = '') {
+		
+		// To active Auth you have to call activeAuth([{namespace}]) 		
+		function activeAuth($namespace = '') {
 			if(!strlen($namespace)) $namespace = 'CloudUser';
-			$this -> setConf("requireAuth", $namespace);
+			$this -> setConf("activeAuth", $namespace);
 			if (isset($_GET['logout'])) $this->setAuth(false);
 		}		 
 
@@ -798,10 +808,10 @@ if (!defined("_ADNBP_CLASS_")) {
 		}
 
 		function isAuth($namespace = '') {
-			if (!strlen($namespace)) $namespace = $this -> getConf("requireAuth");
+			if (!strlen($namespace)) $namespace = $this -> getConf("activeAuth");
 			if (!strlen($namespace)) return false;
 
-			if ($this -> _isAuth === false && strlen($this -> getConf("requireAuth"))) {
+			if ($this -> _isAuth === false && strlen($this -> getConf("activeAuth"))) {
 				$this -> _isAuth = $this -> getSessionVar("CloudAuth");
 				if(!isset($this -> _isAuth[$namespace])) return false;
 			}
@@ -811,7 +821,7 @@ if (!defined("_ADNBP_CLASS_")) {
 				
 		// To set true or false
 		function setAuth($bool, $namespace = '') {
-			if (!strlen($namespace)) $namespace = $this -> getConf("requireAuth");
+			if (!strlen($namespace)) $namespace = $this -> getConf("activeAuth");
 			if (!strlen($namespace)) return false;
 			
 			if($bool===false ) {
@@ -893,8 +903,8 @@ if (!defined("_ADNBP_CLASS_")) {
 		// To use Auth tokens
 		function authToken($command,$data=array()) {
 			// $command can be: check, generate
-			if(!strlen($this -> getConf("requireAuth"))) {
-				$this->addLog('$this->requireAuth([{namespace]}) missing;');
+			if(!strlen($this -> getConf("activeAuth"))) {
+				$this->addLog('$this->activeAuth([{namespace]}) missing;');
 				return false;
 			}
 			return  include(__DIR__.'/ADNBP/authToken.php');
@@ -902,7 +912,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			
 		function setAuthUserData($key, $value, $namespace = '') {
 			if (!strlen($namespace))
-				$namespace = $this -> getConf("requireAuth");
+				$namespace = $this -> getConf("activeAuth");
 			if (!strlen($namespace))
 				return false;
 
@@ -912,7 +922,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
 		function getAuthUserData($key = '', $namespace = '') {
 			if (!strlen($namespace))
-				$namespace = $this -> getConf("requireAuth");
+				$namespace = $this -> getConf("activeAuth");
 			if (!strlen($namespace))
 				return false;
 
@@ -924,7 +934,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
 		function getAuthUserNameSpace($namespace = '') {
 			if (!strlen($namespace))
-				$namespace = $this -> getConf("requireAuth");
+				$namespace = $this -> getConf("activeAuth");
 			if (!strlen($namespace))
 				return false;
 
@@ -1059,7 +1069,7 @@ if (!defined("_ADNBP_CLASS_")) {
 		function checkAuth() {
 				
 			$_ret = $this -> isAuth();
-			if (strlen($this -> getConf("requireAuth"))) {
+			if (strlen($this -> getConf("activeAuth"))) {
 				if (is_file($this -> _webapp . "/logic/CloudFrameWorkAuth.php"))
 					include ($this -> _webapp . "/logic/CloudFrameWorkAuth.php");
 				else {
