@@ -110,7 +110,7 @@ if (!defined ("_bucket_CLASS_") ) {
 			return($this->uploadedFiles);
 		}
 		
-		function getPublicUrl($filename='', $path='') {
+		function getPublicUrl($filename='', $path='', $https = true) {
 			global $adnbp;
 			
 			if(strpos($filename,'gs://')!==0 ) {
@@ -123,7 +123,7 @@ if (!defined ("_bucket_CLASS_") ) {
 			if(strpos($filename,'gs://')!==0 ) {
 				$ret  = $adnbp->url['host_url'].str_replace($_SERVER['DOCUMENT_ROOT'], '',$filename);
 			} else {
-				$ret =  CloudStorageTools::getPublicUrl($filename,false);
+				$ret =  CloudStorageTools::getPublicUrl($filename,$https);
 			}
 
 			return $ret;
