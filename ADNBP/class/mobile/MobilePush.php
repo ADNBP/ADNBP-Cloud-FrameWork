@@ -5,6 +5,7 @@ class MobilePush {
 	public $errorMessage = '';
 	private $apns = array();
 	private $gcm = array();
+	private $apnConnection = null;
 	public $lastGCMResult=null;
 	
 	
@@ -17,7 +18,24 @@ class MobilePush {
 			$this->apns['phrase'] = $phrase;
 			$this->apns['cert'] = $cert;
 			$this->apns['url'] = $url;
-			return(true);
+			if($apnConnection) fclose($this->apnConnection);
+			$ctx = stream_context_create();
+			stream_context_set_option($ctx, 'ssl', 'local_cert', $this->apns['cert']);
+			stream_context_set_option($ctx, 'ssl', 'passphrase', $this->apns['phrase']); 
+			
+			try {
+				$this->apnConnection = stream_socket_client(
+											$this->apns['url'], $err,
+											$errstr, 60, STREAM_CLIENT_CONNECT|STREAM_CLIENT_PERSISTENT, $ctx);
+				if (!$this->apnConnection) {
+					$this->error = true;
+					$this->errorMessage = "Failed to connect: $err $errstr";
+				}
+			} catch(Exception $e) {
+				$this->error = true;
+				$this->errorMessage = $e->getMessage();
+			}
+			return(!$this->error);
 		} else {
 			$this->error = true;
 			$this->errorMessage .= $cert.' does not exist'."\n";
@@ -31,59 +49,54 @@ class MobilePush {
 		return(true);
 	}
 	
-	
+	// Close all open connections
+	function close() {
+		if($this->apnConnection) fclose($this->apnConnection);
+	}
 	
 	/**
 	 * Send a message to the the APNS with $deviceToken destination 
 	 * Based on: http://www.tagwith.com/question_138013_ssl-connect-to-apns-server-in-local-environment-stream-socket-client-failed
-	 *
+	 * Also.. http://stackoverflow.com/questions/28995197/apns-php-stream-socket-client-failed-to-enable-crypto
 	 */
 	function _sendAPNSMessage($type,$deviceToken, $txt, $badge){
 		if($this->error) return(false);
-		
-		if(is_file($this->apns['cert']) && strlen($this->apns['url'])) {
-			$ctx = stream_context_create();
-			stream_context_set_option($ctx, 'ssl', 'local_cert', $this->apns['cert']);
-			stream_context_set_option($ctx, 'ssl', 'passphrase', $this->apns['phrase']); 
-			// Open a connection to the APNS server
-			$fp = stream_socket_client(
-					$this->apns['url'], $err,
-					$errstr, 60, STREAM_CLIENT_CONNECT|STREAM_CLIENT_PERSISTENT, $ctx);
-			if (!$fp) {
-				$this->error = true;
-				$this->errorMessage = "Failed to connect: $err $errstr";
-			} else { 
-				// Create the payload body
-				if($type=='msg') {
-					$body['aps'] = array(
-							'alert' => array('body' => $txt),
-							'sound' => 'default',
-							'badge' => $badge
-					);
-				} else {
-					$body['aps'] = array(
-							'alert' => array('loc-key' => $txt),
-							'sound' => 'default',
-							'badge' => $badge
-					);					
-				}
-				// Encode the payload as JSON
-				$payload = json_encode($body);
-				//echo $payload;
-				// Build the binary notification
-				$msg = chr(0) . pack('n', 32) . pack('H*', $deviceToken) . pack('n', strlen($payload)) . $payload;
-				// Send it to the server
-				$result = fwrite($fp, $msg, strlen($msg));
-				if (!$result) {
-					$this->error = true;
-					$this->errorMessage = 'Message not delivered';
-				} 
-				
-				// Close the connection to the server
-				fclose($fp);
-			}
+		if(!$this->apnConnection) {
+			$this->error = true;
+			$this->errorMessage = 'Use setAPNS($phrase,$cert[,$url]) before to call this method.';
 		}
-
+		
+		if (!$this->apnConnection) {
+			$this->error = true;
+			$this->errorMessage = "Failed to connect: $err $errstr";
+		} else { 
+			// Create the payload body
+			if($type=='msg') {
+				$body['aps'] = array(
+						'alert' => array('body' => $txt),
+						'sound' => 'default',
+						'badge' => $badge
+				);
+			} else {
+				$body['aps'] = array(
+						'alert' => array('loc-key' => $txt),
+						'sound' => 'default',
+						'badge' => $badge
+				);					
+			}
+			// Encode the payload as JSON
+			$payload = json_encode($body);
+			//echo $payload;
+			// Build the binary notification
+			$msg = chr(0) . pack('n', 32) . pack('H*', $deviceToken) . pack('n', strlen($payload)) . $payload;
+			// Send it to the server
+			$result = fwrite($this->apnConnection, $msg, strlen($msg));
+			if (!$result) {
+				$this->error = true;
+				$this->errorMessage = 'Message not delivered';
+			} 
+			
+		}
 		return(!$this->error);
 	}
 	
