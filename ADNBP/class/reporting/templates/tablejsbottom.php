@@ -9,7 +9,7 @@
 		<script src="/ADNBP/static/sa151/js/plugin/morris/raphael.min.js"></script>
 		<script src="/ADNBP/static/sa151/js/plugin/morris/morris.min.js"></script>
 
-		<script type="text/javascript">
+		<!-- script type="text/javascript">
 		
 		// DO NOT REMOVE : GLOBAL FUNCTIONS!
 		$(document).ready(function() {
@@ -45,4 +45,4 @@
 		
 		})
 
-		</script>
+		</script -->

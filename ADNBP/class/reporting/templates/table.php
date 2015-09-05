@@ -1,3 +1,4 @@
+<section id="widget-grid" class="">
 <article class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
 <?php if(!$simple) {?>
     <!-- Widget ID (each widget will need unique ID)-->
@@ -48,7 +49,7 @@
                         <tbody>
                             <?php if(is_array($data->rows)) foreach ($data->rows as $key => $value) {?>
                             <tr>
-                                <?php if($value) foreach ($value as $key2 => $cell) {
+                                <?php if(is_array($value)) foreach ($value as $key2 => $cell) {
 	                                	$align = $cell['align'];
 										if(!$align && (isset($cell['currency']))) $align='right';
                                 	?>
@@ -80,7 +81,7 @@
     </div>
     <!-- end widget -->
 
-
 <?php } ?>
 </article>
+</section>
 <!-- WIDGET END -->

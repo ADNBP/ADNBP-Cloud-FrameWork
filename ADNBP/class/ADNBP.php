@@ -34,7 +34,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
 	class ADNBP {
 
-		var $_version = "2015_Jul_28";
+		var $_version = "2015_Aug_29";
 		var $_conf = array();
 		var $_menu = array();
 		var $_lang = "en";
@@ -72,6 +72,7 @@ if (!defined("_ADNBP_CLASS_")) {
 		var $_referer=null;
 		var $_log = array();
 		var $_date = null;
+        var $system = array();
 
 		/**
 		 * Constructor
@@ -85,7 +86,6 @@ if (!defined("_ADNBP_CLASS_")) {
             
 			if ($session) $this->sessionStart($sessionId);
 			    
-                
 			__p('session_start. Construct Class:'.__CLASS__,__FILE__);
 			// If the call is just to KeepSession
 			if (strpos($_SERVER['REQUEST_URI'], '/CloudFrameWorkService/keepSession') !== false) {
@@ -95,19 +95,7 @@ if (!defined("_ADNBP_CLASS_")) {
 				die('<html><head><title>ADNBP Cloud FrameWork KeepSession ' . time() . '</title><meta name="robots" content="noindex"></head><body bgcolor="#' . $bg . '"></body></html>');
 			}
 
-			// Temporary bug workaround
-			// https://code.google.com/p/googleappengine/issues/detail?id=11695#c6
-			if($this->is("production")) {
-				 apc_delete('_ah_app_identity_:https://www.googleapis.com/auth/devstorage.read_only');
-				 apc_delete('_ah_app_identity_:https://www.googleapis.com/auth/devstorage.read_write');
-			}
-			 
-			// https url EOF
-			// Temporary bug workaround
-			$default_opts = array('ssl' => array('verify_peer' => false, 'allow_self_signed' => true));
-			stream_context_set_default($default_opts);
-			// $this->_webapp = dirname(dirname(__FILE__))."/webapp";
-			// $this->_rootpath = dirname(dirname(dirname(__FILE__)));
+
 			if (!strlen($rootpath))
 				$rootpath = $_SERVER['DOCUMENT_ROOT'];
 			$this -> _rootpath = $rootpath;
@@ -135,14 +123,15 @@ if (!defined("_ADNBP_CLASS_")) {
 			$this -> _userAgent = $_SERVER['HTTP_USER_AGENT'];
 			$this -> _urlParts = explode('/',$this-> _url);
 
-
-			$_configs ='';
+             
+            // CONFIG VARS
+            $_configs ='/ADNBP/config.php';
+            require_once __DIR__.'/../config.php';
 			//  Use this file to assign webApp. $this->setWebApp(""); if not ADNBP/webapp will be included
 			if (is_file($this -> _rootpath . "/adnbp_framework_config.php")) {
 				include_once ($this -> _rootpath . "/adnbp_framework_config.php");
 				$_configs.='/adnbp_framework_config.php - ';
 			}
-			// CONFIG VARS
 			// load webapp config values or FrameWork default values
 			if (is_file($this -> _webapp . "/config/config.php")) {
 				include_once ($this -> _webapp . "/config/config.php");
@@ -634,12 +623,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
 			__p('getCloudServiceResponse: ',"$_url " . (($data===null)?'{no params}':'{with params}'),'note');
 			
-			// Workaround to avoid EOF: https://code.google.com/p/googleappengine/issues/detail?id=11772&q=certificate%20invalid%20or%20non-existent&colspec=ID%20Type%20Component%20Status%20Stars%20Summary%20Language%20Priority%20Owner%20Log
-			$options = array('ssl' => array('verify_peer' => false, 'allow_self_signed' => true));
-			
-			// Avoid long waits
-			$options['http']['ignore_errors'] ='1';
-			$options['http']['header'] = 'Connection: close' . "\r\n";
+            $options = $this->system['stream_context_default']; // Take a look in ADNBP/config.php
 
 			// Automatic send header for X-CLOUDFRAMEWORK-SECURITY if it is defined in config
 			if (strlen($this -> getConf("CloudServiceId")) && strlen($this -> getConf("CloudServiceSecret"))) 
