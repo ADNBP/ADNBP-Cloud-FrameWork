@@ -139,7 +139,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			} 
 
 			// load bucket config values. Use this to keep safely passwords etc.. in a external bucket only accesible by admin
-			if (strlen($this -> getConf('ConfigPath')) && is_file($this -> getConf('ConfigPath') . "/config.php")) {
+			if (strlen($this -> getConf('ConfigPath'))) {
 				include_once ($this -> getConf('ConfigPath') . "/config.php");
 				$_configs.=$this -> getConf('ConfigPath') . "/config.php";
 			}
