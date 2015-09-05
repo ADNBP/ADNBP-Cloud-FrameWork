@@ -7,7 +7,7 @@ $api->checkMethod('GET,POST');
 
 // Activating Auth mode with a namespace specific for API_KEY
 if(!$api->error) 
-   $this->requireAuth(strlen($_REQUEST['API_KEY'])?'API_KEY':''); 	
+   $this->activeAuth(strlen($_REQUEST['API_KEY'])?'API_KEY':''); 	
 
 // Detecting extra security
 if(!$api->error && strlen($this->getHeader('X-CLOUDFRAMEWORK-SECURITY'))) 
