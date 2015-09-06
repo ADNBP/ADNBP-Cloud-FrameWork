@@ -5,7 +5,7 @@ class MobilePush {
 	public $errorMessage = '';
 	private $apns = array();
 	private $gcm = array();
-	private $apnConnection = null;
+	public $apnConnection = null;
 	public $lastGCMResult=null;
 	
 	
@@ -22,6 +22,8 @@ class MobilePush {
 			$ctx = stream_context_create();
 			stream_context_set_option($ctx, 'ssl', 'local_cert', $this->apns['cert']);
 			stream_context_set_option($ctx, 'ssl', 'passphrase', $this->apns['phrase']); 
+            //stream_context_set_option($ctx, 'ssl', 'cafile', __DIR__.'/entrust_2048_ca.cer'); 
+            
 			
 			try {
 				$this->apnConnection = stream_socket_client(
@@ -50,7 +52,7 @@ class MobilePush {
 	}
 	
 	// Close all open connections
-	function close() {
+	function closeAPNS() {
 		if($this->apnConnection) fclose($this->apnConnection);
 	}
 	

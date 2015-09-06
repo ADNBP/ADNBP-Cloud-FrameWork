@@ -856,7 +856,7 @@ if (!defined("_ADNBP_CLASS_")) {
 						$this->addLog('Security String has reached maxtime: '.$maxSeconds.' seconds');
 					} else {
 					    $secArr['SECURITY-ID'] = $_id;
-                        $secArr['SECURITY-EXPIRATION'] = ($maxSeconds)?$secs:$maxSeconds;
+                        $secArr['SECURITY-EXPIRATION'] = ($maxSeconds)?$maxSeconds-$secs:$maxSeconds;
 						return($secArr);
 					}
 				}
