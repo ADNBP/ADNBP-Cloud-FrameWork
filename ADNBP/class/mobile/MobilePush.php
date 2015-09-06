@@ -92,8 +92,14 @@ class MobilePush {
 			// Build the binary notification
 			$msg = chr(0) . pack('n', 32) . pack('H*', $deviceToken) . pack('n', strlen($payload)) . $payload;
 			// Send it to the server
-			$result = fwrite($this->apnConnection, $msg, strlen($msg));
-			if (!$result) {
+			try {
+			    $result = fwrite($this->apnConnection, $msg, strlen($msg));
+			} catch(Exception $e) {
+                $this->error = true;
+                $this->errorMessage = $e->getMessage();
+            }
+			
+			if (!$this->error && !$result) {
 				$this->error = true;
 				$this->errorMessage = 'Message not delivered';
 			} 
