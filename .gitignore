@@ -3,4 +3,5 @@ app.yaml
 README.md
 **/.DS_Store
 .git/*
+.idea/*
 local_config.php
