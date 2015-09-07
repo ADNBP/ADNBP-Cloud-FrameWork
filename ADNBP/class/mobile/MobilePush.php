@@ -91,13 +91,23 @@ class MobilePush {
 			//echo $payload;
 			// Build the binary notification
 			$msg = chr(0) . pack('n', 32) . pack('H*', $deviceToken) . pack('n', strlen($payload)) . $payload;
-			// Send it to the server
-			try {
-			    $result = fwrite($this->apnConnection, $msg, strlen($msg));
-			} catch(Exception $e) {
-                $this->error = true;
-                $this->errorMessage = $e->getMessage();
-            }
+            
+            // Sending trying again if it fails.
+			$maxtries = 2;
+            $tries = 0;
+            $sleep=1;
+            do {
+                $this->error = false;
+                if($tries>0) sleep(1); // Wait one second to try more thant 1 time
+    			// Send it to the server
+    			try {
+    			    $result = fwrite($this->apnConnection, $msg, strlen($msg));
+    			} catch(Exception $e) {
+                    $this->error = true;
+                    $this->errorMessage = $e->getMessage().' sending '.$msg.' ('.strlen($msg).')';
+                }
+                $tries++;
+            } while(($this->error || !$result) && $tries < $maxtries);
 			
 			if (!$this->error && !$result) {
 				$this->error = true;
