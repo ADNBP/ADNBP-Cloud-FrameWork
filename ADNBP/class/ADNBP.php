@@ -274,7 +274,7 @@ if (!defined("_ADNBP_CLASS_")) {
 			//if URL has CloudFrameWork* & /api has an special treatment
 			if (strpos($this -> _url, '/CloudFrameWork') !== false || strpos($this -> _url, '/api') === 0) {
 
-				$this -> setConf("setLanguageByPath", f);
+				$this -> setConf("setLanguageByPath", false);
 				list($foo, $this -> _basename, $foo) = explode('/', $this -> _url, 3);
 				$this -> _basename .= ".php";
 				// add .php extension to the basename in order to find logic and templates.
@@ -313,8 +313,13 @@ if (!defined("_ADNBP_CLASS_")) {
 					} else if ($this -> _menu[$i]['path'] == $this -> _url || (!empty($this -> _menu[$i][$this -> getConf("lang") . "_path"]) && $this -> _menu[$i][$this -> getConf("lang") . "_path"] == $this -> _url))
 						$_found = true;
 
+                    // I have found an entry menu.
 					if ($_found)
 						foreach ($this->_menu[$i] as $key => $value) {
+						    // Tag {buquet:} substitution
+						    if(stripos($value, '{bucket:') !==false) {
+						          $value = preg_replace('/{bucket:(.*)}/',  $this->getConf('BucketPrefix').'$1', $value);  // Bucket tag subsitution
+                            }
 							$this -> setConf($key, $value);
 						}
 
@@ -325,7 +330,6 @@ if (!defined("_ADNBP_CLASS_")) {
 				}
 
 				// If not found in the menu and it doens't have a local template desactive topbottom
-
 				if (!$_found && is_file($this -> _webapp . "/templates/" . $this -> _basename . ".php")) {
 					$this -> _basename .= ".php";
 				}
@@ -334,7 +338,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
 			
 			// if it is a permilink
-			if ($scriptname == "adnbppl.php") {
+			if ($scriptname == "adnbppl.php" && !$_found) {
 				if (!strlen($this -> getConf("template")) && !$this -> getConf("notemplate")) {
 
 					if (is_file($this -> _webapp . "/templates/" . $this -> _basename) || is_file($this -> _rootpath . "/ADNBP/templates/" . $this -> _basename))
@@ -372,8 +376,9 @@ if (!defined("_ADNBP_CLASS_")) {
 					$_file = ($this -> _rootpath . "/ADNBP/logic/" . $this -> _basename);
 				}
 
-			} else {
-				if (is_file($this -> _webapp . "/logic/" . $this -> getConf("logic"))) {
+			} else { 
+                if(strpos($this -> getConf("logic"), 'gs://')===0 || strpos($this -> getConf("logic"), '/')===0) $_file = $this -> getConf("logic");
+                elseif (is_file($this -> _webapp . "/logic/" . $this -> getConf("logic"))) {
 					$_file = ($this -> _webapp . "/logic/" . $this -> getConf("logic"));
 				} else {
 					$output = "No logic Found";
@@ -393,6 +398,7 @@ if (!defined("_ADNBP_CLASS_")) {
 					} elseif (is_file("./ADNBP/templates/top.php"))
 						$_file =  ("./ADNBP/templates/top.php");
 				} else {
+                    if(strpos($this -> getConf("top"), 'gs://')===0 || strpos($this -> getConf("top"), '/')===0) $_file = $this -> getConf("top");
 					if (is_file($this -> _webapp . "/templates/" . $this -> getConf("top"))) {
 						$_file =  ($this -> _webapp . "/templates/" . $this -> getConf("top"));
 					} else if (is_file($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("top"))) {
@@ -417,19 +423,20 @@ if (!defined("_ADNBP_CLASS_")) {
 					// exist a var with the content of the template
 					echo $$var;
 
-					// Content of template is stored in a file defined in template
+			    // Content of template is stored in a file 
 				} else {
+				    
 					if (!$this -> getConf("template")) {
 						if (is_file("./templates/" . $this -> _basename)){
 							$_file =   ("./templates/" . $this -> _basename);
-							
 						} elseif (is_file($this -> _rootpath . "/ADNBP/templates/" . $this -> _basename)){
 							$_file =   ($this -> _rootpath . "/ADNBP/templates/" . $this -> _basename);
 						} elseif ($this -> getConf("logic") == "nologic") {
 
 						}
 					} else {
-						if (is_file($this -> _webapp . "/templates/" . $this -> getConf("template"))){
+					    if(strpos($this -> getConf("template"), 'gs://')===0 || strpos($this -> getConf("template"), '/')===0) $_file = $this -> getConf("template");
+                        elseif (is_file($this -> _webapp . "/templates/" . $this -> getConf("template"))){
 							$_file =   ($this -> _webapp . "/templates/" . $this -> getConf("template"));
 						} elseif (is_file($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("template"))){
 							$_file =   ($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("template"));
@@ -453,13 +460,13 @@ if (!defined("_ADNBP_CLASS_")) {
 					elseif (is_file($this -> _rootpath . "/ADNBP/templates/bottom.php"))
 						$_file =  ($this -> _rootpath . "/ADNBP/templates/bottom.php");
 				} else {
+				    if(strpos($this -> getConf("bottom"), 'gs://')===0 || strpos($this -> getConf("bottom"), '/')===0) $_file = $this -> getConf("bottom");
 					if (is_file($this -> _webapp . "/templates/" . $this -> getConf("bottom")))
 						$_file =  ($this -> _webapp . "/templates/" . $this -> getConf("bottom"));
 					elseif (is_file($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("bottom")))
 						$_file =  ($this -> _rootpath . "/ADNBP/templates/" . $this -> getConf("bottom"));
 					else
 						echo "No bottom file found: " . $this -> getConf("bottom");
-
 				}
 			}
 			if($_file) {

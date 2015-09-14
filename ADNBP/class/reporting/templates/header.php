@@ -1,6 +1,6 @@
 <div class="row">
     <div class="col-xs-12 col-sm-7 col-md-7 col-lg-4">
-        <h1 class="page-title txt-color-blueDark"><i class="fa-fw fa fa-home"></i> <?=htmlentities($data->title)?> <span>> <?=htmlentities($data->subtitle)?></span></h1>
+        <h1 class="page-title txt-color-blueDark"><i class="fa-fw fa fa-home"></i> <?=htmlentities($data->title)?> <span>> <?=htmlentities($data->subtitle)?> <a href='?reload'><i class="fa fa-refresh"></i></a></span></h1>
     </div>
     <div class="col-xs-12 col-sm-5 col-md-5 col-lg-8">
         <ul id="sparks" class="">
@@ -17,6 +17,7 @@
                      <?php } ?>
             </li>    
             <?php } ?>
+            
         </ul>
     </div>
 </div>

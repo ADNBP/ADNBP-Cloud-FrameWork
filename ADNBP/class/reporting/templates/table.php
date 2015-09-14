@@ -1,5 +1,4 @@
-<section id="widget-grid" class="">
-<article class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+<article >
 <?php if(!$simple) {?>
     <!-- Widget ID (each widget will need unique ID)-->
     <div class="jarviswidget jarviswidget-color-blueDark" id="wid-id-<?=$key?>" data-widget-editbutton="false">
@@ -83,5 +82,4 @@
 
 <?php } ?>
 </article>
-</section>
 <!-- WIDGET END -->
