@@ -206,16 +206,26 @@ if (!defined ("_bucket_CLASS_") ) {
 			
 			if(!$ret) try {
 				if(!strlen($path)) {
-					try {
-						$ret = @mkdir($value);
-					} catch(Exception $e) {
-							$this->addError($e->getMessage());
-							$this->addError(error_get_last());
+					$subfolders = explode('/', $value);
+					$value = '';
+					$ret=true;
+					for($i=1,$tr=count($subfolders);$i<$tr && $ret;$i++) if(strlen($subfolders[$i])) {
+						$value.='/'.$subfolders[$i];
+						if(!is_dir($value)) {
+							try {
+								$ret = @mkdir($value);
+							} catch(Exception $e) {
+								$this->addError($e->getMessage());
+								$this->addError(error_get_last());
+							}
+						}
 					}
+
 				} else {
 					$subfolders = explode('/', $path);
 					$value = $this->folderPref.$this->folder;
-					for($i=1,$tr=count($subfolders);$i<$tr;$i++) if(strlen($subfolders[$i])) {
+					$ret=true;
+					for($i=1,$tr=count($subfolders);$i<$tr && $ret;$i++) if(strlen($subfolders[$i])) {
 						$value.='/'.$subfolders[$i];
 						if(!is_dir($value)) {
 							try {
