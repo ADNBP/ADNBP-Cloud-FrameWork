@@ -206,10 +206,14 @@ if (!defined ("_bucket_CLASS_") ) {
 			
 			if(!$ret) try {
 				if(!strlen($path)) {
-					$subfolders = explode('/', $value);
-					$value = '';
+					$subfolders = explode('/', $this->folder);
+					if($this->folderPref=='gs://') {
+						$value = 'gs://'.$subfolders[0];
+					} else {
+						$value ='';				
+					}
 					$ret=true;
-					for($i=1,$tr=count($subfolders);$i<$tr && $ret;$i++) if(strlen($subfolders[$i])) {
+					for($i,$tr=count($subfolders);$i<$tr && $ret;$i++) if(strlen($subfolders[$i])) {
 						$value.='/'.$subfolders[$i];
 						if(!is_dir($value)) {
 							try {
