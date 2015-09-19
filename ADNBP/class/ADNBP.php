@@ -221,11 +221,8 @@ if (!defined("_ADNBP_CLASS_")) {
 			$this -> setConf("lang", $this -> _lang);
 			
 			// Active cache.
-			if($this->getConf('activeCache')) $this->initCache();
+			if($this->getConf('activeCache') || $this->getConf('CacheDics')) $this->initCache();
 			
-			// Activate cache of dics
-			if($this->getConf('CacheDics')) $this->loadCacheDics();
-
 		}
 
         function sessionStart($sessionId='') {
@@ -474,10 +471,12 @@ if (!defined("_ADNBP_CLASS_")) {
 				include ($_file);
 				__p('Including bottom html: ','','endnote');
 			}			
-			// Cache dics.
-			if($this->getConf('CacheDics')) $this->saveCacheDics();
 			__p('End Run '.__CLASS__.'-'.__FUNCTION__);
 			
+            // Output performance of the system
+            if(isset($_GET['__sp']) ) {
+                __sp();
+            }
 			
 		}
 
@@ -983,8 +982,20 @@ if (!defined("_ADNBP_CLASS_")) {
 
 			// Load dictionary repository
 			if (!isset($this -> dics[$dic])) {
-				if(!isset($this -> _dicKeys[$dic]))
-					$this -> _dicKeys[$dic] = $this -> readDictionaryKeys($dic, $lang);
+				if(!isset($this -> _dicKeys[$dic])) {
+				    $_read=false;
+                    // Cache dics is activated
+				    if($this->getConf('CacheDics') && !isset($_GET['reloadCache']) && !isset($_GET['reloadDictionaries']) ) 
+				        $this -> _dicKeys[$dic] = $this->getCache('Dic_'.$dic.'_'.$lang);
+                    // If info does not come from Cache
+				    if(!isset($this -> _dicKeys[$dic]) || !is_object( $this -> _dicKeys[$dic])) {
+					   $this -> _dicKeys[$dic] = $this -> readDictionaryKeys($dic, $lang);
+                       $_read=(is_object($this -> _dicKeys[$dic]))?true:false;
+                    }
+                    // Save in Cache if it is neccesary
+                    if($this->getConf('CacheDics') && $_read) 
+                        $this->setCache('Dic_'.$dic.'_'.$lang,$this -> _dicKeys[$dic]);
+                }
 				$this -> dics[$dic] = true;
 			}
 			$ret = isset($this -> _dicKeys[$dic] -> $key) ? $this -> _dicKeys[$dic] -> $key : $dic . '-' . $key;
@@ -1334,19 +1345,6 @@ if (!defined("_ADNBP_CLASS_")) {
 			}
 		}
 		
-		function loadCacheDics() {
-			if ($this -> _cache === null) $this->initCache();
-			if(!isset($_REQUEST['reloadCache'])) {
-				$key = 'loadCacheDics: '.$this->_url.'-'.$this->_lang;
-				$this -> _dicKeys = $this->getCache(hash('md5',$key));
-			}
-		}
-		function saveCacheDics() {
-			if ($this -> _cache === null) return (null);
-			$key = 'loadCacheDics: '.$this->_url.'-'.$this->_lang;
-			$this->setCache(hash('md5',$key),$this -> _dicKeys);
-		}		
-		
 
 		/*
 		 * Manage User Roles
@@ -1449,7 +1447,7 @@ if (!defined("_ADNBP_CLASS_")) {
 		function addLog($msg) { $this -> _log[] = $msg; }
 		function getLog() { return $this->_log; }
 				
-		function sendLog($type,$cat,$subcat,$title,$text='',$email='',$app='') {
+		function sendLog($type,$cat,$subcat,$title,$text='',$email='',$app='',$interactive=false) {
 			if(!$this->getConf('CloudServiceLog') && !$this->getConf('LogPath')) return false;
 			if(!strlen($app)) $app = $this->url['host'];
 			$app = str_replace(' ', '_', $app);
@@ -1469,6 +1467,7 @@ if (!defined("_ADNBP_CLASS_")) {
 				$params['email'] = $email;
 			//_printe($app,$text,$params);
 			if($this->getConf('CloudServiceLog')){
+			    if($interactive) $params['interactive'] = 1;
 				$ret = json_decode($this->getCloudServiceResponse('queue/log/'.urlencode($app).'/'.urlencode($type),$params,'POST'));
 				if(!$ret->success) $this->addError($ret);
 				return($ret);

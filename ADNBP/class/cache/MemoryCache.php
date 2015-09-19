@@ -7,10 +7,14 @@
  */
 class MemoryCache {
 	var $_object = null;
-	var $str = 'ADNBP CACHE';
+	var $str = 'ADNBPCACHE';
 	
 	function MemoryCache($str='') {
-		//if(!strlen(trim($str))) $this->str = $str;
+		if(strlen(trim($str))) {
+		    $this->str .= '_'.trim($str);
+        } else {
+            $this->str .= '_'.$_SERVER['HTTP_HOST'];
+        }
 		$this->_object =  new Memcache;
 	}
 	
