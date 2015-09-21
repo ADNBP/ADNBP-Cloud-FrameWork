@@ -18,13 +18,13 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
         }
         
         // Excute an DB query
-        function _query($id,$q,$data) {
+        function query($id,$q,$data=null) {
             if($this->error) return false;
             $q = "SELECT ".$q;
             
             // Check cache
             if(!isset($_REQUEST['reload'])) {
-                $this->queryResults[$id]['data'] = $this->super->getCache(md5($id.$q.json_encode($data)));
+                $this->queryResults[$id]['data'] = $this->super->getCache('Reporting_'.$id.'_'.md5($id.$q.json_encode($data)));
                 if(is_array($this->queryResults[$id]['data'])) {
                       return true;
                 }
@@ -47,7 +47,7 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
             $this->queryResults[$id]['query'] = $this->db->getQuery();
             if(!$this->db->error()) {
                 $this->queryResults[$id]['data'] = $ret;
-                $this->super->setCache(md5($id.$q.json_encode($data)),$ret);
+                $this->super->setCache('Reporting_'.$id.'_'.md5($id.$q.json_encode($data)),$ret);
                 unset($ret);
                 return true;
             } else {
@@ -56,29 +56,65 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
             }
         }
         
-        
-        function query($id,$q,$data) {
-            if($this->error) return false;
-            else return  $this->_query($id,$q,$data);
-        }
-        
-        function queryTotals($id,$q,$data=null) {
-            if($this->query($id,$q,$data)) {
-                if(count($this->queryResults[$id]['data'])) $this->queryResults[$id]['data'] = $this->queryResults[$id]['data'][0];
-            } else return false;
-        }
+
+
         
         function queryEnd() {
             if(is_object($this->db)) $this->db->close();
         }
-        function queryData($id,$field='') {
-            if(isset($this->queryResults[$id])) {
-                if(strlen($field)) return $this->queryResults[$id]['data'][$field];
-                else return $this->queryResults[$id]['data'];
-            } 
+
+        /**
+         * @param $id
+         * @param string $fields
+         * @param string $op
+         * @return array or number or string or false
+         */
+        function queryData($id,$fields='*',$op='raw')
+        {
+            if(trim($fields)=='') $fields='*';
+            if (isset($this->queryResults[$id])) {
+                if ($fields=='*' && $op=='raw') return $this->queryResults[$id]['data'];
+                else {
+                    $ret = '';
+                    if($fields=='*') $fields = array_keys($this->queryResults[$id]['data'][0]);
+                    else $fields = explode(',', $fields);
+
+                    switch ($op) {
+                        case'raw':
+                            $ret = array();
+                            for ($i = 0, $tr = count($this->queryResults[$id]['data']); $i < $tr; $i++) {
+                                foreach ($fields as $ind => $key) { $key = trim($key);
+                                    $ret[$i][$key] = $this->queryResults[$id]['data'][$i][$key];
+                                }
+                            }
+                            break;
+                        case'sum':
+                            $ret = 0;
+                            for ($i = 0, $tr = count($this->queryResults[$id]['data']); $i < $tr; $i++) {
+                                foreach ($fields as $ind => $key) { $key=trim($key);
+                                    $ret += $this->queryResults[$id]['data'][$i][$key];
+                                }
+                            }
+                            break;
+                        case'count':
+                            return(count($this->queryResults[$id]['data']));
+                            break;
+                    }
+                    return($ret);
+                }
+            }
             return false;
         }
-        
+        function queryDataFields($id) {
+            $ret=array();
+            if (is_array($this->queryResults[$id]['data'][0])) $ret = array_keys($this->queryResults[$id]['data'][0]);
+            return($ret);
+        }
+
+        /**
+         * @param $type
+         * @param string $info
+         */
         function add($type,$info='') {
             //if(is_array($info)) _printe((object)$info);
             switch ($type) {
@@ -92,6 +128,8 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                     break;
             }
         }
+
+
         function output() {
         	global $adnbp;
 			$types = array('barcode'=>false);
