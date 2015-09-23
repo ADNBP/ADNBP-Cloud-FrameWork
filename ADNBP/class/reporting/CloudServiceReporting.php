@@ -92,6 +92,7 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                             $ret = 0;
                             for ($i = 0, $tr = count($this->queryResults[$id]['data']); $i < $tr; $i++) {
                                 foreach ($fields as $ind => $key) { $key=trim($key);
+                                    if(isset($this->queryResults[$id]['data'][$i][$key]))
                                     $ret += $this->queryResults[$id]['data'][$i][$key];
                                 }
                             }
