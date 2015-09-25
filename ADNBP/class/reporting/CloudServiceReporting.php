@@ -55,50 +55,90 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                 return false;
             }
         }
-        
 
 
-        
+        /**
+         *
+         */
         function queryEnd() {
             if(is_object($this->db)) $this->db->close();
         }
+
 
         /**
          * @param $id
          * @param string $fields
          * @param string $op
-         * @return array or number or string or false
+         * @param null $cond
+         * @return array|bool|int|string
          */
-        function queryData($id,$fields='*',$op='raw')
+        function queryData($id,$fields='*',$op='raw',$cond=null)
         {
             if(trim($fields)=='') $fields='*';
-            if (isset($this->queryResults[$id])) {
-                if ($fields=='*' && $op=='raw') return $this->queryResults[$id]['data'];
+            if (isset($this->queryResults[$id]['data'])) {
+
+                // Evaluate subset of elements
+                if(!is_array($cond))
+                    $data = &$this->queryResults[$id]['data'];
+                else {
+                    $data = array();
+                    foreach ($this->queryResults[$id]['data'] as $i=>$row) {
+
+                        // Only include match elements
+                        $inc=true;
+                        foreach ($cond as $key=>$fieldCond ) {
+
+                            if(!is_array($fieldCond)) {
+                                $fieldCond = array('field'=>$key,'value'=>$fieldCond,'operator'=>'=');
+                            }
+                            switch($fieldCond['operator']) {
+                                case '=':
+                                    if($row[$fieldCond['field']] != $fieldCond['value']) $inc=false;
+                                    break;
+                                case '!=':
+                                    if($row[$fieldCond['field']] == $fieldCond['value']) $inc=false;
+                                    break;
+                            }
+
+                        }
+
+                        if($inc) $data[] = $row;
+                    }
+                }
+
+                if ($fields=='*' && $op=='raw') return $data;
                 else {
                     $ret = '';
-                    if($fields=='*') $fields = array_keys($this->queryResults[$id]['data'][0]);
+                    if($fields=='*') $fields = array_keys($data[0]);
                     else $fields = explode(',', $fields);
 
                     switch ($op) {
                         case'raw':
                             $ret = array();
-                            for ($i = 0, $tr = count($this->queryResults[$id]['data']); $i < $tr; $i++) {
+                            for ($i = 0, $tr = count($data); $i < $tr; $i++) {
                                 foreach ($fields as $ind => $key) { $key = trim($key);
-                                    $ret[$i][$key] = $this->queryResults[$id]['data'][$i][$key];
+                                    $ret[$i][$key] = $data[$i][$key];
                                 }
                             }
                             break;
                         case'sum':
                             $ret = 0;
-                            for ($i = 0, $tr = count($this->queryResults[$id]['data']); $i < $tr; $i++) {
+                            for ($i = 0, $tr = count($data); $i < $tr; $i++) {
                                 foreach ($fields as $ind => $key) { $key=trim($key);
-                                    if(isset($this->queryResults[$id]['data'][$i][$key]))
-                                    $ret += $this->queryResults[$id]['data'][$i][$key];
+                                    if(isset($data[$i][$key]))
+                                    $ret += $data[$i][$key];
                                 }
                             }
                             break;
                         case'count':
-                            return(count($this->queryResults[$id]['data']));
+                            $ret=0;
+                            if(!is_array($cond))
+                                return(count($data));
+                            else for ($ret=0,$i=0,$tr=count($data);$i<$tr;$i++) {
+                                $ret++;
+                            }
+                            return $ret;
+
                             break;
                     }
                     return($ret);
@@ -109,6 +149,40 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
         function queryDataFields($id) {
             $ret=array();
             if (is_array($this->queryResults[$id]['data'][0])) $ret = array_keys($this->queryResults[$id]['data'][0]);
+            return($ret);
+        }
+        function queryDataRows($id) {
+            $ret=0;
+            if (is_array($this->queryResults[$id]['data'])) $ret = count($this->queryResults[$id]['data']);
+            return($ret);
+        }
+
+        /**
+         * @param $id
+         * @param $groups
+         * @param $fields
+         * @param $math
+         * @return array or false in error case.
+         */
+        function queryDataGrouped($id,$groups,$fields,$math)
+        {
+            if (!isset($this->queryResults[$id]['data'])) return false;
+
+            if(!is_array($groups)) $groups = explode(",",trim($groups));
+            $ret = array();
+
+            $keys='';
+            foreach ($groups as $i=>$key ) {
+                $key = trim($key);
+
+                $keys .= ((strlen($keys))?'/':'').$key;
+
+
+            }
+
+            if (isset($this->queryResults[$id]['data'])) {
+
+            }
             return($ret);
         }
 

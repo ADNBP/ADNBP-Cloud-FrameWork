@@ -64,7 +64,7 @@
 									$cell['value'] =htmlentities($cell['value']);
 									if(isset($cell['bold'])) $cell['value'] = '<strong>'.$cell['value'].'</strong>';
 									if(isset($cell['small'])) $cell['value'] = '<small>'.$cell['value'].'</small>';
-                                    if(isset($cell['link'])) $cell['value'] = '<a href="'.htmlentities($cell['link']).'">'.$cell['value'].'</a>';
+                                    if(isset($cell['link'])) $cell['value'] = '<a href="'.htmlentities($cell['link']).'" target="'.$cell['target'].'">'.$cell['value'].'</a>';
 									echo $cell['value'];
 									
                                 ?></td>
