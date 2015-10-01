@@ -3,7 +3,8 @@
     "description": "Cloud Framework Service which resolve all social network connections between apis and cloud services",
     "require": {
         "abraham/twitteroauth": "dev-master",
-        "google/apiclient": "^1.1@dev"
+        "google/apiclient": "^1.1@dev",
+        "facebook/php-sdk-v4": "^5.0@dev"
     },
     "license": "MIT",
     "authors": [

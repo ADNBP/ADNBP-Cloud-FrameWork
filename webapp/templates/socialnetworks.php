@@ -56,7 +56,7 @@
                 </md-input-container>
             </md-card-content>
             <div class="md-actions" flex="100" layout="row" layout-align="center center">
-                <md-button class="md-raised md-primary" ng-click="getSocialData('google')">Get Social Data</md-button>
+                <md-button class="md-raised md-primary" ng-click="getSocialData('Google')">Get Social Data</md-button>
             </div>
         </md-card>
         <md-card flex ng-show="apis.facebook">
@@ -80,7 +80,7 @@
                 </md-input-container>
             </md-card-content>
             <div class="md-actions" flex="100" layout="row" layout-align="center center">
-                <md-button class="md-raised md-primary" ng-click="getSocialData('facebook')">Get Social Data</md-button>
+                <md-button class="md-raised md-primary" ng-click="getSocialData('Facebook')">Get Social Data</md-button>
             </div>
         </md-card>
         <md-card flex ng-show="apis.twitter">
@@ -104,7 +104,7 @@
                 </md-input-container>
             </md-card-content>
             <div class="md-actions" flex="100" layout="row" layout-align="center center">
-                <md-button class="md-raised md-primary" ng-click="getSocialData('twitter')">Get Social Data</md-button>
+                <md-button class="md-raised md-primary" ng-click="getSocialData('Twitter')">Get Social Data</md-button>
             </div>
         </md-card>
         <md-card flex ng-show="apis.linkedin">
@@ -128,7 +128,7 @@
                 </md-input-container>
             </md-card-content>
             <div class="md-actions" flex="100" layout="row" layout-align="center center">
-                <md-button class="md-raised md-primary" ng-click="getSocialData('linkedin')">Get Social Data</md-button>
+                <md-button class="md-raised md-primary" ng-click="getSocialData('LinkedIn')">Get Social Data</md-button>
             </div>
         </md-card>
         <md-card flex ng-show="apis.instagram">
@@ -152,7 +152,7 @@
                 </md-input-container>
             </md-card-content>
             <div class="md-actions" flex="100" layout="row" layout-align="center center">
-                <md-button class="md-raised md-primary" ng-click="getSocialData('instagram')">Get Social Data</md-button>
+                <md-button class="md-raised md-primary" ng-click="getSocialData('Instagram')">Get Social Data</md-button>
             </div>
         </md-card>
         <md-card flex ng-show="apis.pinterest">
@@ -176,7 +176,7 @@
                 </md-input-container>
             </md-card-content>
             <div class="md-actions" flex="100" layout="row" layout-align="center center">
-                <md-button class="md-raised md-primary" ng-click="getSocialData('pinterest')">Get Social Data</md-button>
+                <md-button class="md-raised md-primary" ng-click="getSocialData('Pinterest')">Get Social Data</md-button>
             </div>
         </md-card>
     </md-content>
@@ -215,8 +215,9 @@
                     if(!$scope.loading) {
                         $scope.loading = true;
                         $scope.dataLoaded = false;
+                        var social = socialNetwork.toLowerCase();
                         $log.info("Get social data for " + socialNetwork);
-                        var data = $scope[socialNetwork];
+                        var data = $scope[social];
                         data['social'] = socialNetwork;
                         $http.post("/socialnetworks", data)
                             .then(function(response) {

@@ -18,10 +18,10 @@ if(!class_exists("SocialNetworksAutoloader")) {
          */
         public static function loadClass($class) {
             // it only autoload class into the Rain scope
-            if (strpos($class, 'CloudFramework') !== false && strpos($class, 'Service') !== false) {
+            if (strpos($class, 'CloudFramework') !== false && strpos($class, 'Service') !== false  && strpos($class, 'SocialNetworks') !== false) {
                 // Change order src
                 $path = str_replace("\\", DIRECTORY_SEPARATOR, $class);
-                $path = str_replace('CloudFramework' . DIRECTORY_SEPARATOR . 'Service', '', $path);
+                $path = str_replace('CloudFramework' . DIRECTORY_SEPARATOR . 'Service' . DIRECTORY_SEPARATOR . 'SocialNetworks', '', $path);
                 // transform the namespace in path
                 // filepath
                 $abs_path = __DIR__ . $path . ".php";
