@@ -72,11 +72,7 @@
                 </md-input-container>
                 <md-input-container>
                     <label>Facebook Api User Token</label>
-                    <input ng-model="facebook.token">
-                </md-input-container>
-                <md-input-container>
-                    <label>Facebook Api User Token OAuth</label>
-                    <input ng-model="facebook.oauthToken">
+                    <input ng-model="facebook.facebook_access_token" ng-init="facebook.facebook_access_token = '<?=getFromArray("facebook_access_token", $facebook)?>'">
                 </md-input-container>
             </md-card-content>
             <div class="md-actions" flex="100" layout="row" layout-align="center center">

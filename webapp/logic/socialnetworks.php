@@ -5,12 +5,12 @@
  * @version 1.0
  */
 use CloudFramework\Service\SocialNetworks\SocialNetworks;
-
 /** @var ADNBP $this */
 $this->loadClass('socialnetworks/src/SocialNetworksAutoloader');
 $sc = SocialNetworks::getInstance();
 $google = (array_key_exists("google_form_credentials", $_SESSION)) ? $_SESSION["google_form_credentials"] : array();
 $twitter = (array_key_exists("twitter_form_credentials", $_SESSION)) ? $_SESSION["twitter_form_credentials"] : array();
+$facebook = (array_key_exists("facebook_form_credentials", $_SESSION)) ? $_SESSION["facebook_form_credentials"] : array();
 
 function getFromArray($key, array $array = array()) {
     if(array_key_exists($key, $array)) {
@@ -49,5 +49,13 @@ if ($requestMethod === 'POST') {
             "token" => $_REQUEST["oauth_token"],
         );
         $sc->saveInSession("Twitter", $params);
+    } elseif (array_key_exists("facebookOAuthCallback", $_REQUEST)) {
+        $params = array(
+            "client" => $this->getConf("FacebookOauth_APP_ID"),
+            "secret" => $this->getConf("FacebookOauth_APP_SECRET"),
+            "code" => $_REQUEST["code"],
+            "state" => $_REQUEST["state"],
+        );
+        $sc->saveInSession("Facebook", $params);
     }
 }

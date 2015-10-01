@@ -54,7 +54,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
 
         if ($client->isAccessTokenExpired()) {
             // TODO auto regenerate user token
-            SocialNetworks::generateErrorResponse(SocialNetworks::getAuthGoogleApiUrl(), 401);
+            SocialNetworks::generateErrorResponse($this->getAuthUrl(), 401);
         }
 
         $plusService = new \Google_Service_Plus($client);
@@ -65,7 +65,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     /**
      * Authentication service from google sign in request
      * @param array $credentials
-     * @return string
+     * @return array
      */
     public function authorize(array $credentials)
     {

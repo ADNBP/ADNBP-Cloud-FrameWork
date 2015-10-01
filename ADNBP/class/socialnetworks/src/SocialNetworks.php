@@ -65,24 +65,23 @@ class SocialNetworks extends Singleton
             }
         }
         if (count($credentials) !== count($keys)) {
-            switch (strtoupper($socialNetwork)) {
-                case "GOOGLE":
-                    SocialNetworks::generateErrorResponse(SocialNetworks::getAuthGoogleApiUrl(), 401);
-                    break;
-                case "TWITTER":
-                    SocialNetworks::generateErrorResponse(SocialNetworks::getAuthTwitterApiUrl(), 401);
-                    break;
-                case "FACEBOOK":
-                case "LINKEDIN":
-                case "INSTAGRAM":
-                case "PINTEREST":
-                default:
-                    SocialNetworks::generateErrorResponse(SocialNetworks::generateRequestUrl() . "socialnetworks", 302);
-                    break;
-            }
-
+            SocialNetworks::generateErrorResponse(SocialNetworks::getInstance()->getSocialLoginUrl($socialNetwork), 401);
         }
         return $credentials;
+    }
+
+    /**
+     * Method that generate the social network login url
+     * @param $social
+     * @return mixed
+     */
+    public function getSocialLoginUrl($social) {
+        try {
+            $connector = $this->getSocialApi($social);
+            return $connector->getAuthUrl();
+        } catch(\Exception $e) {
+            SocialNetworks::generateErrorResponse($e->getMessage(), 500);
+        }
     }
 
     /**
