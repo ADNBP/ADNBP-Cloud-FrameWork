@@ -1,0 +1,16 @@
+{
+    "name": "cloud-framework/social-network",
+    "description": "Cloud Framework Service which resolve all social network connections between apis and cloud services",
+    "require": {
+        "abraham/twitteroauth": "dev-master",
+        "google/apiclient": "^1.1@dev"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Fran López",
+            "email": "fl@bloombees.com"
+        }
+    ],
+    "minimum-stability": "dev"
+}

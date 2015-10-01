@@ -5,3 +5,8 @@ README.md
 .git/*
 .idea/*
 local_config.php
+**/composer.phar
+**/composer.lock
+**/vendor
+adnbp_framework_config.php
+php.ini
