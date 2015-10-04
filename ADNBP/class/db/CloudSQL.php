@@ -169,14 +169,12 @@ if (!defined ("_MYSQLI_CLASS_") ) {
         // It requires at least query argument
 		function getDataFromQuery() {
 		    $_q = $this->_buildQuery(func_get_args());
+            __p('getDataFromQuery ',$_q,'note');
             if($this->error()) {
                 return(false);
             } else {
                 $ret=array();
-				
-				
 				if($this->_debug) _print($_q);
-				
                 if( ($this->_lastRes = $this->_db->query($_q)) ) {
                 	$this->_affectedRows = $this->_db->affected_rows;
 					
@@ -187,6 +185,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                 } else {
                     $this->setError('Query Error [$q]: ' . $this->_db->error);
                 }
+                __p('getDataFromQuery ','','endnote');
                 return($ret);                
             }
 		}
@@ -194,6 +193,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
         // It requires at least query argument
         function command() {
             $_q = $this->_buildQuery(func_get_args());
+            __p('command ',$_q,'note');
             if($this->error()) {
                 return(false);
             } else {
@@ -211,6 +211,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                     $_ok = false;
                     $this->setError('Query Error [$q]: ' .  $this->_db->error);
                 }
+                __p('command ','','endnote');
                 return($_ok);                
             }
         }
@@ -454,7 +455,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
          * $mixValue: if is_string is the name of the table elseif is_array are the values from a table where in $data
          */      
         function cloudFrameWork($action,$data='',$mixValue='',$order='',$selectFields='*',$page=0) {
-        	
+
 			if(!strlen($selectFields)) $selectFields='*';
 			if(!is_numeric($page)) $page=0;
             $table=''; // We have to calculate $table
