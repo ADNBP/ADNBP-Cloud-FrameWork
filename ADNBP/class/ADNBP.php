@@ -73,12 +73,16 @@ if (!defined("_ADNBP_CLASS_")) {
 		var $_log = array();
 		var $_date = null;
         var $system = array();
+		var $__p = null;
 
 		/**
 		 * Constructor
 		 */
 		function ADNBP($session = true, $sessionId = '', $rootpath = '') {
-		    
+
+			global $__p;
+			$this->__p = &$__p;
+
             // HTTP_REFERER
             $this->_referer = $_SERVER['HTTP_REFERER'];
             if(!strlen($this->_referer)) $this->_referer = $_SERVER['SERVER_NAME'];
@@ -1253,37 +1257,6 @@ if (!defined("_ADNBP_CLASS_")) {
 					return (false);
 					break;
 			}
-		}
-
-		
-		/*
-		 * Time Performce
-		 */
-		function initTime() {
-			$this -> _timePerformance['times'][] = array('Init Server response', $_SERVER["REQUEST_TIME_FLOAT"], 0);
-			$this -> _timePerformance['times'][] = array('ADNBP Class Construction', microtime(true), microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"]);
-			$this -> _timePerformance['max'] = microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"];
-		}
-
-		function setPartialTime($txt) {
-			$time = microtime(true) - $this -> _timePerformance['times'][count($this -> _timePerformance['times']) - 1][1];
-			$this -> _timePerformance['times'][] = array($txt, microtime(true), $time);
-			$this -> _timePerformance['max'] = ($time > $this -> _timePerformance['max']) ? $time : $this -> _timePerformance['max'];
-		}
-
-		function getTotalTime($prec = 4) {
-			$txt = 'Require TotalTime';
-			$this -> setPartialTime($txt);
-			$currentTime = microtime(true);
-			return (round($currentTime - $this -> _timePerformance['times'][0][1], $prec));
-		}
-
-		function getLastPartialTime() {
-			$ret = null;
-			$last = 0;
-			if (is_array($this -> _timePerformance['times']))
-				$last = count($this -> _timePerformance['times']) - 1;
-			return (($last >= 0) ? $this -> _timePerformance['times'][$last] : null);
 		}
 
 		/*

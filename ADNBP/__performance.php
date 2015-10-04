@@ -13,7 +13,7 @@ if (!defined ("_Performance_CLASS_") ) {
 			$this->data['lastMicrotime'] = $this->data['initMicrotime'];
 			$this->data['initMemory'] = memory_get_usage() / (1024 * 1024);
 			$this->data['lastMemory'] = $this->data['initMemory'];
-			$this->data['lastIndex']++;
+			$this->data['lastIndex']=1;
 			$this->data['info'][] = 'File: ' . str_replace($_SERVER['DOCUMENT_ROOT'], '',__FILE__);
 			$this->data['info'][] = 'Init Memory Usage: ' .number_format(round($this->data['initMemory'], 4), 4) .  'Mb';
 		}
@@ -55,6 +55,7 @@ if (!defined ("_Performance_CLASS_") ) {
 				__sp();
 				exit ;
 			}
+
 			$this->data['lastIndex']++;
 			
 		}
