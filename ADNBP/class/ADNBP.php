@@ -666,7 +666,7 @@ if (!defined("_ADNBP_CLASS_")) {
 					if (is_array($data)) {
 							if(strpos($_url, '?')===false) $_url.='?';
 							else $_url.='&';
-							foreach ($data as $key => $value) $_url .= $key . '=' . urlencode($value) . '&';
+							foreach ($data as $key => $value) $_url .= $key . '=' . rawurlencode($value) . '&';
 					}
 				} else {
 					if ($raw) {
@@ -688,6 +688,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
 			// Context creation
 			$context = stream_context_create($options);
+			
 			
 			try {
 				$ret = @file_get_contents($_url, false, $context);
@@ -1213,14 +1214,15 @@ if (!defined("_ADNBP_CLASS_")) {
 		/*
 		 * String with {{var}} to find substitutions with $_REQUEST['var']
 		 */
-		function applyVarsSubsitutions($str) {
+		function applyVarsSubsitutions($str,$data=null) {
 			if (!strlen(trim($str))) return ($str);
+			if($data===null) $data = &$_REQUEST;
 			$matchs = $this->getSubstitutionsTags($str);
 			if (is_array($matchs[0]))
 				for ($i = 0, $tr = count($matchs[0]); $i < $tr; $i++) {
 					// if not there is Variables
-					if (isset($_REQUEST[$matchs[1][$i]]))
-						$str = str_replace($matchs[0][$i], $_REQUEST[$matchs[1][$i]], $str);
+					if (isset($data[$matchs[1][$i]]))
+						$str = str_replace($matchs[0][$i], $data[$matchs[1][$i]], $str);
 				}
 			return ($str);
 		}
