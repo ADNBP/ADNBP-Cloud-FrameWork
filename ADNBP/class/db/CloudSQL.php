@@ -161,11 +161,11 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                 else 
                     $this->_db = new mysqli($this->_dbserver, $this->_dbuser, $this->_dbpassword, $this->_dbdatabase, $this->_dbport);
 				
-                    if($this->_db->connect_error)  $this->setError('Connect Error to: '.$this->_dbserver.$this->_dbsocket.' (' . $this->_db->connect_errno . ') '. $mysqli->connect_error);
+                    if($this->_db->connect_error)  $this->setError('Connect Error to: '.((strlen($this->_dbsocket))?$this->_dbsocket:$this->_dbserver).' (' . $this->_db->connect_errno . ') '. $mysqli->connect_error);
                     else $this->_dblink = true;
                     
                 } catch (Exception $e) {
-                    $this->setError('Connect Error to: '.$this->_dbserver.$this->_dbsocket.' (' . $this->_db->connect_errno . ') '. $mysqli->connect_error);
+                    $this->setError('Connect Error to: '.((strlen($this->_dbsocket))?$this->_dbsocket:$this->_dbserver).' (' . $this->_db->connect_errno . ') '. $mysqli->connect_error);
                 }
 			} else {
 				$this->setError("No DB server or DB name provided. ");
