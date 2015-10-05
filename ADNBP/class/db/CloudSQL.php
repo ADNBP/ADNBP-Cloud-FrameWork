@@ -66,10 +66,10 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 		var $_cloudFilterToAvoidCalculation = array();
 		var $_queryFieldTypes = array();
                 
-        var $_dblink=false;                // Database Connection Link	
+        protected $_dblink=false;                // Database Connection Link
         var $_debug=false;
         
-        Function CloudSQL ($h='',$u='',$p='',$db='',$port='3306',$socket='') {
+        Function __construct ($h='',$u='',$p='',$db='',$port='3306',$socket='') {
             
             global $adnbp;
             
@@ -127,10 +127,21 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 					break;
 			}
 			return($ret);
-		}	
-		
-		function connect($h='',$u='',$p='',$db='',$port="3306",$socket='') {
-		    
+		}
+
+        /**
+         * @param string $h Host
+         * @param string $u User
+         * @param string $p Password
+         * @param string $db DB Name
+         * @param string $port Port. Default 3306
+         * @param string $socket Socket
+         * @return bool True if connection is ok.
+         */
+        function connect($h='',$u='',$p='',$db='',$port="3306",$socket='') {
+
+            if($this->_dblink)  return($this->_dblink); // Optimize current connection.
+
         	if(strlen($h)) {
         		$this->_dbserver = $h;
         		$this->_user = $u;
@@ -140,9 +151,9 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                 $this->_dbsocket = $socket;
         	}
             
-			if($this->_dblink)  $this->close();
-			$this->_dblink = false;
-            
+
+
+
 			if(strlen($this->_dbserver) || strlen($this->_dbsocket)) {
 			    try {
 			    if(strlen($this->_dbsocket))

@@ -49,6 +49,8 @@ if (!defined ("_Performance_CLASS_") ) {
 			if($title) {
 				$this->data['titles'][$title]['mem'] = $_mem;
 				$this->data['titles'][$title]['time'] += $_time;
+				$this->data['titles'][$title]['lastIndex'] = $this->data['lastIndex'];
+
 			}
 			
 			if (isset($_GET['__p']) && $_GET['__p'] == $this->data['lastIndex']) {
@@ -70,7 +72,27 @@ if (!defined ("_Performance_CLASS_") ) {
 			$this->data['init'][$spacename][$key]['time'] = round(microtime(true) - $this->data['init'][$spacename][$key]['time'],3).' secs';
 			$this->data['init'][$spacename][$key]['ok'] = $ok;
 			if($msg!== false) $this->data['init'][$spacename][$key]['notes'] = $msg;
-		}	
+		}
+
+		function getLog() {
+			$ret = '';
+			$spaces = "";
+			if(is_array($this->data['info']))
+			foreach ($this->data['info'] as $key => $value) {
+				if(is_string($value) && strpos($value, '[endnote]')!==false) $spaces = substr($spaces, 0,-2);
+				$ret.= $spaces;
+				$ret.= ((is_string($value))?$value:print_r($value,true))."\n";
+				if(is_string($value) && strpos($value, '[note]')!==false) $spaces .= "  ";
+				if(is_string($value) && strpos($value, '[endnote]')!==false) $ret.= "\n";
+
+			}
+			$ret.= "\n\nTOTALS:\n";
+			if(is_array($this->data['titles']))
+			foreach ($this->data['titles'] as $key => $value) {
+				$ret.= "[$key] : ".round($value['mem'],3).' Mb / '.round($value['time'],3)." secs.\n";
+			}
+			return $ret;
+		}
 	}
 }
 
