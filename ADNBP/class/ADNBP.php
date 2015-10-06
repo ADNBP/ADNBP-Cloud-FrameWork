@@ -1220,8 +1220,39 @@ if (!defined("_ADNBP_CLASS_")) {
 			$matchs = $this->getSubstitutionsTags($str);
 			if (is_array($matchs[0]))
 				for ($i = 0, $tr = count($matchs[0]); $i < $tr; $i++) {
+				    
 					// if not there is Variables
-					if (isset($data[$matchs[1][$i]]))
+					if (strpos($matchs[1][$i], 'if:') === 0) {
+					    list($foo, $var) = explode('if:', $matchs[1][$i], 2);
+                        $var=trim($var);
+                        $_condition = false;  // if false delete text until next {{endif:}}
+                        
+                        // There is a condition
+                        if (strpos($var, '=') !== false) {
+                        // Eval if exist the var.
+                        // TODO: support conditional values
+                        } else {
+                            if($var[0]=='!') {
+                                $var = str_replace('!', '', $var);
+                                $_condition = !isset($data[$var]);
+                            } else $_condition = isset($data[$var]);
+                        }
+                        
+                        // Delete only tags
+                        if($_condition) {
+                           $str = preg_replace('/'.$matchs[0][$i].'/', '', $str,1);
+                           $str = preg_replace('/{{endif:}}/', '', $str,1);
+                        //delete {{if: .. {{endif:}}}}
+                        } else {
+                            
+                            $pattern= '/'.$matchs[0][$i].'(.*){{endif:}}/s';
+                            $str = preg_replace($pattern, '', $str,1,$count);
+                            
+                        }
+                        
+                        // _printe($var,$var[0],$_condition);
+                    // simple substitution
+                    } else if (isset($data[$matchs[1][$i]]))
 						$str = str_replace($matchs[0][$i], $data[$matchs[1][$i]], $str);
 				}
 			return ($str);
