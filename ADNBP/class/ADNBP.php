@@ -1245,7 +1245,7 @@ if (!defined("_ADNBP_CLASS_")) {
                         //delete {{if: .. {{endif:}}}}
                         } else {
                             
-                            $pattern= '/'.$matchs[0][$i].'(.*){{endif:}}/s';
+                            $pattern= '/'.$matchs[0][$i].'(.*?){{endif:}}/s';
                             $str = preg_replace($pattern, '', $str,1,$count);
                             
                         }
