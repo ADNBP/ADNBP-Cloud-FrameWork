@@ -1,5 +1,5 @@
 <?php
-$api->checkMethod('GET');
+$api->checkMethod('GET,PUT');
 
 $template = null;
 $lang = null;
@@ -85,8 +85,7 @@ if(!$api->error) {
             // Do substitutions
         	if(strlen($lang))
 				$value = $this->applyTranslations($value,$lang); // substitute {{lang:xxxx }}
-				
-			$value = $this->applyVarsSubsitutions($value);
+			$value = $this->applyVarsSubsitutions($value,$api->formParams);
 			$api->setReturnData($value);
 			unset($value);
         }        
