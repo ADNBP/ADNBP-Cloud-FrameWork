@@ -82,9 +82,10 @@ if(!$api->error) {
             
         // Else apply subsititutions
         } else {
-            // Do substitutions
+            // Do substitutions if lang is passed
         	if(strlen($lang))
 				$value = $this->applyTranslations($value,$lang); // substitute {{lang:xxxx }}
+			
 			$value = $this->applyVarsSubsitutions($value,$api->formParams);
 			$api->setReturnData($value);
 			unset($value);

@@ -1234,32 +1234,33 @@ if (!defined("_ADNBP_CLASS_")) {
                         } else {
                             if($var[0]=='!') {
                                 $var = str_replace('!', '', $var);
-                                $_condition = !isset($data[$var]);
-                            } else $_condition = isset($data[$var]);
+                                $_condition = !strlen($data[$var]) || $data[$var]=='0';
+                            } else $_condition = strlen($data[$var]) && $data[$var]!='0';
                         }
                         
-                        // Delete only tags
-                        if($_condition) {
-                           $str = preg_replace('/'.$matchs[0][$i].'/', '', $str,1);
-                           $str = preg_replace('/{{endif:}}/', '', $str,1);
-                        //delete {{if: .. {{endif:}}}}
-                        } else {
-                        	
-                            // How many nested 'if's are there?
-							for($nested=1,$closes=1,$j=$i+1;$j<$tr && $closes>0;$j++) 
-								if (strpos($matchs[1][$j], 'if:') === 0) {
-									$nested++; $closes++;
-								} elseif (strpos($matchs[1][$j], 'endif:') === 0) {
-									$closes--;
-								} 
-							
-							$pattern= '/'.$matchs[0][$i];
-							if($nested < 1) $nested = 1;
-							for($j=0;$j<$nested;$j++) $pattern.='(.*?){{endif:}}';
-							$pattern.='/s';
-                            $str = preg_replace($pattern, '', $str,1,$count);
-                            
-                        }
+						// Only parse if the var exist
+						if(isset($data[$var])) {
+	                        // Delete only tags
+	                        if($_condition) {
+	                           $str = preg_replace('/'.$matchs[0][$i].'/', '', $str,1);
+	                           $str = preg_replace('/{{endif:}}/', '', $str,1);
+	                        //delete {{if: .. {{endif:}}}}
+	                        } else {
+	                            // How many nested 'if's are there?
+								for($nested=1,$closes=1,$j=$i+1;$j<$tr && $closes>0;$j++) 
+									if (strpos($matchs[1][$j], 'if:') === 0) {
+										$nested++; $closes++;
+									} elseif (strpos($matchs[1][$j], 'endif:') === 0) {
+										$closes--;
+									} 
+								
+								$pattern= '/'.$matchs[0][$i];
+								if($nested < 1) $nested = 1;
+								for($j=0;$j<$nested;$j++) $pattern.='(.*?){{endif:}}';
+								$pattern.='/s';
+	                            $str = preg_replace($pattern, '', $str,1,$count);
+	                        }
+						}
                         
                         // _printe($var,$var[0],$_condition);
                     // simple substitution
