@@ -1244,8 +1244,19 @@ if (!defined("_ADNBP_CLASS_")) {
                            $str = preg_replace('/{{endif:}}/', '', $str,1);
                         //delete {{if: .. {{endif:}}}}
                         } else {
-                            
-                            $pattern= '/'.$matchs[0][$i].'(.*?){{endif:}}/s';
+                        	
+                            // How many nested 'if's are there?
+							for($nested=1,$closes=1,$j=$i+1;$j<$tr && $closes>0;$j++) 
+								if (strpos($matchs[1][$j], 'if:') === 0) {
+									$nested++; $closes++;
+								} elseif (strpos($matchs[1][$j], 'endif:') === 0) {
+									$closes--;
+								} 
+							
+							$pattern= '/'.$matchs[0][$i];
+							if($nested < 1) $nested = 1;
+							for($j=0;$j<$nested;$j++) $pattern.='(.*?){{endif:}}';
+							$pattern.='/s';
                             $str = preg_replace($pattern, '', $str,1,$count);
                             
                         }
@@ -1255,6 +1266,7 @@ if (!defined("_ADNBP_CLASS_")) {
                     } else if (isset($data[$matchs[1][$i]]))
 						$str = str_replace($matchs[0][$i], $data[$matchs[1][$i]], $str);
 				}
+
 			return ($str);
 		}
 
