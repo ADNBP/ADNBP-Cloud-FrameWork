@@ -15,6 +15,7 @@
  * Environment Vars && ClassLoader for ADNBP Framework
  * @version 1.0
  * @author Hector López <hlopez@adnbp.com>
+ * @author Fran López <fl@adnry.com>
  * @package com.adnbp.framework
  */
 
@@ -29,12 +30,13 @@ if (!defined("_ADNBP_CLASS_")) {
      *
      * @version 1.0
      * @author Hector López <hlopez@adnbp.com>
+     * @author Fran López <fl@adnry.com>
      * @copyright PUBLIC
      */
     class ADNBP
     {
 
-        var $_version = "2015_Aug_29";
+        var $_version = "2015_Oct_22";
         var $_conf = array();
         var $_menu = array();
         var $_lang = "en";
@@ -1610,6 +1612,10 @@ if (!defined("_ADNBP_CLASS_")) {
             }
         }
 
+        /**
+         * Checks if current path url exists in Cloud Framework menu
+         * @return bool
+         */
         public function checkRouteExists()
         {
             $exists = false;
@@ -1623,6 +1629,17 @@ if (!defined("_ADNBP_CLASS_")) {
                 }
             }
             return $exists;
+        }
+
+        /**
+         * Do an internal redirect to other path
+         * @param string $newPath
+         */
+        public function internalRedirect($newPath)
+        {
+            $this->_url = $newPath;
+            $this->run();
+            exit;
         }
 
     }
