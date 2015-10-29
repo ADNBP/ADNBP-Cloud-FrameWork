@@ -2,6 +2,7 @@
     "name": "cloudframework/pushnotifications",
     "description": "Group of tool to send push notifications to IOs, Android or Windows Phone devices",
     "require": {
+        "cloud-framework/core": "dev-master"
     },
     "license": "MIT",
     "authors": [

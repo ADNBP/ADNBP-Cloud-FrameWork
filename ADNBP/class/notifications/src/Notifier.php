@@ -1,7 +1,7 @@
 <?php
 namespace CloudFramework\Service\Notifications;
+use CloudFramework\Patterns\Singleton;
 
-use CloudFramework\Service\Notifications\Interfaces\Singleton;
 
 /**
  * Class Notifier
@@ -42,6 +42,12 @@ class Notifier extends Singleton
      * @var string
      */
     protected $lastError = '';
+
+    /**
+     * Socket connection for APNS messages
+     * @var resource
+     */
+    private $apnSocket;
 
     public function __construct($appName = 'CloudFramework', array $config = null)
     {
@@ -136,25 +142,26 @@ class Notifier extends Singleton
      */
     private function prepareAPNSSocket($resource, array $options)
     {
-        $socket = null;
-        if ($this->checkSocketOptions($options)) {
+        if ($this->checkSocketOptions($options) && null === $this->apnSocket) {
             $errorCode = $errorMessage = null;
             if (@file_exists($options['certificate'])) {
                 stream_context_set_option($resource, 'ssl', 'local_cert', $options['certificate']);
                 stream_context_set_option($resource, 'ssl', 'passphrase', $options['certificatePassPhrase']);
 
                 try {
-                    $socket = stream_socket_client($options['url'], $errorCode, $errorMessage, 60, STREAM_CLIENT_CONNECT | STREAM_CLIENT_PERSISTENT, $resource);
+                    $this->apnSocket = stream_socket_client($options['url'], $errorCode, $errorMessage, 60, STREAM_CLIENT_CONNECT | STREAM_CLIENT_PERSISTENT, $resource);
                 } catch (\Exception $e) {
                     $this->addError($e->getMessage());
                 }
             } else {
                 $this->addError('Certificate ' . $options['certificate'] . ' not valid or not exists');
             }
+        } elseif(null !== $this->apnSocket) {
+            $this->addTrace('Socket alredy created');
         } else {
             $this->addError('Needed options not configured to send push notifications with APNS');
         }
-        return $socket;
+        return $this->apnSocket;
     }
 
     /**
@@ -183,6 +190,25 @@ class Notifier extends Singleton
             $this->addError("Push response: " . $result);
         } else {
             $sended = true;
+        }
+        return $sended;
+    }
+
+    /**
+     * Send push notification for
+     * @param resource $socket
+     * @param array $message
+     * @return bool
+     */
+    protected function sendAPNSMessage($socket, array $message)
+    {
+        $sended = false;
+        $payload = $this->composeAPNSPayloadMessage($message);
+        try {
+            $result = fwrite($socket, $payload, strlen($payload));
+            $sended = ($result !== false);
+        } catch(\Exception $e) {
+            $this->addError($e->getMessage());
         }
         return $sended;
     }
@@ -234,6 +260,10 @@ class Notifier extends Singleton
         return $this->log;
     }
 
+    /**
+     * Checkpoint timestamp for logs
+     * @return float
+     */
     private function stepTs()
     {
         $now = microtime(true);
@@ -243,13 +273,27 @@ class Notifier extends Singleton
     }
 
     /**
+     * Get delay for connector types
+     * @param string $type
+     * @return int
+     */
+    private function getConnectorDelay($type) {
+        switch($type) {
+            case 'APNS': return Notifier::APNS_MESSAGE_DELAY;
+            default:
+            case 'GCM:': return Notifier::GCM_MESSAGE_DELAY;
+        }
+    }
+
+    /**
      * Mapper for push payloads
      * @param array $message
      * @return array
      */
     private function mapPayload($message)
     {
-        return array(
+        $extra = (array_key_exists('extra', $message) && is_array($message['extra'])) ? $message['extra'] : array();
+        return array_merge(array(
             'aps' => array(
                 'alert' => array(
                     'body' => $message['message'] ?: ''
@@ -257,7 +301,7 @@ class Notifier extends Singleton
                 'badge' => $message['badge'] ?: 0
             ),
             'type' => $message['type'] ?: 0
-        );
+        ), $extra);
     }
 
     /**
@@ -300,13 +344,12 @@ class Notifier extends Singleton
      */
     protected function processMessage($type, array &$message)
     {
-        $sended = false;
         $conn = null;
         switch (strtoupper($type)) {
             case 'APNS':
                 $conn = $this->prepareConection($type);
                 $socket = $this->prepareAPNSSocket($conn, $this->security[$type]);
-                throw new \Exception('test');
+                $message['sended'] = $this->sendAPNSMessage($socket, $message);
                 break;
             case 'GCM':
                 $options = $this->prepareGCMHeaders($message, $this->security[$type]);
@@ -318,7 +361,7 @@ class Notifier extends Singleton
                 throw new \Exception($type . ' messages not exists or not implemented yet');
         }
         $this->closeConnectionOrSocket($conn);
-        return $sended;
+        return $message['sended'];
     }
 
     /**
@@ -338,6 +381,8 @@ class Notifier extends Singleton
                     }
                 } catch(\Exception $e) {
                     $this->addError($e->getMessage());
+                } finally {
+                    usleep($this->getConnectorDelay($type));
                 }
             }
         }
@@ -382,5 +427,18 @@ class Notifier extends Singleton
             $errors = true;
         }
         return !$errors;
+    }
+
+    /**
+     * Create APNS payload
+     * @param array $message
+     * @return string
+     */
+    protected function composeAPNSPayloadMessage(array $message)
+    {
+        $payload = json_encode($this->mapPayload($message), JSON_UNESCAPED_UNICODE);
+        //echo $payload;
+        // Build the binary notification
+        return chr(0) . pack('n', 32) . pack('H*', $message['device']) . pack('n', strlen($payload)) . $payload;
     }
 }
