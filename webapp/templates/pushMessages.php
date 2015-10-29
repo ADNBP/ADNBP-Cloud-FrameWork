@@ -7,7 +7,7 @@
         <h1>Push notification form example</h1>
         <md-card flex layout-padding>
             <md-card-content>
-                <form ng-submit="doPushNotification()" novalidate name="pushForm" layout="column" flex="100">
+                <form onsubmit="return false;" novalidate name="pushForm" layout="column" flex="100">
                     <md-radio-group ng-model="push.type">
                         <md-radio-button value="apns" class="md-primary">Apple(APNS)</md-radio-button>
                         <md-radio-button value="gcm" class="md-primary">Android(GCM)</md-radio-button>
@@ -60,7 +60,7 @@
                         </div>
                     </fieldset>
                     <div class="md-actions" flex="100" layout="row" layout-align="center center">
-                        <md-button class="md-raised md-primary" id="send-push">Try push notification</md-button>
+                        <md-button class="md-raised md-primary" id="send-push" ng-click="doPushNotification()">Try push notification</md-button>
                     </div>
                 </form>
             </md-card-content>
@@ -76,8 +76,8 @@
 <script type="text/javascript">
     (function () {
         var app = angular.module("cf-push-notifications", ["ngMaterial"]);
-        app.controller("PushController", ["$scope", "$http", "$log", "$location", "$window", "$mdDialog",
-            function ($scope, $http, $log, $location, $window, $mdDialog) {
+        app.controller("PushController", ["$scope", "$http", "$log", "$location", "$window", "$mdDialog", "$compile",
+            function ($scope, $http, $log, $location, $window, $mdDialog, $compile) {
                 $scope.types = [
                     {"id": 0,"name":"General alerts"},
                     {"id": 1,"name":"Order related notifications"},
@@ -115,7 +115,7 @@
                                             .title('Push notifications sended')
                                             .content(_response.message)
                                             .ariaLabel(_response.message)
-                                            .ok('Thanks!')
+                                            .ok('Close')
                                     );
                                 }
                                 $log.warn(response);
