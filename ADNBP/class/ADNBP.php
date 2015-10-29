@@ -23,6 +23,7 @@
 
 if (!defined("_ADNBP_CLASS_")) {
     define("_ADNBP_CLASS_", TRUE);
+    define("ROOT_CLASS_DIRECTORY", __DIR__);
 
     /**
      * @class ADNBP

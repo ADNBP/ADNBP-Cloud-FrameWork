@@ -21,10 +21,10 @@ if(!class_exists("NotificationsAutoloader")) {
             if (strpos($class, 'CloudFramework') !== false && strpos($class, 'Service') !== false  && strpos($class, 'Notifications') !== false) {
                 // Change order src
                 $path = str_replace("\\", DIRECTORY_SEPARATOR, $class);
-                $path = str_replace('CloudFramework' . DIRECTORY_SEPARATOR . 'Service' . DIRECTORY_SEPARATOR . 'Notifications', '', $path);
                 // transform the namespace in path
+                $path = str_replace('CloudFramework' . DIRECTORY_SEPARATOR . 'Service' . DIRECTORY_SEPARATOR . 'Notifications', '', $path);
                 // filepath
-                $abs_path = __DIR__ . $path . ".php";
+                $abs_path = __DIR__ . DIRECTORY_SEPARATOR . 'src' . $path . ".php";
                 // require the file
                 if (file_exists($abs_path)) {
                     require_once $abs_path;
@@ -36,6 +36,6 @@ if(!class_exists("NotificationsAutoloader")) {
 }
 spl_autoload_register(array('NotificationsAutoloader', 'loadClass'), true, true);
 
-if (file_exists(dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php')) {
-    require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+if (file_exists(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php')) {
+    require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
 }
