@@ -1,0 +1,14 @@
+{
+    "name": "cloudframework/pushnotifications",
+    "description": "Group of tool to send push notifications to IOs, Android or Windows Phone devices",
+    "require": {
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Fran López",
+            "email": "fl@bloombees.com"
+        }
+    ],
+    "minimum-stability": "dev"
+}
