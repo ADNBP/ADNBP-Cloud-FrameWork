@@ -4,7 +4,8 @@
     "require": {
         "abraham/twitteroauth": "dev-master",
         "google/apiclient": "^1.1@dev",
-        "facebook/php-sdk-v4": "^5.0@dev"
+        "facebook/php-sdk-v4": "^5.0@dev",
+        "cloud-framework/core": "dev-master"
     },
     "license": "MIT",
     "authors": [

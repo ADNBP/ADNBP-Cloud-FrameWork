@@ -4,9 +4,9 @@
  * @Author Fran López <ll@bloombees.com>
  * @version 1.0
  */
+require_once ROOT_CLASS_DIRECTORY . DIRECTORY_SEPARATOR . 'socialnetworks' . DIRECTORY_SEPARATOR . 'autoload.php';
 use CloudFramework\Service\SocialNetworks\SocialNetworks;
 /** @var ADNBP $this */
-$this->loadClass('socialnetworks/src/SocialNetworksAutoloader');
 $sc = SocialNetworks::getInstance();
 $google = (array_key_exists("google_form_credentials", $_SESSION)) ? $_SESSION["google_form_credentials"] : array();
 $twitter = (array_key_exists("twitter_form_credentials", $_SESSION)) ? $_SESSION["twitter_form_credentials"] : array();

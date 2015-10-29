@@ -2,7 +2,7 @@
 namespace CloudFramework\Service\SocialNetworks\Connectors;
 
 use Abraham\TwitterOAuth\TwitterOAuth;
-use CloudFramework\Service\SocialNetworks\Interfaces\Singleton;
+use CloudFramework\Patterns\Singleton;
 use CloudFramework\Service\SocialNetworks\Interfaces\SocialNetworkInterface;
 use CloudFramework\Service\SocialNetworks\SocialNetworks;
 

@@ -1,11 +1,11 @@
 <?php
 /**
- * Cloud Service Autoloader for Social Network Service
+ * Cloud Service Autoloader for SocialNetworks
  */
 
 if(!class_exists("SocialNetworksAutoloader")) {
     /**
-     * Class SocialNetworkAutoloader
+     * Class SocialNetworksAutoloader
      * @author Fran López <fl@bloombees.com>
      * @version 1.0
      */
@@ -21,10 +21,10 @@ if(!class_exists("SocialNetworksAutoloader")) {
             if (strpos($class, 'CloudFramework') !== false && strpos($class, 'Service') !== false  && strpos($class, 'SocialNetworks') !== false) {
                 // Change order src
                 $path = str_replace("\\", DIRECTORY_SEPARATOR, $class);
-                $path = str_replace('CloudFramework' . DIRECTORY_SEPARATOR . 'Service' . DIRECTORY_SEPARATOR . 'SocialNetworks', '', $path);
                 // transform the namespace in path
+                $path = str_replace('CloudFramework' . DIRECTORY_SEPARATOR . 'Service' . DIRECTORY_SEPARATOR . 'SocialNetworks', '', $path);
                 // filepath
-                $abs_path = __DIR__ . $path . ".php";
+                $abs_path = __DIR__ . DIRECTORY_SEPARATOR . 'src' . $path . ".php";
                 // require the file
                 if (file_exists($abs_path)) {
                     require_once $abs_path;
@@ -35,3 +35,7 @@ if(!class_exists("SocialNetworksAutoloader")) {
     }
 }
 spl_autoload_register(array('SocialNetworksAutoloader', 'loadClass'), true, true);
+
+if (file_exists(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php')) {
+    require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+}
