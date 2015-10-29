@@ -1,5 +1,5 @@
 <?php
-require_once dirname(__FILE__) . '/../../ADNBP/class/notifications/autoload.php';
+require_once ROOT_CLASS_DIRECTORY . '/notifications/autoload.php';
 use CloudFramework\Service\Notifications\Notifier;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
