@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $config[$messageType]['url'] = $data['url'];
         $notifier->setup($config);
-        $notifier->addMessage($messageType, $data['payload'], $data['device']);
+        $notifier->addMessage($messageType, $data['payload'], $data['device'], $data['pType'], $data['badge']);
         $sended = $notifier->notify();
         $response = array(
             "success" => $sended,
