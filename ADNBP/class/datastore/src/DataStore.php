@@ -159,19 +159,12 @@
         {
             $this->checkConfig();
             $mappedResult = $this->getFromCache($object->generateHash());
-            //if(!$mappedResult) {
-                /** @var \Google_Service_Datastore_LookupRequest $query */
-                $gql_query = new \Google_Service_Datastore_GqlQuery();
-                $query = "SELECT * FROM {$object->getKind()} WHERE " . implode(' AND ', $object->generateFilteredQuery());
-                $gql_query->setQueryString($query);
-                $gql_query->setAllowLiteral(true);
-
-                $req = new \Google_Service_Datastore_RunQueryRequest();
-                $req->setGqlQuery($gql_query);
-                $result = $this->store->datasets->runQuery($this->dataset_id, $req, $optParams);
+            if (!$mappedResult) {
+                $req = $this->createSchemaQuery($object, $optParams);
+                $result = $this->store->datasets->runQuery($this->dataset_id, $req, []);
                 $mappedResult = $this->mapSchemaList($result, $object);
                 $this->storeInCache($object->generateHash(), $mappedResult);
-            //}
+            }
             return $mappedResult;
         }
 
@@ -179,6 +172,34 @@
         {
             $this->checkConfig();
             return $this->store->datasets->runQuery($this->dataset_id, $postBody, $optParams);
+        }
+
+        /**
+         * @param Schema $object
+         * @param array $optParams
+         *
+         * @return \Google_Service_Datastore_RunQueryRequest
+         */
+        private function createSchemaQuery(Schema $object, $optParams = array())
+        {
+            /** @var \Google_Service_Datastore_LookupRequest $query */
+            $gql_query = new \Google_Service_Datastore_GqlQuery();
+            $query = "SELECT * FROM {$object->getKind()} WHERE " . implode(' AND ', $object->generateFilteredQuery());
+            if (array_key_exists('groupBy', $optParams)) {
+                // For now only allows one field to group by
+                if(is_string($optParams['groupBy'])) {
+                    if(!$object->fieldExists($optParams['groupBy'], false)) {
+                        $query .= " GROUP BY " . $optParams['groupBy'];
+                    }
+                }
+            }
+            $gql_query->setQueryString($query);
+            $gql_query->setAllowLiteral(TRUE);
+
+            $req = new \Google_Service_Datastore_RunQueryRequest();
+            $req->setGqlQuery($gql_query);
+
+            return $req;
         }
 
     }

@@ -189,6 +189,11 @@
                     $classFingerprint .= $field;
                     $classFingerprint .= $type ?: 'string';
                     $classFingerprint .= $index ?: '';
+                    if ($value instanceof \DateTime) {
+                        $classFingerprint .= $value->format(\DateTime::ATOM);
+                    } else {
+                        $classFingerprint .= $value ?: '';
+                    }
                     $classFingerprint .= '_';
                 }
             }
@@ -208,10 +213,50 @@
                 list($field, $type, $index) = explode('_', $key, 3);
                 if (array_key_exists($field, $array)) {
                     $values = array_values($array[$field]);
-                    $schemaEntity->$key = $values ?: null;
+                    $schemaEntity->$key = $values[0] ?: null;
                 }
             }
             return $schemaEntity;
+        }
+
+        /**
+         * Export Schema Object to plain array or stdObject
+         * @param bool|TRUE $array
+         *
+         * @return array|string
+         */
+        public function export($array = true)
+        {
+            $data = array();
+            foreach (get_object_vars($this) as $key => $value) {
+                list($field, $type, $index) = explode('_', $key, 3);
+                if (!in_array($field, ['loaded', 'loadTs', 'loadMem'])) {
+                    $data[$field] = ($value instanceof \DateTime) ? $value->format(\DateTime::ATOM) : $value;
+                }
+            }
+            return ($array) ? $data : json_encode($data);
+        }
+
+        /**
+         * Compare if one field exists
+         * @param string $field
+         * @param bool $checkFilter
+         *
+         * @return bool
+         */
+        public function fieldExists($comparedField, $checkFilter = false)
+        {
+            $exists = false;
+            foreach (get_object_vars($this) as $key => $value) {
+                list($field, $type, $index) = explode('_', $key, 3);
+                if (!in_array($field, ['loaded', 'loadTs', 'loadMem'])) {
+                    if($comparedField === $field) {
+                        $exists = ($checkFilter) ? !empty($value) : true;
+                        break;
+                    }
+                }
+            }
+            return $exists;
         }
 
     }

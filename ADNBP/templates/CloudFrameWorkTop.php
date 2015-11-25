@@ -90,6 +90,7 @@
                     <li <?=($this->getConf("pageCode")=="TPVSabadell")?"class='active'":""?>><a href="/CloudFrameWorkTPV/SABADELL">TPV Sabadell</a></li>
                     <li <?=($this->getConf("pageCode")=="socialnetworks")?"class='active'":""?>><a href="/socialnetworks">Social Networks Logins</a></li>
                     <li <?=($this->getConf("pageCode")=="pushMessages")?"class='active'":""?>><a href="/pushMessages">Mobile Push Messages</a></li>
+                    <li <?=($this->getConf("pageCode")=="datastore")?"class='active'":""?>><a href="/datastore">DataStore Help</a></li>
                   </ul>
             </ul>
             <?php if(!$this->isAuth()) { ?>
