@@ -1,0 +1,144 @@
+[
+    {
+        "name": "symfony/yaml",
+        "version": "2.8.x-dev",
+        "version_normalized": "2.8.9999999.9999999-dev",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/symfony/yaml.git",
+            "reference": "f65177d7093bc29aefebfbdbe496b9e3a6292653"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/symfony/yaml/zipball/f65177d7093bc29aefebfbdbe496b9e3a6292653",
+            "reference": "f65177d7093bc29aefebfbdbe496b9e3a6292653",
+            "shasum": ""
+        },
+        "require": {
+            "php": ">=5.3.9"
+        },
+        "time": "2015-11-18 13:45:00",
+        "type": "library",
+        "extra": {
+            "branch-alias": {
+                "dev-master": "2.8-dev"
+            }
+        },
+        "installation-source": "source",
+        "autoload": {
+            "psr-4": {
+                "Symfony\\Component\\Yaml\\": ""
+            },
+            "exclude-from-classmap": [
+                "/Tests/"
+            ]
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Fabien Potencier",
+                "email": "fabien@symfony.com"
+            },
+            {
+                "name": "Symfony Community",
+                "homepage": "https://symfony.com/contributors"
+            }
+        ],
+        "description": "Symfony Yaml Component",
+        "homepage": "https://symfony.com"
+    },
+    {
+        "name": "cloud-framework/core",
+        "version": "dev-master",
+        "version_normalized": "9999999-dev",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/CloudFramework/Core.git",
+            "reference": "48c48997246a0cce38cc6e9fdf82b67150449126"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/CloudFramework/Core/zipball/48c48997246a0cce38cc6e9fdf82b67150449126",
+            "reference": "48c48997246a0cce38cc6e9fdf82b67150449126",
+            "shasum": ""
+        },
+        "require": {
+            "symfony/yaml": "2.8.*"
+        },
+        "require-dev": {
+            "phpunit/phpunit": "4.8.x-dev"
+        },
+        "time": "2015-10-29 10:20:51",
+        "type": "library",
+        "installation-source": "source",
+        "autoload": {
+            "psr-4": {
+                "CloudFramework\\": "src/",
+                "CloudFrameworkTest\\": "tests/"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Adrián Martínez Maldonado",
+                "email": "am@bloombees.com"
+            },
+            {
+                "name": "Fran López Quesada",
+                "email": "fl@bloombees.com"
+            }
+        ],
+        "description": "Application Core for Cloud Framework"
+    },
+    {
+        "name": "google/apiclient",
+        "version": "1.1.6",
+        "version_normalized": "1.1.6.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/google/google-api-php-client.git",
+            "reference": "a25dc9d5c109ebb02945ba1ff6336cc937c27628"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/google/google-api-php-client/zipball/a25dc9d5c109ebb02945ba1ff6336cc937c27628",
+            "reference": "a25dc9d5c109ebb02945ba1ff6336cc937c27628",
+            "shasum": ""
+        },
+        "require": {
+            "php": ">=5.2.1"
+        },
+        "require-dev": {
+            "phpunit/phpunit": "3.7.*",
+            "squizlabs/php_codesniffer": "~2.3"
+        },
+        "time": "2015-10-16 22:11:08",
+        "type": "library",
+        "extra": {
+            "branch-alias": {
+                "dev-master": "1.1.x-dev"
+            }
+        },
+        "installation-source": "dist",
+        "autoload": {
+            "classmap": [
+                "src/"
+            ]
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "Apache-2.0"
+        ],
+        "description": "Client library for Google APIs",
+        "homepage": "http://developers.google.com/api-client-library/php",
+        "keywords": [
+            "google"
+        ]
+    }
+]
