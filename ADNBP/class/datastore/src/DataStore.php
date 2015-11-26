@@ -113,7 +113,7 @@
          * @param $data
          * @param int $time
          */
-        private function storeInCache($key, $data, $time = 600)
+        private function storeInCache($key, $data, $time = 30)
         {
             $cache = new \Memcache();
             $cache->add($key, $data, 0, $time);
@@ -151,19 +151,22 @@
         /**
          * @param Schema $object
          * @param array $optParams
+         * @param bool $cache
          *
          * @return Schema[]
          * @throws \Exception
          */
-        public function search(Schema $object, $optParams = [])
+        public function search(Schema $object, $optParams = [], $cache = true)
         {
             $this->checkConfig();
-            $mappedResult = $this->getFromCache($object->generateHash());
+            $mappedResult = ($cache) ? $this->getFromCache($object->generateHash()) : null;
             if (!$mappedResult) {
                 $req = $this->createSchemaQuery($object, $optParams);
                 $result = $this->store->datasets->runQuery($this->dataset_id, $req, []);
                 $mappedResult = $this->mapSchemaList($result, $object);
-                $this->storeInCache($object->generateHash(), $mappedResult);
+                if (count($mappedResult) > 0 && $cache) {
+                    $this->storeInCache($object->generateHash(), $mappedResult);
+                }
             }
             return $mappedResult;
         }
@@ -188,7 +191,7 @@
             if (array_key_exists('groupBy', $optParams)) {
                 // For now only allows one field to group by
                 if(is_string($optParams['groupBy'])) {
-                    if(!$object->fieldExists($optParams['groupBy'], false)) {
+                    if($object->fieldExists($optParams['groupBy'], false)) {
                         $query .= " GROUP BY " . $optParams['groupBy'];
                     }
                 }

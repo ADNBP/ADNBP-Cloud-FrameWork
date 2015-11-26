@@ -3,7 +3,8 @@
  * Cloud Service Autoloader for SocialNetworks
  */
 
-if(!class_exists("SocialNetworksAutoloader")) {
+if(!defined("__SOCIALNETWORKS_AUTOLOADER__")) {
+    define("__SOCIALNETWORKS_AUTOLOADER__", true);
     /**
      * Class SocialNetworksAutoloader
      * @author Fran López <fl@bloombees.com>

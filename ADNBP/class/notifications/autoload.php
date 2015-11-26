@@ -3,7 +3,8 @@
  * Cloud Service Autoloader for Notifications Service
  */
 
-if(!class_exists("NotificationsAutoloader")) {
+if(!defined("__NOTIFICATIONS_AUTOLOADER__")) {
+    define("__NOTIFICATIONS_AUTOLOADER__", true);
     /**
      * Class NotificationsAutoloader
      * @author Fran López <fl@bloombees.com>

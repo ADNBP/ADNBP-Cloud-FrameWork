@@ -3,7 +3,8 @@
  * Cloud Service Autoloader for DataStore Service
  */
 
-if(!class_exists("DataStoreAutoloader")) {
+if(!defined("__DATASTORE_AUTOLOADER__")) {
+    define("__DATASTORE_AUTOLOADER__", true);
     /**
      * Class DataStoreAutoloader
      * @author Fran López <fl@bloombees.com>
