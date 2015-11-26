@@ -116,6 +116,7 @@
          */
         private function mapFilter($type, $value, $field, $operator = '=')
         {
+            $filter = '';
             switch (strtolower($type)) {
                 default:
                 case 'string':
@@ -136,7 +137,8 @@
                     break;
                 case 'boolean':
                 case 'bool':
-                    $filter = "{$field} = '" . ($value ? 1 : 0) . "'";
+                    $boolVal = $value ? "true" : "false";
+                    $filter = "{$field} = {$boolVal}";
                     break;
             }
 
@@ -168,7 +170,7 @@
             $filters = array();
             foreach (get_object_vars($this) as $key => $value) {
                 list($field, $type, $index) = explode('_', $key, 3);
-                if (!in_array($field, ['id', 'loaded', 'loadTs', 'loadMem']) && 'index' === $index && !empty($value)) {
+                if (!in_array($field, ['id', 'loaded', 'loadTs', 'loadMem']) && 'index' === $index && null !== $value) {
                     $filters[] = $this->mapFilter($type, $value, $field);
                 }
             }
@@ -231,7 +233,7 @@
             foreach (get_object_vars($this) as $key => $value) {
                 list($field, $type, $index) = explode('_', $key, 3);
                 if (!in_array($field, ['loaded', 'loadTs', 'loadMem'])) {
-                    $data[$field] = ($value instanceof \DateTime) ? $value->format(\DateTime::ATOM) : $value;
+                    $data[$field] = ($value instanceof \DateTime) ? $value->format('Y-m-d H:i:s') : $value;
                 }
             }
             return ($array) ? $data : json_encode($data);

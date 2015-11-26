@@ -144,7 +144,6 @@
             /** @var \Google_Service_Datastore_CommitRequest $body */
             $body = $object->createRequestMessage();
             $result = $this->store->datasets->commit($this->dataset_id, $body, $optParams);
-            //$this->storeInCache($object->generateHash(), $object);
             return $result->getMutationResult()->getIndexUpdates() > 0;
         }
 
@@ -187,7 +186,11 @@
         {
             /** @var \Google_Service_Datastore_LookupRequest $query */
             $gql_query = new \Google_Service_Datastore_GqlQuery();
-            $query = "SELECT * FROM {$object->getKind()} WHERE " . implode(' AND ', $object->generateFilteredQuery());
+            $query = "SELECT * FROM {$object->getKind()}";
+            $filters = implode(' AND ', $object->generateFilteredQuery());
+            if (strlen($filters)) {
+                $query .= " WHERE " . $filters;
+            }
             if (array_key_exists('groupBy', $optParams)) {
                 // For now only allows one field to group by
                 if(is_string($optParams['groupBy'])) {
