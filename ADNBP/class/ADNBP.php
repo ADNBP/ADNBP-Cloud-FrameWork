@@ -84,7 +84,7 @@ if (!defined("_ADNBP_CLASS_")) {
         function ADNBP($session = true, $sessionId = '', $rootpath = '')
         {
 
-            global $__p;
+            $__p = Performance::getInstance();
             $this->__p = &$__p;
 
             // HTTP_REFERER

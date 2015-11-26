@@ -1,5 +1,5 @@
 <?php
-global $__p;
+$__p = Performance::getInstance();
 $__p->init('include_logic',$this->_url);
 $this->loadClass("api/RESTful");
 $api = new RESTful();
