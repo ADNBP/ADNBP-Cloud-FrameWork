@@ -115,7 +115,8 @@
         }
     }
 
-// Performance Functions
+    // Performance Functions
+    $__p = Performance::getInstance();
 
     function __sp($title = '', $top = "<!--\n", $bottom = "\n-->")
     {
