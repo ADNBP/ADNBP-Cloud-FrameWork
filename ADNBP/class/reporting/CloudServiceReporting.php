@@ -64,6 +64,40 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
             if(is_object($this->db)) $this->db->close();
         }
 
+        /**
+         * @param $id   id of of data
+         * @param $cond  condition to reduce
+         * @return array|null
+         */
+        function getSubData($id,$cond) {
+            $ret = null;
+            if (isset($this->queryResults[$id]['data'])) {
+                if(!is_array($cond)) $ret = &$this->queryResults[$id]['data'];
+                else {
+                    $ret=array();
+                    foreach ($this->queryResults[$id]['data'] as $i=>$row) {
+                        // Only include match elements
+                        $inc = true;
+                        foreach ($cond as $key => $fieldCond) {
+
+                            if (!is_array($fieldCond)) {
+                                $fieldCond = array('field' => $key, 'value' => $fieldCond, 'operator' => '=');
+                            }
+                            switch ($fieldCond['operator']) {
+                                case '=':
+                                    if ($row[$fieldCond['field']] != $fieldCond['value']) $inc = false;
+                                    break;
+                                case '!=':
+                                    if ($row[$fieldCond['field']] == $fieldCond['value']) $inc = false;
+                                    break;
+                            }
+                        }
+                        if($inc) $ret[] = $row;
+                    }
+                }
+            }
+            return $ret;
+        }
 
         /**
          * @param $id
@@ -74,75 +108,45 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
          */
         function queryData($id,$fields='*',$op='raw',$cond=null)
         {
+            if (!isset($this->queryResults[$id]['data'])) return false;
             if(trim($fields)=='') $fields='*';
-            if (isset($this->queryResults[$id]['data'])) {
+            $data = $this->getSubData($id,$cond);
+            if ($fields=='*' && $op=='raw') return $data;
+            else {
+                $ret = '';
+                if($fields=='*') $fields = array_keys($data[0]);
+                else $fields = explode(',', $fields);
 
-                // Evaluate subset of elements
-                if(!is_array($cond))
-                    $data = &$this->queryResults[$id]['data'];
-                else {
-                    $data = array();
-                    foreach ($this->queryResults[$id]['data'] as $i=>$row) {
-
-                        // Only include match elements
-                        $inc=true;
-                        foreach ($cond as $key=>$fieldCond ) {
-
-                            if(!is_array($fieldCond)) {
-                                $fieldCond = array('field'=>$key,'value'=>$fieldCond,'operator'=>'=');
+                switch ($op) {
+                    case'raw':
+                        $ret = array();
+                        for ($i = 0, $tr = count($data); $i < $tr; $i++) {
+                            foreach ($fields as $ind => $key) { $key = trim($key);
+                                $ret[$i][$key] = $data[$i][$key];
                             }
-                            switch($fieldCond['operator']) {
-                                case '=':
-                                    if($row[$fieldCond['field']] != $fieldCond['value']) $inc=false;
-                                    break;
-                                case '!=':
-                                    if($row[$fieldCond['field']] == $fieldCond['value']) $inc=false;
-                                    break;
-                            }
-
                         }
+                        break;
+                    case'sum':
+                        $ret = 0;
+                        for ($i = 0, $tr = count($data); $i < $tr; $i++) {
+                            foreach ($fields as $ind => $key) { $key=trim($key);
+                                if(isset($data[$i][$key]))
+                                $ret += $data[$i][$key];
+                            }
+                        }
+                        break;
+                    case'count':
+                        $ret=0;
+                        if(!is_array($cond))
+                            return(count($data));
+                        else for ($ret=0,$i=0,$tr=count($data);$i<$tr;$i++) {
+                            $ret++;
+                        }
+                        return $ret;
 
-                        if($inc) $data[] = $row;
-                    }
+                        break;
                 }
-
-                if ($fields=='*' && $op=='raw') return $data;
-                else {
-                    $ret = '';
-                    if($fields=='*') $fields = array_keys($data[0]);
-                    else $fields = explode(',', $fields);
-
-                    switch ($op) {
-                        case'raw':
-                            $ret = array();
-                            for ($i = 0, $tr = count($data); $i < $tr; $i++) {
-                                foreach ($fields as $ind => $key) { $key = trim($key);
-                                    $ret[$i][$key] = $data[$i][$key];
-                                }
-                            }
-                            break;
-                        case'sum':
-                            $ret = 0;
-                            for ($i = 0, $tr = count($data); $i < $tr; $i++) {
-                                foreach ($fields as $ind => $key) { $key=trim($key);
-                                    if(isset($data[$i][$key]))
-                                    $ret += $data[$i][$key];
-                                }
-                            }
-                            break;
-                        case'count':
-                            $ret=0;
-                            if(!is_array($cond))
-                                return(count($data));
-                            else for ($ret=0,$i=0,$tr=count($data);$i<$tr;$i++) {
-                                $ret++;
-                            }
-                            return $ret;
-
-                            break;
-                    }
-                    return($ret);
-                }
+                return($ret);
             }
             return false;
         }
@@ -164,26 +168,39 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
          * @param $math
          * @return array or false in error case.
          */
-        function queryDataGrouped($id,$groups,$fields,$math)
+        function queryDataGroup($id,$fields,$rows,$cols,$cond=null)
         {
             if (!isset($this->queryResults[$id]['data'])) return false;
+            $data = $this->getSubData($id,$cond);
 
-            if(!is_array($groups)) $groups = explode(",",trim($groups));
+            if(!is_array($fields)) $fields = explode(",",trim($fields));
+            if(!is_array($rows)) $rows = explode(",",trim($rows));
+            if(!is_array($cols)) $cols = explode(",",trim($cols));
+
             $ret = array();
+            for ($i = 0, $tr = count($data); $i < $tr; $i++) {
+                $row = '';
+                foreach ($rows as $ind => $key) {
+                    $key = trim($key);
+                    $row.= ($row)?'_'.$data[$i][$key]:$data[$i][$key];
+                    foreach ($fields as $ind2 => $field) {
+                        if(!is_array($field)) $field = array(trim($field),'sum');
+                        switch($field[1]) {
+                            default:
+                                $ret[$row] += $data[$i][$field[0]];
+                                break;
+                        }
+                    }
 
-            $keys='';
-            foreach ($groups as $i=>$key ) {
-                $key = trim($key);
-
-                $keys .= ((strlen($keys))?'/':'').$key;
-
-
+                }
             }
 
-            if (isset($this->queryResults[$id]['data'])) {
-
+            // Return Data
+            $retGroup = array();
+            foreach ($ret  as $item=>$value) {
+                $retGroup[] = array('Rows'=>$item,'Total'=>array('value'=>$value,'currency'=>'€'));
             }
-            return($ret);
+            return($retGroup);
         }
 
         /**
