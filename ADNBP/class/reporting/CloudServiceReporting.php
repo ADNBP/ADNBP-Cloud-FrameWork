@@ -75,20 +75,21 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                 if(!is_array($cond)) $ret = &$this->queryResults[$id]['data'];
                 else {
                     $ret=array();
+                    //_printe($this->queryResults[$id]['data']);
                     foreach ($this->queryResults[$id]['data'] as $i=>$row) {
                         // Only include match elements
                         $inc = true;
                         foreach ($cond as $key => $fieldCond) {
 
                             if (!is_array($fieldCond)) {
-                                $fieldCond = array('field' => $key, 'value' => $fieldCond, 'operator' => '=');
+                                $fieldCond = array(  '=', $fieldCond );
                             }
-                            switch ($fieldCond['operator']) {
+                            switch ($fieldCond[0]) {
                                 case '=':
-                                    if ($row[$fieldCond['field']] != $fieldCond['value']) $inc = false;
+                                    if ($row[$key] != $fieldCond[1]) $inc = false;
                                     break;
                                 case '!=':
-                                    if ($row[$fieldCond['field']] == $fieldCond['value']) $inc = false;
+                                    if (trim($row[$key]) == trim($fieldCond[1])) $inc = false;
                                     break;
                             }
                         }
@@ -109,7 +110,7 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
         function queryData($id,$fields='*',$op='raw',$cond=null)
         {
             if (!isset($this->queryResults[$id]['data'])) return false;
-            if(trim($fields)=='') $fields='*';
+            if(!is_string($fields) || trim($fields)=='') $fields='*';
             $data = $this->getSubData($id,$cond);
             if ($fields=='*' && $op=='raw') return $data;
             else {
@@ -186,8 +187,11 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                     foreach ($fields as $ind2 => $field) {
                         if(!is_array($field)) $field = array(trim($field),'sum');
                         switch($field[1]) {
+                            case 'count':
+                                $ret[$row]['count_'.$field[0]] += 1;
+                                break;
                             default:
-                                $ret[$row] += $data[$i][$field[0]];
+                                $ret[$row][$field[0]] += $data[$i][$field[0]];
                                 break;
                         }
                     }
@@ -197,8 +201,16 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
 
             // Return Data
             $retGroup = array();
-            foreach ($ret  as $item=>$value) {
-                $retGroup[] = array('Rows'=>$item,'Total'=>array('value'=>$value,'currency'=>'€'));
+            foreach ($ret  as $item=>$values) {
+                $row = array('Rows'=>$item);
+                $i=0;
+                foreach ($values as $ind2 => $value) {
+                    $row[$ind2] = array('value'=>$value,'align'=>'right');
+                    if(is_array($fields[$i]) && isset($fields[$i][2])) $row[$ind2]['currency'] = $fields[$i][2];
+                    $i++;
+
+                }
+                $retGroup[] = $row;
             }
             return($retGroup);
         }
@@ -235,7 +247,9 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
             foreach ($this->data as $key => $data) {
                 $type = $data['type'];
                 $data = $data['data'];
-                if($type=='header') 
+                if(isset($data->columns) && is_string($data->columns)) $data->columns = explode(',',$data->columns);
+
+                if($type=='header')
                     include __DIR__.'/templates/header.php';
                 elseif($type=='table') {
                 	$simple = false;
