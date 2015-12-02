@@ -56,16 +56,18 @@
                                         if(!is_array($cell)) $cell = array('value'=>$cell);
 
 	                                	$align = $cell['align'];
+                                        $colspan = $cell['colspan'];
 										if(!$align && (isset($cell['currency']))) $align='right';
                                 	?>
-                                <td<?=($align)?' class="text-'.$align.'"':''?><?=($cell['anchor'])?' id="'.htmlentities($cell['anchor']).'"':''?>><?php
-                                	if(isset($cell['currency'])) $cell['value'] = $adnbp->numberFormat($cell['value'],2).' '.$cell['currency'];
-									// save echo
-									$cell['value'] =htmlentities($cell['value']);
+                                <td<?=($align)?' class="text-'.$align.'"':''?><?=($colspan)?' colspan="'.$colspan.'"':''?><?=($cell['anchor'])?' id="'.htmlentities($cell['anchor']).'"':''?>><?php
+                                	if(strlen($cell['currency']))
+                                        $cell['value'] = htmlentities($adnbp->numberFormat($cell['value'],2)).'&nbsp;'.htmlentities($cell['currency']);
+                                    else
+									    $cell['value'] =htmlentities($cell['value']);
 									if(isset($cell['bold'])) $cell['value'] = '<strong>'.$cell['value'].'</strong>';
 									if(isset($cell['small'])) $cell['value'] = '<small>'.$cell['value'].'</small>';
                                     if(isset($cell['link'])) $cell['value'] = '<a href="'.htmlentities($cell['link']).'" target="'.$cell['target'].'">'.$cell['value'].'</a>';
-									echo $cell['value'];
+									echo (strlen($cell['value']))?$cell['value']:'&nbsp';
 									
                                 ?></td>
                                 <?php } ?>

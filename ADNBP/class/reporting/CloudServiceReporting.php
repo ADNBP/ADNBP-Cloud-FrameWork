@@ -174,44 +174,102 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
             if (!isset($this->queryResults[$id]['data'])) return false;
             $data = $this->getSubData($id,$cond);
 
+
             if(!is_array($fields)) $fields = explode(",",trim($fields));
             if(!is_array($rows)) $rows = explode(",",trim($rows));
             if(!is_array($cols)) $cols = explode(",",trim($cols));
 
+            if(!strlen($rows[0])) $rows = array('_row_');
+            if(!strlen($cols[0])) $cols = array('_col_');
+
             $ret = array();
+            $retRows = array();
+            $retCols = array();
+            $retFields = array();
+
+            // Preparing data in the first Loop
             for ($i = 0, $tr = count($data); $i < $tr; $i++) {
                 $row = '';
                 foreach ($rows as $ind => $key) {
                     $key = trim($key);
-                    $row.= ($row)?'_'.$data[$i][$key]:$data[$i][$key];
+                    $rowFieldContent = ($data[$i][$key])?$data[$i][$key]:$key;
+                    $row.= ($row)?'_'.$rowFieldContent:$rowFieldContent;
                     foreach ($fields as $ind2 => $field) {
                         if(!is_array($field)) $field = array(trim($field),'sum');
-                        switch($field[1]) {
-                            case 'count':
-                                $ret[$row]['count_'.$field[0]] += 1;
-                                break;
-                            default:
-                                $ret[$row][$field[0]] += $data[$i][$field[0]];
-                                break;
+                        $col ='';
+                        foreach ($cols as $ind3 => $key3) {
+                            $colFieldContent = ($data[$i][$key3])?$data[$i][$key3]:$key3;
+                            $col.= ($col)?'_'.$colFieldContent:$colFieldContent;
+                            switch ($field[1]) {
+                                case 'count':
+                                    $ret[$row][$col]['count_' . $field[0]] += 1;
+                                    $retRows[$row]+= 1;
+                                    $retCols[$col]+= 1;
+                                    $retFields['count_' .$field[0]]+=1;
+
+                                    break;
+                                default:
+                                    $ret[$row][$col][$field[0]] += $data[$i][$field[0]];
+                                    $retRows[$row]+= $data[$i][$field[0]];
+                                    $retCols[$col]+= $data[$i][$field[0]];
+                                    $retFields[$field[0]]+= $data[$i][$field[0]];
+                                    break;
+                            }
                         }
                     }
 
                 }
             }
 
-            // Return Data
+            // Building array to allow its representation
             $retGroup = array();
+            $colSpan = count($retFields);
+            foreach ($retRows as $row=>$rowValue) {
+                $currentRow = array();
+
+                // Header of the report
+                if(!count($retGroup)) {
+                    if($row !='_row_') $currentRow[] = '';
+                    foreach ($retCols as $col=>$colValue) if($col != '_col_'){
+                        $currentRow[] = array('value'=>$col,'colspan'=>$colSpan,'align'=>'center','bold'=>true);
+                    }
+                    if(count($currentRow)>1)  {
+                        $retGroup[] = $currentRow;
+                    }
+                    $currentRow = array();
+                }
+
+                // Row Content
+                if($row !='_row_') $currentRow[] = array('value'=>$row,'bold'=>true);;
+                foreach ($retCols as $col=>$colValue) {
+                    $i=0;
+                    foreach ($retFields as $field=>$fieldValue ) {
+                        $currentRow[] = array('value'=>$ret[$row][$col][$field],'align'=>'right','currency'=> (is_array($fields[$i]))?$fields[$i][2]:'') ;
+                        $i++;
+                    }
+
+
+
+
+                }
+                $retGroup[] = $currentRow;
+            }
+            /*
+            _printe($retRows,$retCols,$retFields,$retGroup);
+
+            // Adding extra attributes to the data.
             foreach ($ret  as $item=>$values) {
                 $row = array('Rows'=>$item);
                 $i=0;
                 foreach ($values as $ind2 => $value) {
-                    $row[$ind2] = array('value'=>$value,'align'=>'right');
+                    $row[$ind2] = $value;
                     if(is_array($fields[$i]) && isset($fields[$i][2])) $row[$ind2]['currency'] = $fields[$i][2];
                     $i++;
-
                 }
                 $retGroup[] = $row;
             }
+            _printe($retGroup);
+            */
             return($retGroup);
         }
 
