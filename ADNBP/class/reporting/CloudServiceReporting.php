@@ -162,11 +162,99 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
             return($ret);
         }
 
+        function queryDataExplore($id,$field,$row=null,$col=null,$cond=null){
+            if (!isset($this->queryResults[$id]['data']) || (!is_array($field) && !strlen($field)) ) return false;
+            $data = $this->getSubData($id,$cond);
+
+            if(!is_array($field)) $field = array($field,'distinct');
+            if(!is_array($row)) $row = array((strlen($row))?$row:'_row_');
+            if(!is_array($col)) $col = array((strlen($col))?$row:'_col_');
+
+            $rowFieldContent = $row[0];
+            $colFieldContent = $col[0];
+
+            $ret = array();
+            $retRows = array();
+            $retCols = array();
+            $retFields = array();
+            $distinctFields = array();
+
+            // Preparing data in the first Loop
+            for ($i = 0, $tr = count($data); $i < $tr; $i++) {
+
+                // ROW/COL for the field
+                if($row[0]!='_row_')
+                    $rowFieldContent = ($data[$i][$row[0]])?$data[$i][$row[0]]:'_empty_';
+                if($col[0]!='_col_')
+                    $colFieldContent = ($data[$i][$col[0]])?$data[$i][$col[0]]:'_empty_';
+
+                $value = (strlen($data[$i][$field[0]]))?$data[$i][$field[0]]:'_empty_';
+
+                switch ($field[1]) {
+                    case 'distinct':
+                        if(!isset($distinctFields[$value])) {
+                            $ret[$rowFieldContent][$colFieldContent][] = $value;
+                            $distinctFields[$value] += 1;
+                            $retRows[$rowFieldContent][]= $value;
+                            $retCols[$colFieldContent][]= $value;
+                        }
+                        break;
+                    case 'count':
+                        $ret[$rowFieldContent][$colFieldContent] += 1;
+                        $retRows[$rowFieldContent]+= 1;
+                        $retCols[$colFieldContent]+= 1;
+                        $retFields['count_' .$field[0]]+=1;
+
+                        break;
+                    default:
+                        $ret[$rowFieldContent][$colFieldContent] += $value;
+                        $retRows[$rowFieldContent]+= $value;
+                        $retCols[$colFieldContent]+= $value;
+                        break;
+                }
+            }
+
+            // Transform return data based in the info colected.
+            // Potential order
+            if($col[0]!='_col_' && isset($col[1]) && stripos($col[1],'order ')!==false)
+                if(stripos($col[1],' asc')!==false) ksort($retCols);
+                else if(stripos($col[1],' desc')!==false) krsort($retCols);
+
+            if($row[0]!='_row_' && isset($row[1]) && stripos($row[1],'order ')!==false)
+                if(stripos($row[1],' asc')!==false) ksort($retRows);
+                else if(stripos($col[1],' desc')!==false) krsort($retRows);
+
+            // Values Data
+            $retGroup = array();
+            $retGroup[1] = ($row[0]!='_row_')?array_keys($retRows):'';
+            $retGroup[2] = ($col[0]!='_col_')?array_keys($retCols):'';
+            $i=0;
+            foreach ($retRows as $row=>$rowValue) {
+                foreach ($retCols as $col=>$colValue) {
+                    if($row != '_row_') {
+                        if($col !='_col_') {
+                            $retGroup[0][$i][] = $ret[$row][$col];
+                        } else {
+                            $retGroup[0][] = $ret[$row][$col];
+                        }
+                    } elseif($col !='_col_') {
+                        $retGroup[0][] = $ret[$row][$col];
+                    } else {
+                        $retGroup[0] = $ret[$row][$col];
+                    }
+                }
+                $i++;
+            }
+            return($retGroup);
+
+        }
+
         /**
          * @param $id
-         * @param $groups
          * @param $fields
-         * @param $math
+         * @param $rows
+         * @param $cols
+         * @param $cond
          * @return array or false in error case.
          */
         function queryDataGroup($id,$fields,$rows,$cols,$cond=null)
@@ -252,24 +340,9 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
 
 
                 }
+
                 $retGroup[] = $currentRow;
             }
-            /*
-            _printe($retRows,$retCols,$retFields,$retGroup);
-
-            // Adding extra attributes to the data.
-            foreach ($ret  as $item=>$values) {
-                $row = array('Rows'=>$item);
-                $i=0;
-                foreach ($values as $ind2 => $value) {
-                    $row[$ind2] = $value;
-                    if(is_array($fields[$i]) && isset($fields[$i][2])) $row[$ind2]['currency'] = $fields[$i][2];
-                    $i++;
-                }
-                $retGroup[] = $row;
-            }
-            _printe($retGroup);
-            */
             return($retGroup);
         }
 
