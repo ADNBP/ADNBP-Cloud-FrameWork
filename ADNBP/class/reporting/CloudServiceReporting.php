@@ -168,7 +168,7 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
 
             if(!is_array($field)) $field = array($field,'distinct');
             if(!is_array($row)) $row = array((strlen($row))?$row:'_row_');
-            if(!is_array($col)) $col = array((strlen($col))?$row:'_col_');
+            if(!is_array($col)) $col = array((strlen($col))?$col:'_col_');
 
             $rowFieldContent = $row[0];
             $colFieldContent = $col[0];
@@ -181,14 +181,14 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
 
             // Preparing data in the first Loop
             for ($i = 0, $tr = count($data); $i < $tr; $i++) {
-
                 // ROW/COL for the field
                 if($row[0]!='_row_')
-                    $rowFieldContent = ($data[$i][$row[0]])?$data[$i][$row[0]]:'_empty_';
-                if($col[0]!='_col_')
-                    $colFieldContent = ($data[$i][$col[0]])?$data[$i][$col[0]]:'_empty_';
+                    $rowFieldContent = (isset($data[$i][$row[0]]) && strlen($data[$i][$row[0]]))?$data[$i][$row[0]]:'_empty_';
 
-                $value = (strlen($data[$i][$field[0]]))?$data[$i][$field[0]]:'_empty_';
+                if($col[0]!='_col_')
+                    $colFieldContent = (isset($data[$i][$col[0]]) && strlen($data[$i][$col[0]]))?$data[$i][$col[0]]:'_empty_';
+
+                $value = (isset($data[$i][$field[0]]) && strlen($data[$i][$field[0]]))?$data[$i][$field[0]]:'_empty_';
 
                 switch ($field[1]) {
                     case 'distinct':
@@ -415,6 +415,9 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                     $container=false;
                     include __DIR__.'/templates/container.php';
                     $container=true;
+                }
+                elseif($type=='dygraph') {
+                    include __DIR__.'/templates/dygraph.php';
                 }
                 elseif($type=='row') {
                     if($container) include __DIR__.'/templates/container.php';
