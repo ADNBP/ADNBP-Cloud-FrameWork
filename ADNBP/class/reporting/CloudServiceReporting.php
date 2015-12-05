@@ -51,7 +51,7 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                 unset($ret);
                 return true;
             } else {
-                $this->queryResults[$id]['data'] = array($this->db->getError());
+                $this->addError($this->db->getError());
                 return false;
             }
         }
@@ -86,10 +86,10 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                             }
                             switch ($fieldCond[0]) {
                                 case '=':
-                                    if ($row[$key] != $fieldCond[1]) $inc = false;
+                                    if (isset($row[$key]) && $row[$key] != $fieldCond[1]) $inc = false;
                                     break;
                                 case '!=':
-                                    if (trim($row[$key]) == trim($fieldCond[1])) $inc = false;
+                                    if (isset($row[$key]) && trim($row[$key]) == trim($fieldCond[1])) $inc = false;
                                     break;
                             }
                         }
@@ -274,19 +274,18 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
             $retRows = array();
             $retCols = array();
             $retFields = array();
-
             // Preparing data in the first Loop
             for ($i = 0, $tr = count($data); $i < $tr; $i++) {
                 $row = '';
                 foreach ($rows as $ind => $key) {
                     $key = trim($key);
-                    $rowFieldContent = ($data[$i][$key])?$data[$i][$key]:$key;
+                    $rowFieldContent = (isset($data[$i][$key]))?$data[$i][$key]:$key;
                     $row.= ($row)?'_'.$rowFieldContent:$rowFieldContent;
                     foreach ($fields as $ind2 => $field) {
                         if(!is_array($field)) $field = array(trim($field),'sum');
                         $col ='';
                         foreach ($cols as $ind3 => $key3) {
-                            $colFieldContent = ($data[$i][$key3])?$data[$i][$key3]:$key3;
+                            $colFieldContent = (isset($data[$i][$key3]))?$data[$i][$key3]:$key3;
                             $col.= ($col)?'_'.$colFieldContent:$colFieldContent;
                             switch ($field[1]) {
                                 case 'count':
@@ -375,7 +374,9 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
             $lastColSize=12;
             ob_start();
             echo '<section id="widget-grid" >';
+            $_reportNumber =0;
             foreach ($this->data as $key => $data) {
+                $_reportNumber++;
                 $type = $data['type'];
                 $data = $data['data'];
                 if(isset($data->columns) && is_string($data->columns)) $data->columns = explode(',',$data->columns);
@@ -417,7 +418,15 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                     $container=true;
                 }
                 elseif($type=='dygraph') {
-                    include __DIR__.'/templates/dygraph.php';
+                    if(is_array($data->rows)) {
+                        if(!isset($data->rows[1]) || !is_array($data->rows[1])) $data->rows[1][]='Info';
+                        if(!isset($data->rows[2]) ||!is_array($data->rows[2])) $data->rows[2][]=date('Ymd');
+                        if(is_array($data->rows[0]) && !is_array($data->rows[1][0]) && !is_array($data->rows[2][0])) {
+                            if(!is_array($data->rows[0][0])) $data->rows[0] = array($data->rows[0]);
+                            include __DIR__ . '/templates/dygraph.php';
+                        } else $this->addError('Wrong dygraph data');
+                    }
+
                 }
                 elseif($type=='row') {
                     if($container) include __DIR__.'/templates/container.php';
