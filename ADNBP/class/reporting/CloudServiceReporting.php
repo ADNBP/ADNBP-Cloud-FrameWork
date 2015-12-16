@@ -10,13 +10,49 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
         var $db = null;
         var $super = null;
         var $queryResults = array();
+        var $filters = array();
         
-        function CloudServiceReporting(&$db=null) {
+        function __construct(&$db=null) {
             global $adnbp;
             $this->super = &$adnbp;
             $this->super->initCache();
         }
-        
+
+        function filter($command,$var,$info=null) {
+            if(is_array($info) && isset($info['type']) &&  ($command == 'set' || $command=='add')) {
+
+
+
+                // lets work on the diferent filters.
+                $_filterCorrect = true;
+                switch($info['type']) {
+                    case "select":
+                        if(!isset($info['data'])) $_filterCorrect = false;
+                        else{
+                            // Value for field based in filter or default
+                            if(isset($_REQUEST['filter_'.$var])) $info['value'] = $_REQUEST['filter_'.$var];
+                            else $info['value'] = (isset($info['default']))?$info['default']:'';
+
+                            if(strlen($info['value']) && !isset($info['data'][$info['value']])) $info['value'] ='';
+
+                            // Required value
+                            if($info['required'] && !strlen($info['value'])) $info['value'] = array_keys($info['data'])[0];
+                        }
+                        break;
+                }
+
+                if($_filterCorrect) {
+                    if ($command == 'set') $this->filters = array($var => $info);
+                    elseif ($command == 'add') $this->filters[$var] = $info;
+                }
+            }
+            elseif($command == 'get') return (isset($this->filters[$var]))?$this->filters[$var]:null;
+            elseif($command == 'getvalue') return (isset($this->filters[$var]))?$this->filters[$var]['value']:null;
+            elseif($command == 'getdata') return (isset($this->filters[$var]))?$this->filters[$var]['data']:null;
+            elseif($command == 'delete') { if(isset($this->filters[$var])) unset($this->filters[$var]);}
+            else return null;
+        }
+
         // Excute an DB query
         function query($id,$q,$data=null) {
             if($this->error) return false;
@@ -55,11 +91,7 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                 return false;
             }
         }
-
-
-        /**
-         *
-         */
+        //Close the db connection of a query.
         function queryEnd() {
             if(is_object($this->db)) $this->db->close();
         }
@@ -86,10 +118,10 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                             }
                             switch ($fieldCond[0]) {
                                 case '=':
-                                    if (isset($row[$key]) && $row[$key] != $fieldCond[1]) $inc = false;
+                                    if (!isset($row[$key]) || $row[$key] != $fieldCond[1]) $inc = false;
                                     break;
                                 case '!=':
-                                    if (isset($row[$key]) && trim($row[$key]) == trim($fieldCond[1])) $inc = false;
+                                    if (!isset($row[$key]) || trim($row[$key]) == trim($fieldCond[1])) $inc = false;
                                     break;
                             }
                         }
@@ -161,7 +193,6 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
             if (is_array($this->queryResults[$id]['data'])) $ret = count($this->queryResults[$id]['data']);
             return($ret);
         }
-
         function queryDataExplore($id,$field,$row=null,$col=null,$cond=null){
             if (!isset($this->queryResults[$id]['data']) || (!is_array($field) && !strlen($field)) ) return false;
             $data = $this->getSubData($id,$cond);
@@ -363,9 +394,13 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
             }
         }
 
-
+        /**
+         * return the HTML with the info printed.
+         */
         function output() {
         	global $adnbp;
+            $controlVars = (object)array('dygraph'=>false,'tables'=>false,'reportNumber'=>0);
+
 			$types = array('barcode'=>false);
 			$_tables = false;
             $rows='';
@@ -374,9 +409,8 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
             $lastColSize=12;
             ob_start();
             echo '<section id="widget-grid" >';
-            $_reportNumber =0;
             foreach ($this->data as $key => $data) {
-                $_reportNumber++;
+                $controlVars->reportNumber++;
                 $type = $data['type'];
                 $data = $data['data'];
                 if(isset($data->columns) && is_string($data->columns)) $data->columns = explode(',',$data->columns);
@@ -424,6 +458,7 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                         if(is_array($data->rows[0]) && !is_array($data->rows[1][0]) && !is_array($data->rows[2][0])) {
                             if(!is_array($data->rows[0][0])) $data->rows[0] = array($data->rows[0]);
                             include __DIR__ . '/templates/dygraph.php';
+
                         } else $this->addError('Wrong dygraph data');
                     }
 
@@ -455,10 +490,17 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
 
         }
 
+        /**
+         * @param $errorMsg error message to set.
+         */
         function setError($errorMsg) {
             $this -> errorMsg = array();
             $this->addError($errorMsg);
         }
+
+        /**
+         * @param $errorMsg error messageto add.
+         */
         function addError($errorMsg) {
             $this -> error = true;
             $this -> errorMsg[] = $errorMsg;            
