@@ -36,7 +36,3 @@ if(!defined("__DATASTORE_AUTOLOADER__")) {
     }
 }
 spl_autoload_register(array('DataStoreAutoloader', 'loadClass'), true, true);
-
-if (file_exists(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php')) {
-    require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
-}

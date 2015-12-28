@@ -1,6 +1,4 @@
 <?php
-    require_once ROOT_CLASS_DIRECTORY . '/datastore/autoload.php';
-
     /**
      * Class Message
      * Example class to explain
@@ -35,9 +33,7 @@
         //Search case
         if ('OK' === $result) {
             $message->idUser_int_index = 3;
-            $results = $dst->search($message, array(
-                'groupBy' => 'idUser'
-            ));
+            $results = $dst->search($message);
             $messages = array();
             foreach($results as $result) {
                 $messages[] = $result->export();

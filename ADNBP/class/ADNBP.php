@@ -25,6 +25,7 @@ if (!defined("_ADNBP_CLASS_")) {
     define("_ADNBP_CLASS_", TRUE);
     define("ROOT_CLASS_DIRECTORY", __DIR__);
 
+    require_once ROOT_CLASS_DIRECTORY . DIRECTORY_SEPARATOR . 'autoload.php';
     /**
      * @class ADNBP
      * Environment Vars && ClassLoader for ADNBP Framework
