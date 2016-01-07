@@ -432,14 +432,14 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                     include __DIR__.'/templates/tree.php';
                     $_tables = true;
                 }
-				elseif($type=='barcode') {
+				elseif($type=='barcode' ) {
 					
 					_printe($data->data);
 					$barcode = array('element'=>'barcode'.$key);
 					
                     include __DIR__.'/templates/barcode.php';
                 }
-                elseif($type=='btnInfo') {
+                elseif($type=='btnInfo' || $type=='buttoninfo') {
                     if($list) echo "<li>";
                     include __DIR__.'/templates/btnInfo.php';
                     echo "</li>";
