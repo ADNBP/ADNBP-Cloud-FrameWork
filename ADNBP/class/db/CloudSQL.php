@@ -548,7 +548,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
             if(strpos($table, "Rel_") !== false) 
                $_relTable = true;
             
-            if($action == 'insert' || $action == "replace" || $action == 'update' || $action == 'delete' 
+            if($action == 'insert' || $action == "replace" || $action == 'update' || $action == 'delete'
             || $action == 'insertRecord' || $action == "replaceRecord"  ||  $action == "updateRecord" || $action =="getFieldTypes")
                 $table ="CF_".$table;
 
@@ -891,6 +891,110 @@ if (!defined ("_MYSQLI_CLASS_") ) {
         function getHashFromArray($arr) {
         	if(!isset($arr)) $arr=array();
             return(md5(implode('', $arr)));
+        }
+
+        function getModel($table) {
+            $tmp['explain'] = $this->getDataFromQuery("SHOW FULL COLUMNS FROM %s",$table );
+            if(is_array($tmp['explain']) && count($tmp['explain'])) {
+                $tmp['index'] = $this->getDataFromQuery('SHOW INDEX FROM %s;',array($table));
+                foreach ($tmp['explain'] as $key => $value) {
+                    $tmp['Fields'][$value['Field']]['type'] = $value['Type'];
+                    if ($value['Null'] == 'NO')
+                        $tmp['Fields'][$value['Field']]['null'] = false;
+                    if (strlen($value['Key']))
+                        if ($value['Key'] == 'PRI') $tmp['Fields'][$value['Field']]['key'] = true;
+                        else $tmp['Fields'][$value['Field']]['index'] = true;
+                    $tmp['Fields'][$value['Field']]['default'] = $value['Default'];
+                    $tmp['Fields'][$value['Field']]['description'] = $value['Comment'];
+                }
+                return (['table' => $table
+                    , 'description' => ''
+                    , 'engine' => ''
+                    , 'fields' => $tmp['Fields']
+                    , 'fieldst' => $tmp['explain']
+                    , 'indexes' => $tmp['index']
+                ]);
+            } else {
+                return(['table missing'=> $table]);
+            }
+        }
+
+        function checkModels($models) {
+            // We expect a JSON array
+            $tmp['models'] = json_decode($models,true);
+            //TODO: control if json_decode fails.
+
+            // If only a model is passed convert it in an array on 1 element.
+            if(!is_array($tmp['models'][0])) $tmp['models'] = array($tmp['models']);
+
+            //At least has to be one element with table and fields attribs.
+            if(!isset($tmp['models'][0]['table']) || !is_array($tmp['models'][0]['fields'])) return null;
+
+            // Start the exploring
+            foreach ($tmp['models'] as $key=>$model) {
+                $tmp['db'] = $this->getModel($model['table']);
+                $tmp['ret'][$model['table']]['table_exist'] = ($model['table'] == $tmp['db']['table']);
+
+                // Attribs to explore.
+                $tmp['attribs'] = array('type','key','index','default','description');
+                $tmp['nattribs'] = count($tmp['attribs']);
+
+                // Checking fields from model to DB
+                foreach ($model['fields'] as $field=>$fieldAttribs) {
+                    if(!isset($tmp['db']['fields'][$field])) {
+                        $tmp['ret'][$model['table']]['fields'][$field] = 'missing in database';
+                        $tmp['ret'][$model['table']]['SQL'][] = $this->generateSQLFromModelField('insert',$model['table'],$field,$fieldAttribs);
+
+                    }
+                    else for($i=0;$i<$tmp['nattribs'];$i++) {
+                        $attrib = $tmp['attribs'][$i];
+                        $attrib_model = (isset($fieldAttribs[$attrib])) ? $fieldAttribs[$attrib] : 'none';
+                        $attrib_db = (isset($tmp['db']['fields'][$field][$attrib])) ? $tmp['db']['fields'][$field][$attrib] : 'none';
+                        if ($attrib_model !== $attrib_db) {
+                            $tmp['ret'][$model['table']]['fields'][$field][$attrib] = 'Warning. Model=' . $attrib_model . ' DB=' . $attrib_db;
+                            $tmp['ret'][$model['table']]['SQL'][] = $this->generateSQLFromModelField('update',$model['table'],$field,$fieldAttribs);
+
+                        }
+                    }
+                    if(!isset($tmp['ret'][$model['table']]['fields'][$field]))
+                        $tmp['ret'][$model['table']]['fields'][$field] = 'OK';
+                }
+
+                // Checking fields from DB to model
+                if(is_array($tmp['db']['fields']))
+                foreach ($tmp['db']['fields'] as $field=>$fieldAttribs) {
+                    if(!isset($model['fields'][$field])) {
+                        $tmp['ret'][$model['table']]['fields'][$field] = 'missing in the model';
+                        $tmp['ret'][$model['table']]['SQL'][] = $this->generateSQLFromModelField('delete',$model['table'],$field);
+                    }
+                    else for($i=0;$i<$tmp['nattribs'];$i++) {
+                        $attrib = $tmp['attribs'][$i];
+                        $attrib_db = (isset($fieldAttribs[$attrib]))?$fieldAttribs[$attrib]:'none';
+                        $attrib_model = (isset($model['fields'][$field][$attrib]))?$model['fields'][$field][$attrib]:'none';
+
+                        if($attrib_model !== $attrib_db)
+                            $tmp['ret'][$model['table']]['fields'][$field][$attrib] = 'Warning. Model='.$attrib_model. ' DB='.$attrib_db;
+                    }
+                    if(!isset($tmp['ret'][$model['table']]['fields'][$field]))
+                        $tmp['ret'][$model['table']]['fields'][$field] = 'OK';
+                }
+            }
+            return($tmp['ret']);
+        }
+
+        function generateSQLFromModelField ($action,$table,$field,$attribs=array())
+        {
+            $ret='ALTER TABLE '.$table;
+            if (strlen($table) && ('update' == strtolower($action) || 'insert' == strtolower($action) ||  'delete' == strtolower($action)))
+            {
+                if(strtolower($action) == 'delete') {
+                    $ret.= ' DROP '.$field;
+                } else {
+                    $ret .= (strtolower($action) == 'update') ? ' MODIY ':' ADD ';
+                    $ret.=$field;
+                }
+            }
+            return($ret);
         }
 	}
 }
