@@ -992,6 +992,16 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                 } else {
                     $ret .= (strtolower($action) == 'update') ? ' MODIY ':' ADD ';
                     $ret.=$field;
+                    $ret.= ' '.$attribs['type'];
+                    if($attribs['key'] || (isset($attribs['null']) && !($attribs['null']))) $ret.=' NOT NULL';
+                    if($attribs['key'] and strpos(strtolower($attribs['type']),'int')===0)  $ret.=' AUTO_INCREMENT';
+
+                    $ret.= ' COMMENT \''.$attribs['description'].'\'';
+
+                    if($attribs['key']) $ret.=', PRIMARY KEY('.$field.')';
+                    if($attribs['index']) $ret.=', KEY '.$table.'_'.$field.'('.$field.')';
+
+
                 }
             }
             return($ret);
