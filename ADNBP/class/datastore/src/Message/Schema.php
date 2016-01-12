@@ -210,14 +210,25 @@
         {
             $array = json_decode(json_encode($entity->toSimpleObject()->properties), true);
             $class = get_class($this);
-            $schemaEntity = new $class();
+            $schemaEntity = null;
             foreach (get_object_vars($this) as $key => $value) {
                 list($field, $type, $index) = explode('_', $key, 3);
-                if (array_key_exists($field, $array)) {
+                if (array_key_exists($field, $array) && $field === 'id') {
                     $values = array_values($array[$field]);
-                    $schemaEntity->$key = $values[0] ?: null;
+                    $schemaEntity = new $class($values[0] ?: null);
                 }
             }
+
+            if (null !== $schemaEntity) {
+                foreach (get_object_vars($this) as $key => $value) {
+                    list($field, $type, $index) = explode('_', $key, 3);
+                    if (array_key_exists($field, $array)) {
+                        $values = array_values($array[$field]);
+                        $schemaEntity->$key = $values[0] ?: null;
+                    }
+                }
+            }
+
             return $schemaEntity;
         }
 
