@@ -226,7 +226,33 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                 return($_ok);                
             }
         }
-                
+
+        /**
+         * Check if the table exist avoiding to consult the schema because it is very slow.
+         * @param $table
+         * @return bool
+         */
+        function tableExists($table) {
+
+            // Check if a db connection exists
+            if(!$this->_dblink) {
+                $this->setError('connection with db not stablished');
+                return false;
+            }
+            $_q = $this->_buildQuery(array("SELECT 1 FROM %s",$table));
+            if( ($this->_lastRes = $this->_db->query($_q)) ) {
+                return true;
+            } else {
+                return false;
+            }
+            /*
+            $_q = "SELECT count(*) TOT FROM INFORMATION_SCHEMA.TABLES t WHERE t.TABLE_SCHEMA='%s' AND TABLE_NAME = '%s' ";
+            $tmp = $this->getDataFromQuery($_q,$this->_dbdatabase,$table );
+            return($tmp[0][TOT]==1);
+            */
+
+        }
+
         // Scape Query arguments
         function _buildQuery($args) {
         	
@@ -520,10 +546,9 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                     	// it it is a Rel table
                     	if($tmpTable=='Rel') $tmpTable = $allFields[0];
 						else $tmpTable.="s";
-                        $_q = "SELECT count(*) TOT FROM INFORMATION_SCHEMA.TABLES t WHERE t.TABLE_SCHEMA='%s' AND TABLE_NAME = '%s' ";
-                        $tmp = $this->getDataFromQuery($_q,$this->_dbdatabase,$tmpTable );
-                        // if table exist in database
-                        if($tmp[0][TOT]==1) $table = $tmpTable;
+
+                        // Check if table exists
+                        if($this->tableExists($tmpTable)) $table = $tmpTable;
                         else {
                             $this->setError("$tmpTable is not a right table.");
                             return false;                            
@@ -531,6 +556,9 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                     }                     
                 }
             }
+
+
+
             
             // Here $table now has a value.
 			// Let's see if $data[$table] has a where conditions in it count
@@ -893,66 +921,174 @@ if (!defined ("_MYSQLI_CLASS_") ) {
             return(md5(implode('', $arr)));
         }
 
-        function getModel($table) {
-            $tmp['explain'] = $this->getDataFromQuery("SHOW FULL COLUMNS FROM %s",$table );
-            if(is_array($tmp['explain']) && count($tmp['explain'])) {
+        /**
+         * Return the CloudFrameWork-io Model from a DB table
+         * @param $table
+         * @return array where array['model'] is the JSON model if array['table_exists]===true
+         */
+        function getModelFromTable($table) {
+            if($this->tableExists($table)) {
+                $tmp['explain'] = $this->getDataFromQuery("SHOW FULL COLUMNS FROM %s", $table);
                 $tmp['index'] = $this->getDataFromQuery('SHOW INDEX FROM %s;',array($table));
+                $tmp['SQL'] = $this->getDataFromQuery('SHOW CREATE TABLE %s;',array($table));
+
                 foreach ($tmp['explain'] as $key => $value) {
+
+                    // TYPE OF THE FIELD
                     $tmp['Fields'][$value['Field']]['type'] = $value['Type'];
+
+                    // IS NULLABLE
                     if ($value['Null'] == 'NO')
                         $tmp['Fields'][$value['Field']]['null'] = false;
+
+                    // Let's see if the field is Key, Unique or Index
                     if (strlen($value['Key']))
                         if ($value['Key'] == 'PRI') $tmp['Fields'][$value['Field']]['key'] = true;
-                        else $tmp['Fields'][$value['Field']]['index'] = true;
-                    $tmp['Fields'][$value['Field']]['default'] = $value['Default'];
+                        elseif($value['Key'] == 'MUL') $tmp['Fields'][$value['Field']]['index'] = true;
+                        elseif($value['Key'] == 'UNI') $tmp['Fields'][$value['Field']]['unique'] = true;
+
+                    // Default value
+                    if(!($value['Null'] == 'NO' && $value['Default']===null))
+                        $tmp['Fields'][$value['Field']]['default'] = $value['Default'];
+
+                    if (strlen($value['Extra']))
+                        $tmp['Fields'][$value['Field']]['extra'] = $value['Extra'];
+
+                    // Comment field
                     $tmp['Fields'][$value['Field']]['description'] = $value['Comment'];
                 }
-                return (['table' => $table
+                return (['table_exists'=>true,'model'=>['table' => $table
                     , 'description' => ''
                     , 'engine' => ''
                     , 'fields' => $tmp['Fields']
-                    , 'fieldst' => $tmp['explain']
+                    ]
                     , 'indexes' => $tmp['index']
+
+                    , 'SQL' => $tmp['SQL'][0]['Create Table']
+                    , 'fieldst' => $tmp['explain']
+                    //, 'indexes' => $tmp['index']
                 ]);
-            } else {
-                return(['table missing'=> $table]);
+            } else
+                return(['table_exists'=> false]);
+
+
+        }
+
+        /**
+         * Return the SQL CREATION table for mysql based on a CloudFrameWork-io Model
+         * @param $model
+         * @return bool|mixed|string
+         */
+        function getSQLTableCreationFromModel($model) {
+            $data = array($model['table']);
+            $sql = "CREATE TABLE %s (";
+
+            // Fields
+            foreach ($model['fields'] as $field=>$fieldAttribs) {
+                if($sql != "CREATE TABLE %s (") $sql.=', ';
+                $sql .= $this->getSQLFieldCreationFromModelField($field,$fieldAttribs);
             }
+
+            // Keys
+            foreach ($model['fields'] as $field=>$fieldAttribs) {
+                $sql .= $this->getSQLKeyCreationFromModelField($field,$fieldAttribs);
+            }
+
+
+            if(!strlen($model['engine'])) $model['engine']='InnoDB';
+            $sql .= ') ENGINE = ' . $model['engine'];
+            // TODO: Control engine;
+            // $sql.= ' DEFAULT CHARACTER SET ' . $table['mysql_character_set'];
+            return($this->_buildQuery(array($sql,$data)));
+        }
+
+        function getSQLFieldCreationFromModelField ($field,$attribs) {
+            $sql = $field;
+            $sql.= ' '.$attribs['type'];
+            if($attribs['key'] || (isset($attribs['null']) && !($attribs['null']))) $sql.=' NOT NULL';
+            if($attribs['key'] and strpos(strtolower($attribs['type']),'int')===0)  $sql.=' AUTO_INCREMENT';
+
+            if(!strlen($attribs['default']) && false !== $attribs['null']) $attribs['default']='NULL';
+            if(strlen($attribs['default']))  $sql.=' DEFAULT '.$attribs['default'];
+
+            $sql.= ' COMMENT \''.$attribs['description'].'\'';
+
+            return($sql);
+        }
+
+        function getSQLKeyCreationFromModelField ($field,$attribs) {
+            $sql='';
+            if($attribs['key']) $sql.=', PRIMARY KEY('.$field.')';
+            elseif($attribs['unique']) $sql.=', UNIQUE KEY('.$field.')';
+            elseif($attribs['index']) $sql.=', KEY '.$table.'_'.$field.'('.$field.')';
+            return($sql);
+        }
+
+
+
+        function getSQLTableUpdateFromModelField ($action,$table,$field,$attribs=array())
+        {
+            $ret='ALTER TABLE '.$table;
+            if (strlen($table) && ('update' == strtolower($action) || 'insert' == strtolower($action) ||  'delete' == strtolower($action)))
+            {
+                if(strtolower($action) == 'delete') {
+                    $ret.= ' DROP '.$field;
+                } else {
+                    $ret .= (strtolower($action) == 'update') ? ' MODIFY ':' ADD ';
+                    $ret.= $this->getSQLFieldCreationFromModelField($field,$attribs);
+                    $ret.=$this->getSQLKeyCreationFromModelField($field,$attribs);
+                }
+            }
+            return($ret);
         }
 
         function checkModels($models) {
+
+            // Attribs to explore.
+            $tmp['attribs'] = array('type','key','index','default','description');
+
+
             // We expect a JSON array
             $tmp['models'] = json_decode($models,true);
-            //TODO: control if json_decode fails.
-
-            // If only a model is passed convert it in an array on 1 element.
-            if(!is_array($tmp['models'][0])) $tmp['models'] = array($tmp['models']);
+            if(!is_array($tmp['models'])) $tmp['models'] = array();
+            else {
+                // If only a model is passed convert it in an array on 1 element.
+                if(!is_array($tmp['models'][0])) $tmp['models'] = array($tmp['models']);
+            }
 
             //At least has to be one element with table and fields attribs.
-            if(!isset($tmp['models'][0]['table']) || !is_array($tmp['models'][0]['fields'])) return null;
+            //TODO: improve Model Structure validation
+            if(!isset($tmp['models'][0]['table']) || !is_array($tmp['models'][0]['fields']))
+                return array('wrong CloudFrameWork-io JSON Model');;
 
             // Start the exploring
             foreach ($tmp['models'] as $key=>$model) {
-                $tmp['db'] = $this->getModel($model['table']);
-                $tmp['ret'][$model['table']]['table_exist'] = ($model['table'] == $tmp['db']['table']);
 
-                // Attribs to explore.
-                $tmp['attribs'] = array('type','key','index','default','description');
+                $tmp['db'] = $this->getModelFromTable($model['table']);
+                $tmp['ret'][$model['table']]['table_exists'] = $tmp['db']['table_exists'];
+
+                // If table does not exist, set table creation
+                if(!$tmp['ret'][$model['table']]['table_exists']) {
+                    $tmp['ret'][$model['table']]['SQL'][] = $this->getSQLTableCreationFromModel($model);
+                    continue; // go yo next model
+                }
+
+                //If table exists.. explore modifications.
                 $tmp['nattribs'] = count($tmp['attribs']);
-
                 // Checking fields from model to DB
                 foreach ($model['fields'] as $field=>$fieldAttribs) {
-                    if(!isset($tmp['db']['fields'][$field])) {
+                    if(!isset($tmp['db']['model']['fields'][$field])) {
                         $tmp['ret'][$model['table']]['fields'][$field] = 'missing in database';
-                        $tmp['ret'][$model['table']]['SQL'][] = $this->generateSQLFromModelField('insert',$model['table'],$field,$fieldAttribs);
+                        $tmp['ret'][$model['table']]['SQL'][] = $this->getSQLTableUpdateFromModelField('insert',$model['table'],$field,$fieldAttribs);
 
                     }
                     else for($i=0;$i<$tmp['nattribs'];$i++) {
                         $attrib = $tmp['attribs'][$i];
                         $attrib_model = (isset($fieldAttribs[$attrib])) ? $fieldAttribs[$attrib] : 'none';
-                        $attrib_db = (isset($tmp['db']['fields'][$field][$attrib])) ? $tmp['db']['fields'][$field][$attrib] : 'none';
+                        $attrib_db = (isset($tmp['db']['model']['fields'][$field][$attrib])) ? $tmp['db']['model']['fields'][$field][$attrib] : 'none';
                         if ($attrib_model !== $attrib_db) {
                             $tmp['ret'][$model['table']]['fields'][$field][$attrib] = 'Warning. Model=' . $attrib_model . ' DB=' . $attrib_db;
-                            $tmp['ret'][$model['table']]['SQL'][] = $this->generateSQLFromModelField('update',$model['table'],$field,$fieldAttribs);
+                            $tmp['ret'][$model['table']]['SQL'][] = $this->getSQLTableUpdateFromModelField('update',$model['table'],$field,$fieldAttribs);
 
                         }
                     }
@@ -961,11 +1097,11 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                 }
 
                 // Checking fields from DB to model
-                if(is_array($tmp['db']['fields']))
-                foreach ($tmp['db']['fields'] as $field=>$fieldAttribs) {
+                if(is_array($tmp['db']['model']['fields']))
+                foreach ($tmp['db']['model']['fields'] as $field=>$fieldAttribs) {
                     if(!isset($model['fields'][$field])) {
                         $tmp['ret'][$model['table']]['fields'][$field] = 'missing in the model';
-                        $tmp['ret'][$model['table']]['SQL'][] = $this->generateSQLFromModelField('delete',$model['table'],$field);
+                        $tmp['ret'][$model['table']]['SQL'][] = $this->getSQLTableUpdateFromModelField('delete',$model['table'],$field);
                     }
                     else for($i=0;$i<$tmp['nattribs'];$i++) {
                         $attrib = $tmp['attribs'][$i];
@@ -982,30 +1118,6 @@ if (!defined ("_MYSQLI_CLASS_") ) {
             return($tmp['ret']);
         }
 
-        function generateSQLFromModelField ($action,$table,$field,$attribs=array())
-        {
-            $ret='ALTER TABLE '.$table;
-            if (strlen($table) && ('update' == strtolower($action) || 'insert' == strtolower($action) ||  'delete' == strtolower($action)))
-            {
-                if(strtolower($action) == 'delete') {
-                    $ret.= ' DROP '.$field;
-                } else {
-                    $ret .= (strtolower($action) == 'update') ? ' MODIY ':' ADD ';
-                    $ret.=$field;
-                    $ret.= ' '.$attribs['type'];
-                    if($attribs['key'] || (isset($attribs['null']) && !($attribs['null']))) $ret.=' NOT NULL';
-                    if($attribs['key'] and strpos(strtolower($attribs['type']),'int')===0)  $ret.=' AUTO_INCREMENT';
-
-                    $ret.= ' COMMENT \''.$attribs['description'].'\'';
-
-                    if($attribs['key']) $ret.=', PRIMARY KEY('.$field.')';
-                    if($attribs['index']) $ret.=', KEY '.$table.'_'.$field.'('.$field.')';
-
-
-                }
-            }
-            return($ret);
-        }
 	}
 }
 ?>
