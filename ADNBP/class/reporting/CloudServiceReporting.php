@@ -20,23 +20,29 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
 
         function filter($command,$var,$info=null) {
             if(is_array($info) && isset($info['type']) &&  ($command == 'set' || $command=='add')) {
-
-
-
                 // lets work on the diferent filters.
                 $_filterCorrect = true;
                 switch($info['type']) {
                     case "select":
                         if(!isset($info['data'])) $_filterCorrect = false;
                         else{
+                            // Read Filters from session
+                            if(!isset($_REQUEST['reset_filters']))
+                                $info['value'] = $_SESSION['CloudServiceReportingFilter_'.$var];
                             // Value for field based in filter or default
                             if(isset($_REQUEST['filter_'.$var])) $info['value'] = $_REQUEST['filter_'.$var];
-                            else $info['value'] = (isset($info['default']))?$info['default']:'';
+
+                            // Evalue default value if still it is empty
+                            if(!strlen($info['value'])) $info['value'] = (isset($info['default']))?$info['default']:'';
 
                             if(strlen($info['value']) && !isset($info['data'][$info['value']])) $info['value'] ='';
 
                             // Required value
                             if($info['required'] && !strlen($info['value'])) $info['value'] = array_keys($info['data'])[0];
+
+                            // SET from session
+                            $_SESSION['CloudServiceReportingFilter_'.$var] = $info['value'];
+
                         }
                         break;
                 }
@@ -46,11 +52,16 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                     elseif ($command == 'add') $this->filters[$var] = $info;
                 }
             }
-            elseif($command == 'get') return (isset($this->filters[$var]))?$this->filters[$var]:null;
-            elseif($command == 'getvalue') return (isset($this->filters[$var]))?$this->filters[$var]['value']:null;
-            elseif($command == 'getdata') return (isset($this->filters[$var]))?$this->filters[$var]['data']:null;
             elseif($command == 'delete') { if(isset($this->filters[$var])) unset($this->filters[$var]);}
-            else return null;
+            else{
+                // Current Value
+                $value = isset($this->filters[$var]['value'])?$this->filters[$var]['value']:null;
+                if($command == 'get') return (isset($this->filters[$var]))?$this->filters[$var]:null;
+                elseif($command == 'getvalue') return ($value);
+                elseif($command == 'getoption') return ($value!==null && isset($this->filters[$var]['data'][$value]))?$this->filters[$var]['data'][$value]:null;
+                elseif($command == 'getdata') return (isset($this->filters[$var]['data']))?$this->filters[$var]['data']:null;
+                else return null;
+            }
         }
 
         // Excute an DB query
@@ -97,6 +108,7 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
         }
 
         /**
+         * Return a subdata of the info based on a condition
          * @param $id   id of of data
          * @param $cond  condition to reduce
          * @return array|null
@@ -298,18 +310,28 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
             if(!is_array($rows)) $rows = explode(",",trim($rows));
             if(!is_array($cols)) $cols = explode(",",trim($cols));
 
-            if(!strlen($rows[0])) $rows = array('_row_');
-            if(!strlen($cols[0])) $cols = array('_col_');
+            if(!is_array($rows[0]) && !strlen($rows[0])) $rows = array('_row_');
+            if(!is_array($cols[0]) && !strlen($cols[0])) $cols = array('_col_');
 
             $ret = array();
             $retRows = array();
             $retCols = array();
             $retFields = array();
+            $retRowSummary = array();
             // Preparing data in the first Loop
             for ($i = 0, $tr = count($data); $i < $tr; $i++) {
                 $row = '';
+                $rowSummary = '';
                 foreach ($rows as $ind => $key) {
+
+                    // Extract properties of the rows field it it is passed
+                    if(is_array($key)) {
+                        list($key, $rowSummary) = array_values($key);
+
+                    }
                     $key = trim($key);
+                    if(strlen($rowSummary)) $retRowSummary[$key] = trim($rowSummary);
+
                     $rowFieldContent = (isset($data[$i][$key]))?$data[$i][$key]:$key;
                     $row.= ($row)?'_'.$rowFieldContent:$rowFieldContent;
                     foreach ($fields as $ind2 => $field) {
@@ -365,14 +387,11 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                         $currentRow[] = array('value'=>$ret[$row][$col][$field],'align'=>'right','currency'=> (is_array($fields[$i]))?$fields[$i][2]:'') ;
                         $i++;
                     }
-
-
-
-
                 }
-
                 $retGroup[] = $currentRow;
             }
+
+            // Row Summary
             return($retGroup);
         }
 
@@ -409,12 +428,14 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
             $lastColSize=12;
             ob_start();
             echo '<section id="widget-grid" >';
+            if(count($this->filters)) {
+                include __DIR__.'/templates/filters.php';
+            }
             foreach ($this->data as $key => $data) {
                 $controlVars->reportNumber++;
                 $type = $data['type'];
                 $data = $data['data'];
                 if(isset($data->columns) && is_string($data->columns)) $data->columns = explode(',',$data->columns);
-
                 if($type=='header')
                     include __DIR__.'/templates/header.php';
                 elseif($type=='table') {
