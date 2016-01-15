@@ -128,6 +128,7 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                             if (!is_array($fieldCond)) {
                                 $fieldCond = array(  '=', $fieldCond );
                             }
+
                             switch ($fieldCond[0]) {
                                 case '=':
                                     if (!isset($row[$key]) || $row[$key] != $fieldCond[1]) $inc = false;
@@ -205,7 +206,16 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
             if (is_array($this->queryResults[$id]['data'])) $ret = count($this->queryResults[$id]['data']);
             return($ret);
         }
-        function queryDataExplore($id,$field,$row=null,$col=null,$cond=null){
+
+        /**
+         * @param $id
+         * @param $field
+         * @param null $row
+         * @param null $col
+         * @param null $cond
+         * @return array|bool
+         */
+        function queryDataExplore($id, $field, $row=null, $col=null, $cond=null){
             if (!isset($this->queryResults[$id]['data']) || (!is_array($field) && !strlen($field)) ) return false;
             $data = $this->getSubData($id,$cond);
 
@@ -303,56 +313,56 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
         function queryDataGroup($id,$fields,$rows,$cols,$cond=null)
         {
             if (!isset($this->queryResults[$id]['data'])) return false;
-            $data = $this->getSubData($id,$cond);
+            $data = $this->getSubData($id, $cond);
 
+            if (!is_array($fields)) $fields = explode(",", trim($fields));
+            if (!is_array($rows)) $rows = explode(",", trim($rows));
+            if (!is_array($cols)) $cols = explode(",", trim($cols));
 
-            if(!is_array($fields)) $fields = explode(",",trim($fields));
-            if(!is_array($rows)) $rows = explode(",",trim($rows));
-            if(!is_array($cols)) $cols = explode(",",trim($cols));
-
-            if(!is_array($rows[0]) && !strlen($rows[0])) $rows = array('_row_');
-            if(!is_array($cols[0]) && !strlen($cols[0])) $cols = array('_col_');
+            if (!is_array($rows[0]) && !strlen($rows[0])) $rows = array('_row_');
+            if (!is_array($cols[0]) && !strlen($cols[0])) $cols = array('_col_');
 
             $ret = array();
             $retRows = array();
             $retCols = array();
             $retFields = array();
-            $retRowSummary = array();
+            $retColSummary = array();
             // Preparing data in the first Loop
             for ($i = 0, $tr = count($data); $i < $tr; $i++) {
                 $row = '';
-                $rowSummary = '';
                 foreach ($rows as $ind => $key) {
 
                     // Extract properties of the rows field it it is passed
-                    if(is_array($key)) {
-                        list($key, $rowSummary) = array_values($key);
+                    if (is_array($key))
+                        list($key, $colSummary) = array_values($key);
 
-                    }
                     $key = trim($key);
-                    if(strlen($rowSummary)) $retRowSummary[$key] = trim($rowSummary);
+                    if (strlen($colSummary)) $retColSummary[$key] = trim($colSummary);
 
-                    $rowFieldContent = (isset($data[$i][$key]))?$data[$i][$key]:$key;
-                    $row.= ($row)?'_'.$rowFieldContent:$rowFieldContent;
+                    $rowFieldContent = (isset($data[$i][$key])) ? $data[$i][$key] : $key;
+                    $row .= ($row) ? '_' . $rowFieldContent : $rowFieldContent;
                     foreach ($fields as $ind2 => $field) {
-                        if(!is_array($field)) $field = array(trim($field),'sum');
-                        $col ='';
+                        if (!is_array($field)) $field = array(trim($field), 'sum');
+                        $col = '';
                         foreach ($cols as $ind3 => $key3) {
-                            $colFieldContent = (isset($data[$i][$key3]))?$data[$i][$key3]:$key3;
-                            $col.= ($col)?'_'.$colFieldContent:$colFieldContent;
+
+
+                            $colFieldContent = (isset($data[$i][$key3])) ? $data[$i][$key3] : $key3;
+                            $col .= ($col) ? '_' . $colFieldContent : $colFieldContent;
                             switch ($field[1]) {
                                 case 'count':
                                     $ret[$row][$col]['count_' . $field[0]] += 1;
-                                    $retRows[$row]+= 1;
-                                    $retCols[$col]+= 1;
-                                    $retFields['count_' .$field[0]]+=1;
+                                    $retRows[$row][$field[0]] += 1;
+                                    $retCols[$col][$field[0]] += 1;
+                                    $retFields['count_' . $field[0]] += 1;
 
                                     break;
+                                case 'sum':
                                 default:
                                     $ret[$row][$col][$field[0]] += $data[$i][$field[0]];
-                                    $retRows[$row]+= $data[$i][$field[0]];
-                                    $retCols[$col]+= $data[$i][$field[0]];
-                                    $retFields[$field[0]]+= $data[$i][$field[0]];
+                                    $retRows[$row][$field[0]] += $data[$i][$field[0]];
+                                    $retCols[$col][$field[0]] += $data[$i][$field[0]];
+                                    $retFields[$field[0]] += $data[$i][$field[0]];
                                     break;
                             }
                         }
@@ -364,27 +374,28 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
             // Building array to allow its representation
             $retGroup = array();
             $colSpan = count($retFields);
-            foreach ($retRows as $row=>$rowValue) {
+            foreach ($retRows as $row => $rowValue) {
                 $currentRow = array();
 
                 // Header of the report
-                if(!count($retGroup)) {
-                    if($row !='_row_') $currentRow[] = '';
-                    foreach ($retCols as $col=>$colValue) if($col != '_col_'){
-                        $currentRow[] = array('value'=>$col,'colspan'=>$colSpan,'align'=>'center','bold'=>true);
+                if (!count($retGroup)) {
+                    if ($row != '_row_') $currentRow[] = '';
+                    foreach ($retCols as $col => $colValue) if ($col != '_col_') {
+                        $currentRow[] = array('value' => $col, 'colspan' => $colSpan, 'align' => 'center', 'bold' => true);
                     }
-                    if(count($currentRow)>1)  {
+                    if (count($currentRow) > 1) {
+
                         $retGroup[] = $currentRow;
                     }
                     $currentRow = array();
                 }
 
                 // Row Content
-                if($row !='_row_') $currentRow[] = array('value'=>$row,'bold'=>true);;
-                foreach ($retCols as $col=>$colValue) {
-                    $i=0;
-                    foreach ($retFields as $field=>$fieldValue ) {
-                        $currentRow[] = array('value'=>$ret[$row][$col][$field],'align'=>'right','currency'=> (is_array($fields[$i]))?$fields[$i][2]:'') ;
+                if ($row != '_row_') $currentRow[] = array('value' => $row, 'bold' => true);;
+                foreach ($retCols as $col => $colValue) {
+                    $i = 0;
+                    foreach ($retFields as $field => $fieldValue) {
+                        $currentRow[] = array('value' => $ret[$row][$col][$field], 'align' => 'right', 'currency' => (is_array($fields[$i])) ? $fields[$i][2] : '');
                         $i++;
                     }
                 }
@@ -392,6 +403,20 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
             }
 
             // Row Summary
+            if (count($retColSummary)) {
+                $currentRow = array(array(value=>''));
+                foreach ($retCols as $col => $colValue) {
+                    $i = 0;
+                    foreach ($retFields as $field => $fieldValue) {
+                        $currentRow[] = array('value' => $retCols[$col][$field], 'bold' => true, 'align' => 'right', 'currency' => (is_array($fields[$i])) ? $fields[$i][2] : '');
+                        $i++;
+                    }
+                }
+                $retGroup[] = $currentRow;
+
+            }
+
+
             return($retGroup);
         }
 
