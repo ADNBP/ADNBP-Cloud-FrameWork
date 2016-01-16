@@ -23,11 +23,17 @@ if ($requestMethod === 'POST') {
     $postData = json_decode(file_get_contents("php://input"), true);
     if (array_key_exists("social", $postData)) {
         $credentials = $sc->auth($postData["social"], $postData);
-        $result = $sc->getFollowers($postData["social"], $credentials);
-        SocialNetworks::jsonResponse(array(
+        // Get followers
+        //$followers = $sc->getFollowers($postData["social"], $credentials);
+        //$images = $sc->getImages($postData["social"], $credentials);
+        /*SocialNetworks::jsonResponse(array(
             "social" => $postData['social'],
-            "followers" => $result,
-        ));
+            "followers" => $followers,
+            "images" => $images,
+            "count" => count($images)
+        ));*/
+        $sc->plusStreamWrite($postData["social"], $credentials, "Periquito de los palotes");
+        exit;
     } else {
         SocialNetworks::generateErrorResponse("Need a social to make followers request", 400);
     }
@@ -35,9 +41,9 @@ if ($requestMethod === 'POST') {
 } else {
     if (array_key_exists("googlePlusOAuthCallback", $_REQUEST)) {
         $params = array(
-            "client" => $this->getConf("GoogleOauth_CLIENT_ID"),
-            "secret" => $this->getConf("GoogleOauth_CLIENT_SECRET"),
-            "code" => $_REQUEST["code"],
+            "client" => $_SESSION["google_apikeys"]["client"],
+            "secret" => $_SESSION["google_apikeys"]["secret"],
+            "code" => $_REQUEST["code"]
         );
         $sc->saveInSession("Google", $params);
     } elseif (array_key_exists("twitterOAuthCallback", $_REQUEST)) {
@@ -45,7 +51,7 @@ if ($requestMethod === 'POST') {
             "client" => $this->getConf("TwitterOauth_KEY"),
             "secret" => $this->getConf("TwitterOauth_SECRET"),
             "verifier" => $_REQUEST["oauth_verifier"],
-            "token" => $_REQUEST["oauth_token"],
+            "token" => $_REQUEST["oauth_token"]
         );
         $sc->saveInSession("Twitter", $params);
     } elseif (array_key_exists("facebookOAuthCallback", $_REQUEST)) {
@@ -53,7 +59,7 @@ if ($requestMethod === 'POST') {
             "client" => $this->getConf("FacebookOauth_APP_ID"),
             "secret" => $this->getConf("FacebookOauth_APP_SECRET"),
             "code" => $_REQUEST["code"],
-            "state" => $_REQUEST["state"],
+            "state" => $_REQUEST["state"]
         );
         $sc->saveInSession("Facebook", $params);
     }

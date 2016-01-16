@@ -47,37 +47,55 @@ class SocialNetworks extends Singleton
     }
 
     /**
-     * Statis method that hydrate credentials for social network required fields
+     * Static method that hydrate credentials for social network required fields
      * @param string $socialNetwork
-     * @param array $keys
+     * @param array $authKeysNames
+     * @param array $apiKeysNames
      * @param array $data
      * @return array
      */
-    public static function hydrateCredentials($socialNetwork, $keys, $data)
+    public static function hydrateCredentials($socialNetwork, $authKeysNames, $apiKeysNames, $data)
     {
         $credentials = array();
+        $apiKeys = array();
         if (null !== $data) {
-            foreach ($keys as $key) {
-                if (array_key_exists($key, $data) && strlen($data[$key]) > 0) {
-                    $credentials[$key] = $data[$key];
+            foreach ($authKeysNames as $authKeyName) {
+                if (array_key_exists($authKeyName, $data) && strlen($data[$authKeyName]) > 0) {
+                    $credentials[$authKeyName] = $data[$authKeyName];
+                }
+            }
+
+            foreach($apiKeysNames as $apiKeyName) {
+                if (array_key_exists($apiKeyName, $data) && strlen($data[$apiKeyName]) > 0) {
+                    $apiKeys[$apiKeyName] = $data[$apiKeyName];
                 }
             }
         }
-        if (count($credentials) !== count($keys)) {
-            SocialNetworks::generateErrorResponse(SocialNetworks::getInstance()->getSocialLoginUrl($socialNetwork), 401);
+
+        if (count($credentials) !== count($authKeysNames)) {
+            if (count($apiKeys) === count($apiKeysNames)) {
+                SocialNetworks::generateErrorResponse(
+                    SocialNetworks::getInstance()->getSocialLoginUrl($socialNetwork, $apiKeys),
+                    401
+                );
+            } else {
+                SocialNetworks::generateErrorResponse("API Keys aren't correct", 501);
+            }
         }
-        return $credentials;
+
+        return array("api_keys" => $apiKeys, "auth_keys" => $credentials);
     }
 
     /**
      * Method that generate the social network login url
      * @param $social
+     * @param array $apiKeys
      * @return mixed
      */
-    public function getSocialLoginUrl($social) {
+    public function getSocialLoginUrl($social, array $apiKeys) {
         try {
             $connector = $this->getSocialApi($social);
-            return $connector->getAuthUrl();
+            return $connector->getAuthUrl($apiKeys);
         } catch(\Exception $e) {
             SocialNetworks::generateErrorResponse($e->getMessage(), 500);
         }
@@ -151,4 +169,45 @@ class SocialNetworks extends Singleton
         }
     }
 
+    /**
+     * Service that connect to social network api and request for images in drive for authenticated user
+     * @param string $social
+     * @param array $credentials
+     * @return mixed
+     */
+    public function getImages($social, array $credentials = array())
+    {
+        try {
+            $connector = $this->getSocialApi($social);
+            return $connector->getImages($credentials);
+        } catch(\Exception $e) {
+            SocialNetworks::generateErrorResponse($e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Service that publish in Google +
+     * @param string $social
+     * @param array $credentials
+     * @param $content Text of the stream
+     * @param $link External link
+     * @param $logo Logo
+     * @param $userId User whose google domain the stream will be published in
+     * @param $circleId Google circle where the stream will be published in
+     * @param $personId Google + user whose domain the stream will be published in
+     * $personId and $circleId are excluding
+     *
+     * @return string
+     */
+    public function plusStreamWrite($social, array $credentials, $content,
+                                    $link = null, $logo = null, $userId = 'me',
+                                    $circleId = null, $personId = null)
+    {
+        try {
+            $connector = $this->getSocialApi($social);
+            return $connector->plusStreamWrite($credentials, $content, $link, $logo, $userId, $circleId, $personId);
+        } catch(\Exception $e) {
+            SocialNetworks::generateErrorResponse($e->getMessage(), 500);
+        }
+    }
 }
