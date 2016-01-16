@@ -124,9 +124,6 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                 "mimetype" => $fileList["mimeType"],
                 "content" => base64_encode($this->downloadFile($driveService, $fileList))
             ));
-            if ($key == 5) {
-                break;
-            }
         }
 
         return $files;
