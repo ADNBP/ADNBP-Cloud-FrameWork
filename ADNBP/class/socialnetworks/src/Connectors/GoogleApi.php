@@ -162,7 +162,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * @param $personId Google + user whose domain the stream will be published in
      * @param $userId User whose google domain the stream will be published in
      * $personId and $circleId are excluding
-     * @return string
+     * @return Google_Service_PlusDomains_Activity
      */
     public function export(array $credentials, $content, $link = null, $logo = null,
                                     $circleId = null, $personId = null, $userId = 'me') {
