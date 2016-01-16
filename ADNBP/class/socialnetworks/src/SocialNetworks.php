@@ -170,23 +170,23 @@ class SocialNetworks extends Singleton
     }
 
     /**
-     * Service that connect to social network api and request for images in drive for authenticated user
+     * Service that connect to social network api and request for data for authenticated user
      * @param string $social
      * @param array $credentials
      * @return mixed
      */
-    public function getImages($social, array $credentials = array())
+    public function import($social, array $credentials = array())
     {
         try {
             $connector = $this->getSocialApi($social);
-            return $connector->getImages($credentials);
+            return $connector->import($credentials);
         } catch(\Exception $e) {
             SocialNetworks::generateErrorResponse($e->getMessage(), 500);
         }
     }
 
     /**
-     * Service that publish in Google +
+     * Service that connect to social network api and export data for authenticated user
      * @param string $social
      * @param array $credentials
      * @param $content Text of the stream
@@ -199,13 +199,13 @@ class SocialNetworks extends Singleton
      *
      * @return string
      */
-    public function plusStreamWrite($social, array $credentials, $content,
-                                    $link = null, $logo = null, $userId = 'me',
-                                    $circleId = null, $personId = null)
+    public function export($social, array $credentials = array(), $content,
+                                    $link = null, $logo = null,
+                                    $circleId = null, $personId = null, $userId = 'me')
     {
         try {
             $connector = $this->getSocialApi($social);
-            return $connector->plusStreamWrite($credentials, $content, $link, $logo, $userId, $circleId, $personId);
+            return $connector->export($credentials, $content, $link, $logo, $circleId, $personId, $userId);
         } catch(\Exception $e) {
             SocialNetworks::generateErrorResponse($e->getMessage(), 500);
         }

@@ -10,8 +10,8 @@ interface SocialNetworkInterface {
     function getAuth(array $credentials);
     function getAuthUrl(array $credentials);
     function getFollowers(array $credentials);
-    function getImages(array $credentials);
-    function plusStreamWrite(array $credentials, $content, $link, $logo, $userId,
-                             $circleId, $personId);
+    function import(array $credentials);
+    function export(array $credentials, $content, $link, $logo,
+                             $circleId, $personId, $userId);
     function authorize(array $credentials);
 }

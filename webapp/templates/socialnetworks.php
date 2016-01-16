@@ -58,6 +58,10 @@
                     <label>Google Api Auth Refresh Token</label>
                     <input ng-model="google.refresh_token" ng-init="google.refresh_token = '<?=getFromArray("refresh_token", $google)?>'">
                 </md-input-container>
+                <md-input-container>
+                    <label>Text for testing export stream / comment to Google +</label>
+                    <input ng-model="google.export_content" ng-init="google.export_content = '<?=getFromArray("export_content", $google)?>'">
+                </md-input-container>
             </md-card-content>
             <div class="md-actions" flex="100" layout="row" layout-align="center center">
                 <md-button class="md-raised md-primary" ng-click="getSocialData('Google')">Get social data</md-button>
@@ -186,17 +190,6 @@
                 <h3>Social Network Data</h3>
             </md-whiteframe>
             <md-card-content layout="column" layout-fill layout-align="center start">
-                <!--<md-whiteframe class="md-whiteframe-2dp" flex="100" layout layout-align="center center" ng-repeat="data in socialData" ng-show="data.loaded">
-                    <md-whiteframe class="md-whiteframe-5dp" flex="100" layout layout-align="center center">
-                        <p>Social Network <strong>{{data.social}}</strong> has <strong>{{data.followers}}</strong> followers</p>
-                    </md-whiteframe>
-                    <md-whiteframe class="md-whiteframe-8dp" flex="100" layout layout-align="center center">
-                        <p>Social Network <strong>{{data.social}}</strong> has <strong>{{data.count}}</strong> images:</p>
-                    </md-whiteframe>
-                    <md-whiteframe class="md-whiteframe-11dp" flex="100" layout layout-align="center center" ng-repeat="image in data.images">
-                        <img alt="{{image.title}}" src="data:{{image.mimetype}};base64,{{image.content}}" width="50" height="50"/>
-                    </md-whiteframe>
-                </md-whiteframe>-->
                 <md-progress-circular md-mode="indeterminate" ng-show="loading"></md-progress-circular>
             </md-card-content>
         </md-card>

@@ -68,7 +68,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                 $client->setClientId($credentials["api_keys"]["client"]);
                 $client->setClientSecret($credentials["api_keys"]["secret"]);
                 $client->setRedirectUri(SocialNetworks::generateRequestUrl() . "socialnetworks?googlePlusOAuthCallback");
-                //$client->addScope("https://www.googleapis.com/auth/plus.login");
+                $client->addScope("https://www.googleapis.com/auth/plus.login");
                 $client->addScope("https://www.googleapis.com/auth/plus.me");
                 $client->addScope("https://www.googleapis.com/auth/drive");
                 $client->addScope("https://www.googleapis.com/auth/plus.circles.read");
@@ -90,7 +90,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * @param array $credentials
      * @return array
      */
-    public function getImages(array $credentials)
+    public function import(array $credentials)
     {
         $client = new \Google_Client();
         $client->setAccessToken(json_encode($credentials["auth_keys"]));
@@ -100,7 +100,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                 $client->setClientId($credentials["api_keys"]["client"]);
                 $client->setClientSecret($credentials["api_keys"]["secret"]);
                 $client->setRedirectUri(SocialNetworks::generateRequestUrl() . "socialnetworks?googlePlusOAuthCallback");
-                //$client->addScope("https://www.googleapis.com/auth/plus.login");
+                $client->addScope("https://www.googleapis.com/auth/plus.login");
                 $client->addScope("https://www.googleapis.com/auth/plus.me");
                 $client->addScope("https://www.googleapis.com/auth/drive");
                 $client->addScope("https://www.googleapis.com/auth/plus.circles.read");
@@ -124,6 +124,9 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                 "mimetype" => $fileList["mimeType"],
                 "content" => base64_encode($this->downloadFile($driveService, $fileList))
             ));
+            if ($key == 5) {
+                break;
+            }
         }
 
         return $files;
@@ -158,14 +161,14 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * @param $content Text of the stream
      * @param $link External link
      * @param $logo Logo
-     * @param $userId User whose google domain the stream will be published in
      * @param $circleId Google circle where the stream will be published in
      * @param $personId Google + user whose domain the stream will be published in
+     * @param $userId User whose google domain the stream will be published in
      * $personId and $circleId are excluding
      * @return string
      */
-    public function plusStreamWrite(array $credentials, $content, $link = null, $logo = null, $userId = 'me',
-                                    $circleId = null, $personId = null) {
+    public function export(array $credentials, $content, $link = null, $logo = null,
+                                    $circleId = null, $personId = null, $userId = 'me') {
         $client = new \Google_Client();
         $client->setAccessToken(json_encode($credentials["auth_keys"]));
 
@@ -174,7 +177,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                 $client->setClientId($credentials["api_keys"]["client"]);
                 $client->setClientSecret($credentials["api_keys"]["secret"]);
                 $client->setRedirectUri(SocialNetworks::generateRequestUrl() . "socialnetworks?googlePlusOAuthCallback");
-                //$client->addScope("https://www.googleapis.com/auth/plus.login");
+                $client->addScope("https://www.googleapis.com/auth/plus.login");
                 $client->addScope("https://www.googleapis.com/auth/plus.me");
                 $client->addScope("https://www.googleapis.com/auth/drive");
                 $client->addScope("https://www.googleapis.com/auth/plus.circles.read");

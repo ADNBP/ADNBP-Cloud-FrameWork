@@ -25,14 +25,16 @@ if ($requestMethod === 'POST') {
         $credentials = $sc->auth($postData["social"], $postData);
         // Get followers
         //$followers = $sc->getFollowers($postData["social"], $credentials);
-        //$images = $sc->getImages($postData["social"], $credentials);
-        /*SocialNetworks::jsonResponse(array(
+        $images = $sc->import($postData["social"], $credentials);
+        if ("" !== $postData["export_content"]) {
+            $sc->export($postData["social"], $credentials, $postData["export_content"]);
+        }
+        SocialNetworks::jsonResponse(array(
             "social" => $postData['social'],
             "followers" => $followers,
             "images" => $images,
             "count" => count($images)
-        ));*/
-        $sc->plusStreamWrite($postData["social"], $credentials, "Periquito de los palotes");
+        ));
         exit;
     } else {
         SocialNetworks::generateErrorResponse("Need a social to make followers request", 400);
