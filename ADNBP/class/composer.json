@@ -5,7 +5,7 @@
         "abraham/twitteroauth": "0.6.2",
         "google/apiclient": "1.1.6",
         "facebook/php-sdk-v4": "5.1.2",
-        "cloud-framework/core": "dev-master"
+        "cloudframework-io/core": "dev-master"
     },
     "license": "MIT",
     "authors": [

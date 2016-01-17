@@ -199,6 +199,15 @@
                     }
                 }
             }
+
+            if (array_key_exists('orderBy', $optParams)) {
+                // For now only allows one field to group by
+                if(is_string($optParams['orderBy'])) {
+                    if($object->fieldExists($optParams['orderBy'], false)) {
+                        $query .= " ORDER BY " . $optParams['orderBy'];
+                    }
+                }
+            }
             $gql_query->setQueryString($query);
             $gql_query->setAllowLiteral(TRUE);
 

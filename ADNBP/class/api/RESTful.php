@@ -224,9 +224,6 @@ if (!defined ("_RESTfull_CLASS_") ) {
 	            case 204:
 	                $ret = ("HTTP/1.0 204 No Content");
 	                break;
-	            default:
-					$ret = ("HTTP/1.0 200 OK");
-	                break;
 	            case 405:
 	                $ret = ("HTTP/1.0 405 Method Not Allowed");
 	                break;
@@ -267,7 +264,8 @@ if (!defined ("_RESTfull_CLASS_") ) {
             global $adnbp;
             if(isset($this->returnData['SECURITY-ID'])) {
                 return $adnbp->getConf('CLOUDFRAMEWORK-ID-'.$this->returnData['SECURITY-ID']);
-            } else 
+            } else
+				die('false!!!');
                 return false;
         }
 	    

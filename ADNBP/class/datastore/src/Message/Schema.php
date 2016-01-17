@@ -211,20 +211,28 @@
             $array = json_decode(json_encode($entity->toSimpleObject()->properties), true);
             $class = get_class($this);
             $schemaEntity = null;
+            //Extract id from parameters and create instance of schema
             foreach (get_object_vars($this) as $key => $value) {
                 list($field, $type, $index) = explode('_', $key, 3);
                 if (array_key_exists($field, $array) && $field === 'id') {
                     $values = array_values($array[$field]);
                     $schemaEntity = new $class($values[0] ?: null);
+                    $schemaEntity->id_int_index = $values[0];
                 }
             }
 
+            //Hydrate the rest of parameters
             if (null !== $schemaEntity) {
                 foreach (get_object_vars($this) as $key => $value) {
                     list($field, $type, $index) = explode('_', $key, 3);
-                    if (array_key_exists($field, $array)) {
+                    if (array_key_exists($field, $array) && $field !== 'id') {
                         $values = array_values($array[$field]);
-                        $schemaEntity->$key = $values[0] ?: null;
+                        if(array_key_exists(0, $values) && null !== $values[0]) {
+                            $valueTs = new \DateTime(date(DATE_ATOM, strtotime($values[0])));
+                            $schemaEntity->$key = (strtotime($values[0])) ? $valueTs->format(\DateTime::ATOM) : $values[0];
+                        } else {
+                            $schemaEntity->$key = null;
+                        }
                     }
                 }
             }
@@ -244,7 +252,8 @@
             foreach (get_object_vars($this) as $key => $value) {
                 list($field, $type, $index) = explode('_', $key, 3);
                 if (!in_array($field, ['loaded', 'loadTs', 'loadMem'])) {
-                    $data[$field] = ($value instanceof \DateTime) ? $value->format('Y-m-d H:i:s') : $value;
+                    $valueTs = new \DateTime(date(DATE_ATOM, strtotime($value)));
+                    $data[$field] = (strtotime($value)) ? $valueTs->format(\DateTime::ATOM) : $value;
                 }
             }
             return ($array) ? $data : json_encode($data);

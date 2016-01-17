@@ -25,18 +25,23 @@
 
     try {
         //Save case
-        $message = new Message();
+        $id = microtime(true) * 10000;
+        $message = new Message($id);
         $message->message_string = "Lorem ipsum";
         $message->ts_datetime = new \DateTime('now', new DateTimeZone('UTC'));
-        $message->idUser_int_index = round(rand(1, 10), 0);
+        $message->idUser_int_index = 3;//round(rand(1, 10), 0);
         $result = $dst->save($message) ? 'OK' : 'ERROR';
         //Search case
         if ('OK' === $result) {
             $message->idUser_int_index = 3;
             $results = $dst->search($message);
             $messages = array();
+            /** @var Message $result */
             foreach($results as $result) {
                 $messages[] = $result->export();
+                $result->message_string .= ' ' . time();
+                $result->ts_datetime = $result->ts_datetime ? \DateTime::createFromFormat(\DateTime::ATOM, $result->ts_datetime) : new \DateTime();
+                $dst->save($result);
             }
         }
     } catch(\Exception $e) {
