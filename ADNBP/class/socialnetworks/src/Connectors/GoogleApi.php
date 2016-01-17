@@ -155,12 +155,12 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     /**
      * Service that publish in Google +
      * @param array $credentials
-     * @param $content Text of the stream
-     * @param $link External link
-     * @param $logo Logo
-     * @param $circleId Google circle where the stream will be published in
-     * @param $personId Google + user whose domain the stream will be published in
-     * @param $userId User whose google domain the stream will be published in
+     * @param string $content Text of the stream
+     * @param string $link External link
+     * @param string $logo Logo
+     * @param string $circleId Google circle where the stream will be published in
+     * @param string $personId Google + user whose domain the stream will be published in
+     * @param string $userId User whose google domain the stream will be published in
      * $personId and $circleId are excluding
      * @return Google_Service_PlusDomains_Activity
      */
