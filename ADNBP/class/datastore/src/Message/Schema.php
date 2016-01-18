@@ -78,7 +78,8 @@
                     break;
                 case 'int':
                 case 'integer':
-                    $property->setIntegerValue(intval($value));
+                    //FIXME force intval when version was migrated to 64bit version
+                    $property->setIntegerValue($value);
                     break;
                 case 'datetime':
                     if (!$value instanceof \DateTime) {
@@ -88,7 +89,8 @@
                     $property->setDateTimeValue($value->format(\DateTime::ATOM));
                     break;
                 case 'float':
-                    $property->setDoubleValue(floatval($value));
+                    //FIXME force intval when version was migrated to 64bit version
+                    $property->setDoubleValue($value);
                     break;
                 case 'boolean':
                 case 'bool':
