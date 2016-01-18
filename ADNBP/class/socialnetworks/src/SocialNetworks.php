@@ -197,7 +197,7 @@ class SocialNetworks extends Singleton
      * @param $personId Google + user whose domain the stream will be published in
      * $personId and $circleId are excluding
      *
-     * @return string
+     * @return ExportDTO
      */
     public function export($social, array $credentials = array(), $content,
                                     $link = null, $logo = null,

@@ -26,14 +26,16 @@ if ($requestMethod === 'POST') {
         // Get followers
         //$followers = $sc->getFollowers($postData["social"], $credentials);
         $images = $sc->import($postData["social"], $credentials);
+        $exportdto = null;
         if ("" !== $postData["export_content"]) {
-            $sc->export($postData["social"], $credentials, $postData["export_content"]);
+            $exportdto = $sc->export($postData["social"], $credentials, $postData["export_content"]);
         }
         SocialNetworks::jsonResponse(array(
             "social" => $postData['social'],
             "followers" => $followers,
             "images" => $images,
-            "count" => count($images)
+            "count" => count($images),
+            "exportdto" => $exportdto
         ));
         exit;
     } else {

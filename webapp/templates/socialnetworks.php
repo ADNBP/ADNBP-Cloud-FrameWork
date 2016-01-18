@@ -194,9 +194,9 @@
             </md-card-content>
         </md-card>
         <div layout="row" layout-padding layout-wrap layout-fill style="padding-bottom: 32px;" ng-cloak ng-repeat="data in socialData" ng-show="data.loaded">
-            <md-whiteframe class="md-whiteframe-1dp" flex-sm="45" flex-gt-sm="35" flex-gt-md="100" layout layout-align="center center">
+            <!--<md-whiteframe class="md-whiteframe-1dp" flex-sm="45" flex-gt-sm="35" flex-gt-md="100" layout layout-align="center center">
                 <span>Social Network <strong>{{data.social}}</strong> has <strong>{{data.followers}}</strong> followers</span>
-            </md-whiteframe>
+            </md-whiteframe>-->
             <md-whiteframe class="md-whiteframe-2dp" flex-sm="45" flex-gt-sm="35" flex-gt-md="100" layout layout-align="center center">
                 <span>Social Network <strong>{{data.social}}</strong> has <strong>{{data.count}}</strong> images:</span>
             </md-whiteframe>

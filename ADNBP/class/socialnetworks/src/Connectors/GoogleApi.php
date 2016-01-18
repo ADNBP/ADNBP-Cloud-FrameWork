@@ -4,10 +4,12 @@ namespace CloudFramework\Service\SocialNetworks\Connectors;
 use CloudFramework\Patterns\Singleton;
 use CloudFramework\Service\SocialNetworks\Interfaces\SocialNetworkInterface;
 use CloudFramework\Service\SocialNetworks\SocialNetworks;
+use CloudFramework\Service\SocialNetworks\Dtos\ExportDTO;
 
 /**
  * Class GoogleApi
  * @package CloudFramework\Service\SocialNetworks\Connectors
+ * @author Salvador Castro <sc@bloombees.com>
  */
 class GoogleApi extends Singleton implements SocialNetworkInterface {
 
@@ -68,7 +70,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                 $client->setClientId($credentials["api_keys"]["client"]);
                 $client->setClientSecret($credentials["api_keys"]["secret"]);
                 $client->setRedirectUri(SocialNetworks::generateRequestUrl() . "socialnetworks?googlePlusOAuthCallback");
-                $client->addScope("https://www.googleapis.com/auth/plus.login");
+                //$client->addScope("https://www.googleapis.com/auth/plus.login");
                 $client->addScope("https://www.googleapis.com/auth/plus.me");
                 $client->addScope("https://www.googleapis.com/auth/drive");
                 $client->addScope("https://www.googleapis.com/auth/plus.circles.read");
@@ -100,7 +102,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                 $client->setClientId($credentials["api_keys"]["client"]);
                 $client->setClientSecret($credentials["api_keys"]["secret"]);
                 $client->setRedirectUri(SocialNetworks::generateRequestUrl() . "socialnetworks?googlePlusOAuthCallback");
-                $client->addScope("https://www.googleapis.com/auth/plus.login");
+                //$client->addScope("https://www.googleapis.com/auth/plus.login");
                 $client->addScope("https://www.googleapis.com/auth/plus.me");
                 $client->addScope("https://www.googleapis.com/auth/drive");
                 $client->addScope("https://www.googleapis.com/auth/plus.circles.read");
@@ -162,7 +164,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * @param $personId Google + user whose domain the stream will be published in
      * @param $userId User whose google domain the stream will be published in
      * $personId and $circleId are excluding
-     * @return Google_Service_PlusDomains_Activity
+     * @return ExportDTO
      */
     public function export(array $credentials, $content, $link = null, $logo = null,
                                     $circleId = null, $personId = null, $userId = 'me') {
@@ -174,7 +176,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                 $client->setClientId($credentials["api_keys"]["client"]);
                 $client->setClientSecret($credentials["api_keys"]["secret"]);
                 $client->setRedirectUri(SocialNetworks::generateRequestUrl() . "socialnetworks?googlePlusOAuthCallback");
-                $client->addScope("https://www.googleapis.com/auth/plus.login");
+                //$client->addScope("https://www.googleapis.com/auth/plus.login");
                 $client->addScope("https://www.googleapis.com/auth/plus.me");
                 $client->addScope("https://www.googleapis.com/auth/drive");
                 $client->addScope("https://www.googleapis.com/auth/plus.circles.read");
@@ -243,7 +245,14 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         $postBody->setAccess($access);
         $plusDomainService = new \Google_Service_PlusDomains($client);
 
-        return $plusDomainService->activities->insert($userId, $postBody);
+        $activity = $plusDomainService->activities->insert($userId, $postBody);
+        $object = $activity->getObject();
+        $user = $activity->getActor();
+
+        $exportDto = new ExportDTO($activity->getPublished(), $object["content"], $object["url"],
+                                    $user["id"], $user["displayName"], $user["url"]);
+
+        return $exportDto;
     }
 
     /**
