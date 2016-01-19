@@ -326,18 +326,28 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
             $retRows = array();
             $retCols = array();
             $retFields = array();
+            $retRowSummary = array();
             $retColSummary = array();
+
+            // Exploring ColSummaries
+            foreach ($cols as $ind => $key) {
+                if (is_array($key)) {
+                    $retColSummary[$key[0]] = $key[1];
+                    $cols[$ind] = $key[0];
+                }
+            }
+
+            foreach ($rows as $ind => $key) {
+                if (is_array($key)) {
+                    $retRowSummary[$key[0]] = $key[1];
+                    $rows[$ind] = $key[0];
+                }
+            }
+
             // Preparing data in the first Loop
             for ($i = 0, $tr = count($data); $i < $tr; $i++) {
                 $row = '';
                 foreach ($rows as $ind => $key) {
-
-                    // Extract properties of the rows field it it is passed
-                    if (is_array($key))
-                        list($key, $colSummary) = array_values($key);
-
-                    $key = trim($key);
-                    if (strlen($colSummary)) $retColSummary[$key] = trim($colSummary);
 
                     $rowFieldContent = (isset($data[$i][$key])) ? $data[$i][$key] : $key;
                     $row .= ($row) ? '_' . $rowFieldContent : $rowFieldContent;
@@ -402,7 +412,7 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                 $retGroup[] = $currentRow;
             }
 
-            // Row Summary
+            // Col Summary
             if (count($retColSummary)) {
                 $currentRow = array(array(value=>''));
                 foreach ($retCols as $col => $colValue) {
