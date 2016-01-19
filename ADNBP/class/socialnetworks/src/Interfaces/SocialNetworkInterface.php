@@ -12,6 +12,6 @@ interface SocialNetworkInterface {
     function getFollowers(array $credentials);
     function import(array $credentials);
     function export(array $credentials, $content, $link, $logo,
-                             $circleId, $personId, $userId);
+                             $circleId, $personId, $mediaId, $userId);
     function authorize(array $credentials);
 }
