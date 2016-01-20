@@ -52,7 +52,8 @@ if ($requestMethod === 'POST') {
         $params = array(
             "client" => $_SESSION["google_apikeys"]["client"],
             "secret" => $_SESSION["google_apikeys"]["secret"],
-            "code" => $_REQUEST["code"]
+            "code" => $_REQUEST["code"],
+            "redirectUrl" => SocialNetworks::generateRequestUrl() . "socialnetworks?googlePlusOAuthCallback"
         );
         $sc->saveInSession("Google", $params);
     } elseif (array_key_exists("instagramPlusOAuthCallback", $_REQUEST)) {
@@ -62,7 +63,8 @@ if ($requestMethod === 'POST') {
                 "code" => $_REQUEST["code"],
                 "error" => $_REQUEST["error"],
                 "error_reason" => $_REQUEST["error_reason"],
-                "error_description" => $_REQUEST["error_description"]
+                "error_description" => $_REQUEST["error_description"],
+                "redirectUrl" => SocialNetworks::generateRequestUrl() . "socialnetworks?instagramAuthCallback"
             );
             $sc->saveInSession("Instagram", $params);
     } elseif (array_key_exists("twitterOAuthCallback", $_REQUEST)) {
@@ -70,7 +72,8 @@ if ($requestMethod === 'POST') {
             "client" => $this->getConf("TwitterOauth_KEY"),
             "secret" => $this->getConf("TwitterOauth_SECRET"),
             "verifier" => $_REQUEST["oauth_verifier"],
-            "token" => $_REQUEST["oauth_token"]
+            "token" => $_REQUEST["oauth_token"],
+            "redirectUrl" => SocialNetworks::generateRequestUrl() . "socialnetworks?twitterOAuthCallback"
         );
         $sc->saveInSession("Twitter", $params);
     } elseif (array_key_exists("facebookOAuthCallback", $_REQUEST)) {
@@ -78,7 +81,8 @@ if ($requestMethod === 'POST') {
             "client" => $this->getConf("FacebookOauth_APP_ID"),
             "secret" => $this->getConf("FacebookOauth_APP_SECRET"),
             "code" => $_REQUEST["code"],
-            "state" => $_REQUEST["state"]
+            "state" => $_REQUEST["state"],
+            "redirectUrl" => SocialNetworks::generateRequestUrl() . "socialnetworks?facebookOAuthCallback"
         );
         $sc->saveInSession("Facebook", $params);
     }

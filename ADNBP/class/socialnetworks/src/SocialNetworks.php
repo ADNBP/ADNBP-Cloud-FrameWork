@@ -52,7 +52,7 @@ class SocialNetworks extends Singleton
      * @param array $authKeysNames
      * @param array $apiKeysNames
      * @param array $data
-     * @param strin $redirectUrl
+     * @param string $redirectUrl
      * @return array
      */
     public static function hydrateCredentials($socialNetwork, $authKeysNames, $apiKeysNames, $data, $redirectUrl)

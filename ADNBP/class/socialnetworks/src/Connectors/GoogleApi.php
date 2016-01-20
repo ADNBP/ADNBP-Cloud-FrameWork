@@ -222,9 +222,9 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     public function authorize(array $credentials)
     {
         $client = new \Google_Client();
-        $client->setClientId($credentials['client']);
-        $client->setClientSecret($credentials['secret']);
-        $client->setRedirectUri(SocialNetworks::generateRequestUrl() . "socialnetworks?googlePlusOAuthCallback");
+        $client->setClientId($credentials["client"]);
+        $client->setClientSecret($credentials["secret"]);
+        $client->setRedirectUri($credentials["redirectUrl"]);
 
         $client->authenticate($credentials["code"]);
         return json_decode($client->getAccessToken(), true);
