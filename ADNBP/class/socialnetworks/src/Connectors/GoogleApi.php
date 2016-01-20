@@ -59,7 +59,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     /**
      * Service that query to Google Api Drive service for images
      * @param array $credentials
-     * @param string path where files imported will be saved
+     * @param string $path path where files imported will be saved
      * @return array
      */
     public function import(array $credentials, $path)
@@ -71,12 +71,6 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             try {
                 $client->setClientId($credentials["api_keys"]["client"]);
                 $client->setClientSecret($credentials["api_keys"]["secret"]);
-                $client->setRedirectUri(SocialNetworks::generateRequestUrl() . "socialnetworks?googlePlusOAuthCallback");
-                $client->addScope("https://www.googleapis.com/auth/plus.me");
-                $client->addScope("https://www.googleapis.com/auth/drive");
-                $client->addScope("https://www.googleapis.com/auth/plus.circles.read");
-                $client->addScope("https://www.googleapis.com/auth/plus.stream.write");
-                $client->addScope("https://www.googleapis.com/auth/plus.media.upload");
                 $client->refreshToken($credentials["auth_keys"]["refresh_token"]);
             } catch(\Exception $e) {
                 SocialNetworks::generateErrorResponse($e->getMessage(), 500);
@@ -128,17 +122,18 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     /**
      * Service that publish in Google +
      * @param array $credentials
-     * @param string $content Text of the stream
-     * @param string $link External link
-     * @param string $logo Logo
-     * @param string $circleId Google circle where the stream will be published in
-     * @param string $personId Google + user whose domain the stream will be published in
-     * @param string $userId User whose google domain the stream will be published in
-     * $personId and $circleId are excluding
+     * @param array $parameters
+     * *      "userId"    => User whose google domain the stream will be published in
+     *      "content"   => Text of the comment
+     *      "link"      => External link
+     *      "logo"      => Logo
+     *      "circleId"  => Google circle where the stream will be published in
+     *      "personId"  => Google + user whose domain the stream will be published in
+     *      ($circleId are excluding)
+     *
      * @return ExportDTO
      */
-    public function export(array $credentials, $content, $link = null, $logo = null,
-                                    $circleId = null, $personId = null, $mediaId = null, $userId = 'me') {
+    public function export(array $credentials, array $parameters) {
         $client = new \Google_Client();
         $client->setAccessToken(json_encode($credentials["auth_keys"]));
 
@@ -146,12 +141,6 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             try {
                 $client->setClientId($credentials["api_keys"]["client"]);
                 $client->setClientSecret($credentials["api_keys"]["secret"]);
-                $client->setRedirectUri(SocialNetworks::generateRequestUrl() . "socialnetworks?googlePlusOAuthCallback");
-                $client->addScope("https://www.googleapis.com/auth/plus.me");
-                $client->addScope("https://www.googleapis.com/auth/drive");
-                $client->addScope("https://www.googleapis.com/auth/plus.circles.read");
-                $client->addScope("https://www.googleapis.com/auth/plus.stream.write");
-                $client->addScope("https://www.googleapis.com/auth/plus.media.upload");
                 $client->refreshToken($credentials["auth_keys"]["refresh_token"]);
             } catch(\Exception $e) {
                 SocialNetworks::generateErrorResponse($e->getMessage(), 500);
@@ -163,24 +152,24 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
 
         // Activity object
         $object = new \Google_Service_PlusDomains_ActivityObject();
-        $object->setOriginalContent($content);
+        $object->setOriginalContent($parameters["content"]);
 
         // Activity attachments
         $attachments = array();
 
-        if (null !== $link) {
+        if (isset($parameters["link"])) {
             $linkAttachment = new \Google_Service_Plus_ActivityObjectAttachments();
             $linkAttachment->setObjectType("article");
-            $linkAttachment->setUrl($link);
-            $postBody->setUrl($link);
+            $linkAttachment->setUrl($parameters["link"]);
+            $postBody->setUrl($parameters["link"]);
 
             $attachments[] = $linkAttachment;
         }
 
-        if (null !== $logo) {
+        if (isset($parameters["logo"])) {
             $logoAttachment = new \Google_Service_Plus_ActivityObjectAttachments();
             $logoAttachment->setObjectType("photo");
-            $logoAttachment->setUrl($logo);
+            $logoAttachment->setUrl($parameters["logo"]);
 
             $attachments[] = $logoAttachment;
         }
@@ -197,14 +186,14 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
 
         $resource = new \Google_Service_PlusDomains_PlusDomainsAclentryResource();
 
-        if ((null === $circleId) && (null === $personId)) {
+        if ((!isset($parameters["circleId"])) && (!isset($parameters["personId"]))) {
             $resource->setType("domain");
-        } else if (null !== $circleId) {
+        } else if (isset($parameters["circleId"])) {
             $resource->setType("circle");
-            $resource->setId($circleId);
-        } else if (null !== $personId) {
+            $resource->setId($parameters["circleId"]);
+        } else if (isset($parameters["personId"])) {
             $resource->setType("person");
-            $resource->setId($personId);
+            $resource->setId($parameters["personId"]);
         }
 
         $resources = array();
@@ -215,7 +204,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         $postBody->setAccess($access);
         $plusDomainService = new \Google_Service_PlusDomains($client);
 
-        $activity = $plusDomainService->activities->insert($userId, $postBody);
+        $activity = $plusDomainService->activities->insert($parameters["userId"], $postBody);
         $object = $activity->getObject();
         $user = $activity->getActor();
 

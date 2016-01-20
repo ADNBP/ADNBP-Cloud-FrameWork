@@ -202,21 +202,21 @@
             </md-whiteframe>
             <md-whiteframe class="md-whiteframe-3dp" flex-sm="45" flex-gt-sm="35" flex-gt-md="100" layout layout-align="center center" ng-repeat="image in data.images" ng-switch on="$index % 4">
                 <span ng-switch-when="0" style="padding-right:30px">
-                    <img alt="{{data.images[$index].title}}" src="data:{{data.images[$index].mimetype}};base64,{{data.images[$index].content}}" width="50" height="50"/>
+                    <img alt="{{data.images[$index].title}}" src="{{data.images[$index].name}}" width="50" height="50"/>
                 </span>
                 <span ng-show="data.images[$index+1]" style="padding-right:30px">
                     <span ng-switch-when="0">
-                        <img alt="{{data.images[$index+1].title}}" src="data:{{data.images[$index+1].mimetype}};base64,{{data.images[$index+1].content}}" width="50" height="50"/>
+                        <img alt="{{data.images[$index+1].title}}" src="{{data.images[$index+1].name}}" width="50" height="50"/>
                     </span>
                 </span>
                 <span ng-show="data.images[$index+2]" style="padding-right:30px">
                     <span ng-switch-when="0">
-                        <img alt="{{data.images[$index+2].title}}" src="data:{{data.images[$index+2].mimetype}};base64,{{data.images[$index+2].content}}" width="50" height="50"/>
+                        <img alt="{{data.images[$index+2].title}}" src="{{data.images[$index+2].name}}" width="50" height="50"/>
                     </span>
                 </span>
                 <span ng-show="data.images[$index+3]">
                     <span ng-switch-when="0">
-                        <img alt="{{data.images[$index+3].title}}" src="data:{{data.images[$index+3].mimetype}};base64,{{data.images[$index+3].content}}" width="50" height="50"/>
+                        <img alt="{{data.images[$index+3].title}}" src="{{data.images[$index+3].name}}" width="50" height="50"/>
                     </span>
                 </span>
             </md-whiteframe>

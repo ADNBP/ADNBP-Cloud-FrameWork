@@ -176,28 +176,25 @@ class SocialNetworks extends Singleton
      * Service that connect to social network api and export data for authenticated user
      * @param string $social
      * @param array $credentials
-     * @param $content Text of the comment
+     * @param array $parameters
      * GOOGLE
-     * @param $link External link
-     * @param $logo Logo
-     * @param $circleId Google circle where the stream will be published in
-     * @param $personId Google + user whose domain the stream will be published in
-     * @param $userId User whose google domain the stream will be published in
-     * $personId and $circleId are excluding
+     *      "userId"    => User whose google domain the stream will be published in
+     *      "content"   => Text of the comment
+     *      "link"      => External link
+     *      "logo"      => Logo
+     *      "circleId"  => Google circle where the stream will be published in
+     *      "personId"  => Google + user whose domain the stream will be published in
+     *      ($circleId are excluding)
      * INSTAGRAM
-     * @param $mediaId Instagram media's ID
+     *      "mediaId"   => Instagram media's ID
      *
      * @return ExportDTO
      */
-    public function export($social, array $credentials = array(), $content,
-                                    $link = null, $logo = null,
-                                    $circleId = null, $personId = null,
-                                    $mediaId = null,
-                                    $userId = 'me')
+    public function export($social, array $credentials, $parameters)
     {
         try {
             $connector = $this->getSocialApi($social);
-            return $connector->export($credentials, $content, $link, $logo, $circleId, $personId, $mediaId, $userId);
+            return $connector->export($credentials, $parameters);
         } catch(\Exception $e) {
             SocialNetworks::generateErrorResponse($e->getMessage(), 500);
         }
