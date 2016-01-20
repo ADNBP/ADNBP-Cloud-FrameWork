@@ -7,10 +7,9 @@ namespace CloudFramework\Service\SocialNetworks\Interfaces;
  */
 interface SocialNetworkInterface {
 
-    function getAuth(array $credentials);
-    function getAuthUrl(array $credentials);
-    function getFollowers(array $credentials);
-    function import(array $credentials);
+    function getAuth(array $credentials, $redirectUrl);
+    function getAuthUrl(array $credentials, $redirectUrl);
+    function import(array $credentials, $path);
     function export(array $credentials, $content, $link, $logo,
                              $circleId, $personId, $mediaId, $userId);
     function authorize(array $credentials);

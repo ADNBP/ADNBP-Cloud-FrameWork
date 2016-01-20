@@ -20,20 +20,22 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     /**
      * Compose Google Api credentials array from session data
      * @param array|null $credentials
+     * @param string $redirectUrl
      * @return array
      */
-    public function getAuth(array $credentials)
+    public function getAuth(array $credentials, $redirectUrl)
     {
         return SocialNetworks::hydrateCredentials(GoogleApi::ID, GoogleApi::$auth_keys,
-                                                        GoogleApi::$api_keys, $credentials);
+                                                        GoogleApi::$api_keys, $credentials, $redirectUrl);
     }
 
     /**
      * Service that compose url to authorize google api
      * @param array $apiKeys
+     * @param string $redirectUrl
      * @return string
      */
-    public function getAuthUrl(array $apiKeys)
+    public function getAuthUrl(array $apiKeys, $redirectUrl)
     {
         if (null !== $apiKeys) {
             $_SESSION[GoogleApi::ID . "_apikeys"] = $apiKeys;
@@ -43,8 +45,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         $client->setAccessType("offline");
         $client->setClientId($apiKeys["client"]);
         $client->setClientSecret($apiKeys["secret"]);
-        $client->setRedirectUri(SocialNetworks::generateRequestUrl() . "socialnetworks?googlePlusOAuthCallback");
-        //$client->addScope("https://www.googleapis.com/auth/plus.login");
+        $client->setRedirectUri($redirectUrl);
         $client->addScope("https://www.googleapis.com/auth/plus.me");
         $client->addScope("https://www.googleapis.com/auth/drive");
         $client->addScope("https://www.googleapis.com/auth/plus.circles.read");
@@ -56,43 +57,12 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     }
 
     /**
-     * Service that query to Google Api a followers count
-     * @param array $credentials
-     * @return int
-     */
-    public function getFollowers(array $credentials)
-    {
-        $client = new \Google_Client();
-        $client->setAccessToken(json_encode($credentials["auth_keys"]));
-
-        if ($client->isAccessTokenExpired()) {
-            try {
-                $client->setClientId($credentials["api_keys"]["client"]);
-                $client->setClientSecret($credentials["api_keys"]["secret"]);
-                $client->setRedirectUri(SocialNetworks::generateRequestUrl() . "socialnetworks?googlePlusOAuthCallback");
-                //$client->addScope("https://www.googleapis.com/auth/plus.login");
-                $client->addScope("https://www.googleapis.com/auth/plus.me");
-                $client->addScope("https://www.googleapis.com/auth/drive");
-                $client->addScope("https://www.googleapis.com/auth/plus.circles.read");
-                $client->addScope("https://www.googleapis.com/auth/plus.stream.write");
-                $client->addScope("https://www.googleapis.com/auth/plus.media.upload");
-                $client->refreshToken($credentials["auth_keys"]["refresh_token"]);
-            } catch(\Exception $e) {
-                SocialNetworks::generateErrorResponse($e->getMessage(), 500);
-            }
-        }
-
-        $plusService = new \Google_Service_Plus($client);
-        $peopleList = $plusService->people->listPeople("me", "visible", array("fields" => "etag,title,totalItems"));
-        return $peopleList->getTotalItems();
-    }
-
-    /**
      * Service that query to Google Api Drive service for images
      * @param array $credentials
+     * @param string path where files imported will be saved
      * @return array
      */
-    public function import(array $credentials)
+    public function import(array $credentials, $path)
     {
         $client = new \Google_Client();
         $client->setAccessToken(json_encode($credentials["auth_keys"]));
@@ -102,7 +72,6 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                 $client->setClientId($credentials["api_keys"]["client"]);
                 $client->setClientSecret($credentials["api_keys"]["secret"]);
                 $client->setRedirectUri(SocialNetworks::generateRequestUrl() . "socialnetworks?googlePlusOAuthCallback");
-                //$client->addScope("https://www.googleapis.com/auth/plus.login");
                 $client->addScope("https://www.googleapis.com/auth/plus.me");
                 $client->addScope("https://www.googleapis.com/auth/drive");
                 $client->addScope("https://www.googleapis.com/auth/plus.circles.read");
@@ -121,10 +90,12 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
 
         $files = array();
         foreach($filesList as $key=>$fileList) {
+            $binaryContent = $this->downloadFile($driveService, $fileList);
+            file_put_contents($path.$fileList["id"].".".$fileList["fileExtension"], $binaryContent);
             array_push($files, array(
-                "title" => $fileList["title"],
-                "mimetype" => $fileList["mimeType"],
-                "content" => base64_encode($this->downloadFile($driveService, $fileList))
+                "id" => $fileList["id"],
+                "name" => $fileList["id"].".".$fileList["fileExtension"],
+                "title" => $fileList["title"]
             ));
         }
 
@@ -167,7 +138,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * @return ExportDTO
      */
     public function export(array $credentials, $content, $link = null, $logo = null,
-                                    $circleId = null, $personId = null, $userId = 'me') {
+                                    $circleId = null, $personId = null, $mediaId = null, $userId = 'me') {
         $client = new \Google_Client();
         $client->setAccessToken(json_encode($credentials["auth_keys"]));
 
@@ -176,7 +147,6 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                 $client->setClientId($credentials["api_keys"]["client"]);
                 $client->setClientSecret($credentials["api_keys"]["secret"]);
                 $client->setRedirectUri(SocialNetworks::generateRequestUrl() . "socialnetworks?googlePlusOAuthCallback");
-                //$client->addScope("https://www.googleapis.com/auth/plus.login");
                 $client->addScope("https://www.googleapis.com/auth/plus.me");
                 $client->addScope("https://www.googleapis.com/auth/drive");
                 $client->addScope("https://www.googleapis.com/auth/plus.circles.read");
