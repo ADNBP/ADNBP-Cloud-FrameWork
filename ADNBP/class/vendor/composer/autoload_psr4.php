@@ -6,7 +6,6 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
-    'Symfony\\Component\\Yaml\\' => array($vendorDir . '/symfony/yaml'),
     'Facebook\\' => array($vendorDir . '/facebook/php-sdk-v4/src/Facebook'),
     'CloudFramework\\' => array($vendorDir . '/cloudframework-io/core/src'),
     'CloudFrameworkTest\\' => array($vendorDir . '/cloudframework-io/core/tests'),

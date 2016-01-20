@@ -78,7 +78,8 @@
                     break;
                 case 'int':
                 case 'integer':
-                    $property->setIntegerValue(intval($value));
+                    //FIXME force intval when version was migrated to 64bit version
+                    $property->setIntegerValue($value);
                     break;
                 case 'datetime':
                     if (!$value instanceof \DateTime) {
@@ -88,7 +89,8 @@
                     $property->setDateTimeValue($value->format(\DateTime::ATOM));
                     break;
                 case 'float':
-                    $property->setDoubleValue(floatval($value));
+                    //FIXME force intval when version was migrated to 64bit version
+                    $property->setDoubleValue($value);
                     break;
                 case 'boolean':
                 case 'bool':
@@ -204,35 +206,69 @@
         }
 
         /**
+         * Checks if field value is an ts field
+         * @param $field
+         *
+         * @return bool
+         */
+        private function isDateTimeField($field) {
+            try {
+                $canTranslateToTime = (!is_string($field)) ? false : strtotime($field);
+                $haveEnoughtLenght = (!is_string($field)) ? false : 24 === strlen($field);
+            } catch(\Exception $e) {
+                $canTranslateToTime = false;
+                $haveEnoughtLenght = false;
+            }
+            return $canTranslateToTime && $haveEnoughtLenght;
+        }
+
+        /**
          * @param \Google_Service_Datastore_Entity $entity
          */
         public function hydrateFromEntity(\Google_Service_Datastore_Entity $entity)
         {
-            $array = json_decode(json_encode($entity->toSimpleObject()->properties), true);
+            $keys = json_decode(json_encode($entity->toSimpleObject()->key), true);
             $class = get_class($this);
             $schemaEntity = null;
-            //Extract id from parameters and create instance of schema
-            foreach (get_object_vars($this) as $key => $value) {
-                list($field, $type, $index) = explode('_', $key, 3);
-                if (array_key_exists($field, $array) && $field === 'id') {
-                    $values = array_values($array[$field]);
-                    $schemaEntity = new $class($values[0] ?: null);
-                    $schemaEntity->id_int_index = $values[0];
+            if(!empty($keys)) {
+                try {
+                    $_id = $keys['path'][0]['name'];
+                } catch(\Exception $e) {
+                    $_id = microtrime(true) * 10000;
                 }
+                preg_match('/^(.*)\[(.*)\]$/', $_id, $ids);
+                if(array_key_exists(2, $ids)) {
+                    $id = $ids[2];
+                } else {
+                    $id = $_id;
+                }
+            } else {
+                $id = microtrime(true) * 10000;
             }
+            $schemaEntity = new $class($id);
+            $schemaEntity->id_int_index = $id;
 
+            $array = json_decode(json_encode($entity->toSimpleObject()->properties), true);
             //Hydrate the rest of parameters
             if (null !== $schemaEntity) {
                 foreach (get_object_vars($this) as $key => $value) {
                     list($field, $type, $index) = explode('_', $key, 3);
-                    if (array_key_exists($field, $array) && $field !== 'id') {
-                        $values = array_values($array[$field]);
-                        if(array_key_exists(0, $values) && null !== $values[0]) {
-                            $valueTs = new \DateTime(date(DATE_ATOM, strtotime($values[0])));
-                            $schemaEntity->$key = (strtotime($values[0])) ? $valueTs->format(\DateTime::ATOM) : $values[0];
-                        } else {
-                            $schemaEntity->$key = null;
+                    try {
+                        if (array_key_exists($field, $array) && $field !== 'id') {
+                            $values = array_values($array[$field]);
+                            if(array_key_exists(0, $values) && null !== $values[0]) {
+                                if($this->isDateTimeField($values[0])) {
+                                    $valueTs = new \DateTime(date(DATE_ATOM, strtotime($values[0])));
+                                    $schemaEntity->$key = (null !== $valueTs) ? $valueTs->format(\DateTime::ATOM) : $values[0];
+                                } else {
+                                    $schemaEntity->$key = $values[0];
+                                }
+                            } else {
+                                $schemaEntity->$key = null;
+                            }
                         }
+                    } catch(\Exception $e) {
+                        $schemaEntity->$key = null;
                     }
                 }
             }
@@ -252,8 +288,16 @@
             foreach (get_object_vars($this) as $key => $value) {
                 list($field, $type, $index) = explode('_', $key, 3);
                 if (!in_array($field, ['loaded', 'loadTs', 'loadMem'])) {
-                    $valueTs = new \DateTime(date(DATE_ATOM, strtotime($value)));
-                    $data[$field] = (strtotime($value)) ? $valueTs->format(\DateTime::ATOM) : $value;
+                    try {
+                        if($this->isDateTimeField($value)) {
+                            $valueTs = new \DateTime(date(DATE_ATOM, strtotime($value)));
+                            $data[$field] = (null !== $valueTs) ? $valueTs->format(\DateTime::ATOM) : $value;
+                        } else {
+                            $data[$field] = $value;
+                        }
+                    } catch(\Exception $e) {
+                        $data[$field] = $value;
+                    }
                 }
             }
             return ($array) ? $data : json_encode($data);

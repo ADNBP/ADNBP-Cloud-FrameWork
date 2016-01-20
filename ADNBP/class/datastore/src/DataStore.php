@@ -1,14 +1,11 @@
 <?php
     namespace CloudFramework\Service\DataStore;
 
-    use CloudFramework\Helpers\Response;
     use CloudFramework\Patterns\Singleton;
     use CloudFramework\Service\DataStore\Message\Schema;
 
     class DataStore extends Singleton
     {
-        use Response;
-
         /**
          * @AutoWired
          * @var \Google_Client $client

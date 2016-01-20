@@ -110,7 +110,7 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
         /**
          * Return a subdata of the info based on a condition
          * @param $id   id of of data
-         * @param $cond  condition to reduce
+         * @param $cond  array to reduce
          * @return array|null
          */
         function getSubData($id,$cond) {
@@ -267,7 +267,7 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                 }
             }
 
-            // Transform return data based in the info colected.
+            // Transform return data based in the info collected.
             // Potential order
             if($col[0]!='_col_' && isset($col[1]) && stripos($col[1],'order ')!==false)
                 if(stripos($col[1],' asc')!==false) ksort($retCols);
@@ -329,19 +329,14 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
             $retRowSummary = array();
             $retColSummary = array();
 
-            // Exploring ColSummaries
-            foreach ($cols as $ind => $key) {
-                if (is_array($key)) {
-                    $retColSummary[$key[0]] = $key[1];
-                    $cols[$ind] = $key[0];
-                }
+            // Analyzing Summaries when the cols or rows array arrays with properties
+            foreach ($rows as $ind => $key) if(is_array($key))  {
+                $retRowSummary[$key[0]] = $key[1];
+                $rows[$ind] = $key[0];
             }
-
-            foreach ($rows as $ind => $key) {
-                if (is_array($key)) {
-                    $retRowSummary[$key[0]] = $key[1];
-                    $rows[$ind] = $key[0];
-                }
+            foreach ($cols as $ind => $key) if(is_array($key))  {
+                $colSummary[$key[0]] = $key[1];
+                $cols[$ind] = $key[0];
             }
 
             // Preparing data in the first Loop
@@ -412,7 +407,7 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                 $retGroup[] = $currentRow;
             }
 
-            // Col Summary
+            // Row Summary
             if (count($retColSummary)) {
                 $currentRow = array(array(value=>''));
                 foreach ($retCols as $col => $colValue) {
