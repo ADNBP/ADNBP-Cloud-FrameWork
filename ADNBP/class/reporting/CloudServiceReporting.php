@@ -110,7 +110,7 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
         /**
          * Return a subdata of the info based on a condition
          * @param $id   id of of data
-         * @param $cond  condition to reduce
+         * @param $cond  array to reduce
          * @return array|null
          */
         function getSubData($id,$cond) {
@@ -267,7 +267,7 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                 }
             }
 
-            // Transform return data based in the info colected.
+            // Transform return data based in the info collected.
             // Potential order
             if($col[0]!='_col_' && isset($col[1]) && stripos($col[1],'order ')!==false)
                 if(stripos($col[1],' asc')!==false) ksort($retCols);
@@ -326,18 +326,23 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
             $retRows = array();
             $retCols = array();
             $retFields = array();
+            $retRowSummary = array();
             $retColSummary = array();
+
+            // Analyzing Summaries when the cols or rows array arrays with properties
+            foreach ($rows as $ind => $key) if(is_array($key))  {
+                $retRowSummary[$key[0]] = $key[1];
+                $rows[$ind] = $key[0];
+            }
+            foreach ($cols as $ind => $key) if(is_array($key))  {
+                $colSummary[$key[0]] = $key[1];
+                $cols[$ind] = $key[0];
+            }
+
             // Preparing data in the first Loop
             for ($i = 0, $tr = count($data); $i < $tr; $i++) {
                 $row = '';
                 foreach ($rows as $ind => $key) {
-
-                    // Extract properties of the rows field it it is passed
-                    if (is_array($key))
-                        list($key, $colSummary) = array_values($key);
-
-                    $key = trim($key);
-                    if (strlen($colSummary)) $retColSummary[$key] = trim($colSummary);
 
                     $rowFieldContent = (isset($data[$i][$key])) ? $data[$i][$key] : $key;
                     $row .= ($row) ? '_' . $rowFieldContent : $rowFieldContent;
