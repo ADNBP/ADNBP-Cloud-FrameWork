@@ -31,20 +31,28 @@
     <div class="widget-body">
 
         <div class="form-inline input-group-sm" role='form'>
-        <?php foreach ($this->filters as $filter=>$filteroptions) {?>
-            <?php if( $filteroptions['type']=="select" ) {?>
-            <select  class="form-control  input-xs" name='filter_<?=$filter?>' onchange='this.form.submit();'>
+        <?php foreach ($this->filters as $filter=>$filteroptions) {
+            if( isset($filteroptions['breakline'])) echo "<br/>";
+            if( $filteroptions['type']=="select" ) {
+                ?><select  class="form-control  input-xs" name='filter_<?=htmlentities($filter)?>' onchange='this.form.submit();'>
                 <?php foreach ($filteroptions['data'] as $key=>$value) {?>
                     <option value="<?=htmlentities($key)?>" <?=(( $key==$filteroptions['value'])?"selected":"")?>><?=htmlentities($value,ENT_SUBSTITUTE)?></option>
                 <?php } ?>
-            </select>
-        <?php } elseif( $filteroptions['type']=="checkbox" ) {?>
-                <select  class="form-control  input-xs" name='filter_<?=$filter?>' onchange='this.form.submit();'>
+                </select><?php
+            } elseif( $filteroptions['type']=="checkbox" ) {
+                ?><select  class="form-control  input-xs" name='filter_<?=htmlentities($filter)?>' onchange='this.form.submit();'>
                     <?php foreach ($filteroptions['data'] as $key=>$value) {?>
                         <option value="<?=htmlentities($key)?>" <?=(( $key==$filteroptions['value'])?"selected":"")?>><?=htmlentities($value,ENT_SUBSTITUTE)?></option>
                     <?php } ?>
-                </select>
-            <?php }
+                </select><?php
+            } elseif( $filteroptions['type']=="input" ) {
+                ?><input type="text"  class="form-control  input-xs"
+                   name='filter_<?=htmlentities($filter)?>'
+                   placeholder="<?=htmlentities($filteroptions['placeholder'])?>"
+                   value="<?=htmlentities($filteroptions['value'])?>"
+                   <?php if(isset($filteroptions['size'])) echo 'size="'.$filteroptions['size'].'"';?>
+                /><?php
+            }
         } ?>
                 <button class="btn btn-default btn-primary" type="submit">
                     <i class="fa fa-search"></i> Filter

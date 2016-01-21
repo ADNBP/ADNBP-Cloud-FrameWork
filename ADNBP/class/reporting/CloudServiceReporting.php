@@ -45,6 +45,9 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
 
                         }
                         break;
+                    case "input":
+                        if(isset($_REQUEST['filter_'.$var])) $info['value'] = $_REQUEST['filter_'.$var];
+                        break;
                 }
 
                 if($_filterCorrect) {
@@ -84,7 +87,7 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                 $this->db = new CloudSQL();
                 $this->db->connect();
                 if($this->db->error()) {
-                     $this->setError($this->db->getError());
+                     $this->addError($this->db->getError());
                     return false;
                 }
             }
@@ -99,6 +102,7 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                 return true;
             } else {
                 $this->addError($this->db->getError());
+                $this->addError($this->db->getQuery()); //TODO: Securize this output
                 return false;
             }
         }
