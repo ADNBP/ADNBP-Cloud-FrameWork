@@ -186,14 +186,7 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                         }
                         break;
                     case'count':
-                        $ret=0;
-                        if(!is_array($cond))
-                            return(count($data));
-                        else for ($ret=0,$i=0,$tr=count($data);$i<$tr;$i++) {
-                            $ret++;
-                        }
-                        return $ret;
-
+                        return(count($data));
                         break;
                 }
                 return($ret);
@@ -283,8 +276,10 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
 
             // Values Data
             $retGroup = array();
-            $retGroup[1] = ($row[0]!='_row_')?array_keys($retRows):'';
-            $retGroup[2] = ($col[0]!='_col_')?array_keys($retCols):'';
+            if($row[0]!='_row_')
+                $retGroup[1] = array_keys($retRows);
+            if($col[0]!='_col_')
+                $retGroup[2] = ($col[0]!='_col_')?array_keys($retCols):'';
             $i=0;
             foreach ($retRows as $row=>$rowValue) {
                 foreach ($retCols as $col=>$colValue) {
@@ -314,7 +309,7 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
          * @param $cond
          * @return array or false in error case.
          */
-        function queryDataGroup($id,$fields,$rows,$cols,$cond=null)
+        function queryDataGroup($id,$fields,$rows=null,$cols=null,$cond=null)
         {
             if (!isset($this->queryResults[$id]['data'])) return false;
             $data = $this->getSubData($id, $cond);
