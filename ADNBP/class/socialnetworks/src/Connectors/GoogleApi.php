@@ -123,7 +123,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * Service that publish in Google +
      * @param array $credentials
      * @param array $parameters
-     * *      "userId"    => User whose google domain the stream will be published in
+     *      "userId"    => User whose google domain the stream will be published in
      *      "content"   => Text of the comment
      *      "link"      => External link
      *      "logo"      => Logo

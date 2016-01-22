@@ -186,6 +186,7 @@ class SocialNetworks extends Singleton
      *      "personId"  => Google + user whose domain the stream will be published in
      *      ($circleId are excluding)
      * INSTAGRAM
+     *      "content"   => Text of the comment
      *      "mediaId"   => Instagram media's ID
      *
      * @return ExportDTO

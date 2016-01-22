@@ -139,20 +139,28 @@
             <img ng-src="http://images.wondershare.com/images/multimedia/video-editor/instagram-logo.png" class="md-card-image" alt="Instagram">
             <md-card-content>
                 <md-input-container>
-                    <label>Instagram Api Key</label>
-                    <input ng-model="instagram.apiKey" ng-init="instagram.apiKey = '<?=$this->getConf("InstagramOauth_CLIENT_ID")?>'">
+                    <label>Instagram Api Client ID</label>
+                    <input ng-model="instagram.client" ng-init="instagram.client = '<?=$_SESSION["instagram_apikeys"]["client"]?>'">
                 </md-input-container>
                 <md-input-container>
-                    <label>Instagram Api Secret</label>
-                    <input ng-model="instagram.secret" ng-init="instagram.secret = '<?=$this->getConf("InstagramOauth_CLIENT_SECRET")?>'">
+                    <label>Instagram Api Client Secret</label>
+                    <input ng-model="instagram.secret" ng-init="instagram.secret = '<?=$_SESSION["instagram_apikeys"]["secret"]?>'">
                 </md-input-container>
                 <md-input-container>
-                    <label>Instagram Api User Token</label>
-                    <input ng-model="instagram.token">
+                    <label>Instagram Api Access Token</label>
+                    <input ng-model="instagram.access_token" ng-init="instagram.access_token = '<?=getFromArray("access_token", $instagram)?>'">
                 </md-input-container>
                 <md-input-container>
-                    <label>Instagram Api User Token OAuth</label>
-                    <input ng-model="instagram.oauthToken">
+                    <label>Instagram Api User ID</label>
+                    <input ng-model="instagram.user.id" ng-init="instagram.user.id = '<?=getFromArray("id", $instagram["user"])?>'">
+                </md-input-container>
+                <md-input-container>
+                    <label>Instagram Api User Full name</label>
+                    <input ng-model="instagram.user.full_name" ng-init="instagram.user.full_name = '<?=getFromArray("full_name", $instagram["user"])?>'">
+                </md-input-container>
+                <md-input-container>
+                    <label>Text for testing export stream / comment to Instagram media</label>
+                    <input ng-model="instagram.export_content" ng-init="instagram.export_content = '<?=getFromArray("export_content", $google)?>'">
                 </md-input-container>
             </md-card-content>
             <div class="md-actions" flex="100" layout="row" layout-align="center center">

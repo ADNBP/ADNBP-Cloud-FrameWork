@@ -10,8 +10,10 @@ use CloudFramework\Service\SocialNetworks\Connectors\GoogleApi;
 /** @var ADNBP $this */
 $sc = SocialNetworks::getInstance();
 $google = (array_key_exists("google_form_credentials", $_SESSION)) ? $_SESSION["google_form_credentials"] : array();
+$instagram = (array_key_exists("instagram_form_credentials", $_SESSION)) ? $_SESSION["instagram_form_credentials"] : array("user" => array());
 $twitter = (array_key_exists("twitter_form_credentials", $_SESSION)) ? $_SESSION["twitter_form_credentials"] : array();
 $facebook = (array_key_exists("facebook_form_credentials", $_SESSION)) ? $_SESSION["facebook_form_credentials"] : array();
+
 
 function getFromArray($key, array $array = array()) {
     if(array_key_exists($key, $array)) {
@@ -24,15 +26,26 @@ $requestMethod = strtoupper($_SERVER['REQUEST_METHOD']);
 if ($requestMethod === 'POST') {
     $postData = json_decode(file_get_contents("php://input"), true);
     if (array_key_exists("social", $postData)) {
-        $credentials = $sc->auth($postData["social"], $postData, SocialNetworks::generateRequestUrl() . "socialnetworks?googlePlusOAuthCallback");
+        $redirectUrl = SocialNetworks::generateRequestUrl() . "socialnetworks?".strtolower($postData["social"])."OAuthCallback";
+        if ("Instagram" === $postData["social"]) {
+            $redirectUrl .= "=1";
+        }
+        $credentials = $sc->auth($postData["social"], $postData, $redirectUrl);
         // Get followers
         $images = $sc->import($postData["social"], $credentials, "/home/salvador/ADNBP-Cloud-FrameWork/webapp/");
         $exportdto = null;
         if ("" !== $postData["export_content"]) {
-            $parameters = array(
-                "userId" => "me",
-                "content" => $postData["export_content"]
-            );
+            if ("Google" === $postData["social"]) {
+                $parameters = array(
+                    "userId" => "me",
+                    "content" => $postData["export_content"]
+                );
+            } else if (("Instagram" === $postData["social"]) && (count($images) > 0)) {
+                $parameters = array(
+                    "mediaId" => $images[0]["id"],
+                    "content" => $postData["export_content"]
+                );
+            }
             $exportdto = $sc->export($postData["social"], $credentials, $parameters);
         }
         SocialNetworks::jsonResponse(array(
@@ -48,15 +61,15 @@ if ($requestMethod === 'POST') {
     }
 
 } else {
-    if (array_key_exists("googlePlusOAuthCallback", $_REQUEST)) {
+    if (array_key_exists("googleOAuthCallback", $_REQUEST)) {
         $params = array(
             "client" => $_SESSION["google_apikeys"]["client"],
             "secret" => $_SESSION["google_apikeys"]["secret"],
             "code" => $_REQUEST["code"],
-            "redirectUrl" => SocialNetworks::generateRequestUrl() . "socialnetworks?googlePlusOAuthCallback"
+            "redirectUrl" => SocialNetworks::generateRequestUrl() . "socialnetworks?googleOAuthCallback"
         );
         $sc->saveInSession("Google", $params);
-    } elseif (array_key_exists("instagramPlusOAuthCallback", $_REQUEST)) {
+    } elseif (array_key_exists("instagramOAuthCallback", $_REQUEST)) {
             $params = array(
                 "client" => $_SESSION["instagram_apikeys"]["client"],
                 "secret" => $_SESSION["instagram_apikeys"]["secret"],
@@ -64,7 +77,7 @@ if ($requestMethod === 'POST') {
                 "error" => $_REQUEST["error"],
                 "error_reason" => $_REQUEST["error_reason"],
                 "error_description" => $_REQUEST["error_description"],
-                "redirectUrl" => SocialNetworks::generateRequestUrl() . "socialnetworks?instagramAuthCallback"
+                "redirectUrl" => SocialNetworks::generateRequestUrl() . "socialnetworks?instagramOAuthCallback=1"
             );
             $sc->saveInSession("Instagram", $params);
     } elseif (array_key_exists("twitterOAuthCallback", $_REQUEST)) {
