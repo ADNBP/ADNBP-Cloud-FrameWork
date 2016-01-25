@@ -10,15 +10,28 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
         var $db = null;
         var $super = null;
         var $queryResults = array();
+        var $matrixReports = array();
+
         var $filters = array();
         
         function __construct(&$db=null) {
             global $adnbp;
             $this->super = &$adnbp;
             $this->super->initCache();
+
+
         }
 
-        function filter($command,$var,$info=null) {
+
+
+        /**
+         * Add filter for the report
+         * @param $command
+         * @param $var
+         * @param null $info
+         * @return null
+         */
+        function filter($command, $var, $info=null) {
             if(is_array($info) && isset($info['type']) &&  ($command == 'set' || $command=='add')) {
                 // lets work on the diferent filters.
                 $_filterCorrect = true;
@@ -67,21 +80,29 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
             }
         }
 
-        // Excute an DB query
-        function query($id,$q,$data=null) {
+
+        /**
+         * Excute an DB query
+         * @param $cubeId string Id of the cube
+         * @param $q string SQL query
+         * @param $data array with the potential parameters %s of $q
+         * @return bool
+         */
+        function createCubeFromQuery($cubeId, $q, $data=null) {return($this->query($cubeId, $q, $data));}
+        // Alias
+        function query($cubeId, $q, $data=null) {
             if($this->error) return false;
             $q = "SELECT ".$q;
             
             // Check cache
             if(!isset($_REQUEST['reload'])) {
-                $this->queryResults[$id]['data'] = $this->super->getCache('Reporting_'.$id.'_'.md5($id.$q.json_encode($data)));
-                if(is_array($this->queryResults[$id]['data'])) {
+                $this->queryResults[$cubeId]['data'] = $this->super->getCache('Reporting_'.$cubeId.'_'.md5($cubeId.$q.json_encode($data)));
+                if(is_array($this->queryResults[$cubeId]['data'])) {
                       return true;
                 }
             }
             
-            
-            
+            // Db instance
             if($this->db===null) {
                 $this -> super -> loadClass("db/CloudSQL");
                 $this->db = new CloudSQL();
@@ -94,10 +115,10 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
             
             // Query
             $ret = $this->db->getDataFromQuery($q,$data);
-            $this->queryResults[$id]['query'] = $this->db->getQuery();
+            $this->queryResults[$cubeId]['query'] = $this->db->getQuery();
             if(!$this->db->error()) {
-                $this->queryResults[$id]['data'] = $ret;
-                $this->super->setCache('Reporting_'.$id.'_'.md5($id.$q.json_encode($data)),$ret);
+                $this->queryResults[$cubeId]['data'] = $ret;
+                $this->super->setCache('Reporting_'.$cubeId.'_'.md5($cubeId.$q.json_encode($data)),$ret);
                 unset($ret);
                 return true;
             } else {
@@ -112,37 +133,69 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
         }
 
         /**
-         * Return a subdata of the info based on a condition
-         * @param $id   id of of data
+         * Return a cube optionally reduced with $cond
+         * @param $cubeId  string id of of data
          * @param $cond  array to reduce
+         * @param $fields string fields to return separated by , or *
          * @return array|null
          */
-        function getSubData($id,$cond) {
+        function getCube($cubeId, $fields="*",$cond=null ) {
             $ret = null;
-            if (isset($this->queryResults[$id]['data'])) {
-                if(!is_array($cond)) $ret = &$this->queryResults[$id]['data'];
+            if (isset($this->queryResults[$cubeId]['data'])) {
+
+                // Return if only want the Cube.
+                if (!is_array($cond) && $fields == "*") {
+                    $ret = $this->queryResults[$cubeId]['data'];
+                 }
+                // There is a $cond and/or $fields!='*'
                 else {
-                    $ret=array();
-                    //_printe($this->queryResults[$id]['data']);
-                    foreach ($this->queryResults[$id]['data'] as $i=>$row) {
+
+                    $ret=array(); // $ret could be empty
+                    // Fields to return
+                    // $fields has to be an string with length
+                    if(!is_string($fields) || trim($fields)=='') $fields='*';
+
+                    // Get array of Fields if $fields!=*
+                    if(trim($fields)!='*') $fields = array_map("trim",explode(',', $fields));
+
+                    // Explore all rows
+                    foreach ($this->queryResults[$cubeId]['data'] as $i=> $row) {
                         // Only include match elements
                         $inc = true;
+
+                        // Apply condtion if it is an array
+                        if(is_array($cond))
                         foreach ($cond as $key => $fieldCond) {
 
                             if (!is_array($fieldCond)) {
                                 $fieldCond = array(  '=', $fieldCond );
                             }
-
-                            switch ($fieldCond[0]) {
+                            switch (strtolower($fieldCond[0])) {
                                 case '=':
                                     if (!isset($row[$key]) || $row[$key] != $fieldCond[1]) $inc = false;
                                     break;
                                 case '!=':
                                     if (!isset($row[$key]) || trim($row[$key]) == trim($fieldCond[1])) $inc = false;
                                     break;
+                                case 'like':
+                                    if (!isset($row[$key]) || stripos($row[$key],$fieldCond[1])===false) $inc = false;
+                                    break;
+                                case 'not like':
+                                    if (!isset($row[$key]) || stripos($row[$key],$fieldCond[1])!==false) $inc = false;
+                                    break;
                             }
                         }
-                        if($inc) $ret[] = $row;
+
+                        // Add Row if $inc is true
+                        if($inc) {
+                            if(is_array($fields)) {
+                                $row = array();
+                                foreach ($fields as $key=>$field) {
+                                    $row[$field] = isset($this->queryResults[$cubeId]['data'][$i][$field])?$this->queryResults[$cubeId]['data'][$i][$field]:$field. ' does not exist';
+                                }
+                            }
+                            $ret[] = $row;
+                        }
                     }
                 }
             }
@@ -150,71 +203,165 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
         }
 
         /**
-         * @param $id
-         * @param string $fields
-         * @param string $op
-         * @param null $cond
-         * @return array|bool|int|string
+         * Return a multipart info taking a cube.
+         * @param $cubeId
+         * @param $op string $op could be: select(default)|select distinct|fields|sum|count|count distinct
+         * @param $fields string
+         * @param $cond null|array
+         * @return array|bool|int|string|null
          */
-        function queryData($id,$fields='*',$op='raw',$cond=null)
+        function getCubeSubData($cubeId, $op='select', $fields = '*', $cond = null)
         {
-            if (!isset($this->queryResults[$id]['data'])) return false;
-            if(!is_string($fields) || trim($fields)=='') $fields='*';
-            $data = $this->getSubData($id,$cond);
-            if ($fields=='*' && $op=='raw') return $data;
-            else {
-                $ret = '';
-                if($fields=='*') $fields = array_keys($data[0]);
-                else $fields = explode(',', $fields);
+            $data = $this->getCube($cubeId,$fields,$cond);
+            if(!is_array($data)) return $data;
 
-                switch ($op) {
-                    case'raw':
-                        $ret = array();
-                        for ($i = 0, $tr = count($data); $i < $tr; $i++) {
-                            foreach ($fields as $ind => $key) { $key = trim($key);
-                                $ret[$i][$key] = $data[$i][$key];
-                            }
-                        }
+            switch (trim(strtolower($op))) {
+                case'fields':
+                    return array_keys($data[0]);
+                    break;
+                case'select':
+                    return $data;
+                    break;
+                case'select distinct':
+                    $distinct = array();
+                    for ($i = 0, $tr = count($data); $i < $tr; $i++) {
+                        if(!isset($distinct[sha1(serialize($data[$i]))]))
+                            $distinct[sha1(serialize($data[$i]))]=true;
+                        else unset($data[$i]);
+                    }
+                    return $data;
+                    break;
+                case'sum':
+                    //TODO: fix sum option of getCubeSubData
+                    $ret = 0;
+                    for ($i = 0, $tr = count($data); $i < $tr; $i++) {
+                        $ret += array_sum($data[$i]);
+                    }
+                    return $ret;
+                    break;
+                case'count distinct':
+                    $distinct = array();
+                    for ($i = 0, $tr = count($data); $i < $tr; $i++) {
+                        $distinct[sha1(serialize($data[$i]))]+=1;
+                    }
+                    return(count($distinct));
+                    break;
+                case'count':
+                    return(count($data));
+                    break;
+                default:
+                    return('"'.$op. '" is not a valid parameter');
+            }
+        }
+        /**
+         * @param $cubeId
+         * @param $op string (distinct|count|sum)
+         * @param $field
+         * @param null $row (string|array($field[,'order asc|desc'])
+         * @param null $col (string|array($field[,'order asc|desc'])
+         * @param null $cond
+         * @return array|bool
+         */
+        function getCubeSubDataGroup($cubeId, $op, $field, $row=null, $col=null, $cond=null){
+            $data = $this->getCube($cubeId,'*',$cond);
+            if(!is_array($data)) return $data;
+
+            $field = array($field,$op);
+            if(!is_array($row)) $row = array((strlen($row))?$row:'_row_');
+            if(!is_array($col)) $col = array((strlen($col))?$col:'_col_');
+
+            $rowFieldContent = $row[0];
+            $colFieldContent = $col[0];
+
+            $ret = array();
+            $retRows = array();
+            $retCols = array();
+            $retFields = array();
+            $distinctFields = array();
+
+            // Preparing data in the first Loop
+            for ($i = 0, $tr = count($data); $i < $tr; $i++) {
+                // ROW/COL for the field
+                if($row[0]!='_row_')
+                    $rowFieldContent = (isset($data[$i][$row[0]]) && strlen($data[$i][$row[0]]))?$data[$i][$row[0]]:'_empty_';
+
+                if($col[0]!='_col_')
+                    $colFieldContent = (isset($data[$i][$col[0]]) && strlen($data[$i][$col[0]]))?$data[$i][$col[0]]:'_empty_';
+
+                $value = (isset($data[$i][$field[0]]) && strlen($data[$i][$field[0]]))?$data[$i][$field[0]]:'_empty_';
+
+                switch ($field[1]) {
+                    case 'count':
+                        $ret[$rowFieldContent][$colFieldContent] += 1;
+                        $retRows[$rowFieldContent]+= 1;
+                        $retCols[$colFieldContent]+= 1;
+                        $retFields['count_' .$field[0]]+=1;
                         break;
-                    case'sum':
-                        $ret = 0;
-                        for ($i = 0, $tr = count($data); $i < $tr; $i++) {
-                            foreach ($fields as $ind => $key) { $key=trim($key);
-                                if(isset($data[$i][$key]))
-                                $ret += $data[$i][$key];
-                            }
-                        }
+                    case 'sum':
+                        $ret[$rowFieldContent][$colFieldContent] += $value;
+                        $retRows[$rowFieldContent]+= $value;
+                        $retCols[$colFieldContent]+= $value;
                         break;
-                    case'count':
-                        return(count($data));
+                    case 'distinct':
+                    default:
+                        if(!isset($distinctFields[$value])) {
+                            $ret[$rowFieldContent][$colFieldContent][] = $value;
+                            $distinctFields[$value] += 1;
+                            $retRows[$rowFieldContent][]= $value;
+                            $retCols[$colFieldContent][]= $value;
+                        }
                         break;
                 }
-                return($ret);
             }
-            return false;
-        }
-        function queryDataFields($id) {
-            $ret=array();
-            if (is_array($this->queryResults[$id]['data'][0])) $ret = array_keys($this->queryResults[$id]['data'][0]);
-            return($ret);
-        }
-        function queryDataRows($id) {
-            $ret=0;
-            if (is_array($this->queryResults[$id]['data'])) $ret = count($this->queryResults[$id]['data']);
-            return($ret);
+
+            // Transform return data based in the info collected.
+            // Potential order
+            if($col[0]!='_col_' && isset($col[1]) && stripos($col[1],'order ')!==false)
+                if(stripos($col[1],' asc')!==false) ksort($retCols);
+                else if(stripos($col[1],' desc')!==false) krsort($retCols);
+
+            if($row[0]!='_row_' && isset($row[1]) && stripos($row[1],'order ')!==false)
+                if(stripos($row[1],' asc')!==false) ksort($retRows);
+                else if(stripos($col[1],' desc')!==false) krsort($retRows);
+
+            $retGroup = ['data'=>[],'rows'=>[],'cols'=>[]];
+            // Values Data
+            if($row[0]!='_row_')
+                $retGroup['rows'] = array_keys($retRows);
+            if($col[0]!='_col_')
+                $retGroup['cols'] = ($col[0]!='_col_')?array_keys($retCols):'';
+            $i=0;
+            foreach ($retRows as $row=>$rowValue) {
+                foreach ($retCols as $col=>$colValue) {
+                    if($row != '_row_') {
+                        if($col !='_col_') {
+                            $retGroup['data'][$row][$col] = $ret[$row][$col];
+                        } else {
+                            $retGroup['data'][$row] = $ret[$row][$col];
+                        }
+                    } elseif($col !='_col_') {
+                        $retGroup['data'][$col] = $ret[$row][$col];
+                    } else {
+                        $retGroup['data'] = $ret[$row][$col];
+                    }
+                }
+                $i++;
+            }
+            return($retGroup);
+
         }
 
         /**
-         * @param $id
+         * @param $cubeId
          * @param $field
          * @param null $row
          * @param null $col
          * @param null $cond
          * @return array|bool
          */
-        function queryDataExplore($id, $field, $row=null, $col=null, $cond=null){
-            if (!isset($this->queryResults[$id]['data']) || (!is_array($field) && !strlen($field)) ) return false;
-            $data = $this->getSubData($id,$cond);
+        function queryDataExplore($cubeId, $field, $row=null, $col=null, $cond=null){
+            $data = $this->getCube($cubeId,'*',$cond);
+            if(!is_array($data)) return $data;
 
             if(!is_array($field)) $field = array($field,'distinct');
             if(!is_array($row)) $row = array((strlen($row))?$row:'_row_');
@@ -301,18 +448,232 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
 
         }
 
+
         /**
-         * @param $id
+         * @param $idMatix
+         * @param $data array from with the following format: [0..n][field1=>value1,field2=>value2...]
+         */
+        function matrixReportInit($idMatix, $data) { $this->matrixReports =[$idMatix=>['data'=>$data,'rows'=>[],'cols'=>[],'values'=>[]]]; }
+        function matrixReportSetData($idMatix, $data) {
+            $this->matrixReports[$idMatix]['data'] = $data;
+        }
+
+
+        /**
+         * @param $idMatix
+         * @param $type string 'rows'|'cols' else ->'cols'
+         * @param $field
+         * @param array $props ['order'=>'asc'|'desc']
+         */
+        function matrixReportAdd($idMatix, $type, $field, $props=[]) {
+            $this->_matrixReportData('add',$idMatix, $type, $field, $props);
+        }
+        function matrixReportSet($idMatix, $type, $field, $props=[]) {
+            $this->_matrixReportData('set',$idMatix, $type, $field, $props);
+        }
+        function _matrixReportData($action,$idMatix, $type, $field, $props=[]) {
+
+            // Normalizing $type names
+            $type=strtolower($type).'s';
+            if($type!='rows' && $type!='values' && $type!='data') $type='cols';
+
+            // Reset Matrix
+            if($action=='set')
+                unset($this->matrixReports[$idMatix][$type]);
+
+            $this->matrixReports[$idMatix][$type][$field] = $props;
+        }
+
+
+        // Recursive functions to explore data in matrixReportData;
+        function recursiveCols(&$output,&$colData,&$props,$ncols,$nrows,$nvalues,$ncol=0,$x=0,$stringIndex='') {
+            if($nvalues==0) $nvalues = 1;
+            $first = ($x===0);
+            foreach ($colData as $key=>$item) {
+                if($x==0)  for(;$x<$nrows;$x++) $output[$ncol][$x] = '';
+                $output[$ncol][$x] = array_merge(array('value'=>$key,'stringIndex'=>((strlen($stringIndex))?$stringIndex.'|f|':'').$key),$props[$ncol]);
+                $lastX=$x;
+                if($ncol+1 < $ncols)
+                    $x = $this->recursiveCols($output,$colData[$key],$props,$ncols,$nrows,$nvalues,$ncol+1,($first)?0:$x,((strlen($stringIndex))?$stringIndex.'|f|':'').$key);
+                else $x+=$nvalues;
+                if($x-$lastX>1) $output[$ncol][$lastX]['colspan'] = $x-$lastX;
+                $first = false;
+            }
+            return $x;
+        }
+
+        // Recursive functions to explore data in matrixReportData;
+        function recursiveRows(&$output, &$rowData, &$props, $ncols, $nrows, $nvalues, $nrow=0, $y=0,$stringIndex='') {
+            if($nvalues==0) $nvalues = 1;
+            $first = ($y===0);
+            foreach ($rowData as $key=> $item) {
+                if($y==0)  $y=$ncols; // Start the index under the cols
+                $output[$y][$nrow] = array_merge(array('value'=>$key,'stringIndex'=>((strlen($stringIndex))?$stringIndex.'|f|':'').$key),$props[$nrow]);
+                $lastY=$y;
+                if($nrow+1 < $nrows)
+                    $y = $this->recursiveRows($output,$rowData[$key],$props,$ncols,$nrows,$nvalues,$nrow+1,($first)?0:$y,((strlen($stringIndex))?$stringIndex.'|f|':'').$key);
+                else $y++;
+                if($y-$lastY>1) $output[$lastY][$nrow]['rowspan'] = $y-$lastY;
+                $first = false;
+            }
+            return $y;
+        }
+
+        function matrixReportData($idMatix) {
+            // Return if empty
+            if(!isset($this->matrixReports[$idMatix]['data']) || !is_array($this->matrixReports[$idMatix]['data'])) return false;
+            else if(!count($this->matrixReports[$idMatix]['data'])) return [];
+
+            // Analyzing Rows && Cols
+            if(!count($this->matrixReports[$idMatix]['cols'])) $this->matrixReports[$idMatix]['cols']['_col_'] = [];
+            if(!count($this->matrixReports[$idMatix]['rows'])) $this->matrixReports[$idMatix]['rows']['_row_'] = [];
+            if(!count($this->matrixReports[$idMatix]['values'])) $this->matrixReports[$idMatix]['values']['_value_'] = [];
+
+            // Building basic structure:
+            $propData = ['props'=>[],'cols'=>[],'rows'=>[],'values'=>[],'linkData'=>['cols'=>[],'rows'=>[],'values'=>[]]];
+            $propData['props']['cols'] = array_values($this->matrixReports[$idMatix]['cols']);
+            $propData['props']['rows'] = array_values($this->matrixReports[$idMatix]['rows']);
+            $propData['props']['values'] = array_values($this->matrixReports[$idMatix]['values']);
+
+            foreach ($this->matrixReports[$idMatix]['data'] as $index=>$dataRecord) {
+                $rowName = '';
+                // Cols & Rows & Values Structure
+                // ROWS
+                $rowNames = &$propData['rows'];
+                $rowLinks = &$propData['linkData']['rows'];
+                $lastRowName = '';
+                foreach ($this->matrixReports[$idMatix]['rows'] as $rowfield=>$rowProps) {
+                    $rowName='';
+                    if($rowfield!='_row_') {
+                        if (!array_key_exists($rowfield,$dataRecord)) $rowName = '_nofieldvalue_';
+                        else $rowName = (strlen($dataRecord[$rowfield])) ? $dataRecord[$rowfield] : '_empty_';
+                        if(!isset($rowNames[$rowName])) {
+                            // Add the last record if we want to use smart-links
+                            $rowLinks[$rowName] = json_encode($dataRecord);
+                            // Initialize the row element as array
+                            $rowNames[$rowName] = array();
+                        }
+                        $rowNames = &$rowNames[$rowName];
+                    }
+
+                    $lastRowName .= ((strlen($lastRowName))?'|f|':'').$rowName;
+                    // COLS
+                    $colNames = &$propData['cols'];
+                    $colLinks = &$propData['linkData']['cols'];
+                    $lastColName = '';
+                    foreach ($this->matrixReports[$idMatix]['cols'] as $colField=>$colProps) {
+                        $colName='';
+                        if($colField!='_col_') {
+                            if (!array_key_exists($colField,$dataRecord)) $colName = '_nofieldvalue_';
+                            else $colName = (strlen($dataRecord[$colField])) ? $dataRecord[$colField] : '_empty_';
+
+                            if (!isset($colNames[$colName])) {
+                                // Add the last record if we want to use smart-links
+                                $colLinks[$colName] = json_encode($dataRecord);
+                                // Initialize the col element as array
+                                $colNames[$colName] = array();
+                            }
+                            $colNames = &$colNames[$colName];
+                        }
+                        $lastColName .= ((strlen($lastColName))?'|f|':'').$colName;
+
+
+                        $valDatas =  &$propData['values'];
+                        $valLinks =  &$propData['linkData']['values'];
+                        foreach ($this->matrixReports[$idMatix]['values'] as $valueField=>$valueProps) if($valueField!='_value_') {
+                            if (!array_key_exists($valueField,$dataRecord)) $valData = '_nofieldvalue_';
+                            else $valData = (strlen($dataRecord[$valueField])) ? $dataRecord[$valueField] : '_empty_';
+
+                            // Add the last record if we want to use smart-links
+                            $valLinks[$lastColName.'|_|'.$lastRowName][$valueField] = json_encode($dataRecord);
+                            // Add list of values for each cell
+                            $valDatas[$lastColName.'|_|'.$lastRowName][$valueField][] = $valData;
+                        }
+                    }
+                }
+            }
+
+
+            // building output structure
+            // Cols & Rows
+            $ncols = (isset($this->matrixReports[$idMatix]['cols']['_col_']))?0:count($this->matrixReports[$idMatix]['cols']);
+            $nrows = (isset($this->matrixReports[$idMatix]['rows']['_row_']))?0:count($this->matrixReports[$idMatix]['rows']);
+            $nvalues = (isset($this->matrixReports[$idMatix]['values']['_value_']))?0:count($this->matrixReports[$idMatix]['values']);
+
+            $matrixData = array();
+            if($ncols) $this->recursiveCols($matrixData,$propData['cols'],$propData['props']['cols'],$ncols,$nrows,$nvalues);
+            if($nrows) $this->recursiveRows($matrixData,$propData['rows'], $propData['props']['rows'],$ncols, $nrows,$nvalues);
+
+
+            // Values
+            if($nvalues) {
+                // Get Keys combinations of cols&rows
+                // Get Last level of Cols
+                if($ncols>0) {
+                    $colKeys = $matrixData[$ncols-1];
+                    for($i=0;$i<$nrows;$i++) unset($colKeys[$i]);
+                    foreach ($colKeys as $colKeyIndex=>$colKeyValues) {
+                        $colKeys[$colKeyIndex] = $colKeyValues['stringIndex'];
+                    }
+                } else $colKeys = array($nrows=>'');
+
+
+                // Get Last level of Rows
+                if($nrows>0) {
+                    for($i=$ncols,$tr=count($matrixData);$i<$tr;$i++)
+                        $rowKeys[$i] = $matrixData[$i][$nrows-1]['stringIndex'];
+                } else $rowKeys = array($ncols=>'');
+
+                foreach ($rowKeys as $rowIndex=>$rowKey) {
+                    foreach ($colKeys as $colIndex=>$colKey) {
+                        $i=0;
+                        foreach ($this->matrixReports[$idMatix]['values'] as $valueField=>$valueProps) {
+                            if(!isset($valueProps['summarize'])) $valueProps['summarize'] = 'raw';
+                            switch($valueProps['summarize']) {
+                                case "sum":
+                                    if(!is_array($propData['values'][$colKey.'|_|'.$rowKey][$valueField]))
+                                        $value=0;
+                                    else
+                                        $value = array_sum($propData['values'][$colKey.'|_|'.$rowKey][$valueField]);
+                                    break;
+                                default:
+                                    $value = $propData['values'][$colKey.'|_|'.$rowKey][$valueField];
+                                    break;
+                            }
+                            $matrixData[$rowIndex][$colIndex+$i]['value'] = $value;
+                            $matrixData[$rowIndex][$colIndex+$i] = array_merge($matrixData[$rowIndex][$colIndex+$i],$propData['props']['values'][$i]);
+                            if($matrixData[$rowIndex][$colIndex+$i]['link']) {
+                                $cellData = json_decode($propData['linkData']['values'][$colKey.'|_|'.$rowKey][$valueField],true);
+                                if(!is_array($cellData))
+                                    unset($matrixData[$rowIndex][$colIndex+$i]['link']);
+                                else
+                                    $matrixData[$rowIndex][$colIndex+$i]['link'] =  $this->super->applyVarsSubsitutions($matrixData[$rowIndex][$colIndex+$i]['link'],array_map(urlencode,$cellData));
+                            }
+                            $i++;
+                        }
+                    }
+                }
+
+
+            }
+
+            return ($matrixData);
+        }
+
+
+
+        /**
+         * @param $cubeId
          * @param $fields
          * @param $rows
          * @param $cols
          * @param $cond
          * @return array or false in error case.
          */
-        function queryDataGroup($id,$fields,$rows=null,$cols=null,$cond=null)
+        function queryDataGroup($cubeId, $fields, $rows=null, $cols=null, $cond=null)
         {
-            if (!isset($this->queryResults[$id]['data'])) return false;
-            $data = $this->getSubData($id, $cond);
+            $data = $this->getCube($cubeId,$fields,$cond);
+            if(!is_array($data)) return $data;
 
             if (!is_array($fields)) $fields = explode(",", trim($fields));
             if (!is_array($rows)) $rows = explode(",", trim($rows));
@@ -443,12 +804,15 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
         }
 
         /**
-         * return the HTML with the info printed.
+         * return the HTML with the info printed closing opened database connections.
          */
         function output() {
         	global $adnbp;
-            $controlVars = (object)array('dygraph'=>false,'tables'=>false,'reportNumber'=>0);
 
+            // Close Data base it it has been opened.
+            $this->queryEnd();
+
+            $controlVars = (object)array('dygraph'=>false,'tables'=>false,'reportNumber'=>0);
 			$types = array('barcode'=>false);
 			$_tables = false;
             $rows='';

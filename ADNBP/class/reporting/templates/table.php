@@ -57,9 +57,12 @@
 
 	                                	$align = $cell['align'];
                                         $colspan = $cell['colspan'];
+                                        $rowspan = $cell['rowspan'];
+                                        $nowrap = $cell['nowrap'];
 										if(!$align && (isset($cell['currency']))) $align='right';
+                                        if(is_array($cell['value'])) $cell['value'] = implode(', ',$cell['value']);
                                 	?>
-                                <td<?=($align)?' class="text-'.$align.'"':''?><?=($colspan)?' colspan="'.$colspan.'"':''?><?=($cell['anchor'])?' id="'.htmlentities($cell['anchor']).'"':''?>><?php
+                                <td<?=($align)?' class="text-'.$align.'"':''?><?=($nowrap)?' nowrap':''?><?=($colspan)?' colspan="'.$colspan.'"':''?><?=($rowspan)?' rowspan="'.$rowspan.'"':''?><?=($cell['anchor'])?' id="'.htmlentities($cell['anchor']).'"':''?>><?php
                                 	if(strlen($cell['currency']))
                                         $cell['value'] = htmlentities($adnbp->numberFormat($cell['value'],2)).'&nbsp;'.htmlentities($cell['currency']);
                                     else
