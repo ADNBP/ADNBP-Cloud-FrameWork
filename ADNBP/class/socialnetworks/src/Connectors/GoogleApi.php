@@ -84,13 +84,18 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
 
         $files = array();
         foreach($filesList as $key=>$fileList) {
-            $binaryContent = $this->downloadFile($driveService, $fileList);
-            file_put_contents($path.$fileList["id"].".".$fileList["fileExtension"], $binaryContent);
-            array_push($files, array(
-                "id" => $fileList["id"],
-                "name" => $fileList["id"].".".$fileList["fileExtension"],
-                "title" => $fileList["title"]
-            ));
+            if (("image/gif" === $fileList["mimeType"]) ||
+                ("image/jpeg" === $fileList["mimeType"]) ||
+                ("image/pjpeg" === $fileList["mimeType"]) ||
+                ("image/png" === $fileList["mimeType"])) {
+                $binaryContent = $this->downloadFile($driveService, $fileList);
+                file_put_contents($path . $fileList["id"] . "." . $fileList["fileExtension"], $binaryContent);
+                array_push($files, array(
+                    "id" => $fileList["id"],
+                    "name" => $fileList["id"] . "." . $fileList["fileExtension"],
+                    "title" => $fileList["title"]
+                ));
+            }
         }
 
         return $files;
