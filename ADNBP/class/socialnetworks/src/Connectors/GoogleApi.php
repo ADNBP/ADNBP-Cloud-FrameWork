@@ -14,7 +14,7 @@ use CloudFramework\Service\SocialNetworks\Dtos\ExportDTO;
 class GoogleApi extends Singleton implements SocialNetworkInterface {
 
     const ID = 'google';
-    public static $auth_keys = array("access_token", "token_type", "expires_in", "id_token", "created", "refresh_token");
+    public static $auth_keys = array("access_token", "token_type", "expires_in", "id_user", "created", "refresh_token");
     public static $api_keys = array("client", "secret");
 
     /**
@@ -232,6 +232,15 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         $client->setRedirectUri($credentials["redirectUrl"]);
 
         $client->authenticate($credentials["code"]);
-        return json_decode($client->getAccessToken(), true);
+
+        $googleCredentials = json_decode($client->getAccessToken(), true);
+
+        $plusService = new \Google_Service_Plus($client);
+        $profile = $plusService->people->get("me");
+
+        unset($googleCredentials["id_token"]);
+        $googleCredentials["id_user"] = $profile->getId();
+
+        return $googleCredentials;
     }
 }

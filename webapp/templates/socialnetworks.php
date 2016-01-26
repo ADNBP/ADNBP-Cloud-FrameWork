@@ -51,12 +51,12 @@
                     <input ng-model="google.created" ng-init="google.created = '<?=getFromArray("created", $google)?>'">
                 </md-input-container>
                 <md-input-container>
-                    <label>Google Api Auth Id Token</label>
-                    <input ng-model="google.id_token" ng-init="google.id_token = '<?=getFromArray("id_token", $google)?>'">
-                </md-input-container>
-                <md-input-container>
                     <label>Google Api Auth Refresh Token</label>
                     <input ng-model="google.refresh_token" ng-init="google.refresh_token = '<?=getFromArray("refresh_token", $google)?>'">
+                </md-input-container>
+                <md-input-container>
+                    <label>Google + Id User</label>
+                    <input ng-model="google.id_user" ng-init="google.id_user = '<?=getFromArray("id_user", $google)?>'">
                 </md-input-container>
                 <md-input-container>
                     <label>Text for testing export stream / comment to Google +</label>
