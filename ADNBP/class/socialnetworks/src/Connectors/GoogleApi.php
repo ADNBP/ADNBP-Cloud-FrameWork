@@ -2,6 +2,7 @@
 namespace CloudFramework\Service\SocialNetworks\Connectors;
 
 use CloudFramework\Patterns\Singleton;
+use CloudFramework\Service\SocialNetworks\Exceptions\ConnectorConfigException;
 use CloudFramework\Service\SocialNetworks\Interfaces\SocialNetworkInterface;
 use CloudFramework\Service\SocialNetworks\SocialNetworks;
 use CloudFramework\Service\SocialNetworks\Dtos\ExportDTO;
@@ -39,6 +40,14 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     {
         if (null !== $apiKeys) {
             $_SESSION[GoogleApi::ID . "_apikeys"] = $apiKeys;
+        }
+
+        if (!array_key_exists('client', $apiKeys)) {
+            throw new ConnectorConfigException("'client' parameter is required", 400);
+        }
+
+        if (!array_key_exists('secret', $apiKeys)) {
+            throw new ConnectorConfigException("'secret' parameter is required", 401);
         }
 
         $client = new \Google_Client();
