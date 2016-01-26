@@ -489,6 +489,12 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
         function recursiveCols(&$output,&$colData,&$props,$ncols,$nrows,$nvalues,$ncol=0,$x=0,$stringIndex='') {
             if($nvalues==0) $nvalues = 1;
             $first = ($x===0);
+
+            // Sort Columns
+            if(isset($props[$ncol]['order']))
+                if(stripos($props[$ncol]['order'],'desc')!==false) krsort($colData);
+                else ksort($colData);
+
             foreach ($colData as $key=>$item) {
                 if($x==0)  for(;$x<$nrows;$x++) $output[$ncol][$x] = '';
                 $output[$ncol][$x] = array_merge(array('value'=>$key,'stringIndex'=>((strlen($stringIndex))?$stringIndex.'|f|':'').$key),$props[$ncol]);
@@ -496,7 +502,9 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                 if($ncol+1 < $ncols)
                     $x = $this->recursiveCols($output,$colData[$key],$props,$ncols,$nrows,$nvalues,$ncol+1,($first)?0:$x,((strlen($stringIndex))?$stringIndex.'|f|':'').$key);
                 else $x+=$nvalues;
-                if($x-$lastX>1) $output[$ncol][$lastX]['colspan'] = $x-$lastX;
+                if($x-$lastX>1) {
+                    $output[$ncol][$lastX]['colspan'] = $x-$lastX;
+                }
                 $first = false;
             }
             return $x;
@@ -506,6 +514,12 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
         function recursiveRows(&$output, &$rowData, &$props, $ncols, $nrows, $nvalues, $nrow=0, $y=0,$stringIndex='') {
             if($nvalues==0) $nvalues = 1;
             $first = ($y===0);
+
+            // Sort Columns
+            if(isset($props[$ncol]['order']))
+                if(stripos($props[$nrow]['order'],'desc')!==false) krsort($rowData);
+                else ksort($rowData);
+
             foreach ($rowData as $key=> $item) {
                 if($y==0)  $y=$ncols; // Start the index under the cols
                 $output[$y][$nrow] = array_merge(array('value'=>$key,'stringIndex'=>((strlen($stringIndex))?$stringIndex.'|f|':'').$key),$props[$nrow]);
@@ -513,9 +527,19 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                 if($nrow+1 < $nrows)
                     $y = $this->recursiveRows($output,$rowData[$key],$props,$ncols,$nrows,$nvalues,$nrow+1,($first)?0:$y,((strlen($stringIndex))?$stringIndex.'|f|':'').$key);
                 else $y++;
-                if($y-$lastY>1) $output[$lastY][$nrow]['rowspan'] = $y-$lastY;
+                //
+                if($y-$lastY>1) {
+                    $output[$lastY][$nrow]['rowspan'] = $y-$lastY;
+                    // Summarize Row is to add a new row
+                    // Add a new Row if there is a summarize
+                    if(isset($props[$nrow]['summarize'])) {
+                        $output[$y][$nrows-1] = array('colspan'=>$nrows-$nrow,'value'=>'Total '.$key,'rowBold'=>'true','bold'=>'true','stringIndex'=>((strlen($stringIndex))?$stringIndex.'|f|':'').$key);
+                        $y++;
+                    }
+                }
                 $first = false;
             }
+
             return $y;
         }
 
@@ -594,6 +618,7 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
             }
 
 
+
             // building output structure
             // Cols & Rows
             $ncols = (isset($this->matrixReports[$idMatix]['cols']['_col_']))?0:count($this->matrixReports[$idMatix]['cols']);
@@ -603,7 +628,6 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
             $matrixData = array();
             if($ncols) $this->recursiveCols($matrixData,$propData['cols'],$propData['props']['cols'],$ncols,$nrows,$nvalues);
             if($nrows) $this->recursiveRows($matrixData,$propData['rows'], $propData['props']['rows'],$ncols, $nrows,$nvalues);
-
 
             // Values
             if($nvalues) {
@@ -642,6 +666,10 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                             }
                             $matrixData[$rowIndex][$colIndex+$i]['value'] = $value;
                             $matrixData[$rowIndex][$colIndex+$i] = array_merge($matrixData[$rowIndex][$colIndex+$i],$propData['props']['values'][$i]);
+
+                            // If all the rowBold is
+                            if($matrixData[$rowIndex][$nrows-1]['rowBold'])  $matrixData[$rowIndex][$colIndex+$i]['bold'] = true;
+
                             if($matrixData[$rowIndex][$colIndex+$i]['link']) {
                                 $cellData = json_decode($propData['linkData']['values'][$colKey.'|_|'.$rowKey][$valueField],true);
                                 if(!is_array($cellData))
@@ -882,7 +910,7 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                     $container=false;
                     echo $cols; $cols='';
                     echo $rows."<div class='row'>\n";
-                    $rows="\n</div> <!-- row --><br/>";
+                    $rows="\n</div> <!-- row -->";
                     if($data=="center") {
                          echo "<center>";
                         $rows = "</center>".$rows;
