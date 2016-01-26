@@ -4,9 +4,6 @@ namespace CloudFramework\Service\SocialNetworks\Tests;
 use CloudFramework\Service\SocialNetworks\Connectors\GoogleApi;
 use GuzzleHttp\Client;
 
-require_once('../../vendor/autoload.php');
-require_once('../../autoload.php');
-
 /**
  * Class GoogleApiTest
  * @author Salvador Castro <sc@bloombees.com>

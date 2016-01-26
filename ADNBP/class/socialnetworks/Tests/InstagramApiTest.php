@@ -4,9 +4,6 @@ namespace CloudFramework\Service\SocialNetworks\Tests;
 use CloudFramework\Service\SocialNetworks\Connectors\InstagramApi;
 use GuzzleHttp\Client;
 
-require_once('../../vendor/autoload.php');
-require_once('../../autoload.php');
-
 /**
  * Class InstagramApiTest
  * @author Salvador Castro <sc@bloombees.com>
