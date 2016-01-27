@@ -6,6 +6,7 @@ use CloudFramework\Service\SocialNetworks\Exceptions\ConnectorConfigException;
 use CloudFramework\Service\SocialNetworks\Interfaces\SocialNetworkInterface;
 use CloudFramework\Service\SocialNetworks\SocialNetworks;
 use CloudFramework\Service\SocialNetworks\Dtos\ExportDTO;
+use CloudFramework\Service\SocialNetworks\Dtos\ProfileDTO;
 
 /**
  * Class GoogleApi
@@ -15,7 +16,7 @@ use CloudFramework\Service\SocialNetworks\Dtos\ExportDTO;
 class GoogleApi extends Singleton implements SocialNetworkInterface {
 
     const ID = 'google';
-    public static $auth_keys = array("access_token", "token_type", "expires_in", "id_user", "created", "refresh_token");
+    public static $auth_keys = array("access_token", "token_type", "expires_in", "created", "refresh_token");
     public static $api_keys = array("client", "secret");
 
     /**
@@ -60,9 +61,40 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         $client->addScope("https://www.googleapis.com/auth/plus.circles.read");
         $client->addScope("https://www.googleapis.com/auth/plus.stream.write");
         $client->addScope("https://www.googleapis.com/auth/plus.media.upload");
+        $client->addScope("https://www.googleapis.com/auth/userinfo.email");
+        $client->addScope("https://www.googleapis.com/auth/userinfo.profile");
 
         // Authentication request
         return $client->createAuthUrl();
+    }
+
+    /**
+     * Service that query to Google Oauth Api to get user profile
+     * @param array $credentials
+     * @return ProfileDTO
+     */
+    public function getProfile(array $credentials)
+    {
+        $client = new \Google_Client();
+        $client->setAccessToken(json_encode($credentials["auth_keys"]));
+
+        if ($client->isAccessTokenExpired()) {
+            try {
+                $client->setClientId($credentials["api_keys"]["client"]);
+                $client->setClientSecret($credentials["api_keys"]["secret"]);
+                $client->refreshToken($credentials["auth_keys"]["refresh_token"]);
+            } catch(\Exception $e) {
+                SocialNetworks::generateErrorResponse($e->getMessage(), 500);
+            }
+        }
+
+        $oauthService = new \Google_Service_Oauth2($client);
+        $profile = $oauthService->userinfo_v2_me->get();
+
+        $profileDto = new ProfileDTO($profile->getId(), $profile->getGivenName()." ".$profile->getFamilyName(),
+            $profile->getEmail(), $profile->getPicture());
+
+        return $profileDto;
     }
 
     /**
@@ -244,11 +276,15 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
 
         $googleCredentials = json_decode($client->getAccessToken(), true);
 
-        $plusService = new \Google_Service_Plus($client);
-        $profile = $plusService->people->get("me");
+        $oauthService = new \Google_Service_Oauth2($client);
+        $profile = $oauthService->userinfo_v2_me->get();
 
         unset($googleCredentials["id_token"]);
-        $googleCredentials["id_user"] = $profile->getId();
+
+        $profileDto = new ProfileDTO($profile->getId(), $profile->getGivenName()." ".$profile->getFamilyName(),
+                                        $profile->getEmail(), $profile->getPicture());
+
+        $googleCredentials["user"] = $profileDto;
 
         return $googleCredentials;
     }

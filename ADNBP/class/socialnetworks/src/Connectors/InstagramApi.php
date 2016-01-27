@@ -5,6 +5,7 @@ use CloudFramework\Patterns\Singleton;
 use CloudFramework\Service\SocialNetworks\Interfaces\SocialNetworkInterface;
 use CloudFramework\Service\SocialNetworks\SocialNetworks;
 use CloudFramework\Service\SocialNetworks\Dtos\ExportDTO;
+use CloudFramework\Service\SocialNetworks\Dtos\ProfileDTO;
 
 /**
  * Class InstagramApi
@@ -56,6 +57,30 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
     }
 
     /**
+     * Service that query to Instagram Api to get user profile
+     * @param array $credentials
+     * @return ProfileDTO
+     */
+    public function getProfile(array $credentials)
+    {
+        $url = InstagramApi::INSTAGRAM_API_USERS_URL . "self/?access_token=" . $credentials["auth_keys"]["access_token"];
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        $data = curl_exec($ch);
+        curl_close($ch);
+
+        $data = json_decode($data, true);
+
+        // Instagram doesn't return the user's e-mail :(
+        $profileDto = new ProfileDTO($data["data"]["id"], $data["data"]["full_name"],
+                                            null, $data["data"]["profile_picture"]);
+
+        return $profileDto;
+    }
+
+    /**
      * Service that query to Instagram Api Drive service for images
      * @param array $credentials
      * @param string $path
@@ -84,7 +109,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
                     array_push($files, array(
                         "id" => $media->id,
                         "name" => $media->id.".".$fileExtension,
-                        "title" => $media->caption,
+                        "title" => $media->caption->text,
                     ));
                 }
             }
@@ -176,6 +201,14 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
             }
          **/
 
-        return json_decode($data, true);
+        $instagramCredentials = json_decode($data, true);
+
+        // Instagram doesn't return the user's e-mail :(
+        $profileDto = new ProfileDTO($instagramCredentials["user"]["id"], $instagramCredentials["user"]["full_name"],
+                                        null, $instagramCredentials["user"]["profile_picture"]);
+
+        $instagramCredentials["user"] = $profileDto;
+
+        return $instagramCredentials;
     }
 }

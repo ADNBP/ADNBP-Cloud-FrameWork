@@ -9,6 +9,7 @@ interface SocialNetworkInterface {
 
     function getAuth(array $credentials, $redirectUrl);
     function getAuthUrl(array $credentials, $redirectUrl);
+    function getProfile(array $credentials);
     function import(array $credentials, $path);
     function export(array $credentials, array $parameters);
     function authorize(array $credentials);

@@ -10,7 +10,7 @@ use CloudFramework\Service\SocialNetworks\Connectors\GoogleApi;
 /** @var ADNBP $this */
 $sc = SocialNetworks::getInstance();
 $google = (array_key_exists("google_form_credentials", $_SESSION)) ? $_SESSION["google_form_credentials"] : array();
-$instagram = (array_key_exists("instagram_form_credentials", $_SESSION)) ? $_SESSION["instagram_form_credentials"] : array("user" => array());
+$instagram = (array_key_exists("instagram_form_credentials", $_SESSION)) ? $_SESSION["instagram_form_credentials"] : array();
 $twitter = (array_key_exists("twitter_form_credentials", $_SESSION)) ? $_SESSION["twitter_form_credentials"] : array();
 $facebook = (array_key_exists("facebook_form_credentials", $_SESSION)) ? $_SESSION["facebook_form_credentials"] : array();
 
@@ -30,9 +30,16 @@ if ($requestMethod === 'POST') {
         if ("Instagram" === $postData["social"]) {
             $redirectUrl .= "=1";
         }
+
         $credentials = $sc->auth($postData["social"], $postData, $redirectUrl);
-        // Get followers
+
+        // Get profile
+        $profile = $sc->getProfile($postData["social"], $credentials);
+
+        // Get images
         $images = $sc->import($postData["social"], $credentials, "/home/salvador/ADNBP-Cloud-FrameWork/webapp/");
+
+        // Export
         $exportdto = null;
         if ("" !== $postData["export_content"]) {
             if ("Google" === $postData["social"]) {

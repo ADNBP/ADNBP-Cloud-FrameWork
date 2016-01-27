@@ -156,6 +156,21 @@ class SocialNetworks extends Singleton
     }
 
     /**
+     * Service that query to a social network api to get user profile
+     * @param array $credentials
+     * @return ProfileDTO
+     */
+    public function getProfile($social, array $credentials = array())
+    {
+        try {
+            $connector = $this->getSocialApi($social);
+            return $connector->getProfile($credentials);
+        } catch(\Exception $e) {
+            SocialNetworks::generateErrorResponse($e->getMessage(), 500);
+        }
+    }
+
+    /**
      * Service that connect to social network api and request for data for authenticated user
      * @param string $social
      * @param array $credentials

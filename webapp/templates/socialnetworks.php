@@ -55,12 +55,20 @@
                     <input ng-model="google.refresh_token" ng-init="google.refresh_token = '<?=getFromArray("refresh_token", $google)?>'">
                 </md-input-container>
                 <md-input-container>
-                    <label>Google + Id User</label>
-                    <input ng-model="google.id_user" ng-init="google.id_user = '<?=getFromArray("id_user", $google)?>'">
-                </md-input-container>
-                <md-input-container>
                     <label>Text for testing export stream / comment to Google +</label>
                     <input ng-model="google.export_content" ng-init="google.export_content = '<?=getFromArray("export_content", $google)?>'">
+                </md-input-container>
+                <md-input-container>
+                    <label>Google User ID: <?=(count($google) > 0)?$google["user"]->getIdUser():""?></label>
+                </md-input-container>
+                <md-input-container>
+                    <label>Google User Full Name: <?=(count($google) > 0)?$google["user"]->getFullName():""?></label>
+                </md-input-container>
+                <md-input-container>
+                    <label>Google User Email: <?=(count($google) > 0)?$google["user"]->getEmail():""?></label>
+                </md-input-container>
+                <md-input-container>
+                    <label>Google User Image: <img src="<?=(count($google) > 0)?$google["user"]->getImageUrl():""?>" width="50" height="50"/></label>
                 </md-input-container>
             </md-card-content>
             <div class="md-actions" flex="100" layout="row" layout-align="center center">
@@ -151,16 +159,20 @@
                     <input ng-model="instagram.access_token" ng-init="instagram.access_token = '<?=getFromArray("access_token", $instagram)?>'">
                 </md-input-container>
                 <md-input-container>
-                    <label>Instagram Api User ID</label>
-                    <input ng-model="instagram.user.id" ng-init="instagram.user.id = '<?=getFromArray("id", $instagram["user"])?>'">
-                </md-input-container>
-                <md-input-container>
-                    <label>Instagram Api User Full name</label>
-                    <input ng-model="instagram.user.full_name" ng-init="instagram.user.full_name = '<?=getFromArray("full_name", $instagram["user"])?>'">
-                </md-input-container>
-                <md-input-container>
                     <label>Text for testing export stream / comment to Instagram media</label>
-                    <input ng-model="instagram.export_content" ng-init="instagram.export_content = '<?=getFromArray("export_content", $google)?>'">
+                    <input ng-model="instagram.export_content" ng-init="instagram.export_content = '<?=getFromArray("export_content", $instagram)?>'">
+                </md-input-container>
+                <md-input-container>
+                    <label>Instagram User ID: <?=(count($instagram) > 0)?$instagram["user"]->getIdUser():""?></label>
+                </md-input-container>
+                <md-input-container>
+                    <label>Instagram User Full Name: <?=(count($instagram) > 0)?$instagram["user"]->getFullName():""?></label>
+                </md-input-container>
+                <md-input-container>
+                    <label>Instagram User Email: <?=(count($instagram) > 0)?$instagram["user"]->getEmail():""?></label>
+                </md-input-container>
+                <md-input-container>
+                    <label>Instagram User Image: <img src="<?=(count($instagram) > 0)?$instagram["user"]->getImageUrl():""?>" width="50" height="50"/></label>
                 </md-input-container>
             </md-card-content>
             <div class="md-actions" flex="100" layout="row" layout-align="center center">
