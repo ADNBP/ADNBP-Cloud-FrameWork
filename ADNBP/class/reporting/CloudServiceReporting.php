@@ -825,6 +825,9 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                     if($info=='') $info=12;
                     if($info!='') $this->data[] = array('type'=>$type,'data'=> $info);
                     break;
+                case 'markdown':
+                    $this->data[] = array('type'=>$type,'data'=> $info);
+                    break;
                 default:
                     $this->data[] = array('type'=>$type,'data'=> is_array($info)?(object)$info:json_decode($info));
                     break;
@@ -839,6 +842,8 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
 
             // Close Data base it it has been opened.
             $this->queryEnd();
+
+
 
             $controlVars = (object)array('dygraph'=>false,'tables'=>false,'reportNumber'=>0);
 			$types = array('barcode'=>false);
@@ -859,7 +864,12 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                 if(isset($data->columns) && is_string($data->columns)) $data->columns = explode(',',$data->columns);
                 if($type=='header')
                     include __DIR__.'/templates/header.php';
-                elseif($type=='table') {
+                elseif($type=='markdown') {
+                    if (!class_exists('Parsedown')) {
+                        include_once __DIR__.'/Parsedown.php';
+                    }
+                    echo Parsedown::instance()->text($data);
+                }elseif($type=='table') {
                 	$simple = false;
                     include __DIR__.'/templates/table.php';
 					$_tables = true;
