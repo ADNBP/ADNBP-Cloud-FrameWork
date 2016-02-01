@@ -47,37 +47,57 @@ class SocialNetworks extends Singleton
     }
 
     /**
-     * Statis method that hydrate credentials for social network required fields
+     * Static method that hydrate credentials for social network required fields
      * @param string $socialNetwork
-     * @param array $keys
+     * @param array $authKeysNames
+     * @param array $apiKeysNames
      * @param array $data
+     * @param string $redirectUrl
      * @return array
      */
-    public static function hydrateCredentials($socialNetwork, $keys, $data)
+    public static function hydrateCredentials($socialNetwork, $authKeysNames, $apiKeysNames, $data, $redirectUrl)
     {
         $credentials = array();
+        $apiKeys = array();
         if (null !== $data) {
-            foreach ($keys as $key) {
-                if (array_key_exists($key, $data) && strlen($data[$key]) > 0) {
-                    $credentials[$key] = $data[$key];
+            foreach ($authKeysNames as $authKeyName) {
+                if (array_key_exists($authKeyName, $data) && strlen($data[$authKeyName]) > 0) {
+                    $credentials[$authKeyName] = $data[$authKeyName];
+                }
+            }
+
+            foreach($apiKeysNames as $apiKeyName) {
+                if (array_key_exists($apiKeyName, $data) && strlen($data[$apiKeyName]) > 0) {
+                    $apiKeys[$apiKeyName] = $data[$apiKeyName];
                 }
             }
         }
-        if (count($credentials) !== count($keys)) {
-            SocialNetworks::generateErrorResponse(SocialNetworks::getInstance()->getSocialLoginUrl($socialNetwork), 401);
+
+        if (count($credentials) !== count($authKeysNames)) {
+            if (count($apiKeys) === count($apiKeysNames)) {
+                SocialNetworks::generateErrorResponse(
+                    SocialNetworks::getInstance()->getSocialLoginUrl($socialNetwork, $apiKeys, $redirectUrl),
+                    401
+                );
+            } else {
+                SocialNetworks::generateErrorResponse("API Keys aren't correct", 501);
+            }
         }
-        return $credentials;
+
+        return array("api_keys" => $apiKeys, "auth_keys" => $credentials);
     }
 
     /**
      * Method that generate the social network login url
      * @param $social
+     * @param array $apiKeys
+     * @param string $redirectUrl
      * @return mixed
      */
-    public function getSocialLoginUrl($social) {
+    public function getSocialLoginUrl($social, array $apiKeys, $redirectUrl) {
         try {
             $connector = $this->getSocialApi($social);
-            return $connector->getAuthUrl();
+            return $connector->getAuthUrl($apiKeys, $redirectUrl);
         } catch(\Exception $e) {
             SocialNetworks::generateErrorResponse($e->getMessage(), 500);
         }
@@ -88,7 +108,7 @@ class SocialNetworks extends Singleton
      * @param $social
      * @return \CloudFramework\Services\SocialNetworks\Interfaces\SocialNetworksInterface
      */
-    protected function getSocialApi($social) {
+    public function getSocialApi($social) {
         $socialNetworkClass = "CloudFramework\\Service\\SocialNetworks\\Connectors\\{$social}Api";
         if (class_exists($socialNetworkClass)) {
             try {
@@ -107,11 +127,11 @@ class SocialNetworks extends Singleton
      * @param array $credentials
      * @return array|string
      */
-    public function auth($social, array $credentials = array())
+    public function auth($social, array $credentials = array(), $redirectUrl)
     {
         try {
             $connector = $this->getSocialApi($social);
-            return $connector->getAuth($credentials);
+            return $connector->getAuth($credentials, $redirectUrl);
         } catch(\Exception $e) {
             SocialNetworks::generateErrorResponse($e->getMessage(), 500);
         }
@@ -136,19 +156,63 @@ class SocialNetworks extends Singleton
     }
 
     /**
-     * Service that connect to social network api and request a followers count for authenticated user
-     * @param string $social
+     * Service that query to a social network api to get user profile
      * @param array $credentials
-     * @return mixed
+     * @return ProfileDTO
      */
-    public function getFollowers($social, array $credentials = array())
+    public function getProfile($social, array $credentials = array())
     {
         try {
             $connector = $this->getSocialApi($social);
-            return $connector->getFollowers($credentials);
+            return $connector->getProfile($credentials);
         } catch(\Exception $e) {
             SocialNetworks::generateErrorResponse($e->getMessage(), 500);
         }
     }
 
+    /**
+     * Service that connect to social network api and request for data for authenticated user
+     * @param string $social
+     * @param array $credentials
+     * @param string $path path where files imported will be saved
+     * @return mixed
+     */
+    public function import($social, array $credentials = array(), $path)
+    {
+        try {
+            $connector = $this->getSocialApi($social);
+            return $connector->import($credentials, $path);
+        } catch(\Exception $e) {
+            SocialNetworks::generateErrorResponse($e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Service that connect to social network api and export data for authenticated user
+     * @param string $social
+     * @param array $credentials
+     * @param array $parameters
+     * GOOGLE
+     *      "userId"    => User whose google domain the stream will be published in
+     *      "content"   => Text of the comment
+     *      "link"      => External link
+     *      "logo"      => Logo
+     *      "circleId"  => Google circle where the stream will be published in
+     *      "personId"  => Google + user whose domain the stream will be published in
+     *      ($circleId are excluding)
+     * INSTAGRAM
+     *      "content"   => Text of the comment
+     *      "mediaId"   => Instagram media's ID
+     *
+     * @return ExportDTO
+     */
+    public function export($social, array $credentials, $parameters)
+    {
+        try {
+            $connector = $this->getSocialApi($social);
+            return $connector->export($credentials, $parameters);
+        } catch(\Exception $e) {
+            SocialNetworks::generateErrorResponse($e->getMessage(), 500);
+        }
+    }
 }

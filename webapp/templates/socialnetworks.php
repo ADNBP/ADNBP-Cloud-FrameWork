@@ -1,7 +1,7 @@
 <?php /** @var ADNBP $this */?>
 <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/angular_material/0.9.4/angular-material.min.css">
 
-<div class="container-fluid" style="margin-top: 50px;" ng-app="cf-social-network" flex layout="row" layout-sm="column" ng-controller="SocialController">
+<md-whiteframe class="container-fluid" style="margin-top: 50px;" ng-app="cf-social-network" flex layout="row" layout-sm="column" ng-controller="SocialController">
     <md-content flex="30" flex-sm="100" layout="column">
         <md-switch ng-model="apis.google" aria-label="Google Plus">
             Google Plus Api
@@ -28,11 +28,11 @@
             <md-card-content>
                 <md-input-container>
                     <label>Google Api Key</label>
-                    <input ng-model="google.client" ng-init="google.client = '<?=$this->getConf("GoogleOauth_CLIENT_ID")?>'">
+                    <input ng-model="google.client" ng-init="google.client = '<?=$_SESSION["google_apikeys"]["client"]?>'">
                 </md-input-container>
                 <md-input-container>
                     <label>Google Api Secret</label>
-                    <input ng-model="google.secret" ng-init="google.secret = '<?=$this->getConf("GoogleOauth_CLIENT_SECRET")?>'">
+                    <input ng-model="google.secret" ng-init="google.secret = '<?=$_SESSION["google_apikeys"]["secret"]?>'">
                 </md-input-container>
                 <md-input-container>
                     <label>Google Api Auth Access Token</label>
@@ -51,12 +51,28 @@
                     <input ng-model="google.created" ng-init="google.created = '<?=getFromArray("created", $google)?>'">
                 </md-input-container>
                 <md-input-container>
-                    <label>Google Api Auth Access Token</label>
-                    <input ng-model="google.id_token" ng-init="google.id_token = '<?=getFromArray("id_token", $google)?>'">
+                    <label>Google Api Auth Refresh Token</label>
+                    <input ng-model="google.refresh_token" ng-init="google.refresh_token = '<?=getFromArray("refresh_token", $google)?>'">
+                </md-input-container>
+                <md-input-container>
+                    <label>Text for testing export stream / comment to Google +</label>
+                    <input ng-model="google.export_content" ng-init="google.export_content = '<?=getFromArray("export_content", $google)?>'">
+                </md-input-container>
+                <md-input-container>
+                    <label>Google User ID: <?=(count($google) > 0)?$google["user"]->getIdUser():""?></label>
+                </md-input-container>
+                <md-input-container>
+                    <label>Google User Full Name: <?=(count($google) > 0)?$google["user"]->getFullName():""?></label>
+                </md-input-container>
+                <md-input-container>
+                    <label>Google User Email: <?=(count($google) > 0)?$google["user"]->getEmail():""?></label>
+                </md-input-container>
+                <md-input-container>
+                    <label>Google User Image: <img src="<?=(count($google) > 0)?$google["user"]->getImageUrl():""?>" width="50" height="50"/></label>
                 </md-input-container>
             </md-card-content>
             <div class="md-actions" flex="100" layout="row" layout-align="center center">
-                <md-button class="md-raised md-primary" ng-click="getSocialData('Google')">Get Social Data</md-button>
+                <md-button class="md-raised md-primary" ng-click="getSocialData('Google')">Get social data</md-button>
             </div>
         </md-card>
         <md-card flex ng-show="apis.facebook">
@@ -131,20 +147,32 @@
             <img ng-src="http://images.wondershare.com/images/multimedia/video-editor/instagram-logo.png" class="md-card-image" alt="Instagram">
             <md-card-content>
                 <md-input-container>
-                    <label>Instagram Api Key</label>
-                    <input ng-model="instagram.apiKey" ng-init="instagram.apiKey = '<?=$this->getConf("InstagramOauth_CLIENT_ID")?>'">
+                    <label>Instagram Api Client ID</label>
+                    <input ng-model="instagram.client" ng-init="instagram.client = '<?=$_SESSION["instagram_apikeys"]["client"]?>'">
                 </md-input-container>
                 <md-input-container>
-                    <label>Instagram Api Secret</label>
-                    <input ng-model="instagram.secret" ng-init="instagram.secret = '<?=$this->getConf("InstagramOauth_CLIENT_SECRET")?>'">
+                    <label>Instagram Api Client Secret</label>
+                    <input ng-model="instagram.secret" ng-init="instagram.secret = '<?=$_SESSION["instagram_apikeys"]["secret"]?>'">
                 </md-input-container>
                 <md-input-container>
-                    <label>Instagram Api User Token</label>
-                    <input ng-model="instagram.token">
+                    <label>Instagram Api Access Token</label>
+                    <input ng-model="instagram.access_token" ng-init="instagram.access_token = '<?=getFromArray("access_token", $instagram)?>'">
                 </md-input-container>
                 <md-input-container>
-                    <label>Instagram Api User Token OAuth</label>
-                    <input ng-model="instagram.oauthToken">
+                    <label>Text for testing export stream / comment to Instagram media</label>
+                    <input ng-model="instagram.export_content" ng-init="instagram.export_content = '<?=getFromArray("export_content", $instagram)?>'">
+                </md-input-container>
+                <md-input-container>
+                    <label>Instagram User ID: <?=(count($instagram) > 0)?$instagram["user"]->getIdUser():""?></label>
+                </md-input-container>
+                <md-input-container>
+                    <label>Instagram User Full Name: <?=(count($instagram) > 0)?$instagram["user"]->getFullName():""?></label>
+                </md-input-container>
+                <md-input-container>
+                    <label>Instagram User Email: <?=(count($instagram) > 0)?$instagram["user"]->getEmail():""?></label>
+                </md-input-container>
+                <md-input-container>
+                    <label>Instagram User Image: <img src="<?=(count($instagram) > 0)?$instagram["user"]->getImageUrl():""?>" width="50" height="50"/></label>
                 </md-input-container>
             </md-card-content>
             <div class="md-actions" flex="100" layout="row" layout-align="center center">
@@ -176,18 +204,45 @@
             </div>
         </md-card>
     </md-content>
-    <md-card flex="30" flex-sm="100">
-        <md-whiteframe class="md-whiteframe-2dp" flex="100" layout layout-align="center center">
-            <h3>Social Network Data</h3>
-        </md-whiteframe>
-        <md-card-content layout="column" layout-fill layout-align="center start">
-            <md-whiteframe class="md-whiteframe-2dp" flex="100" layout layout-align="center center" ng-repeat="data in socialData" ng-show="data.loaded">
-                <p>Social Network <strong>{{data.social}}</strong> has <strong>{{data.followers}}</strong> followers</p>
+    <md-content flex="40" flex-sm="100" layout="column">
+        <md-card flex="30" flex-sm="100">
+            <md-whiteframe class="md-whiteframe-2dp" flex="100" layout layout-align="center center">
+                <h3>Social Network Data</h3>
             </md-whiteframe>
-            <md-progress-circular md-mode="indeterminate" ng-show="loading"></md-progress-circular>
-        </md-card-content>
-    </md-card>
-</div>
+            <md-card-content layout="column" layout-fill layout-align="center start">
+                <md-progress-circular md-mode="indeterminate" ng-show="loading"></md-progress-circular>
+            </md-card-content>
+        </md-card>
+        <div layout="row" layout-padding layout-wrap layout-fill style="padding-bottom: 32px;" ng-cloak ng-repeat="data in socialData" ng-show="data.loaded">
+            <!--<md-whiteframe class="md-whiteframe-1dp" flex-sm="45" flex-gt-sm="35" flex-gt-md="100" layout layout-align="center center">
+                <span>Social Network <strong>{{data.social}}</strong> has <strong>{{data.followers}}</strong> followers</span>
+            </md-whiteframe>-->
+            <md-whiteframe class="md-whiteframe-2dp" flex-sm="45" flex-gt-sm="35" flex-gt-md="100" layout layout-align="center center">
+                <span>Social Network <strong>{{data.social}}</strong> has <strong>{{data.count}}</strong> images:</span>
+            </md-whiteframe>
+            <md-whiteframe class="md-whiteframe-3dp" flex-sm="45" flex-gt-sm="35" flex-gt-md="100" layout layout-align="center center" ng-repeat="image in data.images" ng-switch on="$index % 4">
+                <span ng-switch-when="0" style="padding-right:30px">
+                    <img alt="{{data.images[$index].title}}" src="{{data.images[$index].name}}" width="50" height="50"/>
+                </span>
+                <span ng-show="data.images[$index+1]" style="padding-right:30px">
+                    <span ng-switch-when="0">
+                        <img alt="{{data.images[$index+1].title}}" src="{{data.images[$index+1].name}}" width="50" height="50"/>
+                    </span>
+                </span>
+                <span ng-show="data.images[$index+2]" style="padding-right:30px">
+                    <span ng-switch-when="0">
+                        <img alt="{{data.images[$index+2].title}}" src="{{data.images[$index+2].name}}" width="50" height="50"/>
+                    </span>
+                </span>
+                <span ng-show="data.images[$index+3]">
+                    <span ng-switch-when="0">
+                        <img alt="{{data.images[$index+3].title}}" src="{{data.images[$index+3].name}}" width="50" height="50"/>
+                    </span>
+                </span>
+            </md-whiteframe>
+        </div>
+    </md-content>
+</md-whiteframe>
 
 <!-- Angular Material Dependencies -->
 <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular.min.js"></script>
@@ -248,6 +303,7 @@
                 }
 
                 $scope.getSocialData = getSocialData;
+
             }
         ])
     })();
