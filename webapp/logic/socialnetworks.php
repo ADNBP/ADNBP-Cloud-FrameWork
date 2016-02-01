@@ -5,7 +5,6 @@
  * @version 1.0
  */
 use CloudFramework\Service\SocialNetworks\SocialNetworks;
-use CloudFramework\Service\SocialNetworks\Connectors\GoogleApi;
 
 /** @var ADNBP $this */
 $sc = SocialNetworks::getInstance();

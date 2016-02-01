@@ -108,7 +108,7 @@ class SocialNetworks extends Singleton
      * @param $social
      * @return \CloudFramework\Services\SocialNetworks\Interfaces\SocialNetworksInterface
      */
-    protected function getSocialApi($social) {
+    public function getSocialApi($social) {
         $socialNetworkClass = "CloudFramework\\Service\\SocialNetworks\\Connectors\\{$social}Api";
         if (class_exists($socialNetworkClass)) {
             try {
