@@ -2,6 +2,8 @@
 namespace CloudFramework\Service\SocialNetworks\Connectors;
 
 use CloudFramework\Patterns\Singleton;
+use CloudFramework\Service\SocialNetworks\Exceptions\ConnectorConfigException;
+use CloudFramework\Service\SocialNetworks\Exceptions\MalformedUrlException;
 use CloudFramework\Service\SocialNetworks\Interfaces\SocialNetworkInterface;
 use CloudFramework\Service\SocialNetworks\SocialNetworks;
 use CloudFramework\Service\SocialNetworks\Dtos\ExportDTO;
@@ -26,10 +28,36 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * Compose Google Api credentials array from session data
      * @param array|null $credentials
      * @param string $redirectUrl
+     * @throws ConnectorConfigException
+     * @throws MalformedUrlException
      * @return array
      */
     public function getAuth(array $credentials, $redirectUrl)
     {
+        if (count($credentials) == 0) {
+            throw new ConnectorConfigException("credentials set is empty", 600);
+        }
+
+        if (!array_key_exists('client', $credentials)) {
+            throw new ConnectorConfigException("'client' parameter is required", 601);
+        } else if ((null === $credentials["client"]) || (empty($credentials["client"]))) {
+            throw new ConnectorConfigException("'client' parameter is empty", 602);
+        }
+
+        if (!array_key_exists('secret', $credentials)) {
+            throw new ConnectorConfigException("'secret' parameter is required", 603);
+        } else if ((null === $credentials["secret"]) || (empty($credentials["secret"]))) {
+            throw new ConnectorConfigException("'secret' parameter is empty", 604);
+        }
+
+        if ((null === $redirectUrl) || (empty($redirectUrl))) {
+            throw new ConnectorConfigException("'redirectUrl' parameter is required", 624);
+        } else {
+            if (!$this->wellFormedUrl($redirectUrl)) {
+                throw new MalformedUrlException("'redirectUrl' is malformed", 600);
+            }
+        }
+
         return SocialNetworks::hydrateCredentials(InstagramApi::ID, InstagramApi::$auth_keys,
             InstagramApi::$api_keys, $credentials, $redirectUrl);
     }
@@ -39,11 +67,35 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @param array $apiKeys
      * @param string $redirectUrl
      * @return string
+     * @throws ConnectorConfigException
+     * @throws MalformedUrlException
      */
     public function getAuthUrl(array $apiKeys, $redirectUrl)
     {
-        if (null !== $apiKeys) {
+        if (count($apiKeys) > 0) {
             $_SESSION[InstagramApi::ID . "_apikeys"] = $apiKeys;
+        } else {
+            throw new ConnectorConfigException("apiKeys set is empty", 600);
+        }
+
+        if (!array_key_exists('client', $apiKeys)) {
+            throw new ConnectorConfigException("'client' parameter is required", 601);
+        } else if ((null === $apiKeys["client"]) || (empty($apiKeys["client"]))) {
+            throw new ConnectorConfigException("'client' parameter is empty", 602);
+        }
+
+        if (!array_key_exists('secret', $apiKeys)) {
+            throw new ConnectorConfigException("'secret' parameter is required", 603);
+        } else if ((null === $apiKeys["secret"]) || (empty($apiKeys["secret"]))) {
+            throw new ConnectorConfigException("'secret' parameter is empty", 604);
+        }
+
+        if ((null === $redirectUrl) || (empty($redirectUrl))) {
+            throw new ConnectorConfigException("'redirectUrl' parameter is required", 624);
+        } else {
+            if (!$this->wellFormedUrl($redirectUrl)) {
+                throw new MalformedUrlException("'redirectUrl' is malformed", 600);
+            }
         }
 
         $urlOauth = InstagramAPI::INSTAGRAM_OAUTH_URL.
@@ -60,9 +112,41 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * Service that query to Instagram Api to get user profile
      * @param array $credentials
      * @return ProfileDTO
+     * @throws ConnectorConfigException
      */
     public function getProfile(array $credentials)
     {
+        if ((count($credentials) == 0) ||
+            (!isset($credentials["api_keys"])) ||
+            (null === $credentials["api_keys"]) ||
+            (!is_array($credentials["api_keys"]))) {
+            throw new ConnectorConfigException("api_keys set is empty", 600);
+        }
+
+        if (!array_key_exists('client', $credentials["api_keys"])) {
+            throw new ConnectorConfigException("'client' parameter is required", 601);
+        } else if ((null === $credentials["api_keys"]["client"]) || (empty($credentials["api_keys"]["client"]))) {
+            throw new ConnectorConfigException("'client' parameter is empty", 602);
+        }
+
+        if (!array_key_exists('secret', $credentials["api_keys"])) {
+            throw new ConnectorConfigException("'secret' parameter is required", 603);
+        } else if ((null === $credentials["api_keys"]["secret"]) || (empty($credentials["api_keys"]["secret"]))) {
+            throw new ConnectorConfigException("'secret' parameter is empty", 604);
+        }
+
+        if ((!isset($credentials["auth_keys"])) ||
+            (null === $credentials["auth_keys"]) ||
+            (!is_array($credentials["auth_keys"]))) {
+            throw new ConnectorConfigException("auth_keys set is empty", 605);
+        }
+
+        if (!array_key_exists('access_token', $credentials["auth_keys"])) {
+            throw new ConnectorConfigException("'access_token' parameter is required", 606);
+        } else if ((null === $credentials["auth_keys"]["access_token"]) || (empty($credentials["auth_keys"]["access_token"]))) {
+            throw new ConnectorConfigException("'access_token' parameter is empty", 607);
+        }
+
         $url = InstagramApi::INSTAGRAM_API_USERS_URL . "self/?access_token=" . $credentials["auth_keys"]["access_token"];
 
         $ch = curl_init();
@@ -85,9 +169,45 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @param array $credentials
      * @param string $path
      * @return array
+     * @throws ConnectorConfigException
      */
     public function import(array $credentials, $path)
     {
+        if ((count($credentials) == 0) ||
+            (!isset($credentials["api_keys"])) ||
+            (null === $credentials["api_keys"]) ||
+            (!is_array($credentials["api_keys"]))) {
+            throw new ConnectorConfigException("api_keys set is empty", 600);
+        }
+
+        if (!array_key_exists('client', $credentials["api_keys"])) {
+            throw new ConnectorConfigException("'client' parameter is required", 601);
+        } else if ((null === $credentials["api_keys"]["client"]) || (empty($credentials["api_keys"]["client"]))) {
+            throw new ConnectorConfigException("'client' parameter is empty", 602);
+        }
+
+        if (!array_key_exists('secret', $credentials["api_keys"])) {
+            throw new ConnectorConfigException("'secret' parameter is required", 603);
+        } else if ((null === $credentials["api_keys"]["secret"]) || (empty($credentials["api_keys"]["secret"]))) {
+            throw new ConnectorConfigException("'secret' parameter is empty", 604);
+        }
+
+        if ((!isset($credentials["auth_keys"])) ||
+            (null === $credentials["auth_keys"]) ||
+            (!is_array($credentials["auth_keys"]))) {
+            throw new ConnectorConfigException("auth_keys set is empty", 605);
+        }
+
+        if (!array_key_exists('access_token', $credentials["auth_keys"])) {
+            throw new ConnectorConfigException("'access_token' parameter is required", 606);
+        } else if ((null === $credentials["auth_keys"]["access_token"]) || (empty($credentials["auth_keys"]["access_token"]))) {
+            throw new ConnectorConfigException("'access_token' parameter is empty", 607);
+        }
+
+        if ((null === $path) || (empty($path))) {
+            throw new ConnectorConfigException("'path' parameter is required", 618);
+        }
+
         $url = InstagramApi::INSTAGRAM_API_USERS_URL."self/media/recent/?access_token=".$credentials["auth_keys"]["access_token"];
         $pagination = true;
         $files = array();
@@ -133,8 +253,56 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      *      "mediaId" => Instagram media's ID
      *
      * @return ExportDTO
+     * @throws ConnectorConfigException
      */
     public function export(array $credentials, array $parameters) {
+        if ((count($credentials) == 0) ||
+            (!isset($credentials["api_keys"])) ||
+            (null === $credentials["api_keys"]) ||
+            (!is_array($credentials["api_keys"]))) {
+            throw new ConnectorConfigException("api_keys set is empty", 600);
+        }
+
+        if (!array_key_exists('client', $credentials["api_keys"])) {
+            throw new ConnectorConfigException("'client' parameter is required", 601);
+        } else if ((null === $credentials["api_keys"]["client"]) || (empty($credentials["api_keys"]["client"]))) {
+            throw new ConnectorConfigException("'client' parameter is empty", 602);
+        }
+
+        if (!array_key_exists('secret', $credentials["api_keys"])) {
+            throw new ConnectorConfigException("'secret' parameter is required", 603);
+        } else if ((null === $credentials["api_keys"]["secret"]) || (empty($credentials["api_keys"]["secret"]))) {
+            throw new ConnectorConfigException("'secret' parameter is empty", 604);
+        }
+
+        if ((!isset($credentials["auth_keys"])) ||
+            (null === $credentials["auth_keys"]) ||
+            (!is_array($credentials["auth_keys"]))) {
+            throw new ConnectorConfigException("auth_keys set is empty", 605);
+        }
+
+        if (!array_key_exists('access_token', $credentials["auth_keys"])) {
+            throw new ConnectorConfigException("'access_token' parameter is required", 606);
+        } else if ((null === $credentials["auth_keys"]["access_token"]) || (empty($credentials["auth_keys"]["access_token"]))) {
+            throw new ConnectorConfigException("'access_token' parameter is empty", 607);
+        }
+
+        if (count($parameters) == 0) {
+            throw new ConnectorConfigException("parameters set is empty", 619);
+        }
+
+        if (!array_key_exists('mediaId', $parameters)) {
+            throw new ConnectorConfigException("'mediaId' parameter is required", 625);
+        } else if ((null === $parameters["mediaId"]) || (empty($parameters["mediaId"]))) {
+            throw new ConnectorConfigException("'mediaId' parameter is empty", 626);
+        }
+
+        if (!array_key_exists('content', $parameters)) {
+            throw new ConnectorConfigException("'content' parameter is required", 622);
+        } else if ((null === $parameters["content"]) || (empty($parameters["content"]))) {
+            throw new ConnectorConfigException("'content' parameter is empty", 623);
+        }
+
         $url = InstagramApi::INSTAGRAM_API_MEDIA_URL.$parameters["mediaId"]."/comments";
 
         $fields = "access_token=".$credentials["auth_keys"]["access_token"].
@@ -165,11 +333,47 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * Authentication service from instagram sign in request
      * @param array $credentials
      * @return array
+     * @throws ConnectorConfigException
+     * @throws MalformedUrlException
      */
     public function authorize(array $credentials)
     {
-        if (null === $credentials["code"]) {
-            SocialNetworks::generateErrorResponse($credentials["error_description"], 500);
+        if (count($credentials) == 0) {
+            throw new ConnectorConfigException("credentials set is empty", 600);
+        }
+
+        if (!array_key_exists('client', $credentials)) {
+            throw new ConnectorConfigException("'client' parameter is required", 601);
+        } else if ((null === $credentials["client"]) || (empty($credentials["client"]))) {
+            throw new ConnectorConfigException("'client' parameter is empty", 602);
+        }
+
+        if (!array_key_exists('secret', $credentials)) {
+            throw new ConnectorConfigException("'secret' parameter is required", 603);
+        } else if ((null === $credentials["secret"]) || (empty($credentials["secret"]))) {
+            throw new ConnectorConfigException("'secret' parameter is empty", 604);
+        }
+
+        if (!array_key_exists('secret', $credentials)) {
+            throw new ConnectorConfigException("'secret' parameter is required", 603);
+        } else if ((null === $credentials["secret"]) || (empty($credentials["secret"]))) {
+            throw new ConnectorConfigException("'secret' parameter is empty", 604);
+        }
+
+        if (!array_key_exists('code', $credentials)) {
+            throw new ConnectorConfigException("'code' parameter is required", 616);
+        } else if ((null === $credentials["code"]) || (empty($credentials["code"]))) {
+            throw new ConnectorConfigException("'code' parameter is empty", 617);
+        }
+
+        if ((!array_key_exists('redirectUrl', $credentials)) ||
+            (null === $credentials["redirectUrl"]) ||
+            (empty($credentials["redirectUrl"]))) {
+            throw new ConnectorConfigException("'redirectUrl' parameter is required", 624);
+        } else {
+            if (!$this->wellFormedUrl($credentials["redirectUrl"])) {
+                throw new MalformedUrlException("'redirectUrl' is malformed", 600);
+            }
         }
 
         $fields = "client_id=".$credentials["client"].
@@ -210,5 +414,18 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         $instagramCredentials["user"] = $profileDto;
 
         return $instagramCredentials;
+    }
+
+    /**
+     * Private function to check url format
+     * @param $redirectUrl
+     * @return bool
+     */
+    private function wellFormedUrl($redirectUrl) {
+        if (!filter_var($redirectUrl, FILTER_VALIDATE_URL) === false) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }

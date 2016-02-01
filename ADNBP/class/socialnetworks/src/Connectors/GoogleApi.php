@@ -3,6 +3,7 @@ namespace CloudFramework\Service\SocialNetworks\Connectors;
 
 use CloudFramework\Patterns\Singleton;
 use CloudFramework\Service\SocialNetworks\Exceptions\ConnectorConfigException;
+use CloudFramework\Service\SocialNetworks\Exceptions\MalformedUrlException;
 use CloudFramework\Service\SocialNetworks\Interfaces\SocialNetworkInterface;
 use CloudFramework\Service\SocialNetworks\SocialNetworks;
 use CloudFramework\Service\SocialNetworks\Dtos\ExportDTO;
@@ -24,9 +25,35 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * @param array|null $credentials
      * @param string $redirectUrl
      * @return array
+     * @throws ConnectorConfigException
+     * @throws MalformedUrlException
      */
     public function getAuth(array $credentials, $redirectUrl)
     {
+        if (count($credentials) == 0) {
+            throw new ConnectorConfigException("credentials set is empty", 600);
+        }
+
+        if (!array_key_exists('client', $credentials)) {
+            throw new ConnectorConfigException("'client' parameter is required", 601);
+        } else if ((null === $credentials["client"]) || (empty($credentials["client"]))) {
+            throw new ConnectorConfigException("'client' parameter is empty", 602);
+        }
+
+        if (!array_key_exists('secret', $credentials)) {
+            throw new ConnectorConfigException("'secret' parameter is required", 603);
+        } else if ((null === $credentials["secret"]) || (empty($credentials["secret"]))) {
+            throw new ConnectorConfigException("'secret' parameter is empty", 604);
+        }
+
+        if ((null === $redirectUrl) || (empty($redirectUrl))) {
+            throw new ConnectorConfigException("'redirectUrl' parameter is required", 624);
+        } else {
+            if (!$this->wellFormedUrl($redirectUrl)) {
+                throw new MalformedUrlException("'redirectUrl' is malformed", 600);
+            }
+        }
+
         return SocialNetworks::hydrateCredentials(GoogleApi::ID, GoogleApi::$auth_keys,
                                                         GoogleApi::$api_keys, $credentials, $redirectUrl);
     }
@@ -36,19 +63,35 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * @param array $apiKeys
      * @param string $redirectUrl
      * @return string
+     * @throws ConnectorConfigException
+     * @throws MalformedUrlException
      */
     public function getAuthUrl(array $apiKeys, $redirectUrl)
     {
-        if (null !== $apiKeys) {
+        if (count($apiKeys) > 0) {
             $_SESSION[GoogleApi::ID . "_apikeys"] = $apiKeys;
+        } else {
+            throw new ConnectorConfigException("apiKeys set is empty", 600);
         }
 
         if (!array_key_exists('client', $apiKeys)) {
-            throw new ConnectorConfigException("'client' parameter is required", 400);
+            throw new ConnectorConfigException("'client' parameter is required", 601);
+        } else if ((null === $apiKeys["client"]) || (empty($apiKeys["client"]))) {
+            throw new ConnectorConfigException("'client' parameter is empty", 602);
         }
 
         if (!array_key_exists('secret', $apiKeys)) {
-            throw new ConnectorConfigException("'secret' parameter is required", 401);
+            throw new ConnectorConfigException("'secret' parameter is required", 603);
+        } else if ((null === $apiKeys["secret"]) || (empty($apiKeys["secret"]))) {
+            throw new ConnectorConfigException("'secret' parameter is empty", 604);
+        }
+
+        if ((null === $redirectUrl) || (empty($redirectUrl))) {
+            throw new ConnectorConfigException("'redirectUrl' parameter is required", 624);
+        } else {
+            if (!$this->wellFormedUrl($redirectUrl)) {
+                throw new MalformedUrlException("'redirectUrl' is malformed", 600);
+            }
         }
 
         $client = new \Google_Client();
@@ -72,9 +115,65 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * Service that query to Google Oauth Api to get user profile
      * @param array $credentials
      * @return ProfileDTO
+     * @throws ConnectorConfigException
      */
     public function getProfile(array $credentials)
     {
+        if ((count($credentials) == 0) ||
+            (!isset($credentials["api_keys"])) ||
+            (null === $credentials["api_keys"]) ||
+            (!is_array($credentials["api_keys"]))) {
+            throw new ConnectorConfigException("api_keys set is empty", 600);
+        }
+
+        if (!array_key_exists('client', $credentials["api_keys"])) {
+            throw new ConnectorConfigException("'client' parameter is required", 601);
+        } else if ((null === $credentials["api_keys"]["client"]) || (empty($credentials["api_keys"]["client"]))) {
+            throw new ConnectorConfigException("'client' parameter is empty", 602);
+        }
+
+        if (!array_key_exists('secret', $credentials["api_keys"])) {
+            throw new ConnectorConfigException("'secret' parameter is required", 603);
+        } else if ((null === $credentials["api_keys"]["secret"]) || (empty($credentials["api_keys"]["secret"]))) {
+            throw new ConnectorConfigException("'secret' parameter is empty", 604);
+        }
+
+        if ((!isset($credentials["auth_keys"])) ||
+            (null === $credentials["auth_keys"]) ||
+            (!is_array($credentials["auth_keys"]))) {
+            throw new ConnectorConfigException("auth_keys set is empty", 605);
+        }
+
+        if (!array_key_exists('access_token', $credentials["auth_keys"])) {
+            throw new ConnectorConfigException("'access_token' parameter is required", 606);
+        } else if ((null === $credentials["auth_keys"]["access_token"]) || (empty($credentials["auth_keys"]["access_token"]))) {
+            throw new ConnectorConfigException("'access_token' parameter is empty", 607);
+        }
+
+        if (!array_key_exists('token_type', $credentials["auth_keys"])) {
+            throw new ConnectorConfigException("'token_type' parameter is required", 608);
+        } else if ((null === $credentials["auth_keys"]["token_type"]) || (empty($credentials["auth_keys"]["token_type"]))) {
+            throw new ConnectorConfigException("'token_type' parameter is empty", 609);
+        }
+
+        if (!array_key_exists('expires_in', $credentials["auth_keys"])) {
+            throw new ConnectorConfigException("'expires_in' parameter is required", 610);
+        } else if ((null === $credentials["auth_keys"]["expires_in"]) || (empty($credentials["auth_keys"]["expires_in"]))) {
+            throw new ConnectorConfigException("'expires_in' parameter is empty", 611);
+        }
+
+        if (!array_key_exists('created', $credentials["auth_keys"])) {
+            throw new ConnectorConfigException("'created' parameter is required", 612);
+        } else if ((null === $credentials["auth_keys"]["created"]) || (empty($credentials["auth_keys"]["created"]))) {
+            throw new ConnectorConfigException("'created' parameter is empty", 613);
+        }
+
+        if (!array_key_exists('refresh_token', $credentials["auth_keys"])) {
+            throw new ConnectorConfigException("'refresh_token' parameter is required", 614);
+        } else if ((null === $credentials["auth_keys"]["refresh_token"]) || (empty($credentials["auth_keys"]["refresh_token"]))) {
+            throw new ConnectorConfigException("'refresh_token' parameter is empty", 615);
+        }
+
         $client = new \Google_Client();
         $client->setAccessToken(json_encode($credentials["auth_keys"]));
 
@@ -102,9 +201,69 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * @param array $credentials
      * @param string $path path where files imported will be saved
      * @return array
+     * @throws ConnectorConfigException
      */
     public function import(array $credentials, $path)
     {
+        if ((count($credentials) == 0) ||
+            (!isset($credentials["api_keys"])) ||
+            (null === $credentials["api_keys"]) ||
+            (!is_array($credentials["api_keys"]))) {
+            throw new ConnectorConfigException("api_keys set is empty", 600);
+        }
+
+        if (!array_key_exists('client', $credentials["api_keys"])) {
+            throw new ConnectorConfigException("'client' parameter is required", 601);
+        } else if ((null === $credentials["api_keys"]["client"]) || (empty($credentials["api_keys"]["client"]))) {
+            throw new ConnectorConfigException("'client' parameter is empty", 602);
+        }
+
+        if (!array_key_exists('secret', $credentials["api_keys"])) {
+            throw new ConnectorConfigException("'secret' parameter is required", 603);
+        } else if ((null === $credentials["api_keys"]["secret"]) || (empty($credentials["api_keys"]["secret"]))) {
+            throw new ConnectorConfigException("'secret' parameter is empty", 604);
+        }
+
+        if ((!isset($credentials["auth_keys"])) ||
+            (null === $credentials["auth_keys"]) ||
+            (!is_array($credentials["auth_keys"]))) {
+            throw new ConnectorConfigException("auth_keys set is empty", 605);
+        }
+
+        if (!array_key_exists('access_token', $credentials["auth_keys"])) {
+            throw new ConnectorConfigException("'access_token' parameter is required", 606);
+        } else if ((null === $credentials["auth_keys"]["access_token"]) || (empty($credentials["auth_keys"]["access_token"]))) {
+            throw new ConnectorConfigException("'access_token' parameter is empty", 607);
+        }
+
+        if (!array_key_exists('token_type', $credentials["auth_keys"])) {
+            throw new ConnectorConfigException("'token_type' parameter is required", 608);
+        } else if ((null === $credentials["auth_keys"]["token_type"]) || (empty($credentials["auth_keys"]["token_type"]))) {
+            throw new ConnectorConfigException("'token_type' parameter is empty", 609);
+        }
+
+        if (!array_key_exists('expires_in', $credentials["auth_keys"])) {
+            throw new ConnectorConfigException("'expires_in' parameter is required", 610);
+        } else if ((null === $credentials["auth_keys"]["expires_in"]) || (empty($credentials["auth_keys"]["expires_in"]))) {
+            throw new ConnectorConfigException("'expires_in' parameter is empty", 611);
+        }
+
+        if (!array_key_exists('created', $credentials["auth_keys"])) {
+            throw new ConnectorConfigException("'created' parameter is required", 612);
+        } else if ((null === $credentials["auth_keys"]["created"]) || (empty($credentials["auth_keys"]["created"]))) {
+            throw new ConnectorConfigException("'created' parameter is empty", 613);
+        }
+
+        if (!array_key_exists('refresh_token', $credentials["auth_keys"])) {
+            throw new ConnectorConfigException("'refresh_token' parameter is required", 614);
+        } else if ((null === $credentials["auth_keys"]["refresh_token"]) || (empty($credentials["auth_keys"]["refresh_token"]))) {
+            throw new ConnectorConfigException("'refresh_token' parameter is empty", 615);
+        }
+
+        if ((null === $path) || (empty($path))) {
+            throw new ConnectorConfigException("'path' parameter is required", 618);
+        }
+
         $client = new \Google_Client();
         $client->setAccessToken(json_encode($credentials["auth_keys"]));
 
@@ -178,8 +337,80 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      *      ($circleId are excluding)
      *
      * @return ExportDTO
+     * @throws ConnectorConfigException
      */
     public function export(array $credentials, array $parameters) {
+        if ((count($credentials) == 0) ||
+            (!isset($credentials["api_keys"])) ||
+            (null === $credentials["api_keys"]) ||
+            (!is_array($credentials["api_keys"]))) {
+            throw new ConnectorConfigException("api_keys set is empty", 600);
+        }
+
+        if (!array_key_exists('client', $credentials["api_keys"])) {
+            throw new ConnectorConfigException("'client' parameter is required", 601);
+        } else if ((null === $credentials["api_keys"]["client"]) || (empty($credentials["api_keys"]["client"]))) {
+            throw new ConnectorConfigException("'client' parameter is empty", 602);
+        }
+
+        if (!array_key_exists('secret', $credentials["api_keys"])) {
+            throw new ConnectorConfigException("'secret' parameter is required", 603);
+        } else if ((null === $credentials["api_keys"]["secret"]) || (empty($credentials["api_keys"]["secret"]))) {
+            throw new ConnectorConfigException("'secret' parameter is empty", 604);
+        }
+
+        if ((!isset($credentials["auth_keys"])) ||
+            (null === $credentials["auth_keys"]) ||
+            (!is_array($credentials["auth_keys"]))) {
+            throw new ConnectorConfigException("auth_keys set is empty", 605);
+        }
+
+        if (!array_key_exists('access_token', $credentials["auth_keys"])) {
+            throw new ConnectorConfigException("'access_token' parameter is required", 606);
+        } else if ((null === $credentials["auth_keys"]["access_token"]) || (empty($credentials["auth_keys"]["access_token"]))) {
+            throw new ConnectorConfigException("'access_token' parameter is empty", 607);
+        }
+
+        if (!array_key_exists('token_type', $credentials["auth_keys"])) {
+            throw new ConnectorConfigException("'token_type' parameter is required", 608);
+        } else if ((null === $credentials["auth_keys"]["token_type"]) || (empty($credentials["auth_keys"]["token_type"]))) {
+            throw new ConnectorConfigException("'token_type' parameter is empty", 609);
+        }
+
+        if (!array_key_exists('expires_in', $credentials["auth_keys"])) {
+            throw new ConnectorConfigException("'expires_in' parameter is required", 610);
+        } else if ((null === $credentials["auth_keys"]["expires_in"]) || (empty($credentials["auth_keys"]["expires_in"]))) {
+            throw new ConnectorConfigException("'expires_in' parameter is empty", 611);
+        }
+
+        if (!array_key_exists('created', $credentials["auth_keys"])) {
+            throw new ConnectorConfigException("'created' parameter is required", 612);
+        } else if ((null === $credentials["auth_keys"]["created"]) || (empty($credentials["auth_keys"]["created"]))) {
+            throw new ConnectorConfigException("'created' parameter is empty", 613);
+        }
+
+        if (!array_key_exists('refresh_token', $credentials["auth_keys"])) {
+            throw new ConnectorConfigException("'refresh_token' parameter is required", 614);
+        } else if ((null === $credentials["auth_keys"]["refresh_token"]) || (empty($credentials["auth_keys"]["refresh_token"]))) {
+            throw new ConnectorConfigException("'refresh_token' parameter is empty", 615);
+        }
+
+        if (count($parameters) == 0) {
+            throw new ConnectorConfigException("parameters set is empty", 619);
+        }
+
+        if (!array_key_exists('userId', $parameters)) {
+            throw new ConnectorConfigException("'userId' parameter is required", 620);
+        } else if ((null === $parameters["userId"]) || (empty($parameters["userId"]))) {
+            throw new ConnectorConfigException("'userId' parameter is empty", 621);
+        }
+
+        if (!array_key_exists('content', $parameters)) {
+            throw new ConnectorConfigException("'content' parameter is required", 622);
+        } else if ((null === $parameters["content"]) || (empty($parameters["content"]))) {
+            throw new ConnectorConfigException("'content' parameter is empty", 623);
+        }
+
         $client = new \Google_Client();
         $client->setAccessToken(json_encode($credentials["auth_keys"]));
 
@@ -264,9 +495,49 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * Authentication service from google sign in request
      * @param array $credentials
      * @return array
+     * @throws ConnectorConfigException
+     * @throws MalformedUrlException
      */
     public function authorize(array $credentials)
     {
+        if (count($credentials) == 0) {
+            throw new ConnectorConfigException("credentials set is empty", 600);
+        }
+
+        if (!array_key_exists('client', $credentials)) {
+            throw new ConnectorConfigException("'client' parameter is required", 601);
+        } else if ((null === $credentials["client"]) || (empty($credentials["client"]))) {
+            throw new ConnectorConfigException("'client' parameter is empty", 602);
+        }
+
+        if (!array_key_exists('secret', $credentials)) {
+            throw new ConnectorConfigException("'secret' parameter is required", 603);
+        } else if ((null === $credentials["secret"]) || (empty($credentials["secret"]))) {
+            throw new ConnectorConfigException("'secret' parameter is empty", 604);
+        }
+
+        if (!array_key_exists('secret', $credentials)) {
+            throw new ConnectorConfigException("'secret' parameter is required", 603);
+        } else if ((null === $credentials["secret"]) || (empty($credentials["secret"]))) {
+            throw new ConnectorConfigException("'secret' parameter is empty", 604);
+        }
+
+        if (!array_key_exists('code', $credentials)) {
+            throw new ConnectorConfigException("'code' parameter is required", 616);
+        } else if ((null === $credentials["code"]) || (empty($credentials["code"]))) {
+            throw new ConnectorConfigException("'code' parameter is empty", 617);
+        }
+
+        if ((!array_key_exists('redirectUrl', $credentials)) ||
+            (null === $credentials["redirectUrl"]) ||
+            (empty($credentials["redirectUrl"]))) {
+            throw new ConnectorConfigException("'redirectUrl' parameter is required", 624);
+        } else {
+            if (!$this->wellFormedUrl($credentials["redirectUrl"])) {
+                throw new MalformedUrlException("'redirectUrl' is malformed", 600);
+            }
+        }
+
         $client = new \Google_Client();
         $client->setClientId($credentials["client"]);
         $client->setClientSecret($credentials["secret"]);
@@ -287,5 +558,18 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         $googleCredentials["user"] = $profileDto;
 
         return $googleCredentials;
+    }
+
+    /**
+     * Private function to check url format
+     * @param $redirectUrl
+     * @return bool
+     */
+    private function wellFormedUrl($redirectUrl) {
+        if (!filter_var($redirectUrl, FILTER_VALIDATE_URL) === false) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }
