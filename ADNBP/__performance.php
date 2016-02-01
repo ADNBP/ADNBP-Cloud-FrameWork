@@ -176,6 +176,7 @@
                 echo 'NULL';
             else
                 echo $args[$i];
+            echo "</li>";
         }
         echo "</pre>";
     }
