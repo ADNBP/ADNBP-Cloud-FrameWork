@@ -14,7 +14,7 @@ $config = array(
  *  - eg. if Opauth is reached via http://example.org/auth/, path is '/auth/'
  *  - if Opauth is reached via http://auth.example.org/, path is '/'
  */
-	'path' => '/CloudFrameWorkOauth/',
+	'path' => ((strlen($this->getConf("OauthPath")))?$this->getConf("OauthPath"):'/CloudFrameWorkOauth/'),
 
 /**
  * Callback URL: redirected to after authentication, successful or otherwise
