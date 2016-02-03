@@ -190,6 +190,23 @@ class SocialNetworks extends Singleton
     }
 
     /**
+     * Service that query to a social network api to get posts info
+     * @param string $social
+     * @param string $userId
+     * @param array $credentials
+     * @return JSON string
+     */
+    public function getActivities($social, $userId, array $credentials = array())
+    {
+        try {
+            $connector = $this->getSocialApi($social);
+            return $connector->getActivities($userId, $credentials);
+        } catch(\Exception $e) {
+            SocialNetworks::generateErrorResponse($e->getMessage(), 500);
+        }
+    }
+
+    /**
      * Service that query to a social network api to get user profile
      * @param string $social
      * @param string $userId
@@ -210,15 +227,14 @@ class SocialNetworks extends Singleton
      * Service that connect to social network api and request for data for authenticated user
      * @param string $social
      * @param array $credentials
-     * @param string $path path where files imported will be saved
      * @param integer $maxResults maximum elements per page
      * @return mixed
      */
-    public function import($social, array $credentials = array(), $path, $maxResults)
+    public function import($social, array $credentials = array(), $maxResults)
     {
         try {
             $connector = $this->getSocialApi($social);
-            return $connector->import($credentials, $path, $maxResults);
+            return $connector->import($credentials, $maxResults);
         } catch(\Exception $e) {
             SocialNetworks::generateErrorResponse($e->getMessage(), 500);
         }
@@ -248,6 +264,23 @@ class SocialNetworks extends Singleton
         try {
             $connector = $this->getSocialApi($social);
             return $connector->export($credentials, $parameters);
+        } catch(\Exception $e) {
+            SocialNetworks::generateErrorResponse($e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Service that query to a social network api to revoke access token in order
+     * to ensure the permissions granted to the application are removed
+     * @param string $social
+     * @param array $credentials
+     * @return JSON string
+     */
+    public function revokeToken($social, array $credentials)
+    {
+        try {
+            $connector = $this->getSocialApi($social);
+            return $connector->revokeToken($credentials);
         } catch(\Exception $e) {
             SocialNetworks::generateErrorResponse($e->getMessage(), 500);
         }

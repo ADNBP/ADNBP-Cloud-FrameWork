@@ -200,7 +200,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                 $client->setClientSecret($credentials["api_keys"]["secret"]);
                 $client->refreshToken($credentials["auth_keys"]["refresh_token"]);
             } catch(\Exception $e) {
-                throw new AuthenticationException("Error refreshing token: " + $e->getMessage(), 602);
+                throw new AuthenticationException("Error refreshing token: " . $e->getMessage(), 602);
             }
         }
 
@@ -283,7 +283,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                 $client->setClientSecret($credentials["api_keys"]["secret"]);
                 $client->refreshToken($credentials["auth_keys"]["refresh_token"]);
             } catch(\Exception $e) {
-                throw new AuthenticationException("Error refreshing token: " + $e->getMessage(), 602);
+                throw new AuthenticationException("Error refreshing token: " . $e->getMessage(), 602);
             }
         }
 
@@ -297,6 +297,90 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         $people["resharers"] = $resharers;//array();
 
         return json_encode($people);
+    }
+
+    /**
+     * Service that query to Google Api for posts/activities of a user
+     * @param string $userId
+     * @param array $credentials
+     * @return JSON string
+     * @throws AuthenticationException
+     * @throws ConnectorConfigException
+     */
+    public function getActivities($userId, array $credentials)
+    {
+        if ((count($credentials) == 0) ||
+            (!isset($credentials["api_keys"])) ||
+            (null === $credentials["api_keys"]) ||
+            (!is_array($credentials["api_keys"]))) {
+            throw new ConnectorConfigException("api_keys set is empty", 600);
+        }
+
+        if (!array_key_exists('client', $credentials["api_keys"])) {
+            throw new ConnectorConfigException("'client' parameter is required", 601);
+        } else if ((null === $credentials["api_keys"]["client"]) || (empty($credentials["api_keys"]["client"]))) {
+            throw new ConnectorConfigException("'client' parameter is empty", 602);
+        }
+
+        if (!array_key_exists('secret', $credentials["api_keys"])) {
+            throw new ConnectorConfigException("'secret' parameter is required", 603);
+        } else if ((null === $credentials["api_keys"]["secret"]) || (empty($credentials["api_keys"]["secret"]))) {
+            throw new ConnectorConfigException("'secret' parameter is empty", 604);
+        }
+
+        if ((!isset($credentials["auth_keys"])) ||
+            (null === $credentials["auth_keys"]) ||
+            (!is_array($credentials["auth_keys"]))) {
+            throw new ConnectorConfigException("auth_keys set is empty", 605);
+        }
+
+        if (!array_key_exists('access_token', $credentials["auth_keys"])) {
+            throw new ConnectorConfigException("'access_token' parameter is required", 606);
+        } else if ((null === $credentials["auth_keys"]["access_token"]) || (empty($credentials["auth_keys"]["access_token"]))) {
+            throw new ConnectorConfigException("'access_token' parameter is empty", 607);
+        }
+
+        if (!array_key_exists('token_type', $credentials["auth_keys"])) {
+            throw new ConnectorConfigException("'token_type' parameter is required", 608);
+        } else if ((null === $credentials["auth_keys"]["token_type"]) || (empty($credentials["auth_keys"]["token_type"]))) {
+            throw new ConnectorConfigException("'token_type' parameter is empty", 609);
+        }
+
+        if (!array_key_exists('expires_in', $credentials["auth_keys"])) {
+            throw new ConnectorConfigException("'expires_in' parameter is required", 610);
+        } else if ((null === $credentials["auth_keys"]["expires_in"]) || (empty($credentials["auth_keys"]["expires_in"]))) {
+            throw new ConnectorConfigException("'expires_in' parameter is empty", 611);
+        }
+
+        if (!array_key_exists('created', $credentials["auth_keys"])) {
+            throw new ConnectorConfigException("'created' parameter is required", 612);
+        } else if ((null === $credentials["auth_keys"]["created"]) || (empty($credentials["auth_keys"]["created"]))) {
+            throw new ConnectorConfigException("'created' parameter is empty", 613);
+        }
+
+        if (!array_key_exists('refresh_token', $credentials["auth_keys"])) {
+            throw new ConnectorConfigException("'refresh_token' parameter is required", 614);
+        } else if ((null === $credentials["auth_keys"]["refresh_token"]) || (empty($credentials["auth_keys"]["refresh_token"]))) {
+            throw new ConnectorConfigException("'refresh_token' parameter is empty", 615);
+        }
+
+        $client = new \Google_Client();
+        $client->setAccessToken(json_encode($credentials["auth_keys"]));
+
+        if ($client->isAccessTokenExpired()) {
+            try {
+                $client->setClientId($credentials["api_keys"]["client"]);
+                $client->setClientSecret($credentials["api_keys"]["secret"]);
+                $client->refreshToken($credentials["auth_keys"]["refresh_token"]);
+            } catch(\Exception $e) {
+                throw new AuthenticationException("Error refreshing token: " . $e->getMessage(), 602);
+            }
+        }
+
+        $plusService = new \Google_Service_Plus($client);
+        $activities = $plusService->activities->listActivities($userId, "public");
+
+        return json_encode($activities->getItems());
     }
 
     /**
@@ -374,7 +458,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                 $client->setClientSecret($credentials["api_keys"]["secret"]);
                 $client->refreshToken($credentials["auth_keys"]["refresh_token"]);
             } catch(\Exception $e) {
-                throw new AuthenticationException("Error refreshing token: " + $e->getMessage(), 602);
+                throw new AuthenticationException("Error refreshing token: " . $e->getMessage(), 602);
             }
         }
 
@@ -401,14 +485,13 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     /**
      * Service that query to Google Api Drive service for images
      * @param array $credentials
-     * @param string $path path where files imported will be saved
      * @param integer $maxResults maximum elements per page
      * @return array
      * @throws AuthenticationException
      * @throws ConnectorConfigException
      * @throws ImportException
      */
-    public function import(array $credentials, $path, $maxResults)
+    public function import(array $credentials, $maxResults)
     {
         if ((count($credentials) == 0) ||
             (!isset($credentials["api_keys"])) ||
@@ -465,9 +548,9 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             throw new ConnectorConfigException("'refresh_token' parameter is empty", 615);
         }
 
-        if ((null === $path) || (empty($path))) {
+        /*if ((null === $path) || (empty($path))) {
             throw new ConnectorConfigException("'path' parameter is required", 618);
-        }
+        }*/
 
         $client = new \Google_Client();
         $client->setAccessToken(json_encode($credentials["auth_keys"]));
@@ -478,7 +561,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                 $client->setClientSecret($credentials["api_keys"]["secret"]);
                 $client->refreshToken($credentials["auth_keys"]["refresh_token"]);
             } catch(\Exception $e) {
-                throw new AuthenticationException("Error refreshing token: " + $e->getMessage(), 602);
+                throw new AuthenticationException("Error refreshing token: " . $e->getMessage(), 602);
             }
         }
 
@@ -503,7 +586,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
 
                 $pageToken = $filesList->getNextPageToken();
             } catch (Exception $e) {
-                throw new ImportException("Error importing files: " + $e->getMessage(), 601);
+                throw new ImportException("Error importing files: " . $e->getMessage(), 601);
                 $pageToken = null;
             }
         } while ($pageToken);
@@ -514,7 +597,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                 "q" => "(mimeType contains 'image')"
             ))->getItems();
         } catch (\Exception $e) {
-            throw new ImportException("Error importing files: " + $e->getMessage(), 601);
+            throw new ImportException("Error importing files: " . $e->getMessage(), 601);
         }
 
         $files = array();
@@ -660,7 +743,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                 $client->setClientSecret($credentials["api_keys"]["secret"]);
                 $client->refreshToken($credentials["auth_keys"]["refresh_token"]);
             } catch(\Exception $e) {
-                throw new AuthenticationException("Error refreshing token: " + $e->getMessage(), 602);
+                throw new AuthenticationException("Error refreshing token: " . $e->getMessage(), 602);
             }
         }
 
@@ -720,13 +803,13 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
 
         $postBody->setAccess($access);
 
-        $exportDto = new ExportDTO();
+        //$exportDto = new ExportDTO();
 
         try {
             $plusDomainService = new \Google_Service_PlusDomains($client);
-
             $activity = $plusDomainService->activities->insert($parameters["userId"], $postBody);
-            $object = $activity->getObject();
+
+            /*$object = $activity->getObject();
             $user = $activity->getActor();
 
             $exportDto->setPublished($activity->getPublished());
@@ -734,12 +817,13 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             $exportDto->setUrlObject($object["url"]);
             $exportDto->setIdUser($user["id"]);
             $exportDto->setNameUser($user["displayName"]);
-            $exportDto->setUrlUser($user["url"]);
+            $exportDto->setUrlUser($user["url"]);*/
         } catch(\Exception $e) {
-            throw new ExportException("Error exporting files: " + $e->getMessage(), 601);
+            throw new ExportException("Error exporting files: " . $e->getMessage(), 601);
         }
 
-        return $exportDto;
+        return json_encode($activity);
+        //return $exportDto;
     }
 
     /**
@@ -815,6 +899,83 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
 
         return $googleCredentials;
     }
+
+    /**
+     * Service that query to Google api to revoke access token in order
+     * to ensure the permissions granted to the application are removed
+     * @param array $credentials
+     * @throws ConnectorConfigException
+     * @return JSON string
+     */
+    public function revokeToken(array $credentials)
+    {
+        if ((count($credentials) == 0) ||
+            (!isset($credentials["api_keys"])) ||
+            (null === $credentials["api_keys"]) ||
+            (!is_array($credentials["api_keys"]))
+        ) {
+            throw new ConnectorConfigException("api_keys set is empty", 600);
+        }
+
+        if (!array_key_exists('client', $credentials["api_keys"])) {
+            throw new ConnectorConfigException("'client' parameter is required", 601);
+        } else if ((null === $credentials["api_keys"]["client"]) || (empty($credentials["api_keys"]["client"]))) {
+            throw new ConnectorConfigException("'client' parameter is empty", 602);
+        }
+
+        if (!array_key_exists('secret', $credentials["api_keys"])) {
+            throw new ConnectorConfigException("'secret' parameter is required", 603);
+        } else if ((null === $credentials["api_keys"]["secret"]) || (empty($credentials["api_keys"]["secret"]))) {
+            throw new ConnectorConfigException("'secret' parameter is empty", 604);
+        }
+
+        if ((!isset($credentials["auth_keys"])) ||
+            (null === $credentials["auth_keys"]) ||
+            (!is_array($credentials["auth_keys"]))
+        ) {
+            throw new ConnectorConfigException("auth_keys set is empty", 605);
+        }
+
+        if (!array_key_exists('access_token', $credentials["auth_keys"])) {
+            throw new ConnectorConfigException("'access_token' parameter is required", 606);
+        } else if ((null === $credentials["auth_keys"]["access_token"]) || (empty($credentials["auth_keys"]["access_token"]))) {
+            throw new ConnectorConfigException("'access_token' parameter is empty", 607);
+        }
+
+        if (!array_key_exists('token_type', $credentials["auth_keys"])) {
+            throw new ConnectorConfigException("'token_type' parameter is required", 608);
+        } else if ((null === $credentials["auth_keys"]["token_type"]) || (empty($credentials["auth_keys"]["token_type"]))) {
+            throw new ConnectorConfigException("'token_type' parameter is empty", 609);
+        }
+
+        if (!array_key_exists('expires_in', $credentials["auth_keys"])) {
+            throw new ConnectorConfigException("'expires_in' parameter is required", 610);
+        } else if ((null === $credentials["auth_keys"]["expires_in"]) || (empty($credentials["auth_keys"]["expires_in"]))) {
+            throw new ConnectorConfigException("'expires_in' parameter is empty", 611);
+        }
+
+        if (!array_key_exists('created', $credentials["auth_keys"])) {
+            throw new ConnectorConfigException("'created' parameter is required", 612);
+        } else if ((null === $credentials["auth_keys"]["created"]) || (empty($credentials["auth_keys"]["created"]))) {
+            throw new ConnectorConfigException("'created' parameter is empty", 613);
+        }
+
+        if (!array_key_exists('refresh_token', $credentials["auth_keys"])) {
+            throw new ConnectorConfigException("'refresh_token' parameter is required", 614);
+        } else if ((null === $credentials["auth_keys"]["refresh_token"]) || (empty($credentials["auth_keys"]["refresh_token"]))) {
+            throw new ConnectorConfigException("'refresh_token' parameter is empty", 615);
+        }
+
+        $client = new \Google_Client();
+        $client->setAccessToken(json_encode($credentials["auth_keys"]));
+        $client->revokeToken();
+
+        return json_encode(array(
+            "status" => "success",
+            "note" => "Following a successful revocation response, it might take some time before the revocation has full effect"
+        ));
+    }
+
 
     /**
      * Private function to check url format
