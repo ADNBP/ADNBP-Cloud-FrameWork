@@ -2,9 +2,12 @@
 namespace CloudFramework\Service\SocialNetworks\Connectors;
 
 use CloudFramework\Patterns\Singleton;
+use CloudFramework\Service\SocialNetworks\Exceptions\AuthenticationException;
 use CloudFramework\Service\SocialNetworks\Exceptions\ConnectorConfigException;
+use CloudFramework\Service\SocialNetworks\Exceptions\ExportException;
+use CloudFramework\Service\SocialNetworks\Exceptions\ImportException;
 use CloudFramework\Service\SocialNetworks\Exceptions\MalformedUrlException;
-use CloudFramework\Service\SocialNetworks\Interfaces\SocialNetworkInterface;
+use CloudFramework\Service\SocialNetworks\Exceptions\ProfileInfoException;
 use CloudFramework\Service\SocialNetworks\SocialNetworks;
 use CloudFramework\Service\SocialNetworks\Dtos\ExportDTO;
 use CloudFramework\Service\SocialNetworks\Dtos\ProfileDTO;
@@ -104,6 +107,14 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
                                     "&response_type=code".
                                     "&scope=basic+public_content+comments";
 
+        if ((null === $urlOauth) || (empty($urlOauth))) {
+            throw new ConnectorConfigException("'authUrl' parameter is required", 624);
+        } else {
+            if (!$this->wellFormedUrl($urlOauth)) {
+                throw new MalformedUrlException("'authUrl' is malformed", 600);
+            }
+        }
+
         // Authentication request
         return $urlOauth;
     }
@@ -112,7 +123,9 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * Service that query to Instagram Api to get user profile
      * @param array $credentials
      * @return ProfileDTO
+     * @throws AuthenticationException
      * @throws ConnectorConfigException
+     * @throws ProfileInfoException
      */
     public function getProfile(array $credentials)
     {
@@ -157,6 +170,11 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
 
         $data = json_decode($data, true);
 
+        if ((!isset($data["data"])) || (!isset($data["data"]["id"])) || (!isset($data["data"]["full_name"])) ||
+            (!isset($data["data"]["profile_picture"]))) {
+            throw new ProfileInfoException("Error fetching user profile info: missing fields", 601);
+        }
+
         // Instagram doesn't return the user's e-mail :(
         $profileDto = new ProfileDTO($data["data"]["id"], $data["data"]["full_name"],
                                             null, $data["data"]["profile_picture"]);
@@ -170,6 +188,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @param string $path
      * @return array
      * @throws ConnectorConfigException
+     * @throws ImportException
      */
     public function import(array $credentials, $path)
     {
@@ -220,6 +239,11 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
             curl_close($ch);
 
             $data = json_decode($data);
+
+            if ((!property_exists($data->data)) || (null === $data->data)) {
+                throw new ImportException("Error importing files", 601);
+            }
+
             foreach ($data->data as $key => $media) {
                 if ("image" === $media->type) {
                     // Save file
@@ -254,6 +278,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      *
      * @return ExportDTO
      * @throws ConnectorConfigException
+     * @throws ExportException
      */
     public function export(array $credentials, array $parameters) {
         if ((count($credentials) == 0) ||
@@ -319,7 +344,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         $data = json_decode($data);
 
         if ($data->meta->code != 200) {
-            SocialNetworks::generateErrorResponse("Error making comments on an Instagram media", 500);
+            throw new ExportException("Error exporting files: Error making comments on an Instagram media", 601);
         }
 
         $today = new \DateTime();
@@ -333,8 +358,10 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * Authentication service from instagram sign in request
      * @param array $credentials
      * @return array
+     * @throws AuthenticationException
      * @throws ConnectorConfigException
      * @throws MalformedUrlException
+     * @throws ProfileInfoException
      */
     public function authorize(array $credentials)
     {
@@ -406,6 +433,14 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
          **/
 
         $instagramCredentials = json_decode($data, true);
+
+        if (!isset($instagramCredentials["access_token"])) {
+            throw new AuthenticationException("Error fetching OAuth2 access token, client is invalid", 601);
+        } else if ((!isset($instagramCredentials["user"])) || (!isset($instagramCredentials["user"]["id"])) ||
+                   (!isset($instagramCredentials["user"]["full_name"])) ||
+                    (!isset($instagramCredentials["user"]["profile_picture"]))) {
+            throw new ProfileInfoException("Error fetching user profile info", 601);
+        }
 
         // Instagram doesn't return the user's e-mail :(
         $profileDto = new ProfileDTO($instagramCredentials["user"]["id"], $instagramCredentials["user"]["full_name"],

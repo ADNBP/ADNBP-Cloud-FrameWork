@@ -14,7 +14,8 @@ class ExportDTO {
     private $nameUser;
     private $urlUser;
 
-    public function __construct($published, $title, $urlObject, $idUser, $nameUser, $urlUser) {
+    public function __construct($published = null, $title = null, $urlObject = null,
+                                    $idUser = null, $nameUser = null, $urlUser = null) {
         $this->setPublished($published);
         $this->setTitle($title);
         $this->setUrlObject($urlObject);

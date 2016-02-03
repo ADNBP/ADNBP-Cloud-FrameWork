@@ -80,7 +80,7 @@ class SocialNetworks extends Singleton
                     401
                 );
             } else {
-                SocialNetworks::generateErrorResponse("API Keys aren't correct", 501);
+                SocialNetworks::generateErrorResponse("API Keys aren't correct", 401);
             }
         }
 
@@ -151,20 +151,56 @@ class SocialNetworks extends Singleton
             header("Location: " . SocialNetworks::generateRequestUrl() . "socialnetworks");
             exit;
         } catch(\Exception $e) {
+            SocialNetworks::generateErrorResponse($e->getMessage(), $e->getCode());
+        }
+    }
+
+    /**
+     * Service that query to a social network api to get followers
+     * @param string $social
+     * @param string $userId
+     * @param array $credentials
+     * @return JSON string
+     */
+    public function getFollowers($social, $userId, array $credentials = array())
+    {
+        try {
+            $connector = $this->getSocialApi($social);
+            return $connector->getFollowers($userId, $credentials);
+        } catch(\Exception $e) {
+            SocialNetworks::generateErrorResponse($e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Service that query to a social network api to get followers info
+     * @param string $social
+     * @param string $postId
+     * @param array $credentials
+     * @return JSON string
+     */
+    public function getFollowersInfo($social, $postId, array $credentials = array())
+    {
+        try {
+            $connector = $this->getSocialApi($social);
+            return $connector->getFollowersInfo($postId, $credentials);
+        } catch(\Exception $e) {
             SocialNetworks::generateErrorResponse($e->getMessage(), 500);
         }
     }
 
     /**
      * Service that query to a social network api to get user profile
+     * @param string $social
+     * @param string $userId
      * @param array $credentials
-     * @return ProfileDTO
+     * @return JSON string
      */
-    public function getProfile($social, array $credentials = array())
+    public function getProfile($social, $userId, array $credentials = array())
     {
         try {
             $connector = $this->getSocialApi($social);
-            return $connector->getProfile($credentials);
+            return $connector->getProfile($userId, $credentials);
         } catch(\Exception $e) {
             SocialNetworks::generateErrorResponse($e->getMessage(), 500);
         }
@@ -175,13 +211,14 @@ class SocialNetworks extends Singleton
      * @param string $social
      * @param array $credentials
      * @param string $path path where files imported will be saved
+     * @param integer $maxResults maximum elements per page
      * @return mixed
      */
-    public function import($social, array $credentials = array(), $path)
+    public function import($social, array $credentials = array(), $path, $maxResults)
     {
         try {
             $connector = $this->getSocialApi($social);
-            return $connector->import($credentials, $path);
+            return $connector->import($credentials, $path, $maxResults);
         } catch(\Exception $e) {
             SocialNetworks::generateErrorResponse($e->getMessage(), 500);
         }

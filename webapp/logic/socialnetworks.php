@@ -33,10 +33,10 @@ if ($requestMethod === 'POST') {
         $credentials = $sc->auth($postData["social"], $postData, $redirectUrl);
 
         // Get profile
-        $profile = $sc->getProfile($postData["social"], $credentials);
+        //$profile = $sc->getProfile($postData["social"], $credentials);
 
         // Get images
-        $images = $sc->import($postData["social"], $credentials, "/home/salvador/ADNBP-Cloud-FrameWork/webapp/");
+        //$images = $sc->import($postData["social"], $credentials, "./");
 
         // Export
         $exportdto = null;
@@ -56,9 +56,8 @@ if ($requestMethod === 'POST') {
         }
         SocialNetworks::jsonResponse(array(
             "social" => $postData['social'],
-            "followers" => $followers,
-            "images" => $images,
-            "count" => count($images),
+            "images" => array(),
+            "count" => 0,
             "exportdto" => $exportdto
         ));
         exit;

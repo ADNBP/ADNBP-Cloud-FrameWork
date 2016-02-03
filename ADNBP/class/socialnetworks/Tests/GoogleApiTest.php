@@ -628,6 +628,26 @@ class GoogleApiTest extends \PHPUnit_Framework_TestCase {
     }
 
     /**
+     * @expectedException CloudFramework\Service\SocialNetworks\Exceptions\AuthenticationException
+     * @expectedExceptionCode 601
+     */
+    public function testWrongCodeInCredentials() {
+        $credentials = array(
+            "client" => "63108327498-mgodb2hd7n1kpfahvda7npqupk5uhdsp.apps.googleusercontent.com",
+            "secret" => "BsWhjY0wXVXDcyQ_m7QiVl6j",
+            "code" => "wrongcode"
+        );
+
+        $googleApi = new GoogleApi();
+
+        try {
+            $loginUrl = $googleApi->authorize($credentials);
+        } catch(\Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
      * @expectedException CloudFramework\Service\SocialNetworks\Exceptions\ConnectorConfigException
      * @expectedExceptionCode 618
      */

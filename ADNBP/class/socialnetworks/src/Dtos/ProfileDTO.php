@@ -12,7 +12,7 @@ class ProfileDTO {
     private $email;
     private $imageUrl;
 
-    public function __construct($idUser, $fullName, $email, $imageUrl) {
+    public function __construct($idUser = null, $fullName = null, $email = null, $imageUrl = null) {
         $this->setIdUser($idUser);
         $this->setFullName($fullName);
         $this->setEmail($email);
