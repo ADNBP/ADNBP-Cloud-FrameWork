@@ -184,6 +184,8 @@ if (!defined ("_MYSQLI_MODELS_CLASS_") ) {
                     }
 
 
+
+
                 }
 
                 //If table exists.. explore modifications.
@@ -237,6 +239,8 @@ if (!defined ("_MYSQLI_MODELS_CLASS_") ) {
                             $tmp['ret'][$model['table']]['table_ok'] = false;
                         }
                     }
+
+                if($tmp['ret'][$model['table']]['table_ok']) $tmp['ret'][$model['table']]['fields'] = count($tmp['ret'][$model['table']]['fields']);
             }
             return($tmp['ret']);
         }
