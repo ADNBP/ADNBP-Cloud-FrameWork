@@ -16,6 +16,8 @@ if (!defined ("_MYSQLI_MODELS_CLASS_") ) {
                 $tmp['index'] = $this->getDataFromQuery('SHOW INDEX FROM %s;',array($table));
                 $tmp['SQL'] = $this->getDataFromQuery('SHOW CREATE TABLE %s;',array($table))[0];
                 $tmp['SCHEMA'] = $this->getDataFromQuery('SELECT * FROM information_schema.TABLES WHERE TABLE_NAME = "%s"',array($table))[0];
+                //$tmp['TRIGGERS'] = $this->getDataFromQuery('SHOW TRIGGERS IN %s;',array($table));
+
                 foreach ($tmp['explain'] as $key => $value) {
 
                     // TYPE OF THE FIELD
@@ -41,15 +43,34 @@ if (!defined ("_MYSQLI_MODELS_CLASS_") ) {
                     // Comment field
                     $tmp['Fields'][$value['Field']]['description'] = $value['Comment'];
                 }
+
+                // CHECK if there is multiple Uniques id's
+                $indexes = [];
+                foreach($tmp['index'] as $index=>$indexValues) {
+                    if($indexValues['Key_name']=='PRIMARY') $indexes[$indexValues['Column_name']]['primary'][] = $indexValues['Column_name'];
+                    elseif($indexValues['Non_unique']=="0") $indexes[$indexValues['Key_name']]['unique'][] = $indexValues['Column_name'];
+                    elseif($indexValues['Non_unique']=="1") $indexes[$indexValues['Key_name']]['index'][] = $indexValues['Column_name'];
+                }
+                if(count($indexes))
+                    foreach($indexes as $index=>$indexValues) {
+                        if(count($indexValues['unique'])>1)
+                            foreach($indexValues['unique'] as $i=>$indexField)
+                                $tmp['Fields'][$indexField]['unique'] = $index;
+                        elseif(count($indexValues['index'])>1)
+                            foreach($indexValues['index'] as $i=>$indexField)
+                                $tmp['Fields'][$indexField]['index'] = $index;
+                    }
+
                 return (['table_exists'=>true,'model'=>['table' => $table
                     , 'description' => $tmp['SCHEMA']['TABLE_COMMENT']
                     , 'engine' => $tmp['SCHEMA']['ENGINE']
                     , 'fields' => $tmp['Fields']
-                ]
+                        ]
                     , 'Schema' => $tmp['SCHEMA']
+                    , 'explain' => $tmp['explain']
                     , 'indexes' => $tmp['index']
                     , 'SQL' => $tmp['SQL']['Create Table']
-                    , 'explain' => $tmp['explain']
+                    , 'TRIGGERS' => $tmp['TRIGGERS']
                     //, 'indexes' => $tmp['index']
                 ]);
             } else
@@ -72,13 +93,12 @@ if (!defined ("_MYSQLI_MODELS_CLASS_") ) {
             }
 
             // Keys
-            foreach ($model['fields'] as $field=>$fieldAttribs) {
-                $sql .= $this->getSQLKeyCreationFromModelField($field,$fieldAttribs);
-            }
+            $sql .= $this->getSQLIndexCreationFromModelField($model['fields']);
 
 
             if(!strlen($model['engine'])) $model['engine']='InnoDB';
-            $sql .= ') ENGINE = ' . $model['engine'];
+            $sql .= ') ENGINE = \'' . $model['engine'].'\'';
+            $sql.= ' COMMENT = \''.$model['description'].'\'';
             // TODO: Control engine;
             // $sql.= ' DEFAULT CHARACTER SET ' . $table['mysql_character_set'];
             return($this->_buildQuery(array($sql,$data)));
@@ -102,11 +122,27 @@ if (!defined ("_MYSQLI_MODELS_CLASS_") ) {
             return($sql);
         }
 
-        function getSQLKeyCreationFromModelField ($field,$attribs) {
+        function getSQLIndexCreationFromModelField ($fields) {
             $sql='';
-            if($attribs['key']) $sql.=', PRIMARY KEY('.$field.')';
-            elseif($attribs['unique']) $sql.=', UNIQUE KEY('.$field.')';
-            elseif($attribs['index']) $sql.=', KEY '.$field.'('.$field.')';
+
+            // PRIMARY AND SIMPLE KEYS AND INDEX
+            foreach ($fields as $field=>$attribs) {
+                if ($attribs['key']) $sql .= ', PRIMARY KEY(' . $field . ')';
+                elseif ($attribs['unique']===true) $sql .= ', UNIQUE KEY (' . $field . ')';
+                elseif ($attribs['index']===true) $sql .= ', KEY ' . $field . '(' . $field . ')';
+            }
+
+            $multiple = [];
+            foreach ($fields as $field=>$attribs) {
+                if (strlen($attribs['unique']) && $attribs['unique']!==true) $multiple[$attribs['unique']]['unique'][] = $field;
+                elseif (strlen($attribs['index']) && $attribs['index']!==true) $multiple[$attribs['index']]['index'][] = $field;
+            }
+            if(count($multiple))
+                foreach ($multiple as $index=>$indexFields) {
+                    if(array_key_exists('unique',$indexFields)) $sql .= ', UNIQUE KEY '.$index.' (' . implode(',',$indexFields['unique']) . ')';
+                    if(array_key_exists('index',$indexFields)) $sql .= ',  KEY '.$index.' (' . implode(',',$indexFields['index']) . ')';
+                }
+
             return($sql);
         }
 
@@ -122,16 +158,15 @@ if (!defined ("_MYSQLI_MODELS_CLASS_") ) {
                 } else {
                     $ret .= (strtolower($action) == 'update') ? ' MODIFY ':' ADD ';
                     $ret.= $this->getSQLFieldCreationFromModelField($field,$attribs);
-                    // $ret.=$this->getSQLKeyCreationFromModelField($field,$attribs);
                 }
             }
             return($ret);
         }
 
-        function checkModels($models,$action='') {
+        function checkModels($models,$table='',$action='') {
 
             // Attribs to explore.
-            $tmp['attribs'] = array('type','key','index','default','description');
+            $tmp['attribs'] = array('type','key','index','default','unique','description');
 
 
             // We expect a JSON array
@@ -148,7 +183,8 @@ if (!defined ("_MYSQLI_MODELS_CLASS_") ) {
                 return array('wrong CloudFrameWork-io JSON Model');;
 
             // Start the exploring
-            foreach ($tmp['models'] as $key=>$model) {
+            foreach ($tmp['models'] as $key=>$model) if($table=='' || $table==$model['table']) {
+
 
                 $tmp['db'] = $this->getModelFromTable($model['table']);
                 $tmp['ret'][$model['table']]['table_exists'] = $tmp['db']['table_exists'];
