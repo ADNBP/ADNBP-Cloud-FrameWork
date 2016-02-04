@@ -11,9 +11,10 @@ interface SocialNetworkInterface {
     function getAuthUrl(array $credentials, $redirectUrl);
     function getFollowers($userId, array $credentials);
     function getFollowersInfo($postId, array $credentials);
-    function getActivities($userId, array $credentials);
+    function getSubscribers($userId, array $credentials);
+    function getPosts($userId, array $credentials);
     function getProfile($userId, array $credentials);
-    function import(array $credentials, $maxResults);
+    function import(array $credentials, $maxResults, $userId);
     function export(array $credentials, array $parameters);
     function revokeToken(array $credentials);
     function authorize(array $credentials);

@@ -190,17 +190,34 @@ class SocialNetworks extends Singleton
     }
 
     /**
+     * Service that query to a social network api to get subscribers
+     * @param string $social
+     * @param string $userId
+     * @param array $credentials
+     * @return JSON string
+     */
+    public function getSubscribers($social, $userId, array $credentials = array())
+    {
+        try {
+            $connector = $this->getSocialApi($social);
+            return $connector->getSubscribers($userId, $credentials);
+        } catch(\Exception $e) {
+            SocialNetworks::generateErrorResponse($e->getMessage(), 500);
+        }
+    }
+
+    /**
      * Service that query to a social network api to get posts info
      * @param string $social
      * @param string $userId
      * @param array $credentials
      * @return JSON string
      */
-    public function getActivities($social, $userId, array $credentials = array())
+    public function getPosts($social, $userId, array $credentials = array())
     {
         try {
             $connector = $this->getSocialApi($social);
-            return $connector->getActivities($userId, $credentials);
+            return $connector->getPosts($userId, $credentials);
         } catch(\Exception $e) {
             SocialNetworks::generateErrorResponse($e->getMessage(), 500);
         }
@@ -228,13 +245,14 @@ class SocialNetworks extends Singleton
      * @param string $social
      * @param array $credentials
      * @param integer $maxResults maximum elements per page
+     * @param string $userId
      * @return mixed
      */
-    public function import($social, array $credentials = array(), $maxResults)
+    public function import($social, array $credentials = array(), $maxResults = 0, $userId = null)
     {
         try {
             $connector = $this->getSocialApi($social);
-            return $connector->import($credentials, $maxResults);
+            return $connector->import($credentials, $maxResults, $userId);
         } catch(\Exception $e) {
             SocialNetworks::generateErrorResponse($e->getMessage(), 500);
         }

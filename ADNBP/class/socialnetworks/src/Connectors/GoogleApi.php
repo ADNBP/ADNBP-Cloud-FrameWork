@@ -127,7 +127,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     }
 
     /**
-     * Service that query to Google Api for followers
+     * Service that query to Google Api for people in user circles
      * @param string $userId
      * @param array $credentials
      * @return JSON string
@@ -291,12 +291,15 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         $plusService = new \Google_Service_Plus($client);
         $plusoners = $plusService->people->listByActivity($postId, "plusoners")->getItems();
         $resharers = $plusService->people->listByActivity($postId, "resharers")->getItems();
-        //$activity = $plusService->activities->get("z134ctopapf0vlfec23ahjiykpj2zf0ay04");
 
-        $people["plusoners"] = $plusoners;//array();
-        $people["resharers"] = $resharers;//array();
+        $people["plusoners"] = $plusoners;
+        $people["resharers"] = $resharers;
 
         return json_encode($people);
+    }
+
+    public function getSubscribers($userId, array $credentials = array()) {
+        return;
     }
 
     /**
@@ -307,7 +310,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * @throws AuthenticationException
      * @throws ConnectorConfigException
      */
-    public function getActivities($userId, array $credentials)
+    public function getPosts($userId, array $credentials)
     {
         if ((count($credentials) == 0) ||
             (!isset($credentials["api_keys"])) ||
@@ -462,36 +465,27 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             }
         }
 
-        //$profileDto = new ProfileDTO();
-
         try {
             $plusService = new \Google_Service_Plus($client);
             $profile = $plusService->people->get($userId);
-
-            /*$oauthService = new \Google_Service_Oauth2($client);
-            $profile = $oauthService->userinfo_v2_me->get();
-
-            $profileDto->setIdUser($profile->getId());
-            $profileDto->setFullName($profile->getGivenName() . " " . $profile->getFamilyName());
-            $profileDto->setEmail($profile->getEmail());
-            $profileDto->setImageUrl($profile->getPicture());*/
         } catch(\Exception $e) {
             throw new ProfileInfoException("Error fetching user profile info: " . $e->getMessage(), 601);
         }
 
-        return json_encode($profile);//$profileDto;
+        return json_encode($profile);
     }
 
     /**
      * Service that query to Google Api Drive service for images
      * @param array $credentials
      * @param integer $maxResults maximum elements per page
-     * @return array
+     * @param string $userId
+     * @return JSON string
      * @throws AuthenticationException
      * @throws ConnectorConfigException
      * @throws ImportException
      */
-    public function import(array $credentials, $maxResults)
+    public function import(array $credentials, $maxResults, $userId = null)
     {
         if ((count($credentials) == 0) ||
             (!isset($credentials["api_keys"])) ||
@@ -548,10 +542,6 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             throw new ConnectorConfigException("'refresh_token' parameter is empty", 615);
         }
 
-        /*if ((null === $path) || (empty($path))) {
-            throw new ConnectorConfigException("'path' parameter is required", 618);
-        }*/
-
         $client = new \Google_Client();
         $client->setAccessToken(json_encode($credentials["auth_keys"]));
 
@@ -590,33 +580,6 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                 $pageToken = null;
             }
         } while ($pageToken);
-
-        /*try {
-            $driveService = new \Google_Service_Drive($client);
-            $filesList = $driveService->files->listFiles(array(
-                "q" => "(mimeType contains 'image')"
-            ))->getItems();
-        } catch (\Exception $e) {
-            throw new ImportException("Error importing files: " . $e->getMessage(), 601);
-        }
-
-        $files = array();
-        foreach($filesList as $key=>$fileList) {
-            if (("image/gif" === $fileList["mimeType"]) ||
-                ("image/jpeg" === $fileList["mimeType"]) ||
-                ("image/pjpeg" === $fileList["mimeType"]) ||
-                ("image/png" === $fileList["mimeType"])) {
-                $binaryContent = $this->downloadFile($driveService, $fileList);
-                if (null !== $binaryContent) {
-                    file_put_contents($path . $fileList["id"] . "." . $fileList["fileExtension"], $binaryContent);
-                    array_push($files, array(
-                        "id" => $fileList["id"],
-                        "name" => $fileList["id"] . "." . $fileList["fileExtension"],
-                        "title" => $fileList["title"]
-                    ));
-                }
-            }
-        }*/
 
         return json_encode($files);
     }
@@ -808,22 +771,11 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         try {
             $plusDomainService = new \Google_Service_PlusDomains($client);
             $activity = $plusDomainService->activities->insert($parameters["userId"], $postBody);
-
-            /*$object = $activity->getObject();
-            $user = $activity->getActor();
-
-            $exportDto->setPublished($activity->getPublished());
-            $exportDto->setTitle($object["content"]);
-            $exportDto->setUrlObject($object["url"]);
-            $exportDto->setIdUser($user["id"]);
-            $exportDto->setNameUser($user["displayName"]);
-            $exportDto->setUrlUser($user["url"]);*/
         } catch(\Exception $e) {
             throw new ExportException("Error exporting files: " . $e->getMessage(), 601);
         }
 
         return json_encode($activity);
-        //return $exportDto;
     }
 
     /**
