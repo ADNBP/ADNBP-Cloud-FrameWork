@@ -51,7 +51,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         }
 
         if ((null === $redirectUrl) || (empty($redirectUrl))) {
-            throw new ConnectorConfigException("'redirectUrl' parameter is required", 624);
+            throw new ConnectorConfigException("'redirectUrl' parameter is required", 618);
         } else {
             if (!$this->wellFormedUrl($redirectUrl)) {
                 throw new MalformedUrlException("'redirectUrl' is malformed", 600);
@@ -91,7 +91,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         }
 
         if ((null === $redirectUrl) || (empty($redirectUrl))) {
-            throw new ConnectorConfigException("'redirectUrl' parameter is required", 624);
+            throw new ConnectorConfigException("'redirectUrl' parameter is required", 618);
         } else {
             if (!$this->wellFormedUrl($redirectUrl)) {
                 throw new MalformedUrlException("'redirectUrl' is malformed", 600);
@@ -814,7 +814,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         if ((!array_key_exists('redirectUrl', $credentials)) ||
             (null === $credentials["redirectUrl"]) ||
             (empty($credentials["redirectUrl"]))) {
-            throw new ConnectorConfigException("'redirectUrl' parameter is required", 624);
+            throw new ConnectorConfigException("'redirectUrl' parameter is empty", 624);
         } else {
             if (!$this->wellFormedUrl($credentials["redirectUrl"])) {
                 throw new MalformedUrlException("'redirectUrl' is malformed", 600);
@@ -830,6 +830,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         try {
             $client->authenticate($credentials["code"]);
 
+            $googleCredentials = $client->getAccessToken();
             $googleCredentials = json_decode($client->getAccessToken(), true);
 
             $oauthService = new \Google_Service_Oauth2($client);
@@ -837,10 +838,11 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
 
             unset($googleCredentials["id_token"]);
 
-            $profileDto = new ProfileDTO($profile->getId(), $profile->getGivenName() . " " . $profile->getFamilyName(),
+            $googleCredentials["user_id"] = $profile->getId();
+            /*$profileDto = new ProfileDTO($profile->getId(), $profile->getGivenName() . " " . $profile->getFamilyName(),
                 $profile->getEmail(), $profile->getPicture());
 
-            $googleCredentials["user"] = $profileDto;
+            $googleCredentials["user"] = $profileDto;*/
         } catch(\Exception $e) {
             if (401 === $e->getCode()) {
                 throw new AuthenticationException("Error fetching OAuth2 access token, client is invalid", 601);
@@ -849,7 +851,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             }
         }
 
-        return $googleCredentials;
+        return json_encode($googleCredentials);
     }
 
     /**

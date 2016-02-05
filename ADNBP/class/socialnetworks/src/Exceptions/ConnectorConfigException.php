@@ -25,7 +25,7 @@
          *      616     'code' parameter is required
          *      617     'code' parameter is empty
          *      618     'redirectUrl' parameter is required
-         *      619     'redirectUrl' is malformed
+         *      619     parameters set is empty
          *      620     'userId' parameter is required (google)
          *      621     'userId' parameter is empty (google)
          *      622     'content' parameter is required

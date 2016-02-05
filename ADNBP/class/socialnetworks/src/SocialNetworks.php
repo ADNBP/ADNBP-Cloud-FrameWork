@@ -54,6 +54,7 @@ class SocialNetworks extends Singleton
      * @param array $data
      * @param string $redirectUrl
      * @return array
+     * @throws \Exception
      */
     public static function hydrateCredentials($socialNetwork, $authKeysNames, $apiKeysNames, $data, $redirectUrl)
     {
@@ -75,12 +76,10 @@ class SocialNetworks extends Singleton
 
         if (count($credentials) !== count($authKeysNames)) {
             if (count($apiKeys) === count($apiKeysNames)) {
-                SocialNetworks::generateErrorResponse(
-                    SocialNetworks::getInstance()->getSocialLoginUrl($socialNetwork, $apiKeys, $redirectUrl),
-                    401
-                );
+                return SocialNetworks::getInstance()->getSocialLoginUrl($socialNetwork, $apiKeys, $redirectUrl);
             } else {
-                SocialNetworks::generateErrorResponse("API Keys aren't correct", 401);
+                //SocialNetworks::generateErrorResponse("API Keys aren't correct", 401);
+                throw new \Exception("API Keys aren't correct", 401);
             }
         }
 
@@ -93,13 +92,15 @@ class SocialNetworks extends Singleton
      * @param array $apiKeys
      * @param string $redirectUrl
      * @return mixed
+     * @throws \Exception
      */
     public function getSocialLoginUrl($social, array $apiKeys, $redirectUrl) {
         try {
             $connector = $this->getSocialApi($social);
             return $connector->getAuthUrl($apiKeys, $redirectUrl);
         } catch(\Exception $e) {
-            SocialNetworks::generateErrorResponse($e->getMessage(), 500);
+            throw $e;
+            //SocialNetworks::generateErrorResponse($e->getMessage(), 500);
         }
     }
 
@@ -107,6 +108,7 @@ class SocialNetworks extends Singleton
      * Method that initialize a social api instance to use
      * @param $social
      * @return \CloudFramework\Services\SocialNetworks\Interfaces\SocialNetworksInterface
+     * @throws \Exception
      */
     public function getSocialApi($social) {
         $socialNetworkClass = "CloudFramework\\Service\\SocialNetworks\\Connectors\\{$social}Api";
@@ -114,10 +116,12 @@ class SocialNetworks extends Singleton
             try {
                 return $connector = $socialNetworkClass::getInstance();
             } catch(\Exception $e) {
-                SocialNetworks::generateErrorResponse($e->getMessage(), 500);
+                throw $e;
+                //SocialNetworks::generateErrorResponse($e->getMessage(), 500);
             }
         } else {
-            SocialNetworks::generateErrorResponse("Social Network Requested not exists", 501);
+            throw new \Exception(501, "Social Network Requested not exists");
+            //SocialNetworks::generateErrorResponse("Social Network Requested not exists", 501);
         }
     }
 
@@ -126,6 +130,7 @@ class SocialNetworks extends Singleton
      * @param string $social
      * @param array $credentials
      * @return array|string
+     * @throws \Exception
      */
     public function auth($social, array $credentials = array(), $redirectUrl)
     {
@@ -133,25 +138,25 @@ class SocialNetworks extends Singleton
             $connector = $this->getSocialApi($social);
             return $connector->getAuth($credentials, $redirectUrl);
         } catch(\Exception $e) {
-            SocialNetworks::generateErrorResponse($e->getMessage(), 500);
+            throw $e;
+            //SocialNetworks::generateErrorResponse($e->getMessage(), 500);
         }
     }
 
     /**
      * @param string $social
      * @param $params
-     * @return mixed
+     * @throws \Exception
      */
     public function saveInSession($social, $params)
     {
         try {
             $connector = $this->getSocialApi($social);
             $credentials = $connector->authorize($params);
-            $_SESSION[strtolower($social) . "_form_credentials"] = $credentials;
-            header("Location: " . SocialNetworks::generateRequestUrl() . "socialnetworks");
-            exit;
+            $_SESSION[strtolower($social) . "_credentials"] = $credentials;
         } catch(\Exception $e) {
-            SocialNetworks::generateErrorResponse($e->getMessage(), $e->getCode());
+            throw $e;
+            //SocialNetworks::generateErrorResponse($e->getMessage(), $e->getCode());
         }
     }
 
@@ -161,6 +166,7 @@ class SocialNetworks extends Singleton
      * @param string $userId
      * @param array $credentials
      * @return JSON string
+     * @throws \Exception
      */
     public function getFollowers($social, $userId, array $credentials = array())
     {
@@ -168,7 +174,8 @@ class SocialNetworks extends Singleton
             $connector = $this->getSocialApi($social);
             return $connector->getFollowers($userId, $credentials);
         } catch(\Exception $e) {
-            SocialNetworks::generateErrorResponse($e->getMessage(), 500);
+            throw $e;
+            //SocialNetworks::generateErrorResponse($e->getMessage(), 500);
         }
     }
 
@@ -178,6 +185,7 @@ class SocialNetworks extends Singleton
      * @param string $postId
      * @param array $credentials
      * @return JSON string
+     * @throws \Exception
      */
     public function getFollowersInfo($social, $postId, array $credentials = array())
     {
@@ -185,7 +193,8 @@ class SocialNetworks extends Singleton
             $connector = $this->getSocialApi($social);
             return $connector->getFollowersInfo($postId, $credentials);
         } catch(\Exception $e) {
-            SocialNetworks::generateErrorResponse($e->getMessage(), 500);
+            throw $e;
+            //SocialNetworks::generateErrorResponse($e->getMessage(), 500);
         }
     }
 
@@ -195,6 +204,7 @@ class SocialNetworks extends Singleton
      * @param string $userId
      * @param array $credentials
      * @return JSON string
+     * @throws \Exception
      */
     public function getSubscribers($social, $userId, array $credentials = array())
     {
@@ -202,7 +212,8 @@ class SocialNetworks extends Singleton
             $connector = $this->getSocialApi($social);
             return $connector->getSubscribers($userId, $credentials);
         } catch(\Exception $e) {
-            SocialNetworks::generateErrorResponse($e->getMessage(), 500);
+            throw $e;
+            //SocialNetworks::generateErrorResponse($e->getMessage(), 500);
         }
     }
 
@@ -212,6 +223,7 @@ class SocialNetworks extends Singleton
      * @param string $userId
      * @param array $credentials
      * @return JSON string
+     * @throws \Exception
      */
     public function getPosts($social, $userId, array $credentials = array())
     {
@@ -219,7 +231,8 @@ class SocialNetworks extends Singleton
             $connector = $this->getSocialApi($social);
             return $connector->getPosts($userId, $credentials);
         } catch(\Exception $e) {
-            SocialNetworks::generateErrorResponse($e->getMessage(), 500);
+            throw $e;
+            //SocialNetworks::generateErrorResponse($e->getMessage(), 500);
         }
     }
 
@@ -229,6 +242,7 @@ class SocialNetworks extends Singleton
      * @param string $userId
      * @param array $credentials
      * @return JSON string
+     * @throws \Exception
      */
     public function getProfile($social, $userId, array $credentials = array())
     {
@@ -236,7 +250,8 @@ class SocialNetworks extends Singleton
             $connector = $this->getSocialApi($social);
             return $connector->getProfile($userId, $credentials);
         } catch(\Exception $e) {
-            SocialNetworks::generateErrorResponse($e->getMessage(), 500);
+            throw $e;
+            //SocialNetworks::generateErrorResponse($e->getMessage(), 500);
         }
     }
 
@@ -247,6 +262,7 @@ class SocialNetworks extends Singleton
      * @param integer $maxResults maximum elements per page
      * @param string $userId
      * @return mixed
+     * @throws \Exception
      */
     public function import($social, array $credentials = array(), $maxResults = 0, $userId = null)
     {
@@ -254,7 +270,8 @@ class SocialNetworks extends Singleton
             $connector = $this->getSocialApi($social);
             return $connector->import($credentials, $maxResults, $userId);
         } catch(\Exception $e) {
-            SocialNetworks::generateErrorResponse($e->getMessage(), 500);
+            throw $e;
+            //SocialNetworks::generateErrorResponse($e->getMessage(), 500);
         }
     }
 
@@ -276,6 +293,7 @@ class SocialNetworks extends Singleton
      *      "mediaId"   => Instagram media's ID
      *
      * @return ExportDTO
+     * @throws \Exception
      */
     public function export($social, array $credentials, $parameters)
     {
@@ -283,7 +301,8 @@ class SocialNetworks extends Singleton
             $connector = $this->getSocialApi($social);
             return $connector->export($credentials, $parameters);
         } catch(\Exception $e) {
-            SocialNetworks::generateErrorResponse($e->getMessage(), 500);
+            throw $e;
+            //SocialNetworks::generateErrorResponse($e->getMessage(), 500);
         }
     }
 
@@ -293,6 +312,7 @@ class SocialNetworks extends Singleton
      * @param string $social
      * @param array $credentials
      * @return JSON string
+     * @throws \Exception
      */
     public function revokeToken($social, array $credentials)
     {
@@ -300,7 +320,8 @@ class SocialNetworks extends Singleton
             $connector = $this->getSocialApi($social);
             return $connector->revokeToken($credentials);
         } catch(\Exception $e) {
-            SocialNetworks::generateErrorResponse($e->getMessage(), 500);
+            throw $e;
+            //SocialNetworks::generateErrorResponse($e->getMessage(), 500);
         }
     }
 }
