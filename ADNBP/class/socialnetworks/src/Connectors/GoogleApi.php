@@ -208,7 +208,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
 
         $plusDomainService = new \Google_Service_PlusDomains($client);
         $peopleList = $plusDomainService->people->listPeople($userId, "circled");
-        return json_encode($peopleList->getItems());
+        return $peopleList->getItems();
     }
 
     /**
@@ -298,7 +298,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         $people["plusoners"] = $plusoners;
         $people["resharers"] = $resharers;
 
-        return json_encode($people);
+        return $people;
     }
 
     public function getSubscribers($userId, array $credentials = array()) {
@@ -387,7 +387,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         $plusService = new \Google_Service_Plus($client);
         $activities = $plusService->activities->listActivities($userId, "public");
 
-        return json_encode($activities->getItems());
+        return $activities->getItems();
     }
 
     /**
@@ -477,7 +477,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             throw new ProfileInfoException("Error fetching user profile info: " . $e->getMessage(), 601);
         }
 
-        return json_encode($profile);
+        return $profile;
     }
 
     /**
@@ -587,7 +587,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             }
         } while ($pageToken);
 
-        return json_encode($files);
+        return $files;
     }
 
     /**
@@ -782,7 +782,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             throw new ExportException("Error exporting files: " . $e->getMessage(), 601);
         }
 
-        return json_encode($activity);
+        return $activity;
     }
 
     /**
@@ -859,7 +859,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             }
         }
 
-        return json_encode($googleCredentials);
+        return $googleCredentials;
     }
 
     /**
@@ -933,10 +933,10 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         $client->setAccessToken(json_encode($credentials["auth_keys"]));
         $client->revokeToken();
 
-        return json_encode(array(
+        return array(
             "status" => "success",
             "note" => "Following a successful revocation response, it might take some time before the revocation has full effect"
-        ));
+        );
     }
 
 
