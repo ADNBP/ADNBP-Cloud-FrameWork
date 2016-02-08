@@ -99,6 +99,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         }
 
         $client = new \Google_Client();
+        $client->setClassConfig('Google_Http_Request', 'disable_gzip', true);
         $client->setAccessType("offline");
         $client->setClientId($apiKeys["client"]);
         $client->setClientSecret($apiKeys["secret"]);
@@ -192,6 +193,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         }
 
         $client = new \Google_Client();
+        $client->setClassConfig('Google_Http_Request', 'disable_gzip', true);
         $client->setAccessToken(json_encode($credentials["auth_keys"]));
 
         if ($client->isAccessTokenExpired()) {
@@ -275,6 +277,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         }
 
         $client = new \Google_Client();
+        $client->setClassConfig('Google_Http_Request', 'disable_gzip', true);
         $client->setAccessToken(json_encode($credentials["auth_keys"]));
 
         if ($client->isAccessTokenExpired()) {
@@ -368,6 +371,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         }
 
         $client = new \Google_Client();
+        $client->setClassConfig('Google_Http_Request', 'disable_gzip', true);
         $client->setAccessToken(json_encode($credentials["auth_keys"]));
 
         if ($client->isAccessTokenExpired()) {
@@ -453,6 +457,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         }
 
         $client = new \Google_Client();
+        $client->setClassConfig('Google_Http_Request', 'disable_gzip', true);
         $client->setAccessToken(json_encode($credentials["auth_keys"]));
 
         if ($client->isAccessTokenExpired()) {
@@ -543,6 +548,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         }
 
         $client = new \Google_Client();
+        $client->setClassConfig('Google_Http_Request', 'disable_gzip', true);
         $client->setAccessToken(json_encode($credentials["auth_keys"]));
 
         if ($client->isAccessTokenExpired()) {
@@ -698,6 +704,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         }
 
         $client = new \Google_Client();
+        $client->setClassConfig('Google_Http_Request', 'disable_gzip', true);
         $client->setAccessToken(json_encode($credentials["auth_keys"]));
 
         if ($client->isAccessTokenExpired()) {
@@ -822,6 +829,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         }
 
         $client = new \Google_Client();
+        $client->setClassConfig('Google_Http_Request', 'disable_gzip', true);
         $client->setClientId($credentials["client"]);
         $client->setClientSecret($credentials["secret"]);
         $client->setRedirectUri($credentials["redirectUrl"]);
@@ -921,6 +929,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         }
 
         $client = new \Google_Client();
+        $client->setClassConfig('Google_Http_Request', 'disable_gzip', true);
         $client->setAccessToken(json_encode($credentials["auth_keys"]));
         $client->revokeToken();
 
