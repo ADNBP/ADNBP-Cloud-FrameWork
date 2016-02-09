@@ -21,109 +21,22 @@ use CloudFramework\Service\SocialNetworks\Dtos\ProfileDTO;
 class GoogleApi extends Singleton implements SocialNetworkInterface {
 
     const ID = 'google';
-    public static $auth_keys = array("access_token", "token_type", "expires_in", "created", "refresh_token");
-    public static $api_keys = array("client", "secret");
+
+    // API keys
+    private $clientId;
+    private $clientSecret;
+    private $clientScope = array();
 
     /**
-     * Compose Google Api credentials array from session data
-     * @param array|null $credentials
-     * @param string $redirectUrl
-     * @return array
-     * @throws ConnectorConfigException
-     * @throws MalformedUrlException
+     * Set Google Api credentials
+     * @param $clientId
+     * @param $clientSecret
+     * @param $clientScope
      */
-    public function getAuth(array $credentials, $redirectUrl)
-    {
-        if (count($credentials) == 0) {
-            throw new ConnectorConfigException("credentials set is empty", 600);
-        }
-
-        if (!array_key_exists('client', $credentials)) {
-            throw new ConnectorConfigException("'client' parameter is required", 601);
-        } else if ((null === $credentials["client"]) || (empty($credentials["client"]))) {
-            throw new ConnectorConfigException("'client' parameter is empty", 602);
-        }
-
-        if (!array_key_exists('secret', $credentials)) {
-            throw new ConnectorConfigException("'secret' parameter is required", 603);
-        } else if ((null === $credentials["secret"]) || (empty($credentials["secret"]))) {
-            throw new ConnectorConfigException("'secret' parameter is empty", 604);
-        }
-
-        if ((null === $redirectUrl) || (empty($redirectUrl))) {
-            throw new ConnectorConfigException("'redirectUrl' parameter is required", 618);
-        } else {
-            if (!$this->wellFormedUrl($redirectUrl)) {
-                throw new MalformedUrlException("'redirectUrl' is malformed", 600);
-            }
-        }
-
-        return SocialNetworks::hydrateCredentials(GoogleApi::ID, GoogleApi::$auth_keys,
-                                                        GoogleApi::$api_keys, $credentials, $redirectUrl);
-    }
-
-    /**
-     * Service that compose url to authorize google api
-     * @param array $apiKeys
-     * @param string $redirectUrl
-     * @return string
-     * @throws ConnectorConfigException
-     * @throws MalformedUrlException
-     */
-    public function getAuthUrl(array $apiKeys, $redirectUrl)
-    {
-        if (count($apiKeys) > 0) {
-            $_SESSION[GoogleApi::ID . "_apikeys"] = $apiKeys;
-        } else {
-            throw new ConnectorConfigException("apiKeys set is empty", 600);
-        }
-
-        if (!array_key_exists('client', $apiKeys)) {
-            throw new ConnectorConfigException("'client' parameter is required", 601);
-        } else if ((null === $apiKeys["client"]) || (empty($apiKeys["client"]))) {
-            throw new ConnectorConfigException("'client' parameter is empty", 602);
-        }
-
-        if (!array_key_exists('secret', $apiKeys)) {
-            throw new ConnectorConfigException("'secret' parameter is required", 603);
-        } else if ((null === $apiKeys["secret"]) || (empty($apiKeys["secret"]))) {
-            throw new ConnectorConfigException("'secret' parameter is empty", 604);
-        }
-
-        if ((null === $redirectUrl) || (empty($redirectUrl))) {
-            throw new ConnectorConfigException("'redirectUrl' parameter is required", 618);
-        } else {
-            if (!$this->wellFormedUrl($redirectUrl)) {
-                throw new MalformedUrlException("'redirectUrl' is malformed", 600);
-            }
-        }
-
-        $client = new \Google_Client();
-        $client->setAccessType("offline");
-        $client->setClientId($apiKeys["client"]);
-        $client->setClientSecret($apiKeys["secret"]);
-        $client->setRedirectUri($redirectUrl);
-        $client->addScope("https://www.googleapis.com/auth/plus.me");
-        $client->addScope("https://www.googleapis.com/auth/drive");
-        $client->addScope("https://www.googleapis.com/auth/plus.circles.read");
-        $client->addScope("https://www.googleapis.com/auth/plus.stream.write");
-        $client->addScope("https://www.googleapis.com/auth/plus.stream.read");
-        $client->addScope("https://www.googleapis.com/auth/plus.media.upload");
-        $client->addScope("https://www.googleapis.com/auth/userinfo.email");
-        $client->addScope("https://www.googleapis.com/auth/userinfo.profile");
-
-        $authUrl = $client->createAuthUrl();
-
-        if ((null === $authUrl) || (empty($authUrl))) {
-            throw new ConnectorConfigException("'authUrl' parameter is required", 624);
-        } else {
-            if (!$this->wellFormedUrl($authUrl)) {
-                throw new MalformedUrlException("'authUrl' is malformed", 600);
-            }
-        }
-
-        // Authentication request
-        return $authUrl;
+    public function setCredentials($clientId, $clientSecret, $clientScope) {
+        $this->clientId = $clientId;
+        $this->clientSecret = $clientSecret;
+        $this->clientScope = $clientScope;
     }
 
     /**
@@ -136,69 +49,16 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     public function getFollowers($userId, array $credentials)
     {
-        if ((count($credentials) == 0) ||
-            (!isset($credentials["api_keys"])) ||
-            (null === $credentials["api_keys"]) ||
-            (!is_array($credentials["api_keys"]))) {
-            throw new ConnectorConfigException("api_keys set is empty", 600);
-        }
-
-        if (!array_key_exists('client', $credentials["api_keys"])) {
-            throw new ConnectorConfigException("'client' parameter is required", 601);
-        } else if ((null === $credentials["api_keys"]["client"]) || (empty($credentials["api_keys"]["client"]))) {
-            throw new ConnectorConfigException("'client' parameter is empty", 602);
-        }
-
-        if (!array_key_exists('secret', $credentials["api_keys"])) {
-            throw new ConnectorConfigException("'secret' parameter is required", 603);
-        } else if ((null === $credentials["api_keys"]["secret"]) || (empty($credentials["api_keys"]["secret"]))) {
-            throw new ConnectorConfigException("'secret' parameter is empty", 604);
-        }
-
-        if ((!isset($credentials["auth_keys"])) ||
-            (null === $credentials["auth_keys"]) ||
-            (!is_array($credentials["auth_keys"]))) {
-            throw new ConnectorConfigException("auth_keys set is empty", 605);
-        }
-
-        if (!array_key_exists('access_token', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'access_token' parameter is required", 606);
-        } else if ((null === $credentials["auth_keys"]["access_token"]) || (empty($credentials["auth_keys"]["access_token"]))) {
-            throw new ConnectorConfigException("'access_token' parameter is empty", 607);
-        }
-
-        if (!array_key_exists('token_type', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'token_type' parameter is required", 608);
-        } else if ((null === $credentials["auth_keys"]["token_type"]) || (empty($credentials["auth_keys"]["token_type"]))) {
-            throw new ConnectorConfigException("'token_type' parameter is empty", 609);
-        }
-
-        if (!array_key_exists('expires_in', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'expires_in' parameter is required", 610);
-        } else if ((null === $credentials["auth_keys"]["expires_in"]) || (empty($credentials["auth_keys"]["expires_in"]))) {
-            throw new ConnectorConfigException("'expires_in' parameter is empty", 611);
-        }
-
-        if (!array_key_exists('created', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'created' parameter is required", 612);
-        } else if ((null === $credentials["auth_keys"]["created"]) || (empty($credentials["auth_keys"]["created"]))) {
-            throw new ConnectorConfigException("'created' parameter is empty", 613);
-        }
-
-        if (!array_key_exists('refresh_token', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'refresh_token' parameter is required", 614);
-        } else if ((null === $credentials["auth_keys"]["refresh_token"]) || (empty($credentials["auth_keys"]["refresh_token"]))) {
-            throw new ConnectorConfigException("'refresh_token' parameter is empty", 615);
-        }
-
         $client = new \Google_Client();
-        $client->setAccessToken(json_encode($credentials["auth_keys"]));
+        $client->setClientId($this->clientId);
+        $client->setClientSecret($this->clientSecret);
+        $client->setAccessToken(json_encode($credentials));
 
         if ($client->isAccessTokenExpired()) {
             try {
-                $client->setClientId($credentials["api_keys"]["client"]);
-                $client->setClientSecret($credentials["api_keys"]["secret"]);
-                $client->refreshToken($credentials["auth_keys"]["refresh_token"]);
+                $client->setClientId($this->clientId);
+                $client->setClientSecret($this->clientSecret);
+                $client->refreshToken($credentials["refresh_token"]);
             } catch(\Exception $e) {
                 throw new AuthenticationException("Error refreshing token: " . $e->getMessage(), 602);
             }
@@ -206,6 +66,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
 
         $plusDomainService = new \Google_Service_PlusDomains($client);
         $peopleList = $plusDomainService->people->listPeople($userId, "circled");
+
         return json_encode($peopleList->getItems());
     }
 
@@ -219,69 +80,16 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     public function getFollowersInfo($postId, array $credentials)
     {
-        if ((count($credentials) == 0) ||
-            (!isset($credentials["api_keys"])) ||
-            (null === $credentials["api_keys"]) ||
-            (!is_array($credentials["api_keys"]))) {
-            throw new ConnectorConfigException("api_keys set is empty", 600);
-        }
-
-        if (!array_key_exists('client', $credentials["api_keys"])) {
-            throw new ConnectorConfigException("'client' parameter is required", 601);
-        } else if ((null === $credentials["api_keys"]["client"]) || (empty($credentials["api_keys"]["client"]))) {
-            throw new ConnectorConfigException("'client' parameter is empty", 602);
-        }
-
-        if (!array_key_exists('secret', $credentials["api_keys"])) {
-            throw new ConnectorConfigException("'secret' parameter is required", 603);
-        } else if ((null === $credentials["api_keys"]["secret"]) || (empty($credentials["api_keys"]["secret"]))) {
-            throw new ConnectorConfigException("'secret' parameter is empty", 604);
-        }
-
-        if ((!isset($credentials["auth_keys"])) ||
-            (null === $credentials["auth_keys"]) ||
-            (!is_array($credentials["auth_keys"]))) {
-            throw new ConnectorConfigException("auth_keys set is empty", 605);
-        }
-
-        if (!array_key_exists('access_token', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'access_token' parameter is required", 606);
-        } else if ((null === $credentials["auth_keys"]["access_token"]) || (empty($credentials["auth_keys"]["access_token"]))) {
-            throw new ConnectorConfigException("'access_token' parameter is empty", 607);
-        }
-
-        if (!array_key_exists('token_type', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'token_type' parameter is required", 608);
-        } else if ((null === $credentials["auth_keys"]["token_type"]) || (empty($credentials["auth_keys"]["token_type"]))) {
-            throw new ConnectorConfigException("'token_type' parameter is empty", 609);
-        }
-
-        if (!array_key_exists('expires_in', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'expires_in' parameter is required", 610);
-        } else if ((null === $credentials["auth_keys"]["expires_in"]) || (empty($credentials["auth_keys"]["expires_in"]))) {
-            throw new ConnectorConfigException("'expires_in' parameter is empty", 611);
-        }
-
-        if (!array_key_exists('created', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'created' parameter is required", 612);
-        } else if ((null === $credentials["auth_keys"]["created"]) || (empty($credentials["auth_keys"]["created"]))) {
-            throw new ConnectorConfigException("'created' parameter is empty", 613);
-        }
-
-        if (!array_key_exists('refresh_token', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'refresh_token' parameter is required", 614);
-        } else if ((null === $credentials["auth_keys"]["refresh_token"]) || (empty($credentials["auth_keys"]["refresh_token"]))) {
-            throw new ConnectorConfigException("'refresh_token' parameter is empty", 615);
-        }
-
         $client = new \Google_Client();
-        $client->setAccessToken(json_encode($credentials["auth_keys"]));
+        $client->setClientId($this->clientId);
+        $client->setClientSecret($this->clientSecret);
+        $client->setAccessToken(json_encode($credentials));
 
         if ($client->isAccessTokenExpired()) {
             try {
-                $client->setClientId($credentials["api_keys"]["client"]);
-                $client->setClientSecret($credentials["api_keys"]["secret"]);
-                $client->refreshToken($credentials["auth_keys"]["refresh_token"]);
+                $client->setClientId($this->clientId);
+                $client->setClientSecret($this->clientSecret);
+                $client->refreshToken($credentials["refresh_token"]);
             } catch(\Exception $e) {
                 throw new AuthenticationException("Error refreshing token: " . $e->getMessage(), 602);
             }
@@ -312,69 +120,16 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     public function getPosts($userId, array $credentials)
     {
-        if ((count($credentials) == 0) ||
-            (!isset($credentials["api_keys"])) ||
-            (null === $credentials["api_keys"]) ||
-            (!is_array($credentials["api_keys"]))) {
-            throw new ConnectorConfigException("api_keys set is empty", 600);
-        }
-
-        if (!array_key_exists('client', $credentials["api_keys"])) {
-            throw new ConnectorConfigException("'client' parameter is required", 601);
-        } else if ((null === $credentials["api_keys"]["client"]) || (empty($credentials["api_keys"]["client"]))) {
-            throw new ConnectorConfigException("'client' parameter is empty", 602);
-        }
-
-        if (!array_key_exists('secret', $credentials["api_keys"])) {
-            throw new ConnectorConfigException("'secret' parameter is required", 603);
-        } else if ((null === $credentials["api_keys"]["secret"]) || (empty($credentials["api_keys"]["secret"]))) {
-            throw new ConnectorConfigException("'secret' parameter is empty", 604);
-        }
-
-        if ((!isset($credentials["auth_keys"])) ||
-            (null === $credentials["auth_keys"]) ||
-            (!is_array($credentials["auth_keys"]))) {
-            throw new ConnectorConfigException("auth_keys set is empty", 605);
-        }
-
-        if (!array_key_exists('access_token', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'access_token' parameter is required", 606);
-        } else if ((null === $credentials["auth_keys"]["access_token"]) || (empty($credentials["auth_keys"]["access_token"]))) {
-            throw new ConnectorConfigException("'access_token' parameter is empty", 607);
-        }
-
-        if (!array_key_exists('token_type', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'token_type' parameter is required", 608);
-        } else if ((null === $credentials["auth_keys"]["token_type"]) || (empty($credentials["auth_keys"]["token_type"]))) {
-            throw new ConnectorConfigException("'token_type' parameter is empty", 609);
-        }
-
-        if (!array_key_exists('expires_in', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'expires_in' parameter is required", 610);
-        } else if ((null === $credentials["auth_keys"]["expires_in"]) || (empty($credentials["auth_keys"]["expires_in"]))) {
-            throw new ConnectorConfigException("'expires_in' parameter is empty", 611);
-        }
-
-        if (!array_key_exists('created', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'created' parameter is required", 612);
-        } else if ((null === $credentials["auth_keys"]["created"]) || (empty($credentials["auth_keys"]["created"]))) {
-            throw new ConnectorConfigException("'created' parameter is empty", 613);
-        }
-
-        if (!array_key_exists('refresh_token', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'refresh_token' parameter is required", 614);
-        } else if ((null === $credentials["auth_keys"]["refresh_token"]) || (empty($credentials["auth_keys"]["refresh_token"]))) {
-            throw new ConnectorConfigException("'refresh_token' parameter is empty", 615);
-        }
-
         $client = new \Google_Client();
-        $client->setAccessToken(json_encode($credentials["auth_keys"]));
+        $client->setClientId($this->clientId);
+        $client->setClientSecret($this->clientSecret);
+        $client->setAccessToken(json_encode($credentials));
 
         if ($client->isAccessTokenExpired()) {
             try {
-                $client->setClientId($credentials["api_keys"]["client"]);
-                $client->setClientSecret($credentials["api_keys"]["secret"]);
-                $client->refreshToken($credentials["auth_keys"]["refresh_token"]);
+                $client->setClientId($this->clientId);
+                $client->setClientSecret($this->clientSecret);
+                $client->refreshToken($credentials["refresh_token"]);
             } catch(\Exception $e) {
                 throw new AuthenticationException("Error refreshing token: " . $e->getMessage(), 602);
             }
@@ -397,69 +152,16 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     public function getProfile($userId, array $credentials)
     {
-        if ((count($credentials) == 0) ||
-            (!isset($credentials["api_keys"])) ||
-            (null === $credentials["api_keys"]) ||
-            (!is_array($credentials["api_keys"]))) {
-            throw new ConnectorConfigException("api_keys set is empty", 600);
-        }
-
-        if (!array_key_exists('client', $credentials["api_keys"])) {
-            throw new ConnectorConfigException("'client' parameter is required", 601);
-        } else if ((null === $credentials["api_keys"]["client"]) || (empty($credentials["api_keys"]["client"]))) {
-            throw new ConnectorConfigException("'client' parameter is empty", 602);
-        }
-
-        if (!array_key_exists('secret', $credentials["api_keys"])) {
-            throw new ConnectorConfigException("'secret' parameter is required", 603);
-        } else if ((null === $credentials["api_keys"]["secret"]) || (empty($credentials["api_keys"]["secret"]))) {
-            throw new ConnectorConfigException("'secret' parameter is empty", 604);
-        }
-
-        if ((!isset($credentials["auth_keys"])) ||
-            (null === $credentials["auth_keys"]) ||
-            (!is_array($credentials["auth_keys"]))) {
-            throw new ConnectorConfigException("auth_keys set is empty", 605);
-        }
-
-        if (!array_key_exists('access_token', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'access_token' parameter is required", 606);
-        } else if ((null === $credentials["auth_keys"]["access_token"]) || (empty($credentials["auth_keys"]["access_token"]))) {
-            throw new ConnectorConfigException("'access_token' parameter is empty", 607);
-        }
-
-        if (!array_key_exists('token_type', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'token_type' parameter is required", 608);
-        } else if ((null === $credentials["auth_keys"]["token_type"]) || (empty($credentials["auth_keys"]["token_type"]))) {
-            throw new ConnectorConfigException("'token_type' parameter is empty", 609);
-        }
-
-        if (!array_key_exists('expires_in', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'expires_in' parameter is required", 610);
-        } else if ((null === $credentials["auth_keys"]["expires_in"]) || (empty($credentials["auth_keys"]["expires_in"]))) {
-            throw new ConnectorConfigException("'expires_in' parameter is empty", 611);
-        }
-
-        if (!array_key_exists('created', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'created' parameter is required", 612);
-        } else if ((null === $credentials["auth_keys"]["created"]) || (empty($credentials["auth_keys"]["created"]))) {
-            throw new ConnectorConfigException("'created' parameter is empty", 613);
-        }
-
-        if (!array_key_exists('refresh_token', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'refresh_token' parameter is required", 614);
-        } else if ((null === $credentials["auth_keys"]["refresh_token"]) || (empty($credentials["auth_keys"]["refresh_token"]))) {
-            throw new ConnectorConfigException("'refresh_token' parameter is empty", 615);
-        }
-
         $client = new \Google_Client();
-        $client->setAccessToken(json_encode($credentials["auth_keys"]));
+        $client->setClientId($this->clientId);
+        $client->setClientSecret($this->clientSecret);
+        $client->setAccessToken(json_encode($credentials));
 
         if ($client->isAccessTokenExpired()) {
             try {
-                $client->setClientId($credentials["api_keys"]["client"]);
-                $client->setClientSecret($credentials["api_keys"]["secret"]);
-                $client->refreshToken($credentials["auth_keys"]["refresh_token"]);
+                $client->setClientId($this->clientId);
+                $client->setClientSecret($this->clientSecret);
+                $client->refreshToken($credentials["refresh_token"]);
             } catch(\Exception $e) {
                 throw new AuthenticationException("Error refreshing token: " . $e->getMessage(), 602);
             }
@@ -476,80 +178,61 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     }
 
     /**
-     * Service that query to Google Api Drive service for images
+     * Service that query to Google Oauth Api to get user profile
      * @param array $credentials
+     * @return string
+     * @throws AuthenticationException
+     * @throws ProfileInfoException
+     */
+    public function getSelfProfile(array $credentials)
+    {
+        $client = new \Google_Client();
+        $client->setClientId($this->clientId);
+        $client->setClientSecret($this->clientSecret);
+        $client->setAccessToken(json_encode($credentials));
+
+        if ($client->isAccessTokenExpired()) {
+            try {
+                $client->setClientId($this->clientId);
+                $client->setClientSecret($this->clientSecret);
+                $client->refreshToken($credentials["refresh_token"]);
+            } catch(\Exception $e) {
+                throw new AuthenticationException("Error refreshing token: " . $e->getMessage(), 602);
+            }
+        }
+
+        try {
+            $oauthService = new \Google_Service_Oauth2($client);
+            $profile = $oauthService->userinfo_v2_me->get();
+        } catch(\Exception $e) {
+            throw new ProfileInfoException("Error fetching user profile info: " . $e->getMessage(), 601);
+        }
+
+        return $profile->getId();
+    }
+
+    /**
+     * Service that query to Google Api Drive service for images
      * @param integer $maxResults maximum elements per page
      * @param string $userId
+     * @param array $credentials
      * @return JSON string
      * @throws AuthenticationException
      * @throws ConnectorConfigException
      * @throws ImportException
      */
-    public function import(array $credentials, $maxResults, $userId = null)
+    public function exportImages($userId, $maxResults, array $credentials)
     {
-        if ((count($credentials) == 0) ||
-            (!isset($credentials["api_keys"])) ||
-            (null === $credentials["api_keys"]) ||
-            (!is_array($credentials["api_keys"]))) {
-            throw new ConnectorConfigException("api_keys set is empty", 600);
-        }
-
-        if (!array_key_exists('client', $credentials["api_keys"])) {
-            throw new ConnectorConfigException("'client' parameter is required", 601);
-        } else if ((null === $credentials["api_keys"]["client"]) || (empty($credentials["api_keys"]["client"]))) {
-            throw new ConnectorConfigException("'client' parameter is empty", 602);
-        }
-
-        if (!array_key_exists('secret', $credentials["api_keys"])) {
-            throw new ConnectorConfigException("'secret' parameter is required", 603);
-        } else if ((null === $credentials["api_keys"]["secret"]) || (empty($credentials["api_keys"]["secret"]))) {
-            throw new ConnectorConfigException("'secret' parameter is empty", 604);
-        }
-
-        if ((!isset($credentials["auth_keys"])) ||
-            (null === $credentials["auth_keys"]) ||
-            (!is_array($credentials["auth_keys"]))) {
-            throw new ConnectorConfigException("auth_keys set is empty", 605);
-        }
-
-        if (!array_key_exists('access_token', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'access_token' parameter is required", 606);
-        } else if ((null === $credentials["auth_keys"]["access_token"]) || (empty($credentials["auth_keys"]["access_token"]))) {
-            throw new ConnectorConfigException("'access_token' parameter is empty", 607);
-        }
-
-        if (!array_key_exists('token_type', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'token_type' parameter is required", 608);
-        } else if ((null === $credentials["auth_keys"]["token_type"]) || (empty($credentials["auth_keys"]["token_type"]))) {
-            throw new ConnectorConfigException("'token_type' parameter is empty", 609);
-        }
-
-        if (!array_key_exists('expires_in', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'expires_in' parameter is required", 610);
-        } else if ((null === $credentials["auth_keys"]["expires_in"]) || (empty($credentials["auth_keys"]["expires_in"]))) {
-            throw new ConnectorConfigException("'expires_in' parameter is empty", 611);
-        }
-
-        if (!array_key_exists('created', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'created' parameter is required", 612);
-        } else if ((null === $credentials["auth_keys"]["created"]) || (empty($credentials["auth_keys"]["created"]))) {
-            throw new ConnectorConfigException("'created' parameter is empty", 613);
-        }
-
-        if (!array_key_exists('refresh_token', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'refresh_token' parameter is required", 614);
-        } else if ((null === $credentials["auth_keys"]["refresh_token"]) || (empty($credentials["auth_keys"]["refresh_token"]))) {
-            throw new ConnectorConfigException("'refresh_token' parameter is empty", 615);
-        }
-
         $client = new \Google_Client();
-        $client->setAccessToken(json_encode($credentials["auth_keys"]));
+        $client->setClientId($this->clientId);
+        $client->setClientSecret($this->clientSecret);
+        $client->setAccessToken(json_encode($credentials));
 
         if ($client->isAccessTokenExpired()) {
             try {
-                $client->setClientId($credentials["api_keys"]["client"]);
-                $client->setClientSecret($credentials["api_keys"]["secret"]);
-                $client->refreshToken($credentials["auth_keys"]["refresh_token"]);
+                $client->setClientId($this->clientId);
+                $client->setClientSecret($this->clientSecret);
+                $client->refreshToken($credentials["refresh_token"]);
             } catch(\Exception $e) {
                 throw new AuthenticationException("Error refreshing token: " . $e->getMessage(), 602);
             }
@@ -576,7 +259,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
 
                 $pageToken = $filesList->getNextPageToken();
             } catch (Exception $e) {
-                throw new ImportException("Error importing files: " . $e->getMessage(), 601);
+                throw new ImportException("Error exporting files: " . $e->getMessage(), 601);
                 $pageToken = null;
             }
         } while ($pageToken);
@@ -625,86 +308,17 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * @throws ExportException
      *
      */
-    public function export(array $credentials, array $parameters) {
-        if ((count($credentials) == 0) ||
-            (!isset($credentials["api_keys"])) ||
-            (null === $credentials["api_keys"]) ||
-            (!is_array($credentials["api_keys"]))) {
-            throw new ConnectorConfigException("api_keys set is empty", 600);
-        }
-
-        if (!array_key_exists('client', $credentials["api_keys"])) {
-            throw new ConnectorConfigException("'client' parameter is required", 601);
-        } else if ((null === $credentials["api_keys"]["client"]) || (empty($credentials["api_keys"]["client"]))) {
-            throw new ConnectorConfigException("'client' parameter is empty", 602);
-        }
-
-        if (!array_key_exists('secret', $credentials["api_keys"])) {
-            throw new ConnectorConfigException("'secret' parameter is required", 603);
-        } else if ((null === $credentials["api_keys"]["secret"]) || (empty($credentials["api_keys"]["secret"]))) {
-            throw new ConnectorConfigException("'secret' parameter is empty", 604);
-        }
-
-        if ((!isset($credentials["auth_keys"])) ||
-            (null === $credentials["auth_keys"]) ||
-            (!is_array($credentials["auth_keys"]))) {
-            throw new ConnectorConfigException("auth_keys set is empty", 605);
-        }
-
-        if (!array_key_exists('access_token', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'access_token' parameter is required", 606);
-        } else if ((null === $credentials["auth_keys"]["access_token"]) || (empty($credentials["auth_keys"]["access_token"]))) {
-            throw new ConnectorConfigException("'access_token' parameter is empty", 607);
-        }
-
-        if (!array_key_exists('token_type', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'token_type' parameter is required", 608);
-        } else if ((null === $credentials["auth_keys"]["token_type"]) || (empty($credentials["auth_keys"]["token_type"]))) {
-            throw new ConnectorConfigException("'token_type' parameter is empty", 609);
-        }
-
-        if (!array_key_exists('expires_in', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'expires_in' parameter is required", 610);
-        } else if ((null === $credentials["auth_keys"]["expires_in"]) || (empty($credentials["auth_keys"]["expires_in"]))) {
-            throw new ConnectorConfigException("'expires_in' parameter is empty", 611);
-        }
-
-        if (!array_key_exists('created', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'created' parameter is required", 612);
-        } else if ((null === $credentials["auth_keys"]["created"]) || (empty($credentials["auth_keys"]["created"]))) {
-            throw new ConnectorConfigException("'created' parameter is empty", 613);
-        }
-
-        if (!array_key_exists('refresh_token', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'refresh_token' parameter is required", 614);
-        } else if ((null === $credentials["auth_keys"]["refresh_token"]) || (empty($credentials["auth_keys"]["refresh_token"]))) {
-            throw new ConnectorConfigException("'refresh_token' parameter is empty", 615);
-        }
-
-        if (count($parameters) == 0) {
-            throw new ConnectorConfigException("parameters set is empty", 619);
-        }
-
-        if (!array_key_exists('userId', $parameters)) {
-            throw new ConnectorConfigException("'userId' parameter is required", 620);
-        } else if ((null === $parameters["userId"]) || (empty($parameters["userId"]))) {
-            throw new ConnectorConfigException("'userId' parameter is empty", 621);
-        }
-
-        if (!array_key_exists('content', $parameters)) {
-            throw new ConnectorConfigException("'content' parameter is required", 622);
-        } else if ((null === $parameters["content"]) || (empty($parameters["content"]))) {
-            throw new ConnectorConfigException("'content' parameter is empty", 623);
-        }
-
+    public function importPost(array $parameters, array $credentials) {
         $client = new \Google_Client();
-        $client->setAccessToken(json_encode($credentials["auth_keys"]));
+        $client->setClientId($this->clientId);
+        $client->setClientSecret($this->clientSecret);
+        $client->setAccessToken(json_encode($credentials));
 
         if ($client->isAccessTokenExpired()) {
             try {
-                $client->setClientId($credentials["api_keys"]["client"]);
-                $client->setClientSecret($credentials["api_keys"]["secret"]);
-                $client->refreshToken($credentials["auth_keys"]["refresh_token"]);
+                $client->setClientId($this->clientId);
+                $client->setClientSecret($this->clientSecret);
+                $client->refreshToken($credentials["refresh_token"]);
             } catch(\Exception $e) {
                 throw new AuthenticationException("Error refreshing token: " . $e->getMessage(), 602);
             }
@@ -780,78 +394,43 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
 
     /**
      * Authentication service from google sign in request
-     * @param array $credentials
+     * @param string $code
+     * @param string $redirectUrl
      * @return array
      * @throws AuthenticationException
-     * @throws ConnectorConfigException
-     * @throws MalformedUrlException
-     * @throws ProfileInfoException
+     * @throws ConnectorException
+     * @throws MalformedException
+     *
      */
-    public function authorize(array $credentials)
+    public function authorize($code, $redirectUrl)
     {
-        if (count($credentials) == 0) {
-            throw new ConnectorConfigException("credentials set is empty", 600);
-        }
-
-        if (!array_key_exists('client', $credentials)) {
-            throw new ConnectorConfigException("'client' parameter is required", 601);
-        } else if ((null === $credentials["client"]) || (empty($credentials["client"]))) {
-            throw new ConnectorConfigException("'client' parameter is empty", 602);
-        }
-
-        if (!array_key_exists('secret', $credentials)) {
-            throw new ConnectorConfigException("'secret' parameter is required", 603);
-        } else if ((null === $credentials["secret"]) || (empty($credentials["secret"]))) {
-            throw new ConnectorConfigException("'secret' parameter is empty", 604);
-        }
-
-        if (!array_key_exists('code', $credentials)) {
-            throw new ConnectorConfigException("'code' parameter is required", 616);
-        } else if ((null === $credentials["code"]) || (empty($credentials["code"]))) {
-            throw new ConnectorConfigException("'code' parameter is empty", 617);
-        }
-
-        if ((!array_key_exists('redirectUrl', $credentials)) ||
-            (null === $credentials["redirectUrl"]) ||
-            (empty($credentials["redirectUrl"]))) {
-            throw new ConnectorConfigException("'redirectUrl' parameter is empty", 624);
+        if ((null === $redirectUrl) || (empty($redirectUrl))) {
+            throw new ConnectorConfigException("'redirectUrl' parameter is required", 618);
         } else {
-            if (!$this->wellFormedUrl($credentials["redirectUrl"])) {
+            if (!$this->wellFormedUrl($redirectUrl)) {
                 throw new MalformedUrlException("'redirectUrl' is malformed", 600);
             }
         }
 
         $client = new \Google_Client();
-        $client->setClientId($credentials["client"]);
-        $client->setClientSecret($credentials["secret"]);
-        $client->setRedirectUri($credentials["redirectUrl"]);
+        $client->setClientId($this->clientId);
+        $client->setClientSecret($this->clientSecret);
+        $client->setRedirectUri($redirectUrl);
 
-        $googleCredentials = array();
         try {
-            $client->authenticate($credentials["code"]);
+            $client->authenticate($code);
 
             $googleCredentials = $client->getAccessToken();
             $googleCredentials = json_decode($client->getAccessToken(), true);
-
-            $oauthService = new \Google_Service_Oauth2($client);
-            $profile = $oauthService->userinfo_v2_me->get();
-
-            unset($googleCredentials["id_token"]);
-
-            $googleCredentials["user_id"] = $profile->getId();
-            /*$profileDto = new ProfileDTO($profile->getId(), $profile->getGivenName() . " " . $profile->getFamilyName(),
-                $profile->getEmail(), $profile->getPicture());
-
-            $googleCredentials["user"] = $profileDto;*/
         } catch(\Exception $e) {
             if (401 === $e->getCode()) {
                 throw new AuthenticationException("Error fetching OAuth2 access token, client is invalid", 601);
             } else {
-                throw new ProfileInfoException("Error fetching user profile info: " . $e->getMessage(), 601);
+                throw new \Exception($e->getMessage(), $e->getCode());
             }
         }
 
-        return json_encode($googleCredentials);
+        return $googleCredentials;
     }
 
     /**
@@ -860,68 +439,25 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * @param array $credentials
      * @throws ConnectorConfigException
      * @return JSON string
+     * @throws AuthenticationException
      */
     public function revokeToken(array $credentials)
     {
-        if ((count($credentials) == 0) ||
-            (!isset($credentials["api_keys"])) ||
-            (null === $credentials["api_keys"]) ||
-            (!is_array($credentials["api_keys"]))
-        ) {
-            throw new ConnectorConfigException("api_keys set is empty", 600);
-        }
-
-        if (!array_key_exists('client', $credentials["api_keys"])) {
-            throw new ConnectorConfigException("'client' parameter is required", 601);
-        } else if ((null === $credentials["api_keys"]["client"]) || (empty($credentials["api_keys"]["client"]))) {
-            throw new ConnectorConfigException("'client' parameter is empty", 602);
-        }
-
-        if (!array_key_exists('secret', $credentials["api_keys"])) {
-            throw new ConnectorConfigException("'secret' parameter is required", 603);
-        } else if ((null === $credentials["api_keys"]["secret"]) || (empty($credentials["api_keys"]["secret"]))) {
-            throw new ConnectorConfigException("'secret' parameter is empty", 604);
-        }
-
-        if ((!isset($credentials["auth_keys"])) ||
-            (null === $credentials["auth_keys"]) ||
-            (!is_array($credentials["auth_keys"]))
-        ) {
-            throw new ConnectorConfigException("auth_keys set is empty", 605);
-        }
-
-        if (!array_key_exists('access_token', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'access_token' parameter is required", 606);
-        } else if ((null === $credentials["auth_keys"]["access_token"]) || (empty($credentials["auth_keys"]["access_token"]))) {
-            throw new ConnectorConfigException("'access_token' parameter is empty", 607);
-        }
-
-        if (!array_key_exists('token_type', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'token_type' parameter is required", 608);
-        } else if ((null === $credentials["auth_keys"]["token_type"]) || (empty($credentials["auth_keys"]["token_type"]))) {
-            throw new ConnectorConfigException("'token_type' parameter is empty", 609);
-        }
-
-        if (!array_key_exists('expires_in', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'expires_in' parameter is required", 610);
-        } else if ((null === $credentials["auth_keys"]["expires_in"]) || (empty($credentials["auth_keys"]["expires_in"]))) {
-            throw new ConnectorConfigException("'expires_in' parameter is empty", 611);
-        }
-
-        if (!array_key_exists('created', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'created' parameter is required", 612);
-        } else if ((null === $credentials["auth_keys"]["created"]) || (empty($credentials["auth_keys"]["created"]))) {
-            throw new ConnectorConfigException("'created' parameter is empty", 613);
-        }
-
-        if (!array_key_exists('refresh_token', $credentials["auth_keys"])) {
-            throw new ConnectorConfigException("'refresh_token' parameter is required", 614);
-        } else if ((null === $credentials["auth_keys"]["refresh_token"]) || (empty($credentials["auth_keys"]["refresh_token"]))) {
-            throw new ConnectorConfigException("'refresh_token' parameter is empty", 615);
-        }
-
         $client = new \Google_Client();
-        $client->setAccessToken(json_encode($credentials["auth_keys"]));
+        $client->setClientId($this->clientId);
+        $client->setClientSecret($this->clientSecret);
+        $client->setAccessToken(json_encode($credentials));
+
+        if ($client->isAccessTokenExpired()) {
+            try {
+                $client->setClientId($this->clientId);
+                $client->setClientSecret($this->clientSecret);
+                $client->refreshToken($credentials["refresh_token"]);
+            } catch(\Exception $e) {
+                throw new AuthenticationException("Error refreshing token: " . $e->getMessage(), 602);
+            }
+        }
+
         $client->revokeToken();
 
         return json_encode(array(
@@ -930,6 +466,65 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         ));
     }
 
+    /**
+     * Compose Google Api credentials array from session data
+     * @param string $redirectUrl
+     * @return array
+     * @throws ConnectorConfigException
+     * @throws MalformedUrlException
+     */
+    public function getAuth($redirectUrl)
+    {
+        if ((null === $redirectUrl) || (empty($redirectUrl))) {
+            throw new ConnectorConfigException("'redirectUrl' parameter is required", 618);
+        } else {
+            if (!$this->wellFormedUrl($redirectUrl)) {
+                throw new MalformedUrlException("'redirectUrl' is malformed", 600);
+            }
+        }
+
+        return SocialNetworks::getInstance()->getSocialLoginUrl(GoogleApi::ID, $redirectUrl);
+    }
+
+    /**
+     * Service that compose url to authorize google api
+     * @param string $redirectUrl
+     * @return string
+     * @throws ConnectorConfigException
+     * @throws MalformedUrlException
+     */
+    public function getAuthUrl($redirectUrl)
+    {
+        if ((null === $redirectUrl) || (empty($redirectUrl))) {
+            throw new ConnectorConfigException("'redirectUrl' parameter is required", 618);
+        } else {
+            if (!$this->wellFormedUrl($redirectUrl)) {
+                throw new MalformedUrlException("'redirectUrl' is malformed", 600);
+            }
+        }
+
+        $client = new \Google_Client();
+        $client->setAccessType("offline");
+        $client->setClientId($this->clientId);
+        $client->setClientSecret($this->clientSecret);
+        $client->setRedirectUri($redirectUrl);
+        foreach($this->clientScope as $scope) {
+            $client->addScope($scope);
+        }
+
+        $authUrl = $client->createAuthUrl();
+
+        if ((null === $authUrl) || (empty($authUrl))) {
+            throw new ConnectorConfigException("'authUrl' parameter is required", 624);
+        } else {
+            if (!$this->wellFormedUrl($authUrl)) {
+                throw new MalformedUrlException("'authUrl' is malformed", 600);
+            }
+        }
+
+        // Authentication request
+        return $authUrl;
+    }
 
     /**
      * Private function to check url format

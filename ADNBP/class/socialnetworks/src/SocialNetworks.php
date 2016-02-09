@@ -47,6 +47,189 @@ class SocialNetworks extends Singleton
     }
 
     /**
+     * Method that initialize a social api instance to use
+     * @param $social
+     * @return \CloudFramework\Services\SocialNetworks\Interfaces\SocialNetworksInterface
+     * @throws \Exception
+     */
+    public function getSocialApi($social) {
+        $social = ucfirst($social);
+        $socialNetworkClass = "CloudFramework\\Service\\SocialNetworks\\Connectors\\{$social}Api";
+        if (class_exists($socialNetworkClass)) {
+            try {
+                return $connector = $socialNetworkClass::getInstance();
+            } catch(\Exception $e) {
+                throw $e;
+                //SocialNetworks::generateErrorResponse($e->getMessage(), 500);
+            }
+        } else {
+            throw new \Exception("Social Network Requested not exists", 501);
+            //SocialNetworks::generateErrorResponse("Social Network Requested not exists", 501);
+        }
+    }
+
+    /**
+     * Method that set credentials for social network
+     * @param $social
+     * @param $clientId
+     * @param $clientSecret
+     * @param array $clientScope
+     */
+    public function setCredentials($social, $clientId, $clientSecret, $clientScope = array()) {
+        $connector = $this->getSocialApi($social);
+        return $connector->setCredentials($clientId, $clientSecret, $clientScope);
+    }
+
+    /**
+     * Method that check if user with $userId is authorized
+     * @param $social
+     * @param $userId
+     * @return bool
+     */
+    public function isAuth($social, $userId) {
+        if (isset($_SESSION[$social . "_credentials_" . $userId])) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Method that save auth keys of the user in session
+     * @param $social
+     * @param $authkeys
+     * @return JSON
+     */
+    public function setAuth($social, $authKeys) {
+        $connector = $this->getSocialApi($social);
+        $userId = $connector->getSelfProfile($authKeys);
+        $_SESSION[$social . "_credentials_" . $userId] = $authKeys;
+        return json_encode(array("user_id" => $userId));
+    }
+
+    /**
+     * Method that get auth keys of the user from session
+     * @param $social
+     * @param $userId
+     * @return JSON
+     */
+    public function getAuth($social, $userId) {
+        return json_encode($_SESSION[$social . "_credentials_" . $userId]);
+    }
+
+    /**
+     * Service that query to a social network api to get user profile
+     * @param string $social
+     * @param string $userId
+     * @return JSON
+     */
+    public function getProfile($social, $userId)    {
+        $connector = $this->getSocialApi($social);
+        return $connector->getProfile($userId, $_SESSION[$social."_credentials_".$userId]);
+    }
+
+    /**
+     * Service that query to a social network api to get followers
+     * @param string $social
+     * @param string $userId
+     * @return JSON
+     */
+    public function getFollowers($social, $userId)
+    {
+        $connector = $this->getSocialApi($social);
+        return $connector->getFollowers($userId, $_SESSION[$social . "_credentials_" . $userId]);
+    }
+
+    /**
+     * Service that query to a social network api to get followers info
+     * @param string $social
+     * @param string $userId
+     * @param string $postId
+     * @return JSON
+     */
+    public function getFollowersInfo($social, $userId, $postId)
+    {
+        $connector = $this->getSocialApi($social);
+        return $connector->getFollowersInfo($postId, $_SESSION[$social . "_credentials_" . $userId]);
+    }
+
+    /**
+     * Service that query to a social network api to get subscribers
+     * @param string $social
+     * @param string $userId
+     * @param array $credentials
+     * @return JSON
+     * @throws \Exception
+     */
+    public function getSubscribers($social, $userId, array $credentials = array())
+    {
+        $connector = $this->getSocialApi($social);
+        return $connector->getSubscribers($userId, $credentials);
+    }
+
+    /**
+     * Service that query to a social network api to get posts info
+     * @param string $social
+     * @param string $userId
+     * @return JSON
+     */
+    public function getPosts($social, $userId)
+    {
+        $connector = $this->getSocialApi($social);
+        return $connector->getPosts($userId, $_SESSION[$social."_credentials_".$userId]);
+    }
+
+    /**
+     * Service that connect to social network api and request for data for authenticated user
+     * @param string $social
+     * @param string $userId
+     * @param integer $maxResults maximum elements per page
+     * @return mixed
+     */
+    public function exportImages($social, $userId, $maxResults = 0)
+    {
+        $connector = $this->getSocialApi($social);
+        return $connector->exportImages($userId, $maxResults, $_SESSION[$social."_credentials_".$userId]);
+    }
+
+    /**
+     * Service that connect to social network api and export data for authenticated user
+     * @param string $social
+     * @param array $parameters
+     * GOOGLE
+     *      "userId"    => User whose google domain the stream will be published in
+     *      "content"   => Text of the comment
+     *      "link"      => External link
+     *      "logo"      => Logo
+     *      "circleId"  => Google circle where the stream will be published in
+     *      "personId"  => Google + user whose domain the stream will be published in
+     *      ($circleId are excluding)
+     * INSTAGRAM
+     *      "content"   => Text of the comment
+     *      "mediaId"   => Instagram media's ID
+     *
+     * @return JSON
+     */
+    public function importPost($social, $parameters)
+    {
+        $connector = $this->getSocialApi($social);
+        return $connector->importPost($parameters, $_SESSION[$social."_credentials_".$parameters["userId"]]);
+    }
+
+    /**
+     * Service that query to a social network api to revoke access token in order
+     * to ensure the permissions granted to the application are removed
+     * @param string $social
+     * @param string $userId
+     * @return JSON
+     */
+    public function revokeToken($social, $userId)
+    {
+        $connector = $this->getSocialApi($social);
+        return $connector->revokeToken($_SESSION[$social."_credentials_".$userId]);
+    }
+
+    /**
      * Static method that hydrate credentials for social network required fields
      * @param string $socialNetwork
      * @param array $authKeysNames
@@ -89,239 +272,37 @@ class SocialNetworks extends Singleton
     /**
      * Method that generate the social network login url
      * @param $social
-     * @param array $apiKeys
      * @param string $redirectUrl
      * @return mixed
-     * @throws \Exception
      */
-    public function getSocialLoginUrl($social, array $apiKeys, $redirectUrl) {
-        try {
-            $connector = $this->getSocialApi($social);
-            return $connector->getAuthUrl($apiKeys, $redirectUrl);
-        } catch(\Exception $e) {
-            throw $e;
-            //SocialNetworks::generateErrorResponse($e->getMessage(), 500);
-        }
-    }
-
-    /**
-     * Method that initialize a social api instance to use
-     * @param $social
-     * @return \CloudFramework\Services\SocialNetworks\Interfaces\SocialNetworksInterface
-     * @throws \Exception
-     */
-    public function getSocialApi($social) {
-        $socialNetworkClass = "CloudFramework\\Service\\SocialNetworks\\Connectors\\{$social}Api";
-        if (class_exists($socialNetworkClass)) {
-            try {
-                return $connector = $socialNetworkClass::getInstance();
-            } catch(\Exception $e) {
-                throw $e;
-                //SocialNetworks::generateErrorResponse($e->getMessage(), 500);
-            }
-        } else {
-            throw new \Exception(501, "Social Network Requested not exists");
-            //SocialNetworks::generateErrorResponse("Social Network Requested not exists", 501);
-        }
+    public function getSocialLoginUrl($social, $redirectUrl) {
+        $connector = $this->getSocialApi($social);
+        return $connector->getAuthUrl($redirectUrl);
     }
 
     /**
      * Service to check authorized credentials for Social Network
      * @param string $social
-     * @param array $credentials
+     * @param string $redirectUrl
      * @return array|string
-     * @throws \Exception
      */
-    public function auth($social, array $credentials = array(), $redirectUrl)
+    public function auth($social, $redirectUrl)
     {
-        try {
-            $connector = $this->getSocialApi($social);
-            return $connector->getAuth($credentials, $redirectUrl);
-        } catch(\Exception $e) {
-            throw $e;
-            //SocialNetworks::generateErrorResponse($e->getMessage(), 500);
-        }
+        $connector = $this->getSocialApi($social);
+        return $connector->getAuth($redirectUrl);
     }
 
     /**
      * @param string $social
+     * @param string $code
+     * @param string $redirectUrl
      * @param $params
-     * @throws \Exception
      */
-    public function saveInSession($social, $params)
+    public function getCredentials($social, $code, $redirectUrl)
     {
-        try {
-            $connector = $this->getSocialApi($social);
-            $credentials = $connector->authorize($params);
-            $_SESSION[strtolower($social) . "_credentials"] = $credentials;
-        } catch(\Exception $e) {
-            throw $e;
-            //SocialNetworks::generateErrorResponse($e->getMessage(), $e->getCode());
-        }
-    }
+        $connector = $this->getSocialApi($social);
+        $credentials = $connector->authorize($code, $redirectUrl);
 
-    /**
-     * Service that query to a social network api to get followers
-     * @param string $social
-     * @param string $userId
-     * @param array $credentials
-     * @return JSON string
-     * @throws \Exception
-     */
-    public function getFollowers($social, $userId, array $credentials = array())
-    {
-        try {
-            $connector = $this->getSocialApi($social);
-            return $connector->getFollowers($userId, $credentials);
-        } catch(\Exception $e) {
-            throw $e;
-            //SocialNetworks::generateErrorResponse($e->getMessage(), 500);
-        }
-    }
-
-    /**
-     * Service that query to a social network api to get followers info
-     * @param string $social
-     * @param string $postId
-     * @param array $credentials
-     * @return JSON string
-     * @throws \Exception
-     */
-    public function getFollowersInfo($social, $postId, array $credentials = array())
-    {
-        try {
-            $connector = $this->getSocialApi($social);
-            return $connector->getFollowersInfo($postId, $credentials);
-        } catch(\Exception $e) {
-            throw $e;
-            //SocialNetworks::generateErrorResponse($e->getMessage(), 500);
-        }
-    }
-
-    /**
-     * Service that query to a social network api to get subscribers
-     * @param string $social
-     * @param string $userId
-     * @param array $credentials
-     * @return JSON string
-     * @throws \Exception
-     */
-    public function getSubscribers($social, $userId, array $credentials = array())
-    {
-        try {
-            $connector = $this->getSocialApi($social);
-            return $connector->getSubscribers($userId, $credentials);
-        } catch(\Exception $e) {
-            throw $e;
-            //SocialNetworks::generateErrorResponse($e->getMessage(), 500);
-        }
-    }
-
-    /**
-     * Service that query to a social network api to get posts info
-     * @param string $social
-     * @param string $userId
-     * @param array $credentials
-     * @return JSON string
-     * @throws \Exception
-     */
-    public function getPosts($social, $userId, array $credentials = array())
-    {
-        try {
-            $connector = $this->getSocialApi($social);
-            return $connector->getPosts($userId, $credentials);
-        } catch(\Exception $e) {
-            throw $e;
-            //SocialNetworks::generateErrorResponse($e->getMessage(), 500);
-        }
-    }
-
-    /**
-     * Service that query to a social network api to get user profile
-     * @param string $social
-     * @param string $userId
-     * @param array $credentials
-     * @return JSON string
-     * @throws \Exception
-     */
-    public function getProfile($social, $userId, array $credentials = array())
-    {
-        try {
-            $connector = $this->getSocialApi($social);
-            return $connector->getProfile($userId, $credentials);
-        } catch(\Exception $e) {
-            throw $e;
-            //SocialNetworks::generateErrorResponse($e->getMessage(), 500);
-        }
-    }
-
-    /**
-     * Service that connect to social network api and request for data for authenticated user
-     * @param string $social
-     * @param array $credentials
-     * @param integer $maxResults maximum elements per page
-     * @param string $userId
-     * @return mixed
-     * @throws \Exception
-     */
-    public function import($social, array $credentials = array(), $maxResults = 0, $userId = null)
-    {
-        try {
-            $connector = $this->getSocialApi($social);
-            return $connector->import($credentials, $maxResults, $userId);
-        } catch(\Exception $e) {
-            throw $e;
-            //SocialNetworks::generateErrorResponse($e->getMessage(), 500);
-        }
-    }
-
-    /**
-     * Service that connect to social network api and export data for authenticated user
-     * @param string $social
-     * @param array $credentials
-     * @param array $parameters
-     * GOOGLE
-     *      "userId"    => User whose google domain the stream will be published in
-     *      "content"   => Text of the comment
-     *      "link"      => External link
-     *      "logo"      => Logo
-     *      "circleId"  => Google circle where the stream will be published in
-     *      "personId"  => Google + user whose domain the stream will be published in
-     *      ($circleId are excluding)
-     * INSTAGRAM
-     *      "content"   => Text of the comment
-     *      "mediaId"   => Instagram media's ID
-     *
-     * @return ExportDTO
-     * @throws \Exception
-     */
-    public function export($social, array $credentials, $parameters)
-    {
-        try {
-            $connector = $this->getSocialApi($social);
-            return $connector->export($credentials, $parameters);
-        } catch(\Exception $e) {
-            throw $e;
-            //SocialNetworks::generateErrorResponse($e->getMessage(), 500);
-        }
-    }
-
-    /**
-     * Service that query to a social network api to revoke access token in order
-     * to ensure the permissions granted to the application are removed
-     * @param string $social
-     * @param array $credentials
-     * @return JSON string
-     * @throws \Exception
-     */
-    public function revokeToken($social, array $credentials)
-    {
-        try {
-            $connector = $this->getSocialApi($social);
-            return $connector->revokeToken($credentials);
-        } catch(\Exception $e) {
-            throw $e;
-            //SocialNetworks::generateErrorResponse($e->getMessage(), 500);
-        }
+        return $credentials;
     }
 }
