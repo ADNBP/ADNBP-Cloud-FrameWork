@@ -50,6 +50,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     public function getFollowers($userId, array $credentials)
     {
         $client = new \Google_Client();
+        $client->setClassConfig("Google_Http_Request", "disable_gzip", true);
         $client->setClientId($this->clientId);
         $client->setClientSecret($this->clientSecret);
         $client->setAccessToken(json_encode($credentials));
@@ -81,6 +82,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     public function getFollowersInfo($postId, array $credentials)
     {
         $client = new \Google_Client();
+        $client->setClassConfig("Google_Http_Request", "disable_gzip", true);
         $client->setClientId($this->clientId);
         $client->setClientSecret($this->clientSecret);
         $client->setAccessToken(json_encode($credentials));
@@ -121,6 +123,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     public function getPosts($userId, array $credentials)
     {
         $client = new \Google_Client();
+        $client->setClassConfig("Google_Http_Request", "disable_gzip", true);
         $client->setClientId($this->clientId);
         $client->setClientSecret($this->clientSecret);
         $client->setAccessToken(json_encode($credentials));
@@ -153,6 +156,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     public function getProfile($userId, array $credentials)
     {
         $client = new \Google_Client();
+        $client->setClassConfig("Google_Http_Request", "disable_gzip", true);
         $client->setClientId($this->clientId);
         $client->setClientSecret($this->clientSecret);
         $client->setAccessToken(json_encode($credentials));
@@ -187,6 +191,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     public function getSelfProfile(array $credentials)
     {
         $client = new \Google_Client();
+        $client->setClassConfig("Google_Http_Request", "disable_gzip", true);
         $client->setClientId($this->clientId);
         $client->setClientSecret($this->clientSecret);
         $client->setAccessToken(json_encode($credentials));
@@ -224,6 +229,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     public function exportImages($userId, $maxResults, array $credentials)
     {
         $client = new \Google_Client();
+        $client->setClassConfig("Google_Http_Request", "disable_gzip", true);
         $client->setClientId($this->clientId);
         $client->setClientSecret($this->clientSecret);
         $client->setAccessToken(json_encode($credentials));
@@ -310,6 +316,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     public function importPost(array $parameters, array $credentials) {
         $client = new \Google_Client();
+        $client->setClassConfig("Google_Http_Request", "disable_gzip", true);
         $client->setClientId($this->clientId);
         $client->setClientSecret($this->clientSecret);
         $client->setAccessToken(json_encode($credentials));
@@ -392,6 +399,27 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         return json_encode($activity);
     }
 
+    /*public function checkAccessTokenExpiry($userId) {
+        $client = new \Google_Client();
+        $client->setClassConfig("Google_Http_Request", "disable_gzip", true);
+        $client->setClientId($this->clientId);
+        $client->setClientSecret($this->clientSecret);
+        $client->setAccessToken(json_encode($credentials));
+
+        if ($client->isAccessTokenExpired()) {
+            try {
+                $client->setClientId($this->clientId);
+                $client->setClientSecret($this->clientSecret);
+                $client->refreshToken($credentials["refresh_token"]);
+            } catch(\Exception $e) {
+                throw new AuthenticationException("Error refreshing token: " . $e->getMessage(), 602);
+            }
+        }
+
+        $googleCredentials = json_decode($client->getAccessToken(), true);
+
+        return $googleCredentials["expires_in"];
+    }*/
     /**
      * Authentication service from google sign in request
      * @param string $code
@@ -400,6 +428,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * @throws AuthenticationException
      * @throws ConnectorException
      * @throws MalformedException
+     * @throws \Exception
      *
      */
     public function authorize($code, $redirectUrl)
@@ -413,6 +442,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         }
 
         $client = new \Google_Client();
+        $client->setClassConfig("Google_Http_Request", "disable_gzip", true);
         $client->setClientId($this->clientId);
         $client->setClientSecret($this->clientSecret);
         $client->setRedirectUri($redirectUrl);
@@ -444,6 +474,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     public function revokeToken(array $credentials)
     {
         $client = new \Google_Client();
+        $client->setClassConfig("Google_Http_Request", "disable_gzip", true);
         $client->setClientId($this->clientId);
         $client->setClientSecret($this->clientSecret);
         $client->setAccessToken(json_encode($credentials));
@@ -504,6 +535,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         }
 
         $client = new \Google_Client();
+        $client->setClassConfig("Google_Http_Request", "disable_gzip", true);
         $client->setAccessType("offline");
         $client->setClientId($this->clientId);
         $client->setClientSecret($this->clientSecret);
