@@ -56,7 +56,7 @@ $config = array(
 		'Google' => array(
 			'client_id' => $this->getConf("GoogleOauth_CLIENT_ID"),
 			'client_secret' => $this->getConf("GoogleOauth_CLIENT_SECRET"),
-			'scope' => (strlen($this->getConf("GoogleOauth_SCOPE"))) ? $this->getConf("GoogleOauth_SCOPE") : 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+			'scope' => (is_array($this->getConf("GoogleOauth_SCOPE"))) ? implode(' ',$this->getConf("GoogleOauth_SCOPE")) : 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
 		),
 		'Instagram' => array(
 			'client_id' => $this->getConf("InstagramOauth_CLIENT_ID"),
