@@ -482,18 +482,19 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         if ((isset($parameters["attachment"])) && (!is_array($parameters["attachment"]))) {
             throw new ConnectorConfigException("'attachment' post parameter must be an array", 623);
         } else {
-            if ((!isset($parameters["attachment"][0])) ||
-                (null === $parameters["attachment"][0]) ||
-                ("" === $parameters["attachment"][0]) ||
+            if (count($parameters["attachment"]) == 0) {
+                throw new ConnectorConfigException("'attachment' post parameter array is empty'", 632);
+            }
+            if ((isset($parameters["attachment"][0])) &&
                 (("link" !== $parameters["attachment"][0]) &&
                 ("photo" !== $parameters["attachment"][0]) &&
                 ("video" !== $parameters["attachment"][0]))) {
                 throw new ConnectorConfigException("'attachment' type must be 'link', 'photo' or 'video'", 624);
             }
 
-            if ((!isset($parameters["attachment"][1])) ||
-                (null === $parameters["attachment"][1]) ||
-                ("" === $parameters["attachment"][1])) {
+            if ((isset($parameters["attachment"][1])) &&
+                ((null === $parameters["attachment"][1]) ||
+                ("" === $parameters["attachment"][1]))) {
                 throw new ConnectorConfigException("'attachment' value must be an url ('link') or a file path ('photo' or 'video')", 625);
             } else {
                 if (("link" === $parameters["attachment"][0]) && (!$this->wellFormedUrl($parameters["attachment"][1]))) {

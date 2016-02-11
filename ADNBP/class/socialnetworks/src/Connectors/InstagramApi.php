@@ -229,8 +229,8 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
 
         if (!$nextPageUrl) {
             $nextPageUrl = self::INSTAGRAM_API_USERS_URL . $userId .
-                        "/media/recent/?access_token=" . $credentials["access_token"].
-                        "&count=".$maxTotalResults;
+                        "/media/recent/?access_token=" . $credentials["access_token"];
+                        //"&count=".$maxTotalResults;
         }
 
         $pagination = true;
@@ -259,7 +259,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
                     $nextPageUrl = null;
                 }
             } else {
-                $url = $data->pagination->next_url;
+                $nextPageUrl = $data->pagination->next_url;
                 $count++;
             }
         }
