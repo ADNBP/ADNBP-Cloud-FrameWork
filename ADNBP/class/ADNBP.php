@@ -943,14 +943,19 @@ if (!defined("_ADNBP_CLASS_")) {
             return include(__DIR__ . '/ADNBP/authToken.php');
         }
 
-        function setAuthUserData($key, $value, $namespace = '')
+        function setAuthUserData($keys, $value='', $namespace = '')
         {
             if (!strlen($namespace))
                 $namespace = $this->getConf("activeAuth");
             if (!strlen($namespace))
                 return false;
 
-            $this->_isAuth[$namespace]['data'][$key] = $value;
+            if (is_array($keys)) {
+                foreach ($keys as $key=>$value)
+                    $this->_isAuth[$namespace]['data'][$key] = $value;
+            } else {
+                $this->_isAuth[$namespace]['data'][$keys] = $value;
+            }
             $this->setAuth(true, $namespace);
         }
 

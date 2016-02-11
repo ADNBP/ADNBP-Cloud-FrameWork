@@ -210,7 +210,7 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
          * @param $cond null|array
          * @return array|bool|int|string|null
          */
-        function getCubeSubData($cubeId, $op='select', $fields = '*', $cond = null)
+        function getCubeSubData($cubeId, $op='data', $fields = '*', $cond = null)
         {
             $data = $this->getCube($cubeId,$fields,$cond);
             if(!is_array($data)) return $data;
@@ -219,17 +219,56 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                 case'fields':
                     return array_keys($data[0]);
                     break;
-                case'select':
+                case'data':
                     return $data;
                     break;
-                case'select distinct':
+                case'distinct data':
                     $distinct = array();
+                    $distinctHash = array();
+
                     for ($i = 0, $tr = count($data); $i < $tr; $i++) {
-                        if(!isset($distinct[sha1(serialize($data[$i]))]))
-                            $distinct[sha1(serialize($data[$i]))]=true;
-                        else unset($data[$i]);
+                        if(!isset($distinctHash[sha1(serialize($data[$i]))])) {
+                            $distinctHash[sha1(serialize($data[$i]))] = true;
+                            $distinct = $data[$i];
+                        }
                     }
-                    return $data;
+                    return $distinct;
+                    break;
+                case'values':
+                    $values = array();
+                    for ($i = 0, $tr = count($data); $i < $tr; $i++) {
+                        $values[] = array_values($data[$i]);
+                    }
+                    return $values;
+                    break;
+                case'distinct values':
+                    $distinct = array();
+                    $distinctHash = array();
+                    for ($i = 0, $tr = count($data); $i < $tr; $i++) {
+                        if(!isset($distinctHash[sha1(serialize($data[$i]))])) {
+                            $distinctHash[sha1(serialize($data[$i]))] = true;
+                            $distinct[] = array_values($data[$i]);
+                        }
+                    }
+                    return $distinct;
+                    break;
+                case'group values':
+                    $values = array();
+                    for ($i = 0, $tr = count($data); $i < $tr; $i++) {
+                        $values[] = implode(',',array_values($data[$i]));
+                    }
+                    return $values;
+                    break;
+                case'distinct group values':
+                    $distinct = array();
+                    $distinctHash = array();
+                    for ($i = 0, $tr = count($data); $i < $tr; $i++) {
+                        if(!isset($distinctHash[sha1(serialize($data[$i]))])) {
+                            $distinctHash[sha1(serialize($data[$i]))] = true;
+                            $distinct[] = implode(',',array_values($data[$i]));
+                        }
+                    }
+                    return $distinct;
                     break;
                 case'sum':
                     //TODO: fix sum option of getCubeSubData
@@ -533,7 +572,7 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                     // Summarize Row is to add a new row
                     // Add a new Row if there is a summarize
                     if(isset($props[$nrow]['summarize'])) {
-                        $output[$y][$nrows-1] = array('colspan'=>$nrows-$nrow,'value'=>'Total '.$key,'rowBold'=>'true','bold'=>'true','stringIndex'=>((strlen($stringIndex))?$stringIndex.'|f|':'').$key);
+                        $output[$y][$nrows-1] = array('rowSummarize'=>$props[$nrow]['summarize'],'colspan'=>$nrows-$nrow,'value'=>'Total '.$key,'rowBold'=>'true','bold'=>'true','stringIndex'=>((strlen($stringIndex))?$stringIndex.'|f|':'').$key);
                         $y++;
                     }
                 }
@@ -649,16 +688,47 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                 } else $rowKeys = array($ncols=>'');
 
                 foreach ($rowKeys as $rowIndex=>$rowKey) {
+
+                    // is this row a summary row
+                    $rowSummary = false;
+                    if(isset($matrixData[$rowIndex][1]['rowSummarize'])) {
+                        $rowSummary = $matrixData[$rowIndex][1]['rowSummarize'];
+                    }
+
+                    // Fill matrix values cells
                     foreach ($colKeys as $colIndex=>$colKey) {
                         $i=0;
                         foreach ($this->matrixReports[$idMatix]['values'] as $valueField=>$valueProps) {
+
+                            $summary = 'raw';
+                            // Summary comes from rowSummary summarize property
+                            if(false !== $rowSummary) {
+                                if(is_array($rowSummary)) $summary = $rowSummary[$i];
+                                else $summary = $rowSummary;
+
+                            //  Summary comes value summarize property
+                            } elseif(isset($valueProps['summarize'])){
+                                $summary = $valueProps['summarize'];
+                            }
+
                             if(!isset($valueProps['summarize'])) $valueProps['summarize'] = 'raw';
-                            switch($valueProps['summarize']) {
+
+                            switch($summary) {
                                 case "sum":
                                     if(!is_array($propData['values'][$colKey.'|_|'.$rowKey][$valueField]))
-                                        $value=0;
+                                        $value='';
                                     else
                                         $value = array_sum($propData['values'][$colKey.'|_|'.$rowKey][$valueField]);
+                                    break;
+                                case "max":
+                                case "min":
+                                    if(!is_array($propData['values'][$colKey.'|_|'.$rowKey][$valueField]))
+                                        $value='';
+                                    else {
+                                        if($summary=='max') rsort($propData['values'][$colKey . '|_|' . $rowKey][$valueField]);
+                                        else sort($propData['values'][$colKey . '|_|' . $rowKey][$valueField]);
+                                        $value = $propData['values'][$colKey . '|_|' . $rowKey][$valueField][0];
+                                    }
                                     break;
                                 default:
                                     $value = $propData['values'][$colKey.'|_|'.$rowKey][$valueField];

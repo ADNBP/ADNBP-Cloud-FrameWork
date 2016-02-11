@@ -64,7 +64,7 @@
                                 	?>
                                 <td<?=($align)?' class="text-'.$align.'"':''?><?=($nowrap)?' nowrap':''?><?=($colspan)?' colspan="'.$colspan.'"':''?><?=($rowspan)?' rowspan="'.$rowspan.'"':''?><?=($cell['anchor'])?' id="'.htmlentities($cell['anchor']).'"':''?>><?php
                                 	if(strlen($cell['currency']))
-                                        $cell['value'] = htmlentities($adnbp->numberFormat($cell['value'],2)).'&nbsp;'.htmlentities($cell['currency']);
+                                        $cell['value'] = (strlen($cell['value']))?htmlentities($adnbp->numberFormat($cell['value'],2)).'&nbsp;'.htmlentities($cell['currency']):'';
                                     else
 									    $cell['value'] =htmlentities($cell['value']);
 									if(isset($cell['bold'])) $cell['value'] = '<strong>'.$cell['value'].'</strong>';
