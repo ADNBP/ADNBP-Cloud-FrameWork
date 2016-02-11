@@ -278,6 +278,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @param array $credentials
      * @return JSON
      * @throws ConnectorConfigException
+     * @throws ConnectorServiceException
      */
     public function post(array $parameters, array $credentials) {
         $this->checkCredentials($credentials);
@@ -366,7 +367,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @throws AuthenticationException
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
-     * @throws MalformedException
+     * @throws MalformedUrlException
      */
     public function authorize($code, $redirectUrl)
     {
