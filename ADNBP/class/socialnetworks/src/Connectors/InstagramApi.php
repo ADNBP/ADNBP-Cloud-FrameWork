@@ -136,8 +136,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
 
         if (!$nextPageUrl) {
             $nextPageUrl = self::INSTAGRAM_API_USERS_URL . $userId .
-                "/follows?access_token=" . $credentials["access_token"].
-                "&count=".$maxResultsPerPage;
+                "/follows?access_token=" . $credentials["access_token"];
         }
 
         $pagination = true;
