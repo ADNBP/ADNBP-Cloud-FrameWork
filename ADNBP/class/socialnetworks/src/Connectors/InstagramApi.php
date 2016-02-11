@@ -5,10 +5,7 @@ use CloudFramework\Patterns\Singleton;
 use CloudFramework\Service\SocialNetworks\Exceptions\AuthenticationException;
 use CloudFramework\Service\SocialNetworks\Exceptions\ConnectorConfigException;
 use CloudFramework\Service\SocialNetworks\Exceptions\ConnectorServiceException;
-use CloudFramework\Service\SocialNetworks\Exceptions\ExportException;
-use CloudFramework\Service\SocialNetworks\Exceptions\ImportException;
 use CloudFramework\Service\SocialNetworks\Exceptions\MalformedUrlException;
-use CloudFramework\Service\SocialNetworks\Exceptions\ProfileInfoException;
 use CloudFramework\Service\SocialNetworks\Interfaces\SocialNetworkInterface;
 use CloudFramework\Service\SocialNetworks\SocialNetworks;
 
@@ -182,9 +179,6 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @param string $userId
      * @param array $credentials
      * @return JSON
-     * @throws AuthenticationException
-     * @throws ConnectorConfigException
-     * @throws ProfileInfoException
      */
     public function getProfile($userId, array $credentials)
     {
@@ -284,7 +278,6 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @param array $credentials
      * @return JSON
      * @throws ConnectorConfigException
-     * @throws ExportException
      */
     public function post(array $parameters, array $credentials) {
         $this->checkCredentials($credentials);
@@ -371,9 +364,9 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @param string $redirectUrl
      * @return array
      * @throws AuthenticationException
-     * @throws ConnectorException
+     * @throws ConnectorConfigException
+     * @throws ConnectorServiceException
      * @throws MalformedException
-     * @throws \Exception
      */
     public function authorize($code, $redirectUrl)
     {
@@ -467,6 +460,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * Method that calls url with GET method
      * @param $url
      * @return array
+     * @throws \Exception
      */
     private function curlGet($url) {
         $ch = curl_init();
@@ -475,6 +469,9 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         $data = curl_exec($ch);
         curl_close($ch);
 
+        if (!$data) {
+            throw \Exception("Error calling curl: ".curl_error($ch), curl_errno($ch));
+        }
         return json_decode($data, true);
     }
 
@@ -483,6 +480,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @param $url
      * @param $fields
      * @return array
+     * @throws \Exception
      */
     private function curlPost($url, $fields) {
         $ch = curl_init();
@@ -493,6 +491,9 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         $data = curl_exec($ch);
         curl_close($ch);
 
+        if (!$data) {
+            throw \Exception("Error calling curl: ".curl_error($ch), curl_errno($ch));
+        }
         return json_decode($data, true);
     }
 
