@@ -212,25 +212,25 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
     /**
      * Service that query to Instagram Api Drive service for images
      * @param string $userId
-     * @param integer $maxResultsPerPage.
+     * @param integer $maxTotalResults.
      * @param integer $numberOfPages
      * @param string $nextPageUrl
      * @param array $credentials
      * @return JSON
      * @throws ConnectorServiceException
      */
-    public function exportImages($userId, $maxResultsPerPage, $numberOfPages, $nextPageUrl, array $credentials)
+    public function exportImages($userId, $maxTotalResults, $numberOfPages, $nextPageUrl, array $credentials)
     {
         $this->checkCredentials($credentials);
 
         $this->checkUser($userId);
 
-        $this->checkPagination($numberOfPages);
+        $this->checkPagination($numberOfPages, $maxTotalResults);
 
         if (!$nextPageUrl) {
             $nextPageUrl = self::INSTAGRAM_API_USERS_URL . $userId .
                         "/media/recent/?access_token=" . $credentials["access_token"].
-                        "&count=".$maxResultsPerPage;
+                        "&count=".$maxTotalResults;
         }
 
         $pagination = true;
@@ -446,10 +446,17 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
 
     /**
      * Method that check pagination parameters are ok
-     * @param $numberOfPages
+     * @param integer $maxTotalResults
+     * @param integer $numberOfPages
      * @throws ConnectorConfigException
      */
-    private function checkPagination($numberOfPages) {
+    private function checkPagination($numberOfPages, $maxTotalResults = 0) {
+        if (null === $maxTotalResults) {
+            throw new ConnectorConfigException("'maxTotalResults' parameter is required", 608);
+        } else if (!is_numeric($maxTotalResults)) {
+            throw new ConnectorConfigException("'maxTotalResults' parameter is not numeric", 609);
+        }
+
         if (null === $numberOfPages) {
             throw new ConnectorConfigException("'numberOfPages' parameter is required", 610);
         } else if (!is_numeric($numberOfPages)) {
