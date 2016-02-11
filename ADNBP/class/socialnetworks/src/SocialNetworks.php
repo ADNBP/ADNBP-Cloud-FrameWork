@@ -102,9 +102,9 @@ class SocialNetworks extends Singleton
      */
     public function setAuth($social, $authKeys) {
         $connector = $this->getSocialApi($social);
-        $profile = $connector->getSelfProfile($authKeys);
-        $_SESSION[$social . "_credentials_" . $profile->getId()] = $authKeys;
-        return json_encode(array("user_id" => $profile->getId()));
+        $profileId = $connector->getProfileId($authKeys);
+        $_SESSION[$social . "_credentials_" . $profileId] = $authKeys;
+        return json_encode(array("user_id" => $profileId));
     }
 
     /**
@@ -161,13 +161,16 @@ class SocialNetworks extends Singleton
      * Service that query to a social network api to get subscribers
      * @param string $social
      * @param string $userId
-     * @param array $credentials
+     * @param integer $maxResultsPerPage maximum elements per page
+     * @param integer $numberOfPages number of pages
+     * @param string $nextPageUrl Indicates a specific page for pagination
      * @return JSON
      */
-    public function getSubscribers($social, $userId, array $credentials = array())
+    public function getSubscribers($social,  $userId, $maxResultsPerPage, $numberOfPages, $nextPageUrl)
     {
         $connector = $this->getSocialApi($social);
-        return $connector->getSubscribers($userId, $credentials);
+        return $connector->getSubscribers($userId, $maxResultsPerPage, $numberOfPages, $nextPageUrl,
+            $_SESSION[$social . "_credentials_" . $userId]);
     }
 
     /**

@@ -35,5 +35,7 @@
          *      627     'code' parameter is required
          *      628     'redirectUrl' parameter is required
          *      629     'authUrl' parameter is required
+         *      630     'content' parameter is required
+         *      631     'mediaId' parameter is required
          */
     }

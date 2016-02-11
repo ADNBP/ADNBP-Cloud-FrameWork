@@ -17,7 +17,9 @@ use CloudFramework\Service\SocialNetworks\SocialNetworks;
 class GoogleApi extends Singleton implements SocialNetworkInterface {
 
     const ID = 'google';
-    const MAX_IMPORT_FILE_SIZE = 36 * 1024 * 1024;
+    const MAX_IMPORT_FILE_SIZE = 37748736; // 36MB
+    const MAX_IMPORT_FILE_SIZE_MB = 36;
+    const BLOCK_SIZE_BYTES = 1048576; // Blocks of 1MB
 
     // Google client object
     private $client;
@@ -71,33 +73,11 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     public function getFollowers($userId, $maxResultsPerPage, $numberOfPages, $pageToken, array $credentials)
     {
-        if ((null === $credentials) || (!is_array($credentials)) || (count($credentials) == 0)) {
-            throw new ConnectorConfigException("Invalid credentials set'", 604);
-        }
+        $this->checkCredentials($credentials);
 
-        if ((!isset($credentials["access_token"])) || (null === $credentials["access_token"]) || ("" === $credentials["access_token"])) {
-            throw new ConnectorConfigException("'access_token' parameter is required", 605);
-        }
+        $this->checkUser($userId);
 
-        if ((!isset($credentials["refresh_token"])) || (null === $credentials["refresh_token"]) || ("" === $credentials["refresh_token"])) {
-            throw new ConnectorConfigException("'refresh_token' parameter is required", 606);
-        }
-
-        if ((null === $userId) || ("" === $userId)) {
-            throw new ConnectorConfigException("'userId' parameter is required", 607);
-        }
-
-        if (null === $maxResultsPerPage) {
-            throw new ConnectorConfigException("'maxResultsPerPage' parameter is required", 608);
-        } else if (!is_numeric($maxResultsPerPage)) {
-            throw new ConnectorConfigException("'maxResultsPerPage' parameter is not numeric", 609);
-        }
-
-        if (null === $numberOfPages) {
-            throw new ConnectorConfigException("'numberOfPages' parameter is required", 610);
-        } else if (!is_numeric($numberOfPages)) {
-            throw new ConnectorConfigException("'numberOfPages' parameter is not numeric", 611);
-        }
+        $this->checkPagination($maxResultsPerPage, $numberOfPages);
 
         $this->setAccessToken($credentials);
 
@@ -118,7 +98,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
 
                 $people[$count] = array();
                 foreach($peopleList->getItems() as $person) {
-                    array_push($people[$count], $person->toSimpleObject());
+                    $people[$count][] = $person->toSimpleObject();
                 }
                 $count++;
 
@@ -150,17 +130,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     public function getFollowersInfo($postId, array $credentials)
     {
-        if ((null === $credentials) || (!is_array($credentials)) || (count($credentials) == 0)) {
-            throw new ConnectorConfigException("Invalid credentials set'", 604);
-        }
-
-        if ((!isset($credentials["access_token"])) || (null === $credentials["access_token"]) || ("" === $credentials["access_token"])) {
-            throw new ConnectorConfigException("'access_token' parameter is required", 605);
-        }
-
-        if ((!isset($credentials["refresh_token"])) || (null === $credentials["refresh_token"]) || ("" === $credentials["refresh_token"])) {
-            throw new ConnectorConfigException("'refresh_token' parameter is required", 606);
-        }
+        $this->checkCredentials($credentials);
 
         if ((null === $postId) || ("" === $postId)) {
             throw new ConnectorConfigException("'postId' parameter is required", 612);
@@ -180,15 +150,15 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             $people["sharedto"] = array();
 
             foreach($plusoners as $plusoner) {
-                array_push($people["plusoners"], $plusoner->toSimpleObject());
+                $people["plusoners"][] = $plusoner->toSimpleObject();
             }
 
             foreach($resharers as $resharer) {
-                array_push($people["resharers"], $resharer->toSimpleObject());
+                $people["resharers"][] = $resharer->toSimpleObject();
             }
 
             foreach($sharedto as $shared) {
-                array_push($people["sharedto"], $shared->toSimpleObject());
+                $people["sharedto"][] = $shared->toSimpleObject();
             }
         } catch(\Exception $e) {
             throw new ConnectorServiceException("Error getting people in Google+ post: " . $e->getMessage(), $e->getCode());
@@ -197,7 +167,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         return json_encode($people);
     }
 
-    public function getSubscribers($userId, array $credentials = array()) {
+    public function getSubscribers($userId, $maxResultsPerPage, $numberOfPages, $nextPageUrl, array $credentials = array()) {
         return;
     }
 
@@ -215,33 +185,11 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     public function getPosts($userId, $maxResultsPerPage, $numberOfPages, $pageToken, array $credentials)
     {
-        if ((null === $credentials) || (!is_array($credentials)) || (count($credentials) == 0)) {
-            throw new ConnectorConfigException("Invalid credentials set'", 604);
-        }
+        $this->checkCredentials($credentials);
 
-        if ((!isset($credentials["access_token"])) || (null === $credentials["access_token"]) || ("" === $credentials["access_token"])) {
-            throw new ConnectorConfigException("'access_token' parameter is required", 605);
-        }
+        $this->checkUser($userId);
 
-        if ((!isset($credentials["refresh_token"])) || (null === $credentials["refresh_token"]) || ("" === $credentials["refresh_token"])) {
-            throw new ConnectorConfigException("'refresh_token' parameter is required", 606);
-        }
-
-        if ((null === $userId) || ("" === $userId)) {
-            throw new ConnectorConfigException("'userId' parameter is required", 607);
-        }
-
-        if (null === $maxResultsPerPage) {
-            throw new ConnectorConfigException("'maxResultsPerPage' parameter is required", 608);
-        } else if (!is_numeric($maxResultsPerPage)) {
-            throw new ConnectorConfigException("'maxResultsPerPage' parameter is not numeric", 609);
-        }
-
-        if (null === $numberOfPages) {
-            throw new ConnectorConfigException("'numberOfPages' parameter is required", 610);
-        } else if (!is_numeric($numberOfPages)) {
-            throw new ConnectorConfigException("'numberOfPages' parameter is not numeric", 611);
-        }
+        $this->checkPagination($maxResultsPerPage, $numberOfPages);
 
         $this->setAccessToken($credentials);
 
@@ -262,7 +210,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
 
                 $activities[$count] = array();
                 foreach($activitiesList->getItems() as $activity) {
-                    array_push($activities[$count], $activity->toSimpleObject());
+                    $activities[$count][] = $activity->toSimpleObject();
                 }
                 $count++;
 
@@ -293,21 +241,9 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     public function getProfile($userId, array $credentials)
     {
-        if ((null === $credentials) || (!is_array($credentials)) || (count($credentials) == 0)) {
-            throw new ConnectorConfigException("Invalid credentials set'", 604);
-        }
+        $this->checkCredentials($credentials);
 
-        if ((!isset($credentials["access_token"])) || (null === $credentials["access_token"]) || ("" === $credentials["access_token"])) {
-            throw new ConnectorConfigException("'access_token' parameter is required", 605);
-        }
-
-        if ((!isset($credentials["refresh_token"])) || (null === $credentials["refresh_token"]) || ("" === $credentials["refresh_token"])) {
-            throw new ConnectorConfigException("'refresh_token' parameter is required", 606);
-        }
-
-        if ((null === $userId) || ("" === $userId)) {
-            throw new ConnectorConfigException("'userId' parameter is required", 607);
-        }
+        $this->checkUser($userId);
 
         $this->setAccessToken($credentials);
 
@@ -322,26 +258,16 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     }
 
     /**
-     * Service that query to Google Oauth Api to get user profile
+     * Service that query to Google Oauth Api to get user profile id
      * @param array $credentials
      * @return string
      * @throws AuthenticationException
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function getSelfProfile(array $credentials)
+    public function getProfileId(array $credentials)
     {
-        if ((null === $credentials) || (!is_array($credentials)) || (count($credentials) == 0)) {
-            throw new ConnectorConfigException("Invalid credentials set'", 604);
-        }
-
-        if ((!isset($credentials["access_token"])) || (null === $credentials["access_token"]) || ("" === $credentials["access_token"])) {
-            throw new ConnectorConfigException("'access_token' parameter is required", 605);
-        }
-
-        if ((!isset($credentials["refresh_token"])) || (null === $credentials["refresh_token"]) || ("" === $credentials["refresh_token"])) {
-            throw new ConnectorConfigException("'refresh_token' parameter is required", 606);
-        }
+        $this->checkCredentials($credentials);
 
         $this->setAccessToken($credentials);
 
@@ -352,7 +278,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             throw new ConnectorServiceException("Error fetching user profile info: " . $e->getMessage(), $e->getCode());
         }
 
-        return $profile;
+        return $profile->getId();
     }
 
     /**
@@ -369,33 +295,11 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     public function exportImages($userId, $maxResultsPerPage, $numberOfPages, $pageToken, array $credentials)
     {
-        if ((null === $credentials) || (!is_array($credentials)) || (count($credentials) == 0)) {
-            throw new ConnectorConfigException("Invalid credentials set'", 604);
-        }
+        $this->checkCredentials($credentials);
 
-        if ((!isset($credentials["access_token"])) || (null === $credentials["access_token"]) || ("" === $credentials["access_token"])) {
-            throw new ConnectorConfigException("'access_token' parameter is required", 605);
-        }
+        $this->checkUser($userId);
 
-        if ((!isset($credentials["refresh_token"])) || (null === $credentials["refresh_token"]) || ("" === $credentials["refresh_token"])) {
-            throw new ConnectorConfigException("'refresh_token' parameter is required", 606);
-        }
-
-        if ((null === $userId) || ("" === $userId)) {
-            throw new ConnectorConfigException("'userId' parameter is required", 607);
-        }
-
-        if (null === $maxResultsPerPage) {
-            throw new ConnectorConfigException("'maxResultsPerPage' parameter is required", 608);
-        } else if (!is_numeric($maxResultsPerPage)) {
-            throw new ConnectorConfigException("'maxResultsPerPage' parameter is not numeric", 609);
-        }
-
-        if (null === $numberOfPages) {
-            throw new ConnectorConfigException("'numberOfPages' parameter is required", 610);
-        } else if (!is_numeric($numberOfPages)) {
-            throw new ConnectorConfigException("'numberOfPages' parameter is not numeric", 611);
-        }
+        $this->checkPagination($maxResultsPerPage, $numberOfPages);
 
         $this->setAccessToken($credentials);
 
@@ -446,21 +350,9 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     public function importMedia($userId, $path, array $credentials)
     {
-        if ((null === $credentials) || (!is_array($credentials)) || (count($credentials) == 0)) {
-            throw new ConnectorConfigException("Invalid credentials set'", 604);
-        }
+        $this->checkCredentials($credentials);
 
-        if ((!isset($credentials["access_token"])) || (null === $credentials["access_token"]) || ("" === $credentials["access_token"])) {
-            throw new ConnectorConfigException("'access_token' parameter is required", 605);
-        }
-
-        if ((!isset($credentials["refresh_token"])) || (null === $credentials["refresh_token"]) || ("" === $credentials["refresh_token"])) {
-            throw new ConnectorConfigException("'refresh_token' parameter is required", 606);
-        }
-
-        if ((null === $userId) || ("" === $userId)) {
-            throw new ConnectorConfigException("'userId' parameter is required", 607);
-        }
+        $this->checkUser($userId);
 
         if ((null === $path) || ("" === $path)) {
             throw new ConnectorConfigException("'path' parameter is required", 613);
@@ -474,7 +366,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                 } else {
                     $filesize = filesize($path);
                     if ($filesize > self::MAX_IMPORT_FILE_SIZE) {
-                        throw new ConnectorConfigException("Maximum file size is ".(self::MAX_IMPORT_FILE_SIZE/1024/1024)."MB", 616);
+                        throw new ConnectorConfigException("Maximum file size is ".(self::MAX_IMPORT_FILE_SIZE_MB)."MB", 616);
                     }
                 }
             }
@@ -492,7 +384,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
 
             // Size of each chunk of data in bytes. Setting it higher leads faster upload (less chunks,
             // for reliable connections). Setting it lower leads better recovery (fine-grained chunks)
-            $chunkSizeBytes = 1 * 1024 * 1024;
+            $chunkSizeBytes = self::BLOCK_SIZE_BYTES;
 
             // Setting the defer flag to true tells the client to return a request which can be called
             // with ->execute(); instead of making the API call immediately.
@@ -559,17 +451,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * @throws ConnectorServiceException
      */
     public function post(array $parameters, array $credentials) {
-        if ((null === $credentials) || (!is_array($credentials)) || (count($credentials) == 0)) {
-            throw new ConnectorConfigException("Invalid credentials set'", 604);
-        }
-
-        if ((!isset($credentials["access_token"])) || (null === $credentials["access_token"]) || ("" === $credentials["access_token"])) {
-            throw new ConnectorConfigException("'access_token' parameter is required", 605);
-        }
-
-        if ((!isset($credentials["refresh_token"])) || (null === $credentials["refresh_token"]) || ("" === $credentials["refresh_token"])) {
-            throw new ConnectorConfigException("'refresh_token' parameter is required", 606);
-        }
+        $this->checkCredentials($credentials);
 
         if ((null === $parameters) || (!is_array($parameters)) || (count($parameters) == 0)) {
             throw new ConnectorConfigException("Invalid post parameters'", 617);
@@ -740,17 +622,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     public function revokeToken(array $credentials)
     {
-        if ((null === $credentials) || (!is_array($credentials)) || (count($credentials) == 0)) {
-            throw new ConnectorConfigException("Invalid credentials set'", 604);
-        }
-
-        if ((!isset($credentials["access_token"])) || (null === $credentials["access_token"]) || ("" === $credentials["access_token"])) {
-            throw new ConnectorConfigException("'access_token' parameter is required", 605);
-        }
-
-        if ((!isset($credentials["refresh_token"])) || (null === $credentials["refresh_token"]) || ("" === $credentials["refresh_token"])) {
-            throw new ConnectorConfigException("'refresh_token' parameter is required", 606);
-        }
+        $this->checkCredentials($credentials);
 
         $this->setAccessToken($credentials);
 
@@ -841,6 +713,57 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             }
         }
     }
+
+    /**
+     * Method that check credentials and userId are ok
+     * @param array $credentials
+     * @throws ConnectorConfigException
+     */
+    private function checkCredentials(array $credentials) {
+        if ((null === $credentials) || (!is_array($credentials)) || (count($credentials) == 0)) {
+            throw new ConnectorConfigException("Invalid credentials set'", 604);
+        }
+
+        if ((!isset($credentials["access_token"])) || (null === $credentials["access_token"]) || ("" === $credentials["access_token"])) {
+            throw new ConnectorConfigException("'access_token' parameter is required", 605);
+        }
+
+        if ((!isset($credentials["refresh_token"])) || (null === $credentials["refresh_token"]) || ("" === $credentials["refresh_token"])) {
+            throw new ConnectorConfigException("'refresh_token' parameter is required", 606);
+        }
+    }
+
+    /**
+     * Method that check userId is ok
+     * @param $userId
+     * @throws ConnectorConfigException
+     */
+    private function checkUser($userId) {
+        if ((null === $userId) || ("" === $userId)) {
+            throw new ConnectorConfigException("'userId' parameter is required", 607);
+        }
+    }
+
+    /**
+     * Method that check pagination parameters are ok
+     * @param $maxResultsPerPage
+     * @param $numberOfPages
+     * @throws ConnectorConfigException
+     */
+    private function checkPagination($maxResultsPerPage, $numberOfPages) {
+        if (null === $maxResultsPerPage) {
+            throw new ConnectorConfigException("'maxResultsPerPage' parameter is required", 608);
+        } else if (!is_numeric($maxResultsPerPage)) {
+            throw new ConnectorConfigException("'maxResultsPerPage' parameter is not numeric", 609);
+        }
+
+        if (null === $maxResultsPerPage) {
+            throw new ConnectorConfigException("'numberOfPages' parameter is required", 610);
+        } else if (!is_numeric($numberOfPages)) {
+            throw new ConnectorConfigException("'numberOfPages' parameter is not numeric", 611);
+        }
+    }
+
     /**
      * Private function to check url format
      * @param $redirectUrl
