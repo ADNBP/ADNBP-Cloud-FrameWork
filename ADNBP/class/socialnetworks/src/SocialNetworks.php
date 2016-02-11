@@ -102,9 +102,9 @@ class SocialNetworks extends Singleton
      */
     public function setAuth($social, $authKeys) {
         $connector = $this->getSocialApi($social);
-        $userId = $connector->getSelfProfile($authKeys);
-        $_SESSION[$social . "_credentials_" . $userId] = $authKeys;
-        return json_encode(array("user_id" => $userId));
+        $profile = $connector->getSelfProfile($authKeys);
+        $_SESSION[$social . "_credentials_" . $profile->getId()] = $authKeys;
+        return json_encode(array("user_id" => $profile->getId()));
     }
 
     /**
@@ -132,12 +132,16 @@ class SocialNetworks extends Singleton
      * Service that query to a social network api to get followers
      * @param string $social
      * @param string $userId
+     * @param integer $maxResultsPerPage maximum elements per page
+     * @param integer $numberOfPages number of pages
+     * @param string $pageToken Indicates a specific page for pagination
      * @return JSON
      */
-    public function getFollowers($social, $userId)
+    public function getFollowers($social, $userId, $maxResultsPerPage, $numberOfPages, $pageToken)
     {
         $connector = $this->getSocialApi($social);
-        return $connector->getFollowers($userId, $_SESSION[$social . "_credentials_" . $userId]);
+        return $connector->getFollowers($userId, $maxResultsPerPage, $numberOfPages, $pageToken,
+                                        $_SESSION[$social . "_credentials_" . $userId]);
     }
 
     /**
@@ -159,7 +163,6 @@ class SocialNetworks extends Singleton
      * @param string $userId
      * @param array $credentials
      * @return JSON
-     * @throws \Exception
      */
     public function getSubscribers($social, $userId, array $credentials = array())
     {
@@ -169,27 +172,47 @@ class SocialNetworks extends Singleton
 
     /**
      * Service that query to a social network api to get posts info
-     * @param string $social
      * @param string $userId
+     * @param integer $maxResultsPerPage maximum elements per page
+     * @param integer $numberOfPages number of pages
+     * @param string $pageToken Indicates a specific page for pagination
+     * @param array $credentials
      * @return JSON
      */
-    public function getPosts($social, $userId)
+    public function getPosts($social, $userId, $maxResultsPerPage, $numberOfPages, $pageToken)
     {
         $connector = $this->getSocialApi($social);
-        return $connector->getPosts($userId, $_SESSION[$social."_credentials_".$userId]);
+        return $connector->getPosts($userId, $maxResultsPerPage, $numberOfPages, $pageToken,
+                                    $_SESSION[$social."_credentials_".$userId]);
     }
 
     /**
      * Service that connect to social network api and request for data for authenticated user
      * @param string $social
      * @param string $userId
-     * @param integer $maxResults maximum elements per page
+     * @param integer $maxResultsPerPage maximum elements per page
+     * @param integer $numberOfPages number of pages
+     * @param string $pageToken Indicates a specific page for pagination
      * @return mixed
      */
-    public function exportImages($social, $userId, $maxResults = 0)
+    public function exportImages($social, $userId, $maxResultsPerPage, $numberOfPages, $pageToken)
     {
         $connector = $this->getSocialApi($social);
-        return $connector->exportImages($userId, $maxResults, $_SESSION[$social."_credentials_".$userId]);
+        return $connector->exportImages($userId, $maxResultsPerPage, $numberOfPages, $pageToken,
+                                        $_SESSION[$social."_credentials_".$userId]);
+    }
+
+    /**
+     * Service that connect to social network api and upload a media file (image/video)
+     * @param string $social
+     * @param string $path Path to media
+     * @param string $userId
+     * @return mixed
+     */
+    public function importMedia($social, $path, $userId)
+    {
+        $connector = $this->getSocialApi($social);
+        return $connector->importMedia($userId, $path, $_SESSION[$social."_credentials_".$userId]);
     }
 
     /**
@@ -197,23 +220,30 @@ class SocialNetworks extends Singleton
      * @param string $social
      * @param array $parameters
      * GOOGLE
-     *      "userId"    => User whose google domain the stream will be published in
+     *      "user_id"    => User whose google domain the stream will be published in
      *      "content"   => Text of the comment
-     *      "link"      => External link
-     *      "logo"      => Logo
-     *      "circleId"  => Google circle where the stream will be published in
-     *      "personId"  => Google + user whose domain the stream will be published in
-     *      ($circleId are excluding)
+     *      "access_type" => The type of entry describing to whom access to new post/activity is granted
+     *              "person"          => Need a personId parameter
+     *              "circle"          => Need a circleId parameter
+     *              "myCircles"       => Access to members of all the person's circles
+     *              "extendedCircles" => Access to members of all the person's circles, plus all of the people in their circles
+     *              "domain"          => Access to members of the person's Google Apps domain
+     *              "public"          => Access to anyone on the web
+     *      "attachment":
+     *          "0": "link" | "image" | "video"
+     *          "1": url or path for a file
+     *      "person_id"  => Google + user whose domain the stream will be published in (mandatory in case of access_type = "person")
+     *      "circle_id"  => Google circle where the stream will be published in (mandatory in case of access_type = "circle")
      * INSTAGRAM
      *      "content"   => Text of the comment
      *      "mediaId"   => Instagram media's ID
      *
      * @return JSON
      */
-    public function importPost($social, $parameters)
+    public function post($social, $parameters)
     {
         $connector = $this->getSocialApi($social);
-        return $connector->importPost($parameters, $_SESSION[$social."_credentials_".$parameters["userId"]]);
+        return $connector->post($parameters, $_SESSION[$social."_credentials_".$parameters["user_id"]]);
     }
 
     /**

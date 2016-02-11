@@ -6,33 +6,34 @@
         /**
          * Error codes
          *
-         *      600     api_keys set is empty
-         *      601     'client' parameter is required
-         *      602     'client' parameter is empty
-         *      603     'secret' parameter is required
-         *      604     'secret' parameter is empty
-         *      605     auth_keys set is empty
-         *      606     'access_token' parameter is required
-         *      607     'access_token' parameter is empty
-         *      608     'token_type' parameter is required
-         *      609     'token_type' parameter is empty
-         *      610     'expires_in' parameter is required
-         *      611     'expires_in' parameter is empty
-         *      612     'created' parameter is required
-         *      613     'created' parameter is empty
-         *      614     'refresh_token' parameter is required
-         *      615     'refresh_token' parameter is empty
-         *      616     'code' parameter is required
-         *      617     'code' parameter is empty
-         *      618     'redirectUrl' parameter is required
-         *      619     parameters set is empty
-         *      620     'userId' parameter is required (google)
-         *      621     'userId' parameter is empty (google)
-         *      622     'content' parameter is required
-         *      623     'content' parameter is empty
-         *      624     'redirectUrl' parameter is empty
-         *      625     'mediaId' parameter is required (instagram)
-         *      626     'mediaId' parameter is empty (instagram)
-         *
+         *      601     'clientId' parameter is required
+         *      602     'clientSecret' parameter is required
+         *      603     'clientScope' parameter is required
+         *      604     Invalid credentials set
+         *      605     'access_token' parameter is required
+         *      606     'refresh_token' parameter is required
+         *      607     'userId' parameter is required
+         *      608     'maxResultsPerPage' parameter is required
+         *      609     'maxResultsPerPage' parameter is not numeric
+         *      610     'numberOfPages' parameter is required
+         *      611     'numberOfPages' parameter is not numeric
+         *      612     'postId' parameter is required
+         *      613     'path' parameter is required
+         *      614     file doesn't exist
+         *      615     file must be an image or a video
+         *      616     Maximum file size is XXXX MB
+         *      617     Invalid post parameters
+         *      618     'user_id' post parameter is required
+         *      619     'content' post parameter is required"
+         *      620     'access_type' post parameter is required
+         *      621     'circle_id' post parameter is required since access_type is 'circle'
+         *      622     'person_id' post parameter is required since access_type is 'person
+         *      623     'attachment' post parameter must be an array
+         *      624     'attachment' type must be 'link', 'photo' or 'video'
+         *      625     'attachment' value must be an url ('link') or a file path ('photo' or 'video')
+         *      626     'attachment' value url is malformed
+         *      627     'code' parameter is required
+         *      628     'redirectUrl' parameter is required
+         *      629     'authUrl' parameter is required
          */
     }
