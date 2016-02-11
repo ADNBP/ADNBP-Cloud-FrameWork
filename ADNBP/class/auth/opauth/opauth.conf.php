@@ -52,12 +52,12 @@ $config = array(
 			'scope' => $this->getConf("FacebookOauth_SCOPE")
 
 		),
-
 		'Google' => array(
 			'client_id' => $this->getConf("GoogleOauth_CLIENT_ID"),
 			'client_secret' => $this->getConf("GoogleOauth_CLIENT_SECRET"),
 			'scope' => (is_array($this->getConf("GoogleOauth_SCOPE"))) ? implode(' ',$this->getConf("GoogleOauth_SCOPE")) : 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
-		),
+			'access_type'=>'offline',
+			),
 		'Instagram' => array(
 			'client_id' => $this->getConf("InstagramOauth_CLIENT_ID"),
 			'client_secret' => $this->getConf("InstagramOauth_CLIENT_SECRET")
