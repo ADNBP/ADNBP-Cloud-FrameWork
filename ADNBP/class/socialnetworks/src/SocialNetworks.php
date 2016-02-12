@@ -9,41 +9,15 @@ use CloudFramework\Patterns\Singleton;
  */
 class SocialNetworks extends Singleton
 {
+    /**
+     * @return string
+     */
     public static function generateRequestUrl()
     {
         $protocol = (array_key_exists("HTTPS", $_SERVER) && $_SERVER["HTTPS"] === 'on') ? 'https' : 'http';
         $domain = $_SERVER['SERVER_NAME'];
         $port = $_SERVER['SERVER_PORT'];
         return "$protocol://$domain:$port/";
-    }
-
-    /**
-     * Static method that generate an error response from SocialNetwork Service
-     * @param string $message
-     * @param int $code
-     */
-    public static function generateErrorResponse($message, $code = 500)
-    {
-        ob_start();
-        header("HTTP/1.0 $code $message");
-        ob_end_clean();
-        exit;
-    }
-
-    /**
-     * Service that make a JSON response
-     * @param mixed $result
-     */
-    public static function jsonResponse($result = null)
-    {
-        $data = json_encode($result, JSON_PRETTY_PRINT);
-        ob_start();
-        header("Content-type: application/json");
-        header("Content-length: " . strlen($data));
-        echo $data;
-        ob_flush();
-        ob_end_clean();
-        exit;
     }
 
     /**
@@ -60,68 +34,113 @@ class SocialNetworks extends Singleton
                 return $connector = $socialNetworkClass::getInstance();
             } catch(\Exception $e) {
                 throw $e;
-                //SocialNetworks::generateErrorResponse($e->getMessage(), 500);
             }
         } else {
             throw new \Exception("Social Network Requested not exists", 501);
-            //SocialNetworks::generateErrorResponse("Social Network Requested not exists", 501);
         }
     }
 
     /**
-     * Method that set credentials for social network
+     * Service that set the api keys for social network
      * @param $social
      * @param $clientId
      * @param $clientSecret
      * @param array $clientScope
+     * @return mixed
+     * @throws \Exception
      */
-    public function setCredentials($social, $clientId, $clientSecret, $clientScope = array()) {
+    public function setApiKeys($social, $clientId, $clientSecret, $clientScope = array()) {
         $connector = $this->getSocialApi($social);
-        return $connector->setCredentials($clientId, $clientSecret, $clientScope);
+        return $connector->setApiKeys($clientId, $clientSecret, $clientScope);
     }
 
     /**
-     * Method that check if user with $userId is authorized
-     * @param $social
-     * @param $userId
-     * @return bool
+     * Service to request authorization to the social network
+     * @param string $social
+     * @param string $redirectUrl
+     * @return mixed
+     * @throws \Exception
      */
-    public function isAuth($social, $userId) {
-        if (isset($_SESSION[$social . "_credentials_" . $userId])) {
-            return true;
-        }
-
-        return false;
+    public function requestAuthorization($social, $redirectUrl)
+    {
+        $connector = $this->getSocialApi($social);
+        return $connector->requestAuthorization($redirectUrl);
     }
 
     /**
-     * Method that save auth keys of the user in session
-     * @param $social
-     * @param $authkeys
-     * @return JSON
+     * Service that authorize a user in the social network.
+     * (This method receives the callback from the social network after login)
+     * @param string $social
+     * @param string $code
+     * @param string $redirectUrl
+     * @return mixed
+     * @throws \Exception
      */
-    public function setAuth($social, $authKeys) {
+    public function confirmAuthorization($social, $code, $redirectUrl)
+    {
         $connector = $this->getSocialApi($social);
-        $profileId = $connector->getProfileId($authKeys);
-        $_SESSION[$social . "_credentials_" . $profileId] = $authKeys;
+        $credentials = $connector->authorize($code, $redirectUrl);
+
+        return $credentials;
+    }
+
+    /**
+     * Service that save the user's credentials in session
+     * @param $social
+     * @param array $credentials
+     * @return string
+     * @throws \Exception
+     */
+    public function setCredentials($social, $credentials) {
+        $connector = $this->getSocialApi($social);
+        $profileId = $connector->getProfileId($credentials);
+        $_SESSION[$social . "_credentials_" . $profileId] = $credentials;
         return json_encode(array("user_id" => $profileId));
     }
 
     /**
-     * Method that get auth keys of the user from session
+     * Service that check if session user's credentials are authorized in two steps:
+     *      1 .- Check if user's credentials are in session
+     *      2 .- If user's credentials are in session, check if access_token in session is authorized
      * @param $social
-     * @param $userId
-     * @return JSON
+     * @throws \Exception
      */
-    public function getAuth($social, $userId) {
-        return json_encode($_SESSION[$social . "_credentials_" . $userId]);
+    public function checkCredentials($social, $userId) {
+        if (isset($_SESSION[$social . "_credentials_" . $userId])) {
+            $credentials = $_SESSION[$social . "_credentials_" . $userId];
+            $connector = $this->getSocialApi($social);
+            if ($expiresIn = $connector->checkCredentials($userId, $credentials)) {
+                $credentials["expires_in"] = $expiresIn;
+                return $credentials;
+            }
+        } else {
+            throw new \Exception("User '".$userId."' is not authorized in social network " . $social);
+        }
     }
+
+    /**
+     * Service that refresh credentials of the user and refresh the session
+     * @param $social
+     * @return mixed
+     * @throws \Exception
+     */
+    public function refreshCredentials($social, $userId) {
+        $credentials = $_SESSION[$social . "_credentials_" . $userId];
+        $connector = $this->getSocialApi($social);
+        $newCredentials = $connector->refreshCredentials($credentials);
+        $_SESSION[$social . "_credentials_" . $userId]["access_token"] = $newCredentials["access_token"];
+        $_SESSION[$social . "_credentials_" . $userId]["id_token"] = $newCredentials["id_token"];
+
+        return $_SESSION[$social . "_credentials_" . $userId];
+    }
+
 
     /**
      * Service that query to a social network api to get user profile
      * @param string $social
      * @param string $userId
-     * @return JSON
+     * @return mixed
+     * @throws \Exception
      */
     public function getProfile($social, $userId)    {
         $connector = $this->getSocialApi($social);
@@ -135,7 +154,8 @@ class SocialNetworks extends Singleton
      * @param integer $maxResultsPerPage maximum elements per page
      * @param integer $numberOfPages number of pages
      * @param string $pageToken Indicates a specific page for pagination
-     * @return JSON
+     * @return mixed
+     * @throws \Exception
      */
     public function getFollowers($social, $userId, $maxResultsPerPage, $numberOfPages, $pageToken)
     {
@@ -149,12 +169,13 @@ class SocialNetworks extends Singleton
      * @param string $social
      * @param string $userId
      * @param string $postId
-     * @return JSON
+     * @return mixed
+     * @throws \Exception
      */
     public function getFollowersInfo($social, $userId, $postId)
     {
         $connector = $this->getSocialApi($social);
-        return $connector->getFollowersInfo($postId, $_SESSION[$social . "_credentials_" . $userId]);
+        return $connector->getFollowersInfo($userId, $postId, $_SESSION[$social . "_credentials_" . $userId]);
     }
 
     /**
@@ -164,7 +185,8 @@ class SocialNetworks extends Singleton
      * @param integer $maxResultsPerPage maximum elements per page
      * @param integer $numberOfPages number of pages
      * @param string $nextPageUrl Indicates a specific page for pagination
-     * @return JSON
+     * @return mixed
+     * @throws \Exception
      */
     public function getSubscribers($social,  $userId, $maxResultsPerPage, $numberOfPages, $nextPageUrl)
     {
@@ -180,7 +202,8 @@ class SocialNetworks extends Singleton
      * @param integer $numberOfPages number of pages
      * @param string $pageToken Indicates a specific page for pagination
      * @param array $credentials
-     * @return JSON
+     * @return mixed
+     * @throws \Exception
      */
     public function getPosts($social, $userId, $maxResultsPerPage, $numberOfPages, $pageToken)
     {
@@ -197,6 +220,7 @@ class SocialNetworks extends Singleton
      * @param integer $numberOfPages number of pages
      * @param string $pageToken Indicates a specific page for pagination
      * @return mixed
+     * @throws \Exception
      */
     public function exportImages($social, $userId, $maxResultsPerPage, $numberOfPages, $pageToken)
     {
@@ -211,6 +235,7 @@ class SocialNetworks extends Singleton
      * @param string $path Path to media
      * @param string $userId
      * @return mixed
+     * @throws \Exception
      */
     public function importMedia($social, $path, $userId)
     {
@@ -241,7 +266,8 @@ class SocialNetworks extends Singleton
      *      "content"   => Text of the comment
      *      "mediaId"   => Instagram media's ID
      *
-     * @return JSON
+     * @return mixed
+     * @throws \Exception
      */
     public function post($social, $parameters)
     {
@@ -254,88 +280,12 @@ class SocialNetworks extends Singleton
      * to ensure the permissions granted to the application are removed
      * @param string $social
      * @param string $userId
-     * @return JSON
+     * @return mixed
+     * @throws \Exception
      */
     public function revokeToken($social, $userId)
     {
         $connector = $this->getSocialApi($social);
         return $connector->revokeToken($_SESSION[$social."_credentials_".$userId]);
-    }
-
-    /**
-     * Static method that hydrate credentials for social network required fields
-     * @param string $socialNetwork
-     * @param array $authKeysNames
-     * @param array $apiKeysNames
-     * @param array $data
-     * @param string $redirectUrl
-     * @return array
-     * @throws \Exception
-     */
-    public static function hydrateCredentials($socialNetwork, $authKeysNames, $apiKeysNames, $data, $redirectUrl)
-    {
-        $credentials = array();
-        $apiKeys = array();
-        if (null !== $data) {
-            foreach ($authKeysNames as $authKeyName) {
-                if (array_key_exists($authKeyName, $data) && strlen($data[$authKeyName]) > 0) {
-                    $credentials[$authKeyName] = $data[$authKeyName];
-                }
-            }
-
-            foreach($apiKeysNames as $apiKeyName) {
-                if (array_key_exists($apiKeyName, $data) && strlen($data[$apiKeyName]) > 0) {
-                    $apiKeys[$apiKeyName] = $data[$apiKeyName];
-                }
-            }
-        }
-
-        if (count($credentials) !== count($authKeysNames)) {
-            if (count($apiKeys) === count($apiKeysNames)) {
-                return SocialNetworks::getInstance()->getSocialLoginUrl($socialNetwork, $apiKeys, $redirectUrl);
-            } else {
-                //SocialNetworks::generateErrorResponse("API Keys aren't correct", 401);
-                throw new \Exception("API Keys aren't correct", 401);
-            }
-        }
-
-        return array("api_keys" => $apiKeys, "auth_keys" => $credentials);
-    }
-
-    /**
-     * Method that generate the social network login url
-     * @param $social
-     * @param string $redirectUrl
-     * @return mixed
-     */
-    public function getSocialLoginUrl($social, $redirectUrl) {
-        $connector = $this->getSocialApi($social);
-        return $connector->getAuthUrl($redirectUrl);
-    }
-
-    /**
-     * Service to check authorized credentials for Social Network
-     * @param string $social
-     * @param string $redirectUrl
-     * @return array|string
-     */
-    public function auth($social, $redirectUrl)
-    {
-        $connector = $this->getSocialApi($social);
-        return $connector->getAuth($redirectUrl);
-    }
-
-    /**
-     * @param string $social
-     * @param string $code
-     * @param string $redirectUrl
-     * @param $params
-     */
-    public function getCredentials($social, $code, $redirectUrl)
-    {
-        $connector = $this->getSocialApi($social);
-        $credentials = $connector->authorize($code, $redirectUrl);
-
-        return $credentials;
     }
 }

@@ -7,7 +7,6 @@ use CloudFramework\Service\SocialNetworks\Exceptions\ConnectorConfigException;
 use CloudFramework\Service\SocialNetworks\Exceptions\ConnectorServiceException;
 use CloudFramework\Service\SocialNetworks\Exceptions\MalformedUrlException;
 use CloudFramework\Service\SocialNetworks\Interfaces\SocialNetworkInterface;
-use CloudFramework\Service\SocialNetworks\SocialNetworks;
 
 /**
  * Class GoogleApi
@@ -30,13 +29,13 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     private $clientScope = array();
 
     /**
-     * Set Google Api credentials
+     * Set Google Api keys
      * @param $clientId
      * @param $clientSecret
      * @param $clientScope
      * @throws ConnectorConfigException
      */
-    public function setCredentials($clientId, $clientSecret, $clientScope) {
+    public function setApiKeys($clientId, $clientSecret, $clientScope) {
         if ((null === $clientId) || ("" === $clientId)) {
             throw new ConnectorConfigException("'clientId' parameter is required", 601);
         }
@@ -60,6 +59,102 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     }
 
     /**
+     * Service that request authorization to Google making up the Google login URL
+     * @param string $redirectUrl
+     * @return array
+     * @throws ConnectorConfigException
+     * @throws MalformedUrlException
+     */
+    public function requestAuthorization($redirectUrl)
+    {
+        if ((null === $redirectUrl) || (empty($redirectUrl))) {
+            throw new ConnectorConfigException("'redirectUrl' parameter is required", 628);
+        } else {
+            if (!$this->wellFormedUrl($redirectUrl)) {
+                throw new MalformedUrlException("'redirectUrl' is malformed", 601);
+            }
+        }
+
+        $this->client->setRedirectUri($redirectUrl);
+        $this->client->setAccessType("offline");
+        foreach($this->clientScope as $scope) {
+            $this->client->addScope($scope);
+        }
+
+        $authUrl = $this->client->createAuthUrl();
+
+        if ((null === $authUrl) || (empty($authUrl))) {
+            throw new ConnectorConfigException("'authUrl' parameter is required", 629);
+        } else {
+            if (!$this->wellFormedUrl($authUrl)) {
+                throw new MalformedUrlException("'authUrl' is malformed", 602);
+            }
+        }
+
+        // Authentication request
+        return $authUrl;
+    }
+
+    /**
+     * Service that check if credentials are valid and authorized in google
+     * @param $userId
+     * @param array $credentials
+     * @return mixed
+     * @throws ConnectorConfigException
+     * @throws ConnectorServiceException
+     */
+    public function checkCredentials($userId = null, array $credentials) {
+        $this->checkCredentialsParameters($credentials);
+
+        if (null !== $userId) {
+            try {
+                $this->setAccessToken($credentials);
+                $oauthService = new \Google_Service_Oauth2($this->client);
+                $optParams["access_token"] = $credentials["access_token"];
+                $optParams["id_token"] = $credentials["id_token"];
+                $tokeninfo = $oauthService->tokeninfo($optParams);
+
+                /*if ($tokeninfo->getIssuedTo()) {
+                    if ($tokeninfo->getUserId() != $userId) {
+                        throw new ConnectorServiceException("User '" . $userId . "' is not authorized in social network " . self::ID);
+                    } else if ($tokeninfo->getExpiresIn() <= 0) {
+                        throw new ConnectorServiceException("Access token is expired and need to be refreshed");
+                    }
+                } else {
+                    throw new ConnectorServiceException("User '" . $userId . "' is not authorized in social network " . self::ID);
+                }*/
+            } catch (\Exception $e) {
+                throw new ConnectorServiceException("Credentials expired and need to be refreshed.");
+            }
+        }
+
+        return (isset($tokeninfo))?$tokeninfo->getExpiresIn():true;
+    }
+
+    /**
+     * Service that refresh credentials of the user and return new credentials
+     * @param $credentials
+     * @return mixed
+     * @throws AuthenticationException
+     * @throws ConnectorServiceException
+     */
+    public function refreshCredentials($credentials) {
+        if ($this->client->isAccessTokenExpired()) {
+            try {
+                $this->client->setClientId($this->clientId);
+                $this->client->setClientSecret($this->clientSecret);
+                $this->client->refreshToken($credentials["refresh_token"]);
+            } catch(\Exception $e) {
+                throw new AuthenticationException("Error refreshing token: " . $e->getMessage(), 602);
+            }
+        } else {
+            throw new ConnectorServiceException("Credentials haven't expired yet");
+        }
+
+        return json_decode($this->client->getAccessToken(), true);
+    }
+
+    /**
      * Service that query to Google Api for people in user circles
      * @param string $userId
      * @param integer $maxResultsPerPage maximum elements per page
@@ -73,7 +168,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     public function getFollowers($userId, $maxResultsPerPage, $numberOfPages, $pageToken, array $credentials)
     {
-        $this->checkCredentials($credentials);
+        $this->checkCredentials($userId, $credentials);
 
         $this->checkUser($userId);
 
@@ -121,6 +216,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
 
     /**
      * Service that query to Google Api for followers info (likes and shares) of a post
+     * @param string $userId
      * @param string $postId
      * @param array $credentials
      * @return JSON
@@ -128,9 +224,9 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function getFollowersInfo($postId, array $credentials)
+    public function getFollowersInfo($userId, $postId, array $credentials)
     {
-        $this->checkCredentials($credentials);
+        $this->checkCredentials($userId, $credentials);
 
         if ((null === $postId) || ("" === $postId)) {
             throw new ConnectorConfigException("'postId' parameter is required", 612);
@@ -185,7 +281,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     public function getPosts($userId, $maxResultsPerPage, $numberOfPages, $pageToken, array $credentials)
     {
-        $this->checkCredentials($credentials);
+        $this->checkCredentials($userId, $credentials);
 
         $this->checkUser($userId);
 
@@ -231,7 +327,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     }
 
     /**
-     * Service that query to Google Oauth Api to get user profile
+     * Service that query to Google+ Api to get user profile
      * @param string $userId
      * @param array $credentials
      * @return JSON
@@ -241,7 +337,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     public function getProfile($userId, array $credentials)
     {
-        $this->checkCredentials($credentials);
+        $this->checkCredentials($userId, $credentials);
 
         $this->checkUser($userId);
 
@@ -267,7 +363,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     public function getProfileId(array $credentials)
     {
-        $this->checkCredentials($credentials);
+        $this->checkCredentials(null, $credentials);
 
         $this->setAccessToken($credentials);
 
@@ -295,7 +391,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     public function exportImages($userId, $maxResultsPerPage, $numberOfPages, $pageToken, array $credentials)
     {
-        $this->checkCredentials($credentials);
+        $this->checkCredentials($userId, $credentials);
 
         $this->checkUser($userId);
 
@@ -350,7 +446,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     public function importMedia($userId, $path, array $credentials)
     {
-        $this->checkCredentials($credentials);
+        $this->checkCredentials($userId, $credentials);
 
         $this->checkUser($userId);
 
@@ -451,7 +547,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * @throws ConnectorServiceException
      */
     public function post(array $parameters, array $credentials) {
-        $this->checkCredentials($credentials);
+        $this->checkCredentials($parameters["user_id"], $credentials);
 
         if ((null === $parameters) || (!is_array($parameters)) || (count($parameters) == 0)) {
             throw new ConnectorConfigException("Invalid post parameters'", 617);
@@ -599,7 +695,6 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         try {
             $this->client->authenticate($code);
 
-            $googleCredentials = $this->client->getAccessToken();
             $googleCredentials = json_decode($this->client->getAccessToken(), true);
         } catch(\Exception $e) {
             if (401 === $e->getCode()) {
@@ -623,7 +718,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     public function revokeToken(array $credentials)
     {
-        $this->checkCredentials($credentials);
+        $this->checkCredentialsParameters($credentials);
 
         $this->setAccessToken($credentials);
 
@@ -640,87 +735,20 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     }
 
     /**
-     * Compose Google Api credentials array from session data
-     * @param string $redirectUrl
-     * @return array
-     * @throws ConnectorConfigException
-     * @throws MalformedUrlException
-     */
-    public function getAuth($redirectUrl)
-    {
-        if ((null === $redirectUrl) || (empty($redirectUrl))) {
-            throw new ConnectorConfigException("'redirectUrl' parameter is required", 628);
-        } else {
-            if (!$this->wellFormedUrl($redirectUrl)) {
-                throw new MalformedUrlException("'redirectUrl' is malformed", 601);
-            }
-        }
-
-        return SocialNetworks::getInstance()->getSocialLoginUrl(self::ID, $redirectUrl);
-    }
-
-    /**
-     * Service that compose url to authorize google api
-     * @param string $redirectUrl
-     * @return string
-     * @throws ConnectorConfigException
-     * @throws MalformedUrlException
-     */
-    public function getAuthUrl($redirectUrl)
-    {
-        if ((null === $redirectUrl) || (empty($redirectUrl))) {
-            throw new ConnectorConfigException("'redirectUrl' parameter is required", 628);
-        } else {
-            if (!$this->wellFormedUrl($redirectUrl)) {
-                throw new MalformedUrlException("'redirectUrl' is malformed", 601);
-            }
-        }
-
-        $this->client->setRedirectUri($redirectUrl);
-        $this->client->setAccessType("offline");
-        foreach($this->clientScope as $scope) {
-            $this->client->addScope($scope);
-        }
-
-        $authUrl = $this->client->createAuthUrl();
-
-        if ((null === $authUrl) || (empty($authUrl))) {
-            throw new ConnectorConfigException("'authUrl' parameter is required", 629);
-        } else {
-            if (!$this->wellFormedUrl($authUrl)) {
-                throw new MalformedUrlException("'authUrl' is malformed", 602);
-            }
-        }
-
-        // Authentication request
-        return $authUrl;
-    }
-
-    /**
-     * Method that set (and refresh if is necessary) the access token
+     * Method that set the access token; credentials are checked previously
      * @param array $credentials
      * @throws AuthenticationException
      */
     private function setAccessToken(array $credentials) {
         $this->client->setAccessToken(json_encode($credentials));
-
-        if ($this->client->isAccessTokenExpired()) {
-            try {
-                $this->client->setClientId($this->clientId);
-                $this->client->setClientSecret($this->clientSecret);
-                $this->client->refreshToken($credentials["refresh_token"]);
-            } catch(\Exception $e) {
-                throw new AuthenticationException("Error refreshing token: " . $e->getMessage(), 602);
-            }
-        }
     }
 
     /**
-     * Method that check credentials and userId are ok
+     * Method that check credentials are present and valid
      * @param array $credentials
      * @throws ConnectorConfigException
      */
-    private function checkCredentials(array $credentials) {
+    private function checkCredentialsParameters(array $credentials) {
         if ((null === $credentials) || (!is_array($credentials)) || (count($credentials) == 0)) {
             throw new ConnectorConfigException("Invalid credentials set'", 604);
         }
@@ -731,6 +759,10 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
 
         if ((!isset($credentials["refresh_token"])) || (null === $credentials["refresh_token"]) || ("" === $credentials["refresh_token"])) {
             throw new ConnectorConfigException("'refresh_token' parameter is required", 606);
+        }
+
+        if ((!isset($credentials["id_token"])) || (null === $credentials["id_token"]) || ("" === $credentials["id_token"])) {
+            throw new ConnectorConfigException("'id_token' parameter is required", 605);
         }
     }
 
