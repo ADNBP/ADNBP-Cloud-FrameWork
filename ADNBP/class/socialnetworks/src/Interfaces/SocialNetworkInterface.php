@@ -7,11 +7,10 @@ namespace CloudFramework\Service\SocialNetworks\Interfaces;
  */
 interface SocialNetworkInterface {
 
-    function setCredentials($clientId, $clientSecret, $clientScope);
-    function getAuth($redirectUrl);
-    function getAuthUrl($redirectUrl);
+    function setApiKeys($clientId, $clientSecret, $clientScope);
+    function requestAuthorization($redirectUrl);
     function getFollowers($userId, $maxResultsPerPage, $numberOfPages, $pageToken, array $credentials);
-    function getFollowersInfo($postId, array $credentials);
+    function getFollowersInfo($userId, $postId, array $credentials);
     function getSubscribers($userId, $maxResultsPerPage, $numberOfPages, $nextPageUrl, array $credentials);
     function getPosts($userId, $maxResultsPerPage, $numberOfPages, $pageToken, array $credentials);
     function getProfile($userId, array $credentials);

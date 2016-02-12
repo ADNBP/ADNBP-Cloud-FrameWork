@@ -34,7 +34,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @param $clientScope
      * @throws ConnectorConfigException
      */
-    public function setCredentials($clientId, $clientSecret, $clientScope) {
+    public function setApiKeys($clientId, $clientSecret, $clientScope) {
         if ((null === $clientId) || ("" === $clientId)) {
             throw new ConnectorConfigException("'clientId' parameter is required", 601);
         }
