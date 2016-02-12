@@ -156,6 +156,41 @@ class Insightly{
     public function __construct($apikey){
         $this->apikey = $apikey;
     }
+
+    /**
+     * Gets a list of Leads
+     *
+     * @param array $options
+     * @return mixed
+     * @link https://api.insight.ly/v2.1/Help/Api/GET-Contacts_ids_email_tag
+     */
+    public function getLeads($options = null){
+        $email = isset($options["email"]) ? $options["email"] : null;
+        $tag = isset($options["tag"]) ? $options["tag"] : null;
+        $ids = isset($options["ids"]) ? $options["ids"] : null;
+        $request = $this->GET("/v2.1/Leads");
+        // handle standard OData options
+        $this->buildODataQuery($request, $options);
+        // handle other options
+        if($email != null){
+            $request->queryParam("email", $email);
+        }
+        if($tag != null){
+            $request->queryParam("tag", $tag);
+        }
+        if($ids != null){
+            $s = "";
+            foreach($ids as $key => $value){
+                if($key > 0){
+                    $s = $s . ",";
+                }
+                $s = $s . $value;
+            }
+            $request->queryParam("ids", $s);
+        }
+        return $request->asJSON();
+    }
+
     /**
      * Gets a list of contacts
      *
