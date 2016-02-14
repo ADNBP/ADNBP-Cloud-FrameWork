@@ -7,7 +7,7 @@ Getting started
 1. Install Opauth-Twitter:
    ```bash
    cd path_to_opauth/Strategy
-   git clone git://github.com/uzyn/opauth-twitter.git Twitter
+   git clone git@github.com:opauth/twitter.git Twitter
    ```
 
 2. Create Twitter application at https://dev.twitter.com/apps
@@ -16,7 +16,7 @@ Getting started
    - Register your domains at @Anywhere domains.  
 	   Twitter only allows authentication from authorized domains.
 	
-3. Configure Opauth-Facebook strategy with at least `Consumer key` and `Consumer secret`.
+3. Configure Opauth-Twitter strategy with at least `Consumer key` and `Consumer secret`.
 
 4. Direct user to `http://path_to_opauth/twitter` to authenticate
 
