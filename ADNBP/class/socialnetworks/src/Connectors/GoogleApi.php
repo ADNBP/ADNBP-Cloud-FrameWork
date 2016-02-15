@@ -106,29 +106,17 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     public function checkCredentials($userId = null, array $credentials) {
         $this->checkCredentialsParameters($credentials);
 
-        if (null !== $userId) {
-            try {
-                $this->setAccessToken($credentials);
-                $oauthService = new \Google_Service_Oauth2($this->client);
-                $optParams["access_token"] = $credentials["access_token"];
-                $optParams["id_token"] = $credentials["id_token"];
-                $tokeninfo = $oauthService->tokeninfo($optParams);
-
-                /*if ($tokeninfo->getIssuedTo()) {
-                    if ($tokeninfo->getUserId() != $userId) {
-                        throw new ConnectorServiceException("User '" . $userId . "' is not authorized in social network " . self::ID);
-                    } else if ($tokeninfo->getExpiresIn() <= 0) {
-                        throw new ConnectorServiceException("Access token is expired and need to be refreshed");
-                    }
-                } else {
-                    throw new ConnectorServiceException("User '" . $userId . "' is not authorized in social network " . self::ID);
-                }*/
-            } catch (\Exception $e) {
-                throw new ConnectorServiceException("Credentials expired and need to be refreshed.");
-            }
+        try {
+            $this->setAccessToken($credentials);
+            $oauthService = new \Google_Service_Oauth2($this->client);
+            $optParams["access_token"] = $credentials["access_token"];
+            $optParams["id_token"] = $credentials["id_token"];
+            $tokenInfo = $oauthService->tokeninfo($optParams);
+        } catch (\Exception $e) {
+            throw new ConnectorServiceException("The token has expired, has been tampered with, or the permissions revoked.");
         }
 
-        return (isset($tokeninfo))?$tokeninfo->getExpiresIn():true;
+        return $tokenInfo;
     }
 
     /**
@@ -139,7 +127,9 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * @throws ConnectorServiceException
      */
     public function refreshCredentials($credentials) {
-        if ($this->client->isAccessTokenExpired()) {
+        try {
+            $tokenInfo = $this->checkCredentials(null, $credentials);
+        } catch(\Exception $e) {
             try {
                 $this->client->setClientId($this->clientId);
                 $this->client->setClientSecret($this->clientSecret);
@@ -147,7 +137,9 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             } catch(\Exception $e) {
                 throw new AuthenticationException("Error refreshing token: " . $e->getMessage(), 602);
             }
-        } else {
+        }
+
+        if (isset($tokenInfo)) {
             throw new ConnectorServiceException("Credentials haven't expired yet");
         }
 
@@ -454,7 +446,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             throw new ConnectorConfigException("'path' parameter is required", 613);
         } else {
             if (!file_exists($path)) {
-                throw new ConnectorConfigException("file doesn't exist", 614);
+                //throw new ConnectorConfigException("file doesn't exist", 614);
             } else {
                 $mimeType = mime_content_type($path);
                 if ((false === strpos($mimeType,"image/")) && (false === strpos($mimeType,"video/"))) {
@@ -502,6 +494,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             // Upload the various chunks. $status will be false until the process is complete.
             $status = false;
             $handle = fopen($path, "rb");
+
             while (!$status && !feof($handle)) {
                 $chunk = fread($handle, $chunkSizeBytes);
                 $status = $media->nextChunk($chunk);

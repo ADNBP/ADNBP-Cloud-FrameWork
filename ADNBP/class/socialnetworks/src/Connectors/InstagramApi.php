@@ -7,7 +7,6 @@ use CloudFramework\Service\SocialNetworks\Exceptions\ConnectorConfigException;
 use CloudFramework\Service\SocialNetworks\Exceptions\ConnectorServiceException;
 use CloudFramework\Service\SocialNetworks\Exceptions\MalformedUrlException;
 use CloudFramework\Service\SocialNetworks\Interfaces\SocialNetworkInterface;
-use CloudFramework\Service\SocialNetworks\SocialNetworks;
 
 /**
  * Class InstagramApi
@@ -52,7 +51,14 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         $this->clientScope = $clientScope;
     }
 
-
+    /**
+     * @param $userId
+     * @param $credentials
+     * @return null
+     */
+    public function checkCredentials($userId, $credentials) {
+        return null;
+    }
 
     /**
      * Service that query to Instagram Api for users the user is followed by
@@ -65,7 +71,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @throws ConnectorServiceException
      */
     function getFollowers($userId, $maxResultsPerPage, $numberOfPages, $nextPageUrl, array $credentials) {
-        $this->checkCredentials($credentials);
+        $this->checkCredentialsParams($credentials);
 
         $this->checkUser($userId);
 
@@ -110,7 +116,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         return json_encode($followers);
     }
 
-    function getFollowersInfo($postId, array $credentials) {
+    function getFollowersInfo($userId, $postId, array $credentials) {
         return;
     }
 
@@ -125,7 +131,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @throws ConnectorServiceException
      */
     function getSubscribers($userId, $maxResultsPerPage, $numberOfPages, $nextPageUrl, array $credentials) {
-        $this->checkCredentials($credentials);
+        $this->checkCredentialsParams($credentials);
 
         $this->checkUser($userId);
 
@@ -182,7 +188,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      */
     public function getProfile($userId, array $credentials)
     {
-        $this->checkCredentials($credentials);
+        $this->checkCredentialsParams($credentials);
 
         $this->checkUser($userId);
 
@@ -221,7 +227,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      */
     public function exportImages($userId, $maxTotalResults, $numberOfPages, $nextPageUrl, array $credentials)
     {
-        $this->checkCredentials($credentials);
+        $this->checkCredentialsParams($credentials);
 
         $this->checkUser($userId);
 
@@ -281,7 +287,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @throws ConnectorServiceException
      */
     public function post(array $parameters, array $credentials) {
-        $this->checkCredentials($credentials);
+        $this->checkCredentialsParams($credentials);
 
         if ((null === $parameters) || (!is_array($parameters)) || (count($parameters) == 0)) {
             throw new ConnectorConfigException("Invalid post parameters'", 617);
@@ -322,7 +328,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @throws MalformedUrlException
      * @return array
      */
-    public function getAuth($redirectUrl)
+    public function requestAuthorization($redirectUrl)
     {
         if ((null === $redirectUrl) || (empty($redirectUrl))) {
             throw new ConnectorConfigException("'redirectUrl' parameter is required", 624);
@@ -332,18 +338,6 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
             }
         }
 
-        return SocialNetworks::getInstance()->getSocialLoginUrl(self::ID, $redirectUrl);
-    }
-
-    /**
-     * Service that compose url to authorize instagram api
-     * @param string $redirectUrl
-     * @return string
-     * @throws ConnectorConfigException
-     * @throws MalformedUrlException
-     */
-    public function getAuthUrl($redirectUrl)
-    {
         $scopes = implode("+", $this->clientScope);
         $authUrl = self::INSTAGRAM_OAUTH_URL.
             "?client_id=".$this->clientId.
@@ -360,6 +354,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         // Authentication request
         return $authUrl;
     }
+
     /**
      * @param string $code
      * @param string $redirectUrl
@@ -420,10 +415,12 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
 
     /**
      * Method that check credentials and userId are ok
+     * @param $userId
      * @param array $credentials
+     * @return null
      * @throws ConnectorConfigException
      */
-    private function checkCredentials(array $credentials) {
+    private function checkCredentialsParams(array $credentials) {
         if ((null === $credentials) || (!is_array($credentials)) || (count($credentials) == 0)) {
             throw new ConnectorConfigException("Invalid credentials set'", 604);
         }
