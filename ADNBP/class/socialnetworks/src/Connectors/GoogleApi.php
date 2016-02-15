@@ -383,17 +383,15 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     public function exportImages($userId, $maxResultsPerPage, $numberOfPages, $pageToken, array $credentials)
     {
-        $this->checkCredentials($userId, $credentials);
+        // $this->checkCredentials($userId, $credentials);
 
-        $this->checkUser($userId);
-
+        // $this->checkUser($userId);
         $this->checkPagination($maxResultsPerPage, $numberOfPages);
-
+        $credentials = [];
         $this->setAccessToken($credentials);
 
         $files = array();
         $count = 0;
-
         do {
             try {
                 $driveService = new \Google_Service_Drive($this->client);
@@ -420,6 +418,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                 $pageToken = null;
             }
         } while ($pageToken);
+
 
         $files["pageToken"] = $pageToken;
 
