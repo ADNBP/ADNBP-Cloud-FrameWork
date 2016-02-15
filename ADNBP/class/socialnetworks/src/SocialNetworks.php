@@ -95,7 +95,7 @@ class SocialNetworks extends Singleton
         $connector = $this->getSocialApi($social);
         $profileId = $connector->getProfileId($credentials);
         $_SESSION[$social . "_credentials_" . $profileId] = $credentials;
-        return json_encode(array("user_id" => $profileId));
+        return array("user_id" => $profileId);
     }
 
     /**
@@ -109,31 +109,44 @@ class SocialNetworks extends Singleton
         if (isset($_SESSION[$social . "_credentials_" . $userId])) {
             $credentials = $_SESSION[$social . "_credentials_" . $userId];
             $connector = $this->getSocialApi($social);
-            if ($expiresIn = $connector->checkCredentials($userId, $credentials)) {
-                $credentials["expires_in"] = $expiresIn;
-                return $credentials;
+            $tokenInfo = $connector->checkCredentials($userId, $credentials);
+            if (null !== $tokenInfo) {
+                $credentials["expires_in"] = $tokenInfo->getExpiresIn();
             }
+            return $credentials;
         } else {
             throw new \Exception("User '".$userId."' is not authorized in social network " . $social);
         }
     }
 
     /**
-     * Service that refresh credentials of the user and refresh the session
+     * Service that refresh session credentials of the user and refresh the session
      * @param $social
      * @return mixed
      * @throws \Exception
      */
-    public function refreshCredentials($social, $userId) {
+    public function refreshSessionCredentials($social, $userId) {
         $credentials = $_SESSION[$social . "_credentials_" . $userId];
         $connector = $this->getSocialApi($social);
         $newCredentials = $connector->refreshCredentials($credentials);
         $_SESSION[$social . "_credentials_" . $userId]["access_token"] = $newCredentials["access_token"];
         $_SESSION[$social . "_credentials_" . $userId]["id_token"] = $newCredentials["id_token"];
 
-        return $_SESSION[$social . "_credentials_" . $userId];
+        return json_encode($_SESSION[$social . "_credentials_" . $userId], true);
     }
 
+    /**
+     * Service that refresh credentials parameters and save new credentials the session
+     * @param $social
+     * @param $credentials
+     * @throws \Exception
+     */
+    public function refreshCredentials($social, $credentials) {
+        $connector = $this->getSocialApi($social);
+        $newCredentials = $connector->refreshCredentials($credentials);
+
+        return $newCredentials;
+    }
 
     /**
      * Service that query to a social network api to get user profile
