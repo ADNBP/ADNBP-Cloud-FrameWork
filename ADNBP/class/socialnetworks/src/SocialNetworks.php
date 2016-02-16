@@ -55,6 +55,18 @@ class SocialNetworks extends Singleton
     }
 
     /**
+     * Service that set the access token for social network
+     * @param $social
+     * @param array $credentials
+     * @return mixed
+     * @throws \Exception
+     */
+    public function setAccessToken($social, array $credentials) {
+        $connector = $this->getSocialApi($social);
+        return $connector->setAccessToken($credentials);
+    }
+
+    /**
      * Service to request authorization to the social network
      * @param string $social
      * @param string $redirectUrl
@@ -79,73 +91,30 @@ class SocialNetworks extends Singleton
     public function confirmAuthorization($social, $code, $redirectUrl)
     {
         $connector = $this->getSocialApi($social);
-        $credentials = $connector->authorize($code, $redirectUrl);
-
-        return $credentials;
+        return $connector->authorize($code, $redirectUrl);
     }
 
     /**
-     * Service that save the user's credentials in session
+     * Service that check if session user's credentials are authorized and not expired / revoked
      * @param $social
-     * @param array $credentials
-     * @return string
-     * @throws \Exception
-     */
-    public function setCredentials($social, $credentials) {
-        $connector = $this->getSocialApi($social);
-        $profileId = $connector->getProfileId($credentials);
-        $_SESSION[$social . "_credentials_" . $profileId] = $credentials;
-        return array("user_id" => $profileId);
-    }
-
-    /**
-     * Service that check if session user's credentials are authorized in two steps:
-     *      1 .- Check if user's credentials are in session
-     *      2 .- If user's credentials are in session, check if access_token in session is authorized
-     * @param $social
-     * @throws \Exception
-     */
-    public function checkCredentials($social, $userId) {
-        if (isset($_SESSION[$social . "_credentials_" . $userId])) {
-            $credentials = $_SESSION[$social . "_credentials_" . $userId];
-            $connector = $this->getSocialApi($social);
-            $tokenInfo = $connector->checkCredentials($userId, $credentials);
-            if (null !== $tokenInfo) {
-                $credentials["expires_in"] = $tokenInfo->getExpiresIn();
-            }
-            return $credentials;
-        } else {
-            throw new \Exception("User '".$userId."' is not authorized in social network " . $social);
-        }
-    }
-
-    /**
-     * Service that refresh session credentials of the user and refresh the session
-     * @param $social
+     * @param $credentials
      * @return mixed
      * @throws \Exception
      */
-    public function refreshSessionCredentials($social, $userId) {
-        $credentials = $_SESSION[$social . "_credentials_" . $userId];
+    public function checkCredentials($social, $credentials) {
         $connector = $this->getSocialApi($social);
-        $newCredentials = $connector->refreshCredentials($credentials);
-        $_SESSION[$social . "_credentials_" . $userId]["access_token"] = $newCredentials["access_token"];
-        $_SESSION[$social . "_credentials_" . $userId]["id_token"] = $newCredentials["id_token"];
-
-        return json_encode($_SESSION[$social . "_credentials_" . $userId], true);
+        return $connector->checkCredentials($credentials);
     }
 
     /**
-     * Service that refresh credentials parameters and save new credentials the session
+     * Service that refresh credentials and return new ones
      * @param $social
      * @param $credentials
      * @throws \Exception
      */
     public function refreshCredentials($social, $credentials) {
         $connector = $this->getSocialApi($social);
-        $newCredentials = $connector->refreshCredentials($credentials);
-
-        return $newCredentials;
+        return $connector->refreshCredentials($credentials);
     }
 
     /**
@@ -157,7 +126,7 @@ class SocialNetworks extends Singleton
      */
     public function getProfile($social, $userId)    {
         $connector = $this->getSocialApi($social);
-        return $connector->getProfile($userId, $_SESSION[$social."_credentials_".$userId]);
+        return $connector->getProfile($userId);
     }
 
     /**
@@ -173,8 +142,7 @@ class SocialNetworks extends Singleton
     public function getFollowers($social, $userId, $maxResultsPerPage, $numberOfPages, $pageToken)
     {
         $connector = $this->getSocialApi($social);
-        return $connector->getFollowers($userId, $maxResultsPerPage, $numberOfPages, $pageToken,
-                                        $_SESSION[$social . "_credentials_" . $userId]);
+        return $connector->getFollowers($userId, $maxResultsPerPage, $numberOfPages, $pageToken);
     }
 
     /**
@@ -188,7 +156,7 @@ class SocialNetworks extends Singleton
     public function getFollowersInfo($social, $userId, $postId)
     {
         $connector = $this->getSocialApi($social);
-        return $connector->getFollowersInfo($userId, $postId, $_SESSION[$social . "_credentials_" . $userId]);
+        return $connector->getFollowersInfo($userId, $postId);
     }
 
     /**
@@ -204,8 +172,7 @@ class SocialNetworks extends Singleton
     public function getSubscribers($social,  $userId, $maxResultsPerPage, $numberOfPages, $nextPageUrl)
     {
         $connector = $this->getSocialApi($social);
-        return $connector->getSubscribers($userId, $maxResultsPerPage, $numberOfPages, $nextPageUrl,
-            $_SESSION[$social . "_credentials_" . $userId]);
+        return $connector->getSubscribers($userId, $maxResultsPerPage, $numberOfPages, $nextPageUrl);
     }
 
     /**
@@ -214,15 +181,13 @@ class SocialNetworks extends Singleton
      * @param integer $maxResultsPerPage maximum elements per page
      * @param integer $numberOfPages number of pages
      * @param string $pageToken Indicates a specific page for pagination
-     * @param array $credentials
      * @return mixed
      * @throws \Exception
      */
     public function getPosts($social, $userId, $maxResultsPerPage, $numberOfPages, $pageToken)
     {
         $connector = $this->getSocialApi($social);
-        return $connector->getPosts($userId, $maxResultsPerPage, $numberOfPages, $pageToken,
-                                    $_SESSION[$social."_credentials_".$userId]);
+        return $connector->getPosts($userId, $maxResultsPerPage, $numberOfPages, $pageToken);
     }
 
     /**
@@ -238,22 +203,21 @@ class SocialNetworks extends Singleton
     public function exportImages($social, $userId, $maxResultsPerPage, $numberOfPages, $pageToken)
     {
         $connector = $this->getSocialApi($social);
-        return $connector->exportImages($userId, $maxResultsPerPage, $numberOfPages, $pageToken,
-                                        $_SESSION[$social."_credentials_".$userId]);
+        return $connector->exportImages($userId, $maxResultsPerPage, $numberOfPages, $pageToken);
     }
 
     /**
      * Service that connect to social network api and upload a media file (image/video)
      * @param string $social
-     * @param string $path Path to media
      * @param string $userId
+     * @param string $path Path to media
      * @return mixed
      * @throws \Exception
      */
-    public function importMedia($social, $path, $userId)
+    public function importMedia($social, $userId, $path)
     {
         $connector = $this->getSocialApi($social);
-        return $connector->importMedia($userId, $path, $_SESSION[$social."_credentials_".$userId]);
+        return $connector->importMedia($userId, $path);
     }
 
     /**
@@ -285,20 +249,19 @@ class SocialNetworks extends Singleton
     public function post($social, $parameters)
     {
         $connector = $this->getSocialApi($social);
-        return $connector->post($parameters, $_SESSION[$social."_credentials_".$parameters["user_id"]]);
+        return $connector->post($parameters);
     }
 
     /**
      * Service that query to a social network api to revoke access token in order
      * to ensure the permissions granted to the application are removed
      * @param string $social
-     * @param string $userId
      * @return mixed
      * @throws \Exception
      */
-    public function revokeToken($social, $userId)
+    public function revokeToken($social)
     {
         $connector = $this->getSocialApi($social);
-        return $connector->revokeToken($_SESSION[$social."_credentials_".$userId]);
+        return $connector->revokeToken();
     }
 }

@@ -96,18 +96,66 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     }
 
     /**
+     * Authentication service from google sign in request
+     * @param string $code
+     * @param string $redirectUrl
+     * @return array
+     * @throws AuthenticationException
+     * @throws ConnectorException
+     * @throws MalformedException
+     * @throws \Exception
+     *
+     */
+    public function authorize($code, $redirectUrl)
+    {
+        if ((null === $code) || ("" === $code)) {
+            throw new ConnectorConfigException("'code' parameter is required", 627);
+        }
+
+        if ((null === $redirectUrl) || (empty($redirectUrl))) {
+            throw new ConnectorConfigException("'redirectUrl' parameter is required", 628);
+        } else {
+            if (!$this->wellFormedUrl($redirectUrl)) {
+                throw new MalformedUrlException("'redirectUrl' is malformed", 601);
+            }
+        }
+
+        $this->client->setRedirectUri($redirectUrl);
+
+        try {
+            $this->client->authenticate($code);
+
+            $googleCredentials = json_decode($this->client->getAccessToken(), true);
+        } catch(\Exception $e) {
+            if (401 === $e->getCode()) {
+                throw new AuthenticationException("Error fetching OAuth2 access token, client is invalid", 601);
+            } else {
+                throw new ConnectorServiceException($e->getMessage(), $e->getCode());
+            }
+        }
+
+        return $googleCredentials;
+    }
+
+    /**
+     * Method that inject the access token in google client
+     * @param array $credentials
+     */
+    public function setAccessToken(array $credentials) {
+        $this->client->setAccessToken(json_encode($credentials));
+    }
+
+    /**
      * Service that check if credentials are valid and authorized in google
-     * @param $userId
      * @param array $credentials
      * @return mixed
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function checkCredentials($userId = null, array $credentials) {
+    public function checkCredentials(array $credentials) {
         $this->checkCredentialsParameters($credentials);
 
         try {
-            $this->setAccessToken($credentials);
             $oauthService = new \Google_Service_Oauth2($this->client);
             $optParams["access_token"] = $credentials["access_token"];
             $optParams["id_token"] = $credentials["id_token"];
@@ -120,7 +168,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     }
 
     /**
-     * Service that refresh credentials of the user and return new credentials
+     * Service that refresh user's credentials and returns new ones
      * @param $credentials
      * @return mixed
      * @throws AuthenticationException
@@ -128,19 +176,11 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     public function refreshCredentials($credentials) {
         try {
-            $tokenInfo = $this->checkCredentials(null, $credentials);
+            $this->client->setClientId($this->clientId);
+            $this->client->setClientSecret($this->clientSecret);
+            $this->client->refreshToken($credentials["refresh_token"]);
         } catch(\Exception $e) {
-            try {
-                $this->client->setClientId($this->clientId);
-                $this->client->setClientSecret($this->clientSecret);
-                $this->client->refreshToken($credentials["refresh_token"]);
-            } catch(\Exception $e) {
-                throw new AuthenticationException("Error refreshing token: " . $e->getMessage(), 602);
-            }
-        }
-
-        if (isset($tokenInfo)) {
-            throw new ConnectorServiceException("Credentials haven't expired yet");
+            throw new AuthenticationException("Error refreshing token: " . $e->getMessage(), 602);
         }
 
         return json_decode($this->client->getAccessToken(), true);
@@ -152,21 +192,15 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * @param integer $maxResultsPerPage maximum elements per page
      * @param integer $numberOfPages number of pages
      * @param string $pageToken Indicates a specific page for pagination
-     * @param array $credentials
      * @return JSON
      * @throws AuthenticationException
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function getFollowers($userId, $maxResultsPerPage, $numberOfPages, $pageToken, array $credentials)
+    public function getFollowers($userId, $maxResultsPerPage, $numberOfPages, $pageToken)
     {
-        $this->checkCredentials($userId, $credentials);
-
         $this->checkUser($userId);
-
         $this->checkPagination($maxResultsPerPage, $numberOfPages);
-
-        $this->setAccessToken($credentials);
 
         $people = array();
         $count = 0;
@@ -210,21 +244,18 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * Service that query to Google Api for followers info (likes and shares) of a post
      * @param string $userId
      * @param string $postId
-     * @param array $credentials
      * @return JSON
      * @throws AuthenticationException
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function getFollowersInfo($userId, $postId, array $credentials)
+    public function getFollowersInfo($userId, $postId)
     {
-        $this->checkCredentials($userId, $credentials);
+        $this->checkUser($userId);
 
         if ((null === $postId) || ("" === $postId)) {
             throw new ConnectorConfigException("'postId' parameter is required", 612);
         }
-
-        $this->setAccessToken($credentials);
 
         try {
             $people = array();
@@ -255,7 +286,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         return json_encode($people);
     }
 
-    public function getSubscribers($userId, $maxResultsPerPage, $numberOfPages, $nextPageUrl, array $credentials = array()) {
+    public function getSubscribers($userId, $maxResultsPerPage, $numberOfPages, $nextPageUrl) {
         return;
     }
 
@@ -265,21 +296,15 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * @param integer $maxResultsPerPage maximum elements per page
      * @param integer $numberOfPages number of pages
      * @param string $pageToken Indicates a specific page for pagination
-     * @param array $credentials
      * @return JSON
      * @throws AuthenticationException
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function getPosts($userId, $maxResultsPerPage, $numberOfPages, $pageToken, array $credentials)
+    public function getPosts($userId, $maxResultsPerPage, $numberOfPages, $pageToken)
     {
-        $this->checkCredentials($userId, $credentials);
-
         $this->checkUser($userId);
-
         $this->checkPagination($maxResultsPerPage, $numberOfPages);
-
-        $this->setAccessToken($credentials);
 
         $activities = array();
         $count = 0;
@@ -321,52 +346,23 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     /**
      * Service that query to Google+ Api to get user profile
      * @param string $userId
-     * @param array $credentials
      * @return JSON
      * @throws AuthenticationException
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function getProfile($userId, array $credentials)
+    public function getProfile($userId)
     {
-        $this->checkCredentials($userId, $credentials);
-
         $this->checkUser($userId);
-
-        $this->setAccessToken($credentials);
 
         try {
             $plusService = new \Google_Service_Plus($this->client);
             $profile = $plusService->people->get($userId);
         } catch(\Exception $e) {
-            throw new ConnectorServiceException("Error fetching user profile info: " . $e->getMessage(), $e->getCode());
+            throw new ConnectorServiceException("Error getting user profile: " . $e->getMessage(), $e->getCode());
         }
 
         return json_encode($profile->toSimpleObject());
-    }
-
-    /**
-     * Service that query to Google Oauth Api to get user profile id
-     * @param array $credentials
-     * @return string
-     * @throws AuthenticationException
-     * @throws ConnectorConfigException
-     * @throws ConnectorServiceException
-     */
-    public function getProfileId(array $credentials)
-    {
-        $this->checkCredentials(null, $credentials);
-
-        $this->setAccessToken($credentials);
-
-        try {
-            $oauthService = new \Google_Service_Oauth2($this->client);
-            $profile = $oauthService->userinfo_v2_me->get();
-        } catch(\Exception $e) {
-            throw new ConnectorServiceException("Error fetching user profile info: " . $e->getMessage(), $e->getCode());
-        }
-
-        return $profile->getId();
     }
 
     /**
@@ -375,20 +371,15 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * @param integer $maxResultsPerPage maximum elements per page
      * @param integer $numberOfPages number of pages
      * @param string $pageToken Indicates a specific page
-     * @param array $credentials
      * @return JSON
      * @throws AuthenticationException
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function exportImages($userId, $maxResultsPerPage, $numberOfPages, $pageToken, array $credentials)
+    public function exportImages($userId, $maxResultsPerPage, $numberOfPages, $pageToken)
     {
-        // $this->checkCredentials($userId, $credentials);
-
-        // $this->checkUser($userId);
+        $this->checkUser($userId);
         $this->checkPagination($maxResultsPerPage, $numberOfPages);
-        $credentials = [];
-        $this->setAccessToken($credentials);
 
         $files = array();
         $count = 0;
@@ -429,16 +420,13 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * Service that upload a media file (image/video) to Google+
      * @param string $userId
      * @param string $path Path to media
-     * @param array $credentials
      * @return JSON
      * @throws AuthenticationException
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function importMedia($userId, $path, array $credentials)
+    public function importMedia($userId, $path)
     {
-        $this->checkCredentials($userId, $credentials);
-
         $this->checkUser($userId);
 
         if ((null === $path) || ("" === $path)) {
@@ -458,8 +446,6 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                 }
             }
         }
-
-        $this->setAccessToken($credentials);
 
         try {
             $plusDomainsService = new \Google_Service_PlusDomains($this->client);
@@ -517,7 +503,6 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
 
     /**
      * Service that publish in Google +
-     * @param array $credentials
      * @param array $parameters
      *      "user_id"    => User whose google domain the stream will be published in
      *      "content"   => Text of the comment
@@ -538,9 +523,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function post(array $parameters, array $credentials) {
-        $this->checkCredentials($parameters["user_id"], $credentials);
-
+    public function post(array $parameters) {
         if ((null === $parameters) || (!is_array($parameters)) || (count($parameters) == 0)) {
             throw new ConnectorConfigException("Invalid post parameters'", 617);
         }
@@ -590,8 +573,6 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                 }
             }
         }
-
-        $this->setAccessToken($credentials);
 
         // Activity
         $postBody = new \Google_Service_PlusDomains_Activity();
@@ -658,62 +639,15 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     }
 
     /**
-     * Authentication service from google sign in request
-     * @param string $code
-     * @param string $redirectUrl
-     * @return array
-     * @throws AuthenticationException
-     * @throws ConnectorException
-     * @throws MalformedException
-     * @throws \Exception
-     *
-     */
-    public function authorize($code, $redirectUrl)
-    {
-        if ((null === $code) || ("" === $code)) {
-            throw new ConnectorConfigException("'code' parameter is required", 627);
-        }
-
-        if ((null === $redirectUrl) || (empty($redirectUrl))) {
-            throw new ConnectorConfigException("'redirectUrl' parameter is required", 628);
-        } else {
-            if (!$this->wellFormedUrl($redirectUrl)) {
-                throw new MalformedUrlException("'redirectUrl' is malformed", 601);
-            }
-        }
-
-        $this->client->setRedirectUri($redirectUrl);
-
-        try {
-            $this->client->authenticate($code);
-
-            $googleCredentials = json_decode($this->client->getAccessToken(), true);
-        } catch(\Exception $e) {
-            if (401 === $e->getCode()) {
-                throw new AuthenticationException("Error fetching OAuth2 access token, client is invalid", 601);
-            } else {
-                throw new ConnectorServiceException($e->getMessage(), $e->getCode());
-            }
-        }
-
-        return $googleCredentials;
-    }
-
-    /**
      * Service that query to Google api to revoke access token in order
      * to ensure the permissions granted to the application are removed
-     * @param array $credentials
      * @return JSON
      * @throws AuthenticationException
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function revokeToken(array $credentials)
+    public function revokeToken()
     {
-        $this->checkCredentialsParameters($credentials);
-
-        $this->setAccessToken($credentials);
-
         try {
             $this->client->revokeToken();
         } catch(\Exception $e) {
@@ -724,15 +658,6 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             "status" => "success",
             "note" => "Following a successful revocation response, it might take some time before the revocation has full effect"
         ));
-    }
-
-    /**
-     * Method that set the access token; credentials are checked previously
-     * @param array $credentials
-     * @throws AuthenticationException
-     */
-    private function setAccessToken(array $credentials) {
-        $this->client->setAccessToken(json_encode($credentials));
     }
 
     /**

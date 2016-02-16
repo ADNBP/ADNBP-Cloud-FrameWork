@@ -9,15 +9,16 @@ interface SocialNetworkInterface {
 
     function setApiKeys($clientId, $clientSecret, $clientScope);
     function requestAuthorization($redirectUrl);
-    function getFollowers($userId, $maxResultsPerPage, $numberOfPages, $pageToken, array $credentials);
-    function getFollowersInfo($userId, $postId, array $credentials);
-    function getSubscribers($userId, $maxResultsPerPage, $numberOfPages, $nextPageUrl, array $credentials);
-    function getPosts($userId, $maxResultsPerPage, $numberOfPages, $pageToken, array $credentials);
-    function getProfile($userId, array $credentials);
-    function importMedia($userId, $path, array $credentials);
-    function getProfileId(array $credentials);
-    function exportImages($userId, $maxResultsPerPage, $numberOfPages, $pageToken, array $credentials);
-    function post(array $parameters, array $credentials);
-    function revokeToken(array $credentials);
     function authorize($code, $redirectUrl);
+    function setAccessToken(array $credentials);
+    function revokeToken();
+    function getFollowers($userId, $maxResultsPerPage, $numberOfPages, $pageToken);
+    function getFollowersInfo($userId, $postId);
+    function getSubscribers($userId, $maxResultsPerPage, $numberOfPages, $nextPageUrl);
+    function getPosts($userId, $maxResultsPerPage, $numberOfPages, $pageToken);
+    function getProfile($userId);
+    function importMedia($userId, $path);
+    function exportImages($userId, $maxResultsPerPage, $numberOfPages, $pageToken);
+    function post(array $parameters);
+
 }

@@ -26,8 +26,11 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
     private $clientSecret;
     private $clientScope = array();
 
+    // Auth keys
+    private $accessToken;
+
     /**
-     * Set Instagram Api credentials
+     * Set Instagram Api keys
      * @param $clientId
      * @param $clientSecret
      * @param $clientScope
@@ -49,276 +52,6 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         $this->clientId = $clientId;
         $this->clientSecret = $clientSecret;
         $this->clientScope = $clientScope;
-    }
-
-    /**
-     * @param $userId
-     * @param $credentials
-     * @return null
-     */
-    public function checkCredentials($userId, $credentials) {
-        return null;
-    }
-
-    /**
-     * Service that query to Instagram Api for users the user is followed by
-     * @param string $userId
-     * @param integer $maxResultsPerPage.
-     * @param integer $numberOfPages
-     * @param string $nextPageUrl
-     * @param array $credentials
-     * @return JSON
-     * @throws ConnectorServiceException
-     */
-    function getFollowers($userId, $maxResultsPerPage, $numberOfPages, $nextPageUrl, array $credentials) {
-        $this->checkCredentialsParams($credentials);
-
-        $this->checkUser($userId);
-
-        $this->checkPagination($numberOfPages);
-
-        if (!$nextPageUrl) {
-            $nextPageUrl = self::INSTAGRAM_API_USERS_URL . $userId .
-                "/followed-by?access_token=" . $credentials["access_token"];
-        }
-
-        $pagination = true;
-        $followers = array();
-        $count = 0;
-
-        while ($pagination) {
-            $data = $this->curlGet($nextPageUrl);
-
-            if (null === $data["data"]) {
-                throw new ConnectorServiceException("Error getting followers", 601);
-            }
-
-            $followers[$count] = array();
-
-            foreach ($data["data"] as $key => $follower) {
-                $followers[$count][] = $follower;
-            }
-
-            // If number of pages is zero, then all elements are returned
-            if ((($numberOfPages > 0) && ($count == $numberOfPages)) || (!isset($data->pagination->next_url))) {
-                $pagination = false;
-                if (!isset($data->pagination->next_url)) {
-                    $nextPageUrl = null;
-                }
-            } else {
-                $nextPageUrl = $data->pagination->next_url;
-                $count++;
-            }
-        }
-
-        $followers["nextPageUrl"] = $nextPageUrl;
-
-        return json_encode($followers);
-    }
-
-    function getFollowersInfo($userId, $postId, array $credentials) {
-        return;
-    }
-
-    /**
-     * Service that query to Instagram Api for users the user is following
-     * @param string $userId
-     * @param integer $maxResultsPerPage.
-     * @param integer $numberOfPages
-     * @param string $nextPageUrl
-     * @param array $credentials
-     * @return JSON
-     * @throws ConnectorServiceException
-     */
-    function getSubscribers($userId, $maxResultsPerPage, $numberOfPages, $nextPageUrl, array $credentials) {
-        $this->checkCredentialsParams($credentials);
-
-        $this->checkUser($userId);
-
-        $this->checkPagination($numberOfPages);
-
-        if (!$nextPageUrl) {
-            $nextPageUrl = self::INSTAGRAM_API_USERS_URL . $userId .
-                "/follows?access_token=" . $credentials["access_token"];
-        }
-
-        $pagination = true;
-        $subscribers = array();
-        $count = 0;
-
-        while ($pagination) {
-            $data = $this->curlGet($nextPageUrl);
-
-            if (null === $data["data"]) {
-                throw new ConnectorServiceException("Error getting subscribers", 602);
-            }
-
-            $subscribers[$count] = array();
-
-            foreach ($data["data"] as $key => $subscriber) {
-                $subscribers[$count][] = $subscriber;
-            }
-
-            // If number of pages is zero, then all elements are returned
-            if ((($numberOfPages > 0) && ($count == $numberOfPages)) || (!isset($data->pagination->next_url))) {
-                $pagination = false;
-                if (!isset($data->pagination->next_url)) {
-                    $nextPageUrl = null;
-                }
-            } else {
-                $nextPageUrl = $data->pagination->next_url;
-                $count++;
-            }
-        }
-
-        $subscribers["nextPageUrl"] = $nextPageUrl;
-
-        return json_encode($subscribers);
-    }
-
-    function getPosts($userId, $maxResultsPerPage, $numberOfPages, $pageToken, array $credentials) {
-        return;
-    }
-
-    /**
-     * Service that query to Instagram Api to get user profile
-     * @param string $userId
-     * @param array $credentials
-     * @return JSON
-     */
-    public function getProfile($userId, array $credentials)
-    {
-        $this->checkCredentialsParams($credentials);
-
-        $this->checkUser($userId);
-
-        $url = self::INSTAGRAM_API_USERS_URL . $userId . "/?access_token=" . $credentials["access_token"];
-
-        $data = $this->curlGet($url);
-
-        // Instagram API doesn't return the user's e-mail
-        return json_encode($data["data"]);
-    }
-
-    public function importMedia($userId, $path, array $credentials) {
-        return;
-    }
-
-    /**
-     * Service that query to Google Oauth Api to get user profile id
-     * @param array $credentials
-     * @return string
-     */
-    public function getProfileId(array $credentials)
-    {
-        $profile = json_decode($this->getProfile("self", $credentials), true);
-        return $profile["id"];
-    }
-
-    /**
-     * Service that query to Instagram Api Drive service for images
-     * @param string $userId
-     * @param integer $maxTotalResults.
-     * @param integer $numberOfPages
-     * @param string $nextPageUrl
-     * @param array $credentials
-     * @return JSON
-     * @throws ConnectorServiceException
-     */
-    public function exportImages($userId, $maxTotalResults, $numberOfPages, $nextPageUrl, array $credentials)
-    {
-        $this->checkCredentialsParams($credentials);
-
-        $this->checkUser($userId);
-
-        $this->checkPagination($numberOfPages, $maxTotalResults);
-
-        if (!$nextPageUrl) {
-            $nextPageUrl = self::INSTAGRAM_API_USERS_URL . $userId .
-                        "/media/recent/?access_token=" . $credentials["access_token"];
-                        //"&count=".$maxTotalResults;
-        }
-
-        $pagination = true;
-        $files = array();
-        $count = 0;
-
-        while ($pagination) {
-            $data = $this->curlGet($nextPageUrl);
-
-            if (null === $data["data"]) {
-                throw new ConnectorServiceException("Error exporting files", 603);
-            }
-
-            $files[$count] = array();
-
-            foreach ($data["data"] as $key => $media) {
-                if ("image" === $media["type"]) {
-                    $files[$count][] = $media;
-                }
-            }
-
-            // If number of pages is zero, then all elements are returned
-            if ((($numberOfPages > 0) && ($count == $numberOfPages)) || (!isset($data->pagination->next_url))) {
-                $pagination = false;
-                if (!isset($data->pagination->next_url)) {
-                    $nextPageUrl = null;
-                }
-            } else {
-                $nextPageUrl = $data->pagination->next_url;
-                $count++;
-            }
-        }
-
-        $files["nextPageUrl"] = $nextPageUrl;
-
-        return json_encode($files);
-    }
-
-
-    /**
-     * Service that publish a comment in an Instagram media
-     * @param array $parameters
-     *      "content" => Text of the comment
-     *      "mediaId" => Instagram media's ID
-     * @param array $credentials
-     * @return JSON
-     * @throws ConnectorConfigException
-     * @throws ConnectorServiceException
-     */
-    public function post(array $parameters, array $credentials) {
-        $this->checkCredentialsParams($credentials);
-
-        if ((null === $parameters) || (!is_array($parameters)) || (count($parameters) == 0)) {
-            throw new ConnectorConfigException("Invalid post parameters'", 617);
-        }
-
-        if ((!array_key_exists('content', $parameters)) ||
-            (null === $parameters["content"]) || (empty($parameters["content"]))) {
-            throw new ConnectorConfigException("'content' parameter is required", 631);
-        }
-
-        if ((!array_key_exists('mediaId', $parameters)) ||
-            (null === $parameters["mediaId"]) || (empty($parameters["mediaId"]))) {
-            throw new ConnectorConfigException("'mediaId' parameter is required", 630);
-        }
-
-        $url = self::INSTAGRAM_API_MEDIA_URL.$parameters["mediaId"]."/comments";
-
-        $fields = "access_token=".$credentials["access_token"].
-                    "&text=".$parameters["content"];
-
-        $data = $this->curlPost($url, $fields);
-
-        if ($data["meta"]["code"] != 200) {
-            throw new ConnectorServiceException("Error making comments on an Instagram media", $data["meta"]["code"]);
-        }
-
-        return json_encode($data);
-    }
-
-    function revokeToken(array $credentials) {
-        return;
     }
 
     /**
@@ -379,33 +112,33 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         }
 
         $fields = "client_id=".$this->clientId.
-                    "&client_secret=".$this->clientSecret.
-                    "&grant_type=authorization_code".
-                    "&code=".$code.
-                    "&redirect_uri=".$redirectUrl;
+            "&client_secret=".$this->clientSecret.
+            "&grant_type=authorization_code".
+            "&code=".$code.
+            "&redirect_uri=".$redirectUrl;
 
         $instagramCredentials = $this->curlPost(self::INSTAGRAM_OAUTH_ACCESS_TOKEN_URL, $fields);
 
         /**
          * Returned data format instance
          *  {
-                    "access_token": "fb2e77d.47a0479900504cb3ab4a1f626d174d2d",
-                    "user": {
-                        "id": "1574083",
-                        "username": "snoopdogg",
-                        "full_name": "Snoop Dogg",
-                        "profile_picture": "...",
-                        "bio": "...",
-                        "website": "..."
-                }
-            }
+        "access_token": "fb2e77d.47a0479900504cb3ab4a1f626d174d2d",
+        "user": {
+        "id": "1574083",
+        "username": "snoopdogg",
+        "full_name": "Snoop Dogg",
+        "profile_picture": "...",
+        "bio": "...",
+        "website": "..."
+        }
+        }
          **/
 
         if (!isset($instagramCredentials["access_token"])) {
             throw new AuthenticationException("Error fetching OAuth2 access token, client is invalid", 601);
         } else if ((!isset($instagramCredentials["user"])) || (!isset($instagramCredentials["user"]["id"])) ||
-                   (!isset($instagramCredentials["user"]["full_name"])) ||
-                    (!isset($instagramCredentials["user"]["profile_picture"]))) {
+            (!isset($instagramCredentials["user"]["full_name"])) ||
+            (!isset($instagramCredentials["user"]["profile_picture"]))) {
             throw new ConnectorServiceException("Error fetching user profile info", 601);
         }
 
@@ -414,20 +147,251 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
     }
 
     /**
-     * Method that check credentials and userId are ok
-     * @param $userId
+     * Method that inject the access token in connector
      * @param array $credentials
-     * @return null
-     * @throws ConnectorConfigException
      */
-    private function checkCredentialsParams(array $credentials) {
-        if ((null === $credentials) || (!is_array($credentials)) || (count($credentials) == 0)) {
-            throw new ConnectorConfigException("Invalid credentials set'", 604);
+    public function setAccessToken(array $credentials) {
+        $this->accessToken = $credentials["access_token"];
+    }
+
+    /**
+     * @param $credentials
+     * @return null
+     */
+    public function checkCredentials($credentials) {
+        return;
+    }
+
+    /**
+     * Service that query to Instagram Api for users the user is followed by
+     * @param string $userId
+     * @param integer $maxResultsPerPage.
+     * @param integer $numberOfPages
+     * @param string $nextPageUrl
+     * @return JSON
+     * @throws ConnectorServiceException
+     */
+    function getFollowers($userId, $maxResultsPerPage, $numberOfPages, $nextPageUrl) {
+        $this->checkUser($userId);
+
+        $this->checkPagination($numberOfPages);
+
+        if (!$nextPageUrl) {
+            $nextPageUrl = self::INSTAGRAM_API_USERS_URL . $userId .
+                "/followed-by?access_token=" . $this->accessToken;
         }
 
-        if ((!isset($credentials["access_token"])) || (null === $credentials["access_token"]) || ("" === $credentials["access_token"])) {
-            throw new ConnectorConfigException("'access_token' parameter is required", 605);
+        $pagination = true;
+        $followers = array();
+        $count = 0;
+
+        while ($pagination) {
+            $data = $this->curlGet($nextPageUrl);
+
+            if (null === $data["data"]) {
+                throw new ConnectorServiceException("Error getting followers", 601);
+            }
+
+            $followers[$count] = array();
+
+            foreach ($data["data"] as $key => $follower) {
+                $followers[$count][] = $follower;
+            }
+
+            // If number of pages is zero, then all elements are returned
+            if ((($numberOfPages > 0) && ($count == $numberOfPages)) || (!isset($data->pagination->next_url))) {
+                $pagination = false;
+                if (!isset($data->pagination->next_url)) {
+                    $nextPageUrl = null;
+                }
+            } else {
+                $nextPageUrl = $data->pagination->next_url;
+                $count++;
+            }
         }
+
+        $followers["nextPageUrl"] = $nextPageUrl;
+
+        return json_encode($followers);
+    }
+
+    function getFollowersInfo($userId, $postId) {
+        return;
+    }
+
+    /**
+     * Service that query to Instagram Api for users the user is following
+     * @param string $userId
+     * @param integer $maxResultsPerPage.
+     * @param integer $numberOfPages
+     * @param string $nextPageUrl
+     * @return JSON
+     * @throws ConnectorServiceException
+     */
+    function getSubscribers($userId, $maxResultsPerPage, $numberOfPages, $nextPageUrl) {
+        $this->checkUser($userId);
+        $this->checkPagination($numberOfPages);
+
+        if (!$nextPageUrl) {
+            $nextPageUrl = self::INSTAGRAM_API_USERS_URL . $userId .
+                "/follows?access_token=" . $this->accessToken;
+        }
+
+        $pagination = true;
+        $subscribers = array();
+        $count = 0;
+
+        while ($pagination) {
+            $data = $this->curlGet($nextPageUrl);
+
+            if (null === $data["data"]) {
+                throw new ConnectorServiceException("Error getting subscribers", 602);
+            }
+
+            $subscribers[$count] = array();
+
+            foreach ($data["data"] as $key => $subscriber) {
+                $subscribers[$count][] = $subscriber;
+            }
+
+            // If number of pages is zero, then all elements are returned
+            if ((($numberOfPages > 0) && ($count == $numberOfPages)) || (!isset($data->pagination->next_url))) {
+                $pagination = false;
+                if (!isset($data->pagination->next_url)) {
+                    $nextPageUrl = null;
+                }
+            } else {
+                $nextPageUrl = $data->pagination->next_url;
+                $count++;
+            }
+        }
+
+        $subscribers["nextPageUrl"] = $nextPageUrl;
+
+        return json_encode($subscribers);
+    }
+
+    function getPosts($userId, $maxResultsPerPage, $numberOfPages, $pageToken) {
+        return;
+    }
+
+    /**
+     * Service that query to Instagram Api to get user profile
+     * @param string $userId
+     * @return JSON
+     */
+    public function getProfile($userId)
+    {
+        $this->checkUser($userId);
+
+        $url = self::INSTAGRAM_API_USERS_URL . $userId . "/?access_token=" . $this->accessToken;
+
+        $data = $this->curlGet($url);
+
+        // Instagram API doesn't return the user's e-mail
+        return json_encode($data["data"]);
+    }
+
+    /**
+     * Service that query to Instagram Api Drive service for images
+     * @param string $userId
+     * @param integer $maxTotalResults.
+     * @param integer $numberOfPages
+     * @param string $nextPageUrl
+     * @return JSON
+     * @throws ConnectorServiceException
+     */
+    public function exportImages($userId, $maxTotalResults, $numberOfPages, $nextPageUrl)
+    {
+        $this->checkUser($userId);
+        $this->checkPagination($numberOfPages, $maxTotalResults);
+
+        if (!$nextPageUrl) {
+            $nextPageUrl = self::INSTAGRAM_API_USERS_URL . $userId .
+                        "/media/recent/?access_token=" . $this->accessToken;
+                        //"&count=".$maxTotalResults;
+        }
+
+        $pagination = true;
+        $files = array();
+        $count = 0;
+
+        while ($pagination) {
+            $data = $this->curlGet($nextPageUrl);
+
+            if (null === $data["data"]) {
+                throw new ConnectorServiceException("Error exporting files", 603);
+            }
+
+            $files[$count] = array();
+
+            foreach ($data["data"] as $key => $media) {
+                if ("image" === $media["type"]) {
+                    $files[$count][] = $media;
+                }
+            }
+
+            // If number of pages is zero, then all elements are returned
+            if ((($numberOfPages > 0) && ($count == $numberOfPages)) || (!isset($data->pagination->next_url))) {
+                $pagination = false;
+                if (!isset($data->pagination->next_url)) {
+                    $nextPageUrl = null;
+                }
+            } else {
+                $nextPageUrl = $data->pagination->next_url;
+                $count++;
+            }
+        }
+
+        $files["nextPageUrl"] = $nextPageUrl;
+
+        return json_encode($files);
+    }
+
+    public function importMedia($userId, $path) {
+        return;
+    }
+
+    /**
+     * Service that publish a comment in an Instagram media
+     * @param array $parameters
+     *      "content" => Text of the comment
+     *      "mediaId" => Instagram media's ID
+     * @return JSON
+     * @throws ConnectorConfigException
+     * @throws ConnectorServiceException
+     */
+    public function post(array $parameters) {
+        if ((null === $parameters) || (!is_array($parameters)) || (count($parameters) == 0)) {
+            throw new ConnectorConfigException("Invalid post parameters'", 617);
+        }
+
+        if ((!array_key_exists('content', $parameters)) ||
+            (null === $parameters["content"]) || (empty($parameters["content"]))) {
+            throw new ConnectorConfigException("'content' parameter is required", 631);
+        }
+
+        if ((!array_key_exists('mediaId', $parameters)) ||
+            (null === $parameters["mediaId"]) || (empty($parameters["mediaId"]))) {
+            throw new ConnectorConfigException("'mediaId' parameter is required", 630);
+        }
+
+        $url = self::INSTAGRAM_API_MEDIA_URL.$parameters["mediaId"]."/comments";
+
+        $fields = "access_token=".$this->accessToken.
+                    "&text=".$parameters["content"];
+
+        $data = $this->curlPost($url, $fields);
+
+        if ($data["meta"]["code"] != 200) {
+            throw new ConnectorServiceException("Error making comments on an Instagram media", $data["meta"]["code"]);
+        }
+
+        return json_encode($data);
+    }
+
+    function revokeToken() {
+        return;
     }
 
     /**
