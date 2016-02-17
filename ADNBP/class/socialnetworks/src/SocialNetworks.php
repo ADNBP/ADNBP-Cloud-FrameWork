@@ -210,14 +210,15 @@ class SocialNetworks extends Singleton
      * Service that connect to social network api and upload a media file (image/video)
      * @param string $social
      * @param string $userId
-     * @param string $path Path to media
+     * @param string $mediaType "url"|"path"
+     * @param string $value url or path
      * @return mixed
      * @throws \Exception
      */
-    public function importMedia($social, $userId, $path)
+    public function importMedia($social, $userId, $mediaType, $value)
     {
         $connector = $this->getSocialApi($social);
-        return $connector->importMedia($userId, $path);
+        return $connector->importMedia($userId, $mediaType, $value);
     }
 
     /**

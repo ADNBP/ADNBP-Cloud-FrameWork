@@ -419,32 +419,49 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     /**
      * Service that upload a media file (image/video) to Google+
      * @param string $userId
-     * @param string $path Path to media
+     * @param string $mediaType "url"|"path"
+     * @param string $value url or path
      * @return JSON
      * @throws AuthenticationException
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function importMedia($userId, $path)
+    public function importMedia($userId, $mediaType, $value)
     {
         $this->checkUser($userId);
 
-        if ((null === $path) || ("" === $path)) {
-            throw new ConnectorConfigException("'path' parameter is required", 613);
-        } else {
-            if (!file_exists($path)) {
-                //throw new ConnectorConfigException("file doesn't exist", 614);
+        if ((null === $mediaType) || ("" === $mediaType)) {
+            throw new ConnectorConfigException("Media type must be 'url' or 'path'", 613);
+        } elseif ((null === $value) || ("" === $value)) {
+            throw new ConnectorConfigException($mediaType." value is required", 613);
+        } elseif ("path" === $mediaType) {
+            if (!file_exists($value)) {
+                throw new ConnectorConfigException("file doesn't exist", 614);
             } else {
-                $mimeType = mime_content_type($path);
+                $mimeType = mime_content_type($value);
                 if ((false === strpos($mimeType,"image/")) && (false === strpos($mimeType,"video/"))) {
                     throw new ConnectorConfigException("file must be an image or a video", 615);
                 } else {
-                    $filesize = filesize($path);
+                    $filesize = filesize($value);
                     if ($filesize > self::MAX_IMPORT_FILE_SIZE) {
                         throw new ConnectorConfigException("Maximum file size is ".(self::MAX_IMPORT_FILE_SIZE_MB)."MB", 616);
                     }
                 }
             }
+        } else {
+            $tempMedia = tmpfile();
+            fwrite($tempMedia, file_get_contents($value));
+            $info = stream_get_meta_data($tempMedia);
+            $mimeType = mime_content_type($info["uri"]);
+            if ((false === strpos($mimeType,"image/")) && (false === strpos($mimeType,"video/"))) {
+                throw new ConnectorConfigException("file must be an image or a video", 615);
+            } else {
+                $filesize = filesize($info["uri"]);
+                if ($filesize > self::MAX_IMPORT_FILE_SIZE) {
+                    throw new ConnectorConfigException("Maximum file size is ".(self::MAX_IMPORT_FILE_SIZE_MB)."MB", 616);
+                }
+            }
+            $value = $info["uri"];
         }
 
         try {
@@ -478,7 +495,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
 
             // Upload the various chunks. $status will be false until the process is complete.
             $status = false;
-            $handle = fopen($path, "rb");
+            $handle = fopen($value, "rb");
 
             while (!$status && !feof($handle)) {
                 $chunk = fread($handle, $chunkSizeBytes);
@@ -492,12 +509,17 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             }
 
             fclose($handle);
+
+            if (isset($tempMedia)) {
+                fclose($tempMedia);
+            }
+
             // Reset to the client to execute requests immediately in the future.
             $this->client->setDefer(false);
 
             return json_encode($result);
         } catch (Exception $e) {
-            throw new ConnectorServiceException("Error importing '".$path."'': " . $e->getMessage(), $e->getCode());
+            throw new ConnectorServiceException("Error importing '".$value."'': " . $e->getMessage(), $e->getCode());
         }
     }
 
