@@ -438,7 +438,15 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             if (!file_exists($value)) {
                 throw new ConnectorConfigException("file doesn't exist", 614);
             } else {
-                $mimeType = mime_content_type($value);
+                $finfo = new \finfo(FILEINFO_MIME_TYPE);
+
+                if (!$finfo) {
+                    throw new ConnectorConfigException("error getting mime type of the media file", 615);
+                }
+
+                $mimeType = $finfo->file($value);
+
+                //$mimeType = $finfo
                 if ((false === strpos($mimeType,"image/")) && (false === strpos($mimeType,"video/"))) {
                     throw new ConnectorConfigException("file must be an image or a video", 615);
                 } else {
@@ -452,7 +460,14 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             $tempMedia = tmpfile();
             fwrite($tempMedia, file_get_contents($value));
             $info = stream_get_meta_data($tempMedia);
-            $mimeType = mime_content_type($info["uri"]);
+            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+
+            if (!$finfo) {
+                throw new ConnectorConfigException("error getting mime type of the media file", 615);
+            }
+
+            $mimeType = $finfo->file($info["uri"]);
+
             if ((false === strpos($mimeType,"image/")) && (false === strpos($mimeType,"video/"))) {
                 throw new ConnectorConfigException("file must be an image or a video", 615);
             } else {
