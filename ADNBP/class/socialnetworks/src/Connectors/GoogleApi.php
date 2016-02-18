@@ -155,6 +155,8 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     public function checkCredentials(array $credentials) {
         $this->checkCredentialsParameters($credentials);
 
+        $this->checkExpiredToken();
+
         try {
             $oauthService = new \Google_Service_Oauth2($this->client);
             $optParams["access_token"] = $credentials["access_token"];
@@ -187,6 +189,28 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     }
 
     /**
+     * Service that query to Google api to revoke access token in order
+     * to ensure the permissions granted to the application are removed
+     * @return JSON
+     * @throws AuthenticationException
+     * @throws ConnectorConfigException
+     * @throws ConnectorServiceException
+     */
+    public function revokeToken()
+    {
+        try {
+            $this->client->revokeToken();
+        } catch(\Exception $e) {
+            throw new ConnectorServiceException("Error revoking token: " . $e->getMessage(), $e->getCode());
+        }
+
+        return json_encode(array(
+            "status" => "success",
+            "note" => "Following a successful revocation response, it might take some time before the revocation has full effect"
+        ));
+    }
+
+    /**
      * Service that query to Google Api for people in user circles
      * @param string $userId
      * @param integer $maxResultsPerPage maximum elements per page
@@ -199,6 +223,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     public function getFollowers($userId, $maxResultsPerPage, $numberOfPages, $pageToken)
     {
+        $this->checkExpiredToken();
         $this->checkUser($userId);
         $this->checkPagination($maxResultsPerPage, $numberOfPages);
 
@@ -251,6 +276,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     public function getFollowersInfo($userId, $postId)
     {
+        $this->checkExpiredToken();
         $this->checkUser($userId);
 
         if ((null === $postId) || ("" === $postId)) {
@@ -303,6 +329,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     public function getPosts($userId, $maxResultsPerPage, $numberOfPages, $pageToken)
     {
+        $this->checkExpiredToken();
         $this->checkUser($userId);
         $this->checkPagination($maxResultsPerPage, $numberOfPages);
 
@@ -353,6 +380,8 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     public function getProfile($userId)
     {
+        $this->checkExpiredToken();
+
         $this->checkUser($userId);
 
         try {
@@ -376,8 +405,9 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function exportImages($userId, $maxResultsPerPage, $numberOfPages, $pageToken)
+    public function exportMedia($userId, $maxResultsPerPage, $numberOfPages, $pageToken)
     {
+        $this->checkExpiredToken();
         $this->checkUser($userId);
         $this->checkPagination($maxResultsPerPage, $numberOfPages);
 
@@ -387,7 +417,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             try {
                 $driveService = new \Google_Service_Drive($this->client);
                 $parameters = array();
-                $parameters["q"] = "(mimeType contains 'image' and trashed = false)";
+                $parameters["q"] = "((mimeType contains 'image' or mimeType contains 'video') and trashed = false)";
                 $parameters["maxResults"] = $maxResultsPerPage;
 
                 if ($pageToken) {
@@ -395,6 +425,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                 }
 
                 $filesList = $driveService->files->listFiles($parameters);
+
                 $files[$count] = $filesList->getItems();
                 $count++;
 
@@ -405,7 +436,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                     break;
                 }
             } catch (Exception $e) {
-                throw new ConnectorServiceException("Error exporting files: " . $e->getMessage(), $e->getCode());
+                throw new ConnectorServiceException("Error exporting images: " . $e->getMessage(), $e->getCode());
                 $pageToken = null;
             }
         } while ($pageToken);
@@ -428,6 +459,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     public function importMedia($userId, $mediaType, $value)
     {
+        $this->checkExpiredToken();
         $this->checkUser($userId);
 
         if ((null === $mediaType) || ("" === $mediaType)) {
@@ -561,6 +593,8 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * @throws ConnectorServiceException
      */
     public function post(array $parameters) {
+        $this->checkExpiredToken();
+
         if ((null === $parameters) || (!is_array($parameters)) || (count($parameters) == 0)) {
             throw new ConnectorConfigException("Invalid post parameters'", 617);
         }
@@ -676,28 +710,6 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     }
 
     /**
-     * Service that query to Google api to revoke access token in order
-     * to ensure the permissions granted to the application are removed
-     * @return JSON
-     * @throws AuthenticationException
-     * @throws ConnectorConfigException
-     * @throws ConnectorServiceException
-     */
-    public function revokeToken()
-    {
-        try {
-            $this->client->revokeToken();
-        } catch(\Exception $e) {
-            throw new ConnectorServiceException("Error revoking token: " . $e->getMessage(), $e->getCode());
-        }
-
-        return json_encode(array(
-            "status" => "success",
-            "note" => "Following a successful revocation response, it might take some time before the revocation has full effect"
-        ));
-    }
-
-    /**
      * Method that check credentials are present and valid
      * @param array $credentials
      * @throws ConnectorConfigException
@@ -748,6 +760,12 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             throw new ConnectorConfigException("'numberOfPages' parameter is required", 610);
         } else if (!is_numeric($numberOfPages)) {
             throw new ConnectorConfigException("'numberOfPages' parameter is not numeric", 611);
+        }
+    }
+
+    private function checkExpiredToken() {
+        if ($this->client->isAccessTokenExpired()) {
+            throw new ConnectorServiceException("The token has expired, has been tampered with, or the permissions revoked.");
         }
     }
 

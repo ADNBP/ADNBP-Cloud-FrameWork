@@ -18,7 +18,7 @@ interface SocialNetworkInterface {
     function getPosts($userId, $maxResultsPerPage, $numberOfPages, $pageToken);
     function getProfile($userId);
     function importMedia($userId, $mediaType, $value);
-    function exportImages($userId, $maxResultsPerPage, $numberOfPages, $pageToken);
+    function exportMedia($userId, $maxResultsPerPage, $numberOfPages, $pageToken);
     function post(array $parameters);
 
 }

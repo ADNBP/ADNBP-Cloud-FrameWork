@@ -118,6 +118,19 @@ class SocialNetworks extends Singleton
     }
 
     /**
+     * Service that query to a social network api to revoke access token in order
+     * to ensure the permissions granted to the application are removed
+     * @param string $social
+     * @return mixed
+     * @throws \Exception
+     */
+    public function revokeToken($social)
+    {
+        $connector = $this->getSocialApi($social);
+        return $connector->revokeToken();
+    }
+
+    /**
      * Service that query to a social network api to get user profile
      * @param string $social
      * @param string $userId
@@ -191,7 +204,7 @@ class SocialNetworks extends Singleton
     }
 
     /**
-     * Service that connect to social network api and request for data for authenticated user
+     * Service that connect to social network api and request for media files for authenticated user
      * @param string $social
      * @param string $userId
      * @param integer $maxResultsPerPage maximum elements per page
@@ -200,10 +213,25 @@ class SocialNetworks extends Singleton
      * @return mixed
      * @throws \Exception
      */
-    public function exportImages($social, $userId, $maxResultsPerPage, $numberOfPages, $pageToken)
+    public function exportMedia($social, $userId, $maxResultsPerPage, $numberOfPages, $pageToken)
     {
         $connector = $this->getSocialApi($social);
-        return $connector->exportImages($userId, $maxResultsPerPage, $numberOfPages, $pageToken);
+        return $connector->exportMedia($userId, $maxResultsPerPage, $numberOfPages, $pageToken);
+    }
+
+    /**
+     * Service that get the list of recent media liked by the owner
+     * @param $social
+     * @param $userId
+     * @param $maxTotalResults
+     * @param $numberOfPages
+     * @param $nextPageUrl
+     * @return mixed
+     * @throws \Exception
+     */
+    public function exportMediaRecentlyLiked($social, $userId, $maxTotalResults, $numberOfPages, $nextPageUrl) {
+        $connector = $this->getSocialApi($social);
+        return $connector->exportMediaRecentlyLiked($userId, $maxTotalResults, $numberOfPages, $nextPageUrl);
     }
 
     /**
@@ -254,15 +282,30 @@ class SocialNetworks extends Singleton
     }
 
     /**
-     * Service that query to a social network api to revoke access token in order
-     * to ensure the permissions granted to the application are removed
-     * @param string $social
+     * Service that get information about a relationship to another user
+     * @param $social
+     * @param $authenticatedUserId
+     * @param $userId
      * @return mixed
      * @throws \Exception
      */
-    public function revokeToken($social)
-    {
+    public function getUserRelationship($social, $authenticatedUserId, $userId) {
         $connector = $this->getSocialApi($social);
-        return $connector->revokeToken();
+        return $connector->getUserRelationship($authenticatedUserId, $userId);
+    }
+
+    /**
+     * Service that modify the relationship between the authenticated user and the target user.
+     * @param $social
+     * @param $authenticatedUserId
+     * @param $userId
+     * @param $action
+     * @return mixed
+     * @throws \Exception
+     */
+    public function modifyUserRelationship($social, $authenticatedUserId, $userId, $action) {
+        $connector = $this->getSocialApi($social);
+        return $connector->modifyUserRelationship($authenticatedUserId, $userId, $action);
     }
 }
+

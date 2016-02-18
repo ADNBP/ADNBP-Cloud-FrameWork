@@ -20,6 +20,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
     const INSTAGRAM_OAUTH_ACCESS_TOKEN_URL = "https://api.instagram.com/oauth/access_token";
     const INSTAGRAM_API_USERS_URL = "https://api.instagram.com/v1/users/";
     const INSTAGRAM_API_MEDIA_URL = "https://api.instagram.com/v1/media/";
+    const INSTAGRAM_SELF_USER = "self";
 
     // API keys
     private $clientId;
@@ -159,6 +160,16 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @return null
      */
     public function checkCredentials($credentials) {
+        $this->checkCredentialsParameters($credentials);
+
+        try {
+            $this->getProfile(INSTAGRAM_SELF_USER);
+        } catch(\Exception $e) {
+            throw new ConnectorConfigException("Invalid credentials set'", 604);
+        }
+    }
+
+    function revokeToken() {
         return;
     }
 
@@ -293,7 +304,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
     }
 
     /**
-     * Service that query to Instagram Api Drive service for images
+     * Service that query to Instagram Api service for media files
      * @param string $userId
      * @param integer $maxTotalResults.
      * @param integer $numberOfPages
@@ -301,15 +312,74 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @return JSON
      * @throws ConnectorServiceException
      */
-    public function exportImages($userId, $maxTotalResults, $numberOfPages, $nextPageUrl)
+    public function exportMedia($userId, $maxTotalResults, $numberOfPages, $nextPageUrl)
     {
         $this->checkUser($userId);
         $this->checkPagination($numberOfPages, $maxTotalResults);
 
         if (!$nextPageUrl) {
             $nextPageUrl = self::INSTAGRAM_API_USERS_URL . $userId .
-                        "/media/recent/?access_token=" . $this->accessToken;
-                        //"&count=".$maxTotalResults;
+                        "/media/recent/?access_token=" . $this->accessToken .
+                        "&count=".$maxTotalResults;
+        }
+
+        $pagination = true;
+        $files = array();
+        $count = 0;
+
+        while ($pagination) {
+            $data = $this->curlGet($nextPageUrl);
+
+            if (null === $data["data"]) {
+                throw new ConnectorServiceException("Error exporting files", 603);
+            }
+
+            $files[$count] = array();
+
+            foreach ($data["data"] as $key => $media) {
+                if ("image" === $media["type"]) {
+                    $files[$count][] = $media;
+                }
+            }
+
+            // If number of pages is zero, then all elements are returned
+            if ((($numberOfPages > 0) && ($count == $numberOfPages)) || (!isset($data->pagination->next_url))) {
+                $pagination = false;
+                if (!isset($data->pagination->next_url)) {
+                    $nextPageUrl = null;
+                }
+            } else {
+                $nextPageUrl = $data->pagination->next_url;
+                $count++;
+            }
+        }
+
+        $files["nextPageUrl"] = $nextPageUrl;
+
+        return json_encode($files);
+    }
+
+    /**
+     * Service that get the list of recent media liked by the owner
+     * @param $userId
+     * @param $maxTotalResults
+     * @param $numberOfPages
+     * @param $nextPageUrl
+     * @return string
+     * @throws ConnectorConfigException
+     * @throws ConnectorServiceException
+     */
+    public function exportMediaRecentlyLiked($userId, $maxTotalResults, $numberOfPages, $nextPageUrl)
+    {
+        $this->checkUser($userId);
+        $this->checkPagination($numberOfPages, $maxTotalResults);
+
+        $userId = self::INSTAGRAM_SELF_USER;
+
+        if (!$nextPageUrl) {
+            $nextPageUrl = self::INSTAGRAM_API_USERS_URL . $userId .
+                "/media/liked/?access_token=" . $this->accessToken .
+                "&count=".$maxTotalResults;
         }
 
         $pagination = true;
@@ -390,8 +460,54 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         return json_encode($data);
     }
 
-    function revokeToken() {
-        return;
+    /**
+     * Service that query to Instagram Api to get user profile
+     * @param string $userId
+     * @return JSON
+     */
+    public function getUserRelationship($authenticatedUserId, $userId)
+    {
+        $this->checkUser($userId);
+
+        $url = self::INSTAGRAM_API_USERS_URL . $userId . "/relationship?access_token=" . $this->accessToken;
+
+        $data = $this->curlGet($url);
+
+        return json_encode($data["data"]);
+    }
+
+    /**
+     * Service that modify the relationship between the authenticated user and the target user.
+     * @param $authenticatedUserId
+     * @param $userId
+     * @param $action
+     * @return string
+     * @throws ConnectorConfigException
+     */
+    public function modifyUserRelationship($authenticatedUserId, $userId, $action) {
+        $this->checkUser($userId);
+
+        $fields = "action=".$action;
+        $url = self::INSTAGRAM_API_USERS_URL . $userId . "/relationship?access_token=" . $this->accessToken;
+
+        $data = $this->curlPost($url, $fields);
+
+        return json_encode($data["data"]);
+    }
+
+    /**
+     * Method that check credentials are present and valid
+     * @param array $credentials
+     * @throws ConnectorConfigException
+     */
+    private function checkCredentialsParameters(array $credentials) {
+        if ((null === $credentials) || (!is_array($credentials)) || (count($credentials) == 0)) {
+            throw new ConnectorConfigException("Invalid credentials set'", 604);
+        }
+
+        if ((!isset($credentials["access_token"])) || (null === $credentials["access_token"]) || ("" === $credentials["access_token"])) {
+            throw new ConnectorConfigException("'access_token' parameter is required", 605);
+        }
     }
 
     /**
