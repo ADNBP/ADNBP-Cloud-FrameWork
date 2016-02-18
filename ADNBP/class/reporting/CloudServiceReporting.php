@@ -174,6 +174,23 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                                 case '=':
                                     if (!isset($row[$key]) || $row[$key] != $fieldCond[1]) $inc = false;
                                     break;
+                                case '>':
+                                case '>=':
+                                case '<':
+                                case '<=':
+                                    $inc = false;
+                                    if (isset($row[$key])) {
+                                        $op = strtolower($fieldCond[0]);
+                                        if($op =='>')
+                                            $inc = (trim($row[$key]) > trim($fieldCond[1]));
+                                        else if($op =='>=')
+                                            $inc = (trim($row[$key]) >= trim($fieldCond[1]));
+                                        else if($op =='<')
+                                            $inc = (trim($row[$key]) < trim($fieldCond[1]));
+                                        else if($op =='<=')
+                                            $inc = (trim($row[$key]) <= trim($fieldCond[1]));
+                                    }
+                                    break;
                                 case '!=':
                                     if (!isset($row[$key]) || trim($row[$key]) == trim($fieldCond[1])) $inc = false;
                                     break;
