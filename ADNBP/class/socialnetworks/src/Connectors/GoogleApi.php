@@ -37,15 +37,15 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     public function setApiKeys($clientId, $clientSecret, $clientScope) {
         if ((null === $clientId) || ("" === $clientId)) {
-            throw new ConnectorConfigException("'clientId' parameter is required", 601);
+            throw new ConnectorConfigException("'clientId' parameter is required");
         }
 
         if ((null === $clientSecret) || ("" === $clientSecret)) {
-            throw new ConnectorConfigException("'clientSecret' parameter is required", 602);
+            throw new ConnectorConfigException("'clientSecret' parameter is required");
         }
 
         if ((null === $clientScope) || (!is_array($clientScope)) || (count($clientScope) == 0)) {
-            throw new ConnectorConfigException("'clientScope' parameter is required", 603);
+            throw new ConnectorConfigException("'clientScope' parameter is required");
         }
 
         $this->clientId = $clientId;
@@ -68,10 +68,10 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     public function requestAuthorization($redirectUrl)
     {
         if ((null === $redirectUrl) || (empty($redirectUrl))) {
-            throw new ConnectorConfigException("'redirectUrl' parameter is required", 628);
+            throw new ConnectorConfigException("'redirectUrl' parameter is required");
         } else {
             if (!$this->wellFormedUrl($redirectUrl)) {
-                throw new MalformedUrlException("'redirectUrl' is malformed", 601);
+                throw new MalformedUrlException("'redirectUrl' is malformed");
             }
         }
 
@@ -84,10 +84,10 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         $authUrl = $this->client->createAuthUrl();
 
         if ((null === $authUrl) || (empty($authUrl))) {
-            throw new ConnectorConfigException("'authUrl' parameter is required", 629);
+            throw new ConnectorConfigException("'authUrl' parameter is required");
         } else {
             if (!$this->wellFormedUrl($authUrl)) {
-                throw new MalformedUrlException("'authUrl' is malformed", 602);
+                throw new MalformedUrlException("'authUrl' is malformed");
             }
         }
 
@@ -109,14 +109,14 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     public function authorize($code, $redirectUrl)
     {
         if ((null === $code) || ("" === $code)) {
-            throw new ConnectorConfigException("'code' parameter is required", 627);
+            throw new ConnectorConfigException("'code' parameter is required");
         }
 
         if ((null === $redirectUrl) || (empty($redirectUrl))) {
-            throw new ConnectorConfigException("'redirectUrl' parameter is required", 628);
+            throw new ConnectorConfigException("'redirectUrl' parameter is required");
         } else {
             if (!$this->wellFormedUrl($redirectUrl)) {
-                throw new MalformedUrlException("'redirectUrl' is malformed", 601);
+                throw new MalformedUrlException("'redirectUrl' is malformed");
             }
         }
 
@@ -128,7 +128,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             $googleCredentials = json_decode($this->client->getAccessToken(), true);
         } catch(\Exception $e) {
             if (401 === $e->getCode()) {
-                throw new AuthenticationException("Error fetching OAuth2 access token, client is invalid", 601);
+                throw new AuthenticationException("Error fetching OAuth2 access token, client is invalid");
             } else {
                 throw new ConnectorServiceException($e->getMessage(), $e->getCode());
             }
@@ -182,7 +182,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             $this->client->setClientSecret($this->clientSecret);
             $this->client->refreshToken($credentials["refresh_token"]);
         } catch(\Exception $e) {
-            throw new AuthenticationException("Error refreshing token: " . $e->getMessage(), 602);
+            throw new AuthenticationException("Error refreshing token: " . $e->getMessage());
         }
 
         return json_decode($this->client->getAccessToken(), true);
@@ -280,7 +280,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         $this->checkUser($userId);
 
         if ((null === $postId) || ("" === $postId)) {
-            throw new ConnectorConfigException("'postId' parameter is required", 612);
+            throw new ConnectorConfigException("'postId' parameter is required");
         }
 
         try {
@@ -463,28 +463,28 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         $this->checkUser($userId);
 
         if ((null === $mediaType) || ("" === $mediaType)) {
-            throw new ConnectorConfigException("Media type must be 'url' or 'path'", 613);
+            throw new ConnectorConfigException("Media type must be 'url' or 'path'");
         } elseif ((null === $value) || ("" === $value)) {
-            throw new ConnectorConfigException($mediaType." value is required", 613);
+            throw new ConnectorConfigException($mediaType." value is required");
         } elseif ("path" === $mediaType) {
             if (!file_exists($value)) {
-                throw new ConnectorConfigException("file doesn't exist", 614);
+                throw new ConnectorConfigException("file doesn't exist");
             } else {
                 $finfo = new \finfo(FILEINFO_MIME_TYPE);
 
                 if (!$finfo) {
-                    throw new ConnectorConfigException("error getting mime type of the media file", 615);
+                    throw new ConnectorConfigException("error getting mime type of the media file");
                 }
 
                 $mimeType = $finfo->file($value);
 
                 //$mimeType = $finfo
                 if ((false === strpos($mimeType,"image/")) && (false === strpos($mimeType,"video/"))) {
-                    throw new ConnectorConfigException("file must be an image or a video", 615);
+                    throw new ConnectorConfigException("file must be an image or a video");
                 } else {
                     $filesize = filesize($value);
                     if ($filesize > self::MAX_IMPORT_FILE_SIZE) {
-                        throw new ConnectorConfigException("Maximum file size is ".(self::MAX_IMPORT_FILE_SIZE_MB)."MB", 616);
+                        throw new ConnectorConfigException("Maximum file size is ".(self::MAX_IMPORT_FILE_SIZE_MB)."MB");
                     }
                 }
             }
@@ -495,17 +495,17 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             $finfo = new \finfo(FILEINFO_MIME_TYPE);
 
             if (!$finfo) {
-                throw new ConnectorConfigException("error getting mime type of the media file", 615);
+                throw new ConnectorConfigException("error getting mime type of the media file");
             }
 
             $mimeType = $finfo->file($info["uri"]);
 
             if ((false === strpos($mimeType,"image/")) && (false === strpos($mimeType,"video/"))) {
-                throw new ConnectorConfigException("file must be an image or a video", 615);
+                throw new ConnectorConfigException("file must be an image or a video");
             } else {
                 $filesize = filesize($info["uri"]);
                 if ($filesize > self::MAX_IMPORT_FILE_SIZE) {
-                    throw new ConnectorConfigException("Maximum file size is ".(self::MAX_IMPORT_FILE_SIZE_MB)."MB", 616);
+                    throw new ConnectorConfigException("Maximum file size is ".(self::MAX_IMPORT_FILE_SIZE_MB)."MB");
                 }
             }
             $value = $info["uri"];
@@ -596,51 +596,51 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         $this->checkExpiredToken();
 
         if ((null === $parameters) || (!is_array($parameters)) || (count($parameters) == 0)) {
-            throw new ConnectorConfigException("Invalid post parameters'", 617);
+            throw new ConnectorConfigException("Invalid post parameters'");
         }
 
         if ((!isset($parameters["user_id"])) || (null === $parameters["user_id"]) || ("" === $parameters["user_id"])) {
-            throw new ConnectorConfigException("'user_id' post parameter is required", 618);
+            throw new ConnectorConfigException("'user_id' post parameter is required");
         }
 
         if ((!isset($parameters["content"])) || (null === $parameters["content"]) || ("" === $parameters["content"])) {
-            throw new ConnectorConfigException("'content' post parameter is required", 619);
+            throw new ConnectorConfigException("'content' post parameter is required");
         }
 
         if ((!isset($parameters["access_type"])) || (null === $parameters["access_type"]) || ("" === $parameters["access_type"])) {
-            throw new ConnectorConfigException("'access_type' post parameter is required", 620);
+            throw new ConnectorConfigException("'access_type' post parameter is required");
         } else {
             if (("circle" == $parameters["access_type"]) &&
                 ((!isset($parameters["circle_id"])) || (null === $parameters["circle_id"]) || ("" === $parameters["circle_id"]))) {
-                throw new ConnectorConfigException("'circle_id' post parameter is required since access_type is 'circle'", 621);
+                throw new ConnectorConfigException("'circle_id' post parameter is required since access_type is 'circle'");
             }
 
             if (("person" == $parameters["access_type"]) &&
                 ((!isset($parameters["person_id"])) || (null === $parameters["person_id"]) || ("" === $parameters["person_id"]))) {
-                throw new ConnectorConfigException("'person_id' post parameter is required since access_type is 'person'", 622);
+                throw new ConnectorConfigException("'person_id' post parameter is required since access_type is 'person'");
             }
         }
 
         if ((isset($parameters["attachment"])) && (!is_array($parameters["attachment"]))) {
-            throw new ConnectorConfigException("'attachment' post parameter must be an array", 623);
+            throw new ConnectorConfigException("'attachment' post parameter must be an array");
         } else {
             if (count($parameters["attachment"]) == 0) {
-                throw new ConnectorConfigException("'attachment' post parameter array is empty'", 632);
+                throw new ConnectorConfigException("'attachment' post parameter array is empty'");
             }
             if ((isset($parameters["attachment"][0])) &&
                 (("link" !== $parameters["attachment"][0]) &&
                 ("photo" !== $parameters["attachment"][0]) &&
                 ("video" !== $parameters["attachment"][0]))) {
-                throw new ConnectorConfigException("'attachment' type must be 'link', 'photo' or 'video'", 624);
+                throw new ConnectorConfigException("'attachment' type must be 'link', 'photo' or 'video'");
             }
 
             if ((isset($parameters["attachment"][1])) &&
                 ((null === $parameters["attachment"][1]) ||
                 ("" === $parameters["attachment"][1]))) {
-                throw new ConnectorConfigException("'attachment' value must be an url ('link') or a file path ('photo' or 'video')", 625);
+                throw new ConnectorConfigException("'attachment' value must be an url ('link') or a file path ('photo' or 'video')");
             } else {
                 if (("link" === $parameters["attachment"][0]) && (!$this->wellFormedUrl($parameters["attachment"][1]))) {
-                    throw new ConnectorConfigException("'attachment' value url is malformed", 626);
+                    throw new ConnectorConfigException("'attachment' value url is malformed");
                 }
             }
         }
@@ -716,19 +716,19 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     private function checkCredentialsParameters(array $credentials) {
         if ((null === $credentials) || (!is_array($credentials)) || (count($credentials) == 0)) {
-            throw new ConnectorConfigException("Invalid credentials set'", 604);
+            throw new ConnectorConfigException("Invalid credentials set'");
         }
 
         if ((!isset($credentials["access_token"])) || (null === $credentials["access_token"]) || ("" === $credentials["access_token"])) {
-            throw new ConnectorConfigException("'access_token' parameter is required", 605);
+            throw new ConnectorConfigException("'access_token' parameter is required");
         }
 
         if ((!isset($credentials["refresh_token"])) || (null === $credentials["refresh_token"]) || ("" === $credentials["refresh_token"])) {
-            throw new ConnectorConfigException("'refresh_token' parameter is required", 606);
+            throw new ConnectorConfigException("'refresh_token' parameter is required");
         }
 
         if ((!isset($credentials["id_token"])) || (null === $credentials["id_token"]) || ("" === $credentials["id_token"])) {
-            throw new ConnectorConfigException("'id_token' parameter is required", 605);
+            throw new ConnectorConfigException("'id_token' parameter is required");
         }
     }
 
@@ -739,7 +739,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     private function checkUser($userId) {
         if ((null === $userId) || ("" === $userId)) {
-            throw new ConnectorConfigException("'userId' parameter is required", 607);
+            throw new ConnectorConfigException("'userId' parameter is required");
         }
     }
 
@@ -751,15 +751,15 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     private function checkPagination($maxResultsPerPage, $numberOfPages) {
         if (null === $maxResultsPerPage) {
-            throw new ConnectorConfigException("'maxResultsPerPage' parameter is required", 608);
+            throw new ConnectorConfigException("'maxResultsPerPage' parameter is required");
         } else if (!is_numeric($maxResultsPerPage)) {
-            throw new ConnectorConfigException("'maxResultsPerPage' parameter is not numeric", 609);
+            throw new ConnectorConfigException("'maxResultsPerPage' parameter is not numeric");
         }
 
         if (null === $maxResultsPerPage) {
-            throw new ConnectorConfigException("'numberOfPages' parameter is required", 610);
+            throw new ConnectorConfigException("'numberOfPages' parameter is required");
         } else if (!is_numeric($numberOfPages)) {
-            throw new ConnectorConfigException("'numberOfPages' parameter is not numeric", 611);
+            throw new ConnectorConfigException("'numberOfPages' parameter is not numeric");
         }
     }
 

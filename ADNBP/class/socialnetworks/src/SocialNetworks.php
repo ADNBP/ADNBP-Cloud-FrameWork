@@ -282,7 +282,7 @@ class SocialNetworks extends Singleton
     }
 
     /**
-     * Service that get information about a relationship to another user
+     * Service that get information about a relationship to another user in a social network
      * @param $social
      * @param $authenticatedUserId
      * @param $userId
@@ -295,7 +295,7 @@ class SocialNetworks extends Singleton
     }
 
     /**
-     * Service that modify the relationship between the authenticated user and the target user.
+     * Service that modify the relationship between the authenticated user and the target user in a social network.
      * @param $social
      * @param $authenticatedUserId
      * @param $userId
@@ -306,6 +306,20 @@ class SocialNetworks extends Singleton
     public function modifyUserRelationship($social, $authenticatedUserId, $userId, $action) {
         $connector = $this->getSocialApi($social);
         return $connector->modifyUserRelationship($authenticatedUserId, $userId, $action);
+    }
+
+    /**
+     * Service that searches for users in a social network by a name passed as a parameter
+     * @param $social
+     * @param $userId
+     * @param $name
+     * @param $maxTotalResults
+     * @param $numberOfPages
+     * @param $nextPageUrl
+     */
+    public function searchUsers($social, $userId, $name, $maxTotalResults, $numberOfPages, $nextPageUrl) {
+        $connector = $this->getSocialApi($social);
+        return $connector->searchUsers($userId, $name, $maxTotalResults, $numberOfPages, $nextPageUrl);
     }
 }
 
