@@ -180,6 +180,7 @@ class FacebookApi extends Singleton implements SocialNetworkInterface
         return;
     }
 
+
     public function post(array $parameters) {
         return;
     }

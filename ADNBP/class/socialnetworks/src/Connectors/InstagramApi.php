@@ -165,7 +165,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         $this->checkCredentialsParameters($credentials);
 
         try {
-            $this->getProfile(INSTAGRAM_SELF_USER);
+            $this->getProfile(self::INSTAGRAM_SELF_USER);
         } catch(\Exception $e) {
             throw new ConnectorConfigException("Invalid credentials set'");
         }
@@ -182,6 +182,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @param integer $numberOfPages
      * @param string $nextPageUrl
      * @return JSON
+     * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
     function getFollowers($userId, $maxResultsPerPage, $numberOfPages, $nextPageUrl) {
@@ -202,7 +203,8 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
             $data = $this->curlGet($nextPageUrl);
 
             if (null === $data["data"]) {
-                throw new ConnectorServiceException("Error getting followers");
+                throw new ConnectorServiceException("Error getting followers:".
+                    $data["meta"]["code"], $data["meta"]["error_message"]);
             }
 
             $followers[$count] = array();
@@ -239,6 +241,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @param integer $numberOfPages
      * @param string $nextPageUrl
      * @return JSON
+     * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
     function getSubscribers($userId, $maxResultsPerPage, $numberOfPages, $nextPageUrl) {
@@ -258,7 +261,8 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
             $data = $this->curlGet($nextPageUrl);
 
             if (null === $data["data"]) {
-                throw new ConnectorServiceException("Error getting subscribers");
+                throw new ConnectorServiceException("Error getting subscribers: " .
+                    $data["meta"]["code"], $data["meta"]["error_message"]);
             }
 
             $subscribers[$count] = array();
@@ -292,6 +296,8 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * Service that query to Instagram Api to get user profile
      * @param string $userId
      * @return JSON
+     * @throws ConnectorConfigException
+     * @throws ConnectorServiceException
      */
     public function getProfile($userId)
     {
@@ -300,6 +306,11 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         $url = self::INSTAGRAM_API_USERS_URL . $userId . "/?access_token=" . $this->accessToken;
 
         $data = $this->curlGet($url);
+
+        if (null === $data["data"]) {
+            throw new ConnectorServiceException("Error getting user profile: " .
+                                $data["meta"]["code"], $data["meta"]["error_message"]);
+        }
 
         // Instagram API doesn't return the user's e-mail
         return json_encode($data["data"]);
@@ -312,6 +323,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @param integer $numberOfPages
      * @param string $nextPageUrl
      * @return JSON
+     * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
     public function exportMedia($userId, $maxTotalResults, $numberOfPages, $nextPageUrl)
@@ -333,7 +345,8 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
             $data = $this->curlGet($nextPageUrl);
 
             if (null === $data["data"]) {
-                throw new ConnectorServiceException("Error exporting media");
+                throw new ConnectorServiceException("Error exporting media: " .
+                                    $data["meta"]["code"], $data["meta"]["error_message"]);
             }
 
             $files[$count] = array();
@@ -392,7 +405,8 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
             $data = $this->curlGet($nextPageUrl);
 
             if (null === $data["data"]) {
-                throw new ConnectorServiceException("Error exporting media");
+                throw new ConnectorServiceException("Error exporting media: " .
+                                            $data["meta"]["code"], $data["meta"]["error_message"]);
             }
 
             $files[$count] = array();
@@ -455,17 +469,21 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
 
         $data = $this->curlPost($url, $fields);
 
-        if ($data["meta"]["code"] != 200) {
-            throw new ConnectorServiceException("Error making comments on an Instagram media", $data["meta"]["code"]);
+        if (null === $data["data"]) {
+            throw new ConnectorServiceException("Error making comments on an Instagram media: " . 
+                                            $data["meta"]["code"], $data["meta"]["error_message"]);
         }
 
         return json_encode($data);
     }
 
     /**
-     * Service that query to Instagram Api to get user profile
+     * Service that query to Instagram Api to get user relationship information
+     * @param string $authenticatedUserId
      * @param string $userId
      * @return JSON
+     * @throws ConnectorConfigException
+     * @throws ConnectorServiceException
      */
     public function getUserRelationship($authenticatedUserId, $userId)
     {
@@ -474,6 +492,11 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         $url = self::INSTAGRAM_API_USERS_URL . $userId . "/relationship?access_token=" . $this->accessToken;
 
         $data = $this->curlGet($url);
+
+        if (null === $data["data"]) {
+            throw new ConnectorServiceException("Error getting relationship info: " .
+                $data["meta"]["code"], $data["meta"]["error_message"]);
+        }
 
         return json_encode($data["data"]);
     }
@@ -485,6 +508,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @param $action
      * @return string
      * @throws ConnectorConfigException
+     * @throws ConnectorServiceException
      */
     public function modifyUserRelationship($authenticatedUserId, $userId, $action) {
         $this->checkUser($userId);
@@ -493,6 +517,11 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         $url = self::INSTAGRAM_API_USERS_URL . $userId . "/relationship?access_token=" . $this->accessToken;
 
         $data = $this->curlPost($url, $fields);
+
+        if (null === $data["data"]) {
+            throw new ConnectorServiceException("Error modifying relationship: " .
+                $data["meta"]["code"], $data["meta"]["error_message"]);
+        }
 
         return json_encode($data["data"]);
     }
@@ -505,7 +534,6 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @param $numberOfPages
      * @param $nextPageUrl
      * @return string
-     * @throws
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
@@ -529,7 +557,8 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
             $data = $this->curlGet($nextPageUrl);
 
             if (null === $data["data"]) {
-                throw new ConnectorServiceException("Error searching users");
+                throw new ConnectorServiceException("Error searching users: " .
+                    $data["meta"]["code"], $data["meta"]["error_message"]);
             }
 
             $users[$count] = array();
