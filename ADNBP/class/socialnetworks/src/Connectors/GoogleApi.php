@@ -709,6 +709,18 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         return json_encode($activity);
     }
 
+    public function getUserRelationship($authenticatedUserId, $userId) {
+        return;
+    }
+
+    public function modifyUserRelationship($authenticatedUserId, $userId, $action) {
+        return;
+    }
+
+    function searchUsers($userId, $name, $maxTotalResults, $numberOfPages, $nextPageUrl) {
+        return;
+    }
+
     /**
      * Method that check credentials are present and valid
      * @param array $credentials

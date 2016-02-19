@@ -20,5 +20,7 @@ interface SocialNetworkInterface {
     function importMedia($userId, $mediaType, $value);
     function exportMedia($userId, $maxResultsPerPage, $numberOfPages, $pageToken);
     function post(array $parameters);
-
+    function getUserRelationship($authenticatedUserId, $userId);
+    function modifyUserRelationship($authenticatedUserId, $userId, $action);
+    function searchUsers($userId, $name, $maxTotalResults, $numberOfPages, $nextPageUrl);
 }

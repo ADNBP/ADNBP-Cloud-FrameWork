@@ -156,8 +156,10 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
     }
 
     /**
+     * Service that check if credentials are valid
      * @param $credentials
      * @return null
+     * @throws ConnectorConfigException
      */
     public function checkCredentials($credentials) {
         $this->checkCredentialsParameters($credentials);

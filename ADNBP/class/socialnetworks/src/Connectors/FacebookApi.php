@@ -2,84 +2,225 @@
 namespace CloudFramework\Service\SocialNetworks\Connectors;
 
 use CloudFramework\Patterns\Singleton;
+use CloudFramework\Service\SocialNetworks\Exceptions\ConnectorConfigException;
+use CloudFramework\Service\SocialNetworks\Exceptions\ConnectorServiceException;
+use CloudFramework\Service\SocialNetworks\Exceptions\MalformedUrlException;
 use CloudFramework\Service\SocialNetworks\Interfaces\SocialNetworkInterface;
-use CloudFramework\Service\SocialNetworks\SocialNetworks;
 use Facebook\Facebook;
 
 class FacebookApi extends Singleton implements SocialNetworkInterface
 {
     const ID = 'facebook';
-    public static $auth_keys = array("apiKey", "secret", "facebook_access_token");
+    const FACEBOOK_SELF_USER = "me";
+
+    // Google client object
+    private $client;
+
+    // API keys
+    private $clientId;
+    private $clientSecret;
+    private $clientScope = array();
+
+    // Auth keys
+    private $accessToken;
 
     /**
-     * Compose Facebook Api credentials array from session data
-     * @param array|null $credentials
-     * @return array
+     * Set Facebook Api keys
+     * @param $clientId
+     * @param $clientSecret
+     * @param $clientScope
+     * @throws ConnectorConfigException
      */
-    public function getAuth(array $credentials)
-    {
-        return SocialNetworks::hydrateCredentials(FacebookApi::ID, FacebookApi::$auth_keys, $credentials);
-    }
+    public function setApiKeys($clientId, $clientSecret, $clientScope) {
+        if ((null === $clientId) || ("" === $clientId)) {
+            throw new ConnectorConfigException("'clientId' parameter is required", 601);
+        }
 
-    /**
-     * Service that compose url to authorize facebook api
-     * @return string
-     */
-    public function getAuthUrl()
-    {
-        $facebook = new Facebook(array(
-            "app_id" => "679052265503996",
-            "app_secret" => "9e1f7ec8df2a40fedf9e1a0cfaedf798",
+        if ((null === $clientSecret) || ("" === $clientSecret)) {
+            throw new ConnectorConfigException("'clientSecret' parameter is required", 602);
+        }
+
+        if ((null === $clientScope) || (!is_array($clientScope)) || (count($clientScope) == 0)) {
+            throw new ConnectorConfigException("'clientScope' parameter is required", 603);
+        }
+
+        $this->clientId = $clientId;
+        $this->clientSecret = $clientSecret;
+        $this->clientScope = $clientScope;
+
+        $this->client = new Facebook(array(
+            "app_id" => $this->clientId,
+            "app_secret" => $this->clientSecret,
             'default_graph_version' => 'v2.4',
             'cookie' => true
         ));
-        $redirect = $facebook->getRedirectLoginHelper();
-        return $redirect->getLoginUrl(SocialNetworks::generateRequestUrl() . "socialnetworks?facebookOAuthCallback",
-        array(
-            "email", "user_photos", "publish_actions", "read_custom_friendlists", "user_friends"
-        ));
+    }
+
+    /**
+     * Service that request authorization to Facebook making up the Facebook login URL
+     * @param string $redirectUrl
+     * @return array
+     * @throws ConnectorConfigException
+     * @throws MalformedUrlException
+     */
+    public function requestAuthorization($redirectUrl)
+    {
+        if ((null === $redirectUrl) || (empty($redirectUrl))) {
+            throw new ConnectorConfigException("'redirectUrl' parameter is required", 628);
+        } else {
+            if (!$this->wellFormedUrl($redirectUrl)) {
+                throw new MalformedUrlException("'redirectUrl' is malformed", 601);
+            }
+        }
+
+        $redirect = $this->client->getRedirectLoginHelper();
+
+        $authUrl = $redirect->getLoginUrl($redirectUrl, $this->clientScope);
+
+        // Authentication request
+        return $authUrl;
+    }
+
+    /**
+     * Authentication service from Facebook sign in request
+     * @param null $code
+     * @param $redirectUrl
+     * @return array
+     * @throws ConnectorServiceException
+     */
+    public function authorize($code = null, $redirectUrl)
+    {
+        try {
+            $helper = $this->client->getRedirectLoginHelper();
+            $accessToken = $helper->getAccessToken();
+
+            if (empty($accessToken)) {
+                throw new ConnectorServiceException("Error taking access token from Facebook Api", 500);
+            }
+        } catch(\Exception $e) {
+            throw new ConnectorServiceException($e->getMessage(), $e->getCode());
+        }
+
+        return array("access_token" => $accessToken->getValue());
+    }
+
+    /**
+     * Method that inject the access token in connector
+     * @param array $credentials
+     */
+    public function setAccessToken(array $credentials) {
+        $this->accessToken = $credentials["access_token"];
+    }
+
+    /**
+     * Service that check if credentials are valid
+     * @param $credentials
+     * @return null
+     * @throws ConnectorConfigException
+     */
+    public function checkCredentials($credentials) {
+        $this->checkCredentialsParameters($credentials);
+
+        try {
+            return $this->getProfile(self::FACEBOOK_SELF_USER);
+        } catch(\Exception $e) {
+            throw new ConnectorConfigException("Invalid credentials set'");
+        }
+    }
+
+    public function revokeToken() {
+        return;
     }
 
     /**
      * Service that query to Facebook Api a followers count
-     * @param array $credentials
      * @return int
      */
-    public function getFollowers(array $credentials)
+    public function getFollowers($userId = null, $maxResultsPerPage, $numberOfPages, $pageToken)
     {
-        $facebook = new Facebook(array(
-            "app_id" => $credentials["apiKey"],
-            "app_secret" => $credentials["secret"],
-            'default_graph_version' => 'v2.4'
-        ));
-        $response = $facebook->get('/me/friends', $credentials["facebook_access_token"])->getDecodedBody();
+        $response = $this->client->get('/me/friends', $this->accessToken)->getDecodedBody();
         return $response["summary"]["total_count"];
     }
 
+    public function getFollowersInfo($userId, $postId) {
+        return;
+    }
+
+    public function getSubscribers($userId, $maxResultsPerPage, $numberOfPages, $nextPageUrl) {
+        return;
+    }
+
+    public function getPosts($userId, $maxResultsPerPage, $numberOfPages, $pageToken) {
+        return;
+    }
+
     /**
-     * Authentication service from facebook sign in request
-     * @param array $credentials
-     * @return array
+     * Service that query to Facebook Api to get user profile
+     * @param $userId
+     * @return string
+     * @throws ConnectorServiceException
      */
-    public function authorize(array $credentials)
-    {
+    public function getProfile($userId) {
         try {
-            $facebook = new Facebook(array(
-                "app_id" => $credentials["client"],
-                "app_secret" => $credentials["secret"],
-                'default_graph_version' => 'v2.4'
-            ));
-            $helper = $facebook->getRedirectLoginHelper();
-            $accessToken = $helper->getAccessToken();
-            if (empty($accessToken)) {
-                throw new \Exception("Error taking access token from Facebook Api", 500);
-            }
+            $response = $this->client->get("/".$userId."?fields=id", $this->accessToken);
         } catch(\Exception $e) {
-            SocialNetworks::generateErrorResponse($e->getMessage(), 500);
+            throw new ConnectorServiceException('Error getting user profile: ' . $e->getMessage());
         }
 
-        return array(
-            "facebook_access_token" => $accessToken->getValue(),
-        );
+        $profile = array("user_id" => $response->getGraphUser()->getId());
+
+        return $profile;
+    }
+
+    public function importMedia($userId, $mediaType, $value) {
+        return;
+    }
+
+    public function exportMedia($userId, $maxResultsPerPage, $numberOfPages, $pageToken) {
+        return;
+    }
+
+    public function post(array $parameters) {
+        return;
+    }
+
+    public function getUserRelationship($authenticatedUserId, $userId) {
+        return;
+    }
+
+    public function modifyUserRelationship($authenticatedUserId, $userId, $action) {
+        return;
+    }
+
+    public function searchUsers($userId, $name, $maxTotalResults, $numberOfPages, $nextPageUrl) {
+        return;
+    }
+
+    /**
+     * Method that check credentials are present and valid
+     * @param array $credentials
+     * @throws ConnectorConfigException
+     */
+    private function checkCredentialsParameters(array $credentials) {
+        if ((null === $credentials) || (!is_array($credentials)) || (count($credentials) == 0)) {
+            throw new ConnectorConfigException("Invalid credentials set'");
+        }
+
+        if ((!isset($credentials["access_token"])) || (null === $credentials["access_token"]) || ("" === $credentials["access_token"])) {
+            throw new ConnectorConfigException("'access_token' parameter is required");
+        }
+    }
+
+    /**
+     * Private function to check url format
+     * @param $redirectUrl
+     * @return bool
+     */
+    private function wellFormedUrl($redirectUrl) {
+        if (!filter_var($redirectUrl, FILTER_VALIDATE_URL) === false) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }
