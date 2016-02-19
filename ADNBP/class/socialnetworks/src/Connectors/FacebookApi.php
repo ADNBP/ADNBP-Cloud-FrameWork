@@ -164,7 +164,7 @@ class FacebookApi extends Singleton implements SocialNetworkInterface
         try {
             $response = $this->client->get("/".$userId."?fields=id", $this->accessToken);
         } catch(\Exception $e) {
-            throw new ConnectorServiceException('Error getting user profile: ' . $e->getMessage());
+            throw new ConnectorServiceException('Error getting user profile: ' . $e->getMessage(), $e->getCode());
         }
 
         $profile = array("user_id" => $response->getGraphUser()->getId());
@@ -181,8 +181,24 @@ class FacebookApi extends Singleton implements SocialNetworkInterface
     }
 
 
+    /**
+     * Service that create a post in Facebook user's feed
+     * @param array $parameters
+     * @return array
+     * @throws ConnectorServiceException
+     */
     public function post(array $parameters) {
-        return;
+        try {
+            $response = $this->client->post("/me/feed", $parameters, $this->accessToken);
+        } catch(\Exception $e) {
+            throw new ConnectorServiceException('Error creating a post: ' . $e->getMessage(), $e->getCode());
+        }
+
+        $graphNode = $response->getGraphNode();
+
+        $post = array("post_id" => $graphNode["id"]);
+
+        return json_encode($post);
     }
 
     public function getUserRelationship($authenticatedUserId, $userId) {
