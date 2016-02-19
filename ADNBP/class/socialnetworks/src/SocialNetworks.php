@@ -270,7 +270,7 @@ class SocialNetworks extends Singleton
      *      "circle_id"  => Google circle where the stream will be published in (mandatory in case of access_type = "circle")
      * INSTAGRAM
      *      "content"   => Text of the comment
-     *      "mediaId"   => Instagram media's ID
+     *      "media_id"   => Instagram media's ID
      *
      * @return mixed
      * @throws \Exception

@@ -442,7 +442,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * Service that publish a comment in an Instagram media
      * @param array $parameters
      *      "content" => Text of the comment
-     *      "mediaId" => Instagram media's ID
+     *      "media_id" => Instagram media's ID
      * @return JSON
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
@@ -457,12 +457,12 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
             throw new ConnectorConfigException("'content' parameter is required");
         }
 
-        if ((!array_key_exists('mediaId', $parameters)) ||
-            (null === $parameters["mediaId"]) || (empty($parameters["mediaId"]))) {
-            throw new ConnectorConfigException("'mediaId' parameter is required");
+        if ((!array_key_exists('media_id', $parameters)) ||
+            (null === $parameters["media_id"]) || (empty($parameters["media_id"]))) {
+            throw new ConnectorConfigException("'media_id' parameter is required");
         }
 
-        $url = self::INSTAGRAM_API_MEDIA_URL.$parameters["mediaId"]."/comments";
+        $url = self::INSTAGRAM_API_MEDIA_URL.$parameters["media_id"]."/comments";
 
         $fields = "access_token=".$this->accessToken.
                     "&text=".$parameters["content"];
