@@ -178,7 +178,6 @@ if (!defined("_ADNBP_CLASS_")) {
                 }
 
             }
-            _printe($this->_conf);
             __p('LOADED CONFIGS: ', $_configs);
             unset($_configs);
 
