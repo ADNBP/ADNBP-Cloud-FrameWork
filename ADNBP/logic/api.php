@@ -97,6 +97,8 @@ if(!strlen($api->service)) {
         case 'JSON':
   			if(isset($api->formParams['__p']))
 				$ret['__p'] = __p();
+			if($this->error)
+				$ret['errors'] = $this->errorMsg;
             
             $ret['_totTime'] = $__p->data['init']['include_logic'][$this->_url]['time'];
             die(json_encode($ret));    

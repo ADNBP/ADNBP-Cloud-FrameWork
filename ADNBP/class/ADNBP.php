@@ -38,7 +38,7 @@ if (!defined("_ADNBP_CLASS_")) {
     class ADNBP
     {
 
-        var $_version = "2015_Oct_22";
+        var $_version = "2016_Feb_20";
         var $_conf = array();
         var $_menu = array();
         var $_lang = "en";
@@ -78,6 +78,7 @@ if (!defined("_ADNBP_CLASS_")) {
         var $_date = null;
         var $system = array();
         var $__p = null;
+        var $_configPaths = array();
 
         /**
          * Constructor
@@ -134,13 +135,22 @@ if (!defined("_ADNBP_CLASS_")) {
 
 
             // CONFIG VARS
-            $_configs = '/ADNBP/config.php';
+            $_configs = '/ADNBP/config.php - ';
             require_once __DIR__ . '/../config.php';
             //  Use this file to assign webApp. $this->setWebApp(""); if not ADNBP/webapp will be included
+
+            if (is_file($this->_rootpath . "/config.json")) {
+                if($this->readJSONConfig($this->_rootpath . "/config.json"))
+
+                    $_configs .= implode(' - ',$this->_configPaths).' - ';
+            }
+
+            // Deprecated
             if (is_file($this->_rootpath . "/adnbp_framework_config.php")) {
                 include_once($this->_rootpath . "/adnbp_framework_config.php");
                 $_configs .= '/adnbp_framework_config.php - ';
             }
+
             // load webapp config values or FrameWork default values
             if (is_file($this->_webapp . "/config/config.php")) {
                 include_once($this->_webapp . "/config/config.php");
@@ -148,21 +158,27 @@ if (!defined("_ADNBP_CLASS_")) {
             }
 
             // load bucket config values. Use this to keep safely passwords etc.. in a external bucket only accesible by admin
+            // Deprecated
             if (strlen($this->getConf('ConfigPath'))) {
                 include_once($this->getConf('ConfigPath') . "/config.php");
-                $_configs .= $this->getConf('ConfigPath') . "/config.php";
+                $_configs .= $this->getConf('ConfigPath') . "/config.php - ";
             }
+
             // For development purpose find local_config.php. Don't forget to add **/local_config.php in .gitignore
             if ($this->is('development')) {
+
+                if (is_file($this->_rootpath . "/local_config.json")) {
+                    if($this->readJSONConfig($this->_rootpath . "/local_config.json"))
+                        $_configs .= '/local_config.json - ';
+                }
+
                 if (is_file($this->_rootpath . "/local_config.php")) {
                     include_once($this->_rootpath . "/local_config.php");
                     $_configs .= '/local_config.php - ';
                 }
-                if (is_file($this->_webapp . "/local_config.php")) {
-                    include_once($this->_webapp . "/local_config.php");
-                    $_configs .= $this->_webappURL . '/local_config.php - ';
-                }
+
             }
+            _printe($this->_conf);
             __p('LOADED CONFIGS: ', $_configs);
             unset($_configs);
 
@@ -270,6 +286,121 @@ if (!defined("_ADNBP_CLASS_")) {
             }
         }
 
+
+        function processConfigData($data) {
+
+            // Tags convertion
+            $convertTags = function ($data) {
+                $_array = is_array($data);
+
+                // Convert into string if we received an array
+                if($_array) $data = json_encode($data);
+
+                // Tags Conversions
+                $data = str_replace('{rootPath}', $this->_rootpath, $data);
+                $data = str_replace('{appPath}', $this->_webapp, $data);
+                while(strpos($data,'{confVar:')!==false) {
+                    list($foo,$var) = explode("{confVar:",$data,2);
+                    list($var,$foo) = explode("}",$var,2);
+                    $data = str_replace('{confVar:'.$var.'}',$this->getConf(trim($var)),$data);
+                }
+
+                // Convert into array if we received an array
+                if($_array) $data = json_decode($data,true);
+                return $data;
+
+            };
+            // going through $data
+            foreach ($data as $cond => $vars) {
+                if ($cond == '--') continue; // comment
+                list($tagcode,$tagvalue) = explode(":",$cond,2);
+                $include = false;
+
+                // Substitute tags for strings
+                $vars = $convertTags($vars);
+
+                switch(trim(strtolower($tagcode))) {
+                    case "include":
+                        // Recursive Call
+                        $this->readJSONConfig($vars);
+                        break;
+                    case "webapp":
+                        $this->setWebApp($vars);
+                        break;
+                    case "true":
+                        $include = true;
+                        break;
+                    case "development":
+                        $include = $this->is("development");
+                        break;
+                    case "production":
+                        $include = $this->is("production");
+                        break;
+                    case "indomain":
+                    case "domain":
+                        $domains = explode(",",$tagvalue);
+                        foreach ($domains as $ind=>$inddomain ) {
+                            if(trim(strtolower($tagcode))=="domain") {
+                                if (strtolower($_SERVER['HTTP_HOST']) ==  strtolower(trim($inddomain)))
+                                    $include = true;
+                            } else {
+                                if (stripos($_SERVER['HTTP_HOST'], trim($inddomain)) !== false)
+                                    $include = true;
+                            }
+                        }
+
+                    break;
+                    case "false":
+                        break;
+                    default:
+                        $this->setError('unknown tag:' .$tagcode);
+                        break;
+                }
+                // Include config vars.
+                if($include) {
+                    if(is_array($vars)) {
+                        foreach ($vars as $key => $value) {
+                            if ($key == '--') continue; // comment
+                            // Recursive call to analyze subelements
+                            if (strpos($key, ':')) $this->processConfigData([$key => $value]);
+                            else {
+                                // Assign conf var values converting {} tags
+                                $this->setConf($key, $convertTags($value));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        /**
+         * @param $pathfile
+         * @return bool
+         */
+        function readJSONConfig($pathfile) {
+            // Avoid recursive load JSON files
+            if(isset($this->_configPaths[$pathfile])) {
+                $this->setError("Recursive config file: ".$pathfile);
+                return false;
+            }
+            $this->_configPaths[$pathfile] = $pathfile; // Control wich config paths are beeing loaded.
+            try {
+                $data = json_decode(@file_get_contents($pathfile),true);
+                if(!is_array($data)) {
+                    if(json_last_error())
+                        $this->addError("Wrong format of json: ".$pathfile);
+                    else
+                        $this->addError(error_get_last());
+                    return false;
+                } else {
+                    $this->processConfigData($data);
+                    return true;
+                }
+            } catch(Exception $e) {
+                $this->addError(error_get_last());
+                $this->addError($e->getMessage());
+                return false;
+            }
+        }
         /**
          * Run method
          */

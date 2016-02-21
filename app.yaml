@@ -14,13 +14,17 @@ handlers:
 # Serve html & php  as script and /
 - url: /(.+\.(html|php))$
   script: \1
-  
+
+# About the read config json config vars.
+- url: /((.+|)config\.json)$
+  script: ADNBP/models/foo.json
+
 # Serve images as static resources.
 - url: /(.+\.(gif|png|jpg|css|ico|txt|htm|js))$
   static_files: \1
   upload: .+\.(gif|png|jpg|css|ico|txt|htm|js)$
   application_readable: true
-    
+
 - url: /(.+\..+)$
   static_files: \1
   upload: .+\..+$
