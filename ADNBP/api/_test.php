@@ -17,9 +17,12 @@ if($this->getConf("dbName")) {
 
 if(strlen($this->getConf("LocalizePath"))) {
 	  $__p->init('test','LocalizePath scandir');
-      $ret = scandir($this->getConf("LocalizePath"));
-	  $errMsg='';
-	  if(!is_array($ret)) $errMsg = error_get_last();
+		$errMsg='';
+	  try {
+		  $ret = scandir($this->getConf("LocalizePath"));
+	  } catch (Exception $e) {
+		  $errMsg = 'Error reading ' . $this->getConf("LocalizePath") . ': ' . $e->getMessage() . ' ' . error_get_last();
+	  }
 	  $__p->end('test','LocalizePath scandir',is_array($ret),$this->getConf("LocalizePath").': '.$errMsg);
 }
 

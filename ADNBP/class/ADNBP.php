@@ -329,6 +329,14 @@ if (!defined("_ADNBP_CLASS_")) {
                     case "true":
                         $include = true;
                         break;
+                    case "auth":
+                    case "noauth":
+
+                        if(trim(strtolower($tagcode))=='auth')
+                            $include = $this->isAuth();
+                        else
+                            $include = !$this->isAuth();
+                        break;
                     case "development":
                         $include = $this->is("development");
                         break;
@@ -967,6 +975,9 @@ if (!defined("_ADNBP_CLASS_")) {
 
         function isAuth($namespace = '')
         {
+            // Active auth it is not actived
+            if(!strlen($this->getConf("activeAuth"))) $this->activeAuth();
+
             if (!strlen($namespace)) $namespace = $this->getConf("activeAuth");
             if (!strlen($namespace)) return false;
 
@@ -981,6 +992,9 @@ if (!defined("_ADNBP_CLASS_")) {
         // To set true or false
         function setAuth($bool, $namespace = '')
         {
+            // Active auth it is not actived
+            if(!strlen($this->getConf("activeAuth"))) $this->activeAuth();
+
             if (!strlen($namespace)) $namespace = $this->getConf("activeAuth");
             if (!strlen($namespace)) return false;
 
