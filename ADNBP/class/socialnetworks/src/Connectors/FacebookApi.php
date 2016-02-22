@@ -162,14 +162,21 @@ class FacebookApi extends Singleton implements SocialNetworkInterface
      */
     public function getProfile($userId) {
         try {
-            $response = $this->client->get("/".$userId."?fields=id", $this->accessToken);
+            $response = $this->client->get("/".$userId."?fields=id,name,first_name,middle_name,last_name,email", $this->accessToken);
         } catch(\Exception $e) {
             throw new ConnectorServiceException('Error getting user profile: ' . $e->getMessage(), $e->getCode());
         }
 
-        $profile = array("user_id" => $response->getGraphUser()->getId());
+        $profile = array(
+            "user_id" => $response->getGraphUser()->getId(),
+            "name" => $response->getGraphUser()->getName(),
+            "first_name" => $response->getGraphUser()->getFirstName(),
+            "middle_name" => $response->getGraphUser()->getMiddleName(),
+            "last_name" => $response->getGraphUser()->getLastName(),
+            "email" => $response->getGraphUser()->getEmail()
+        );
 
-        return $profile;
+        return json_encode($profile);
     }
 
     public function importMedia($userId, $mediaType, $value) {
