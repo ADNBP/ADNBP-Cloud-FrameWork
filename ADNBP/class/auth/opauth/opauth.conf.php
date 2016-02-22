@@ -60,7 +60,9 @@ $config = array(
 			),
 		'Instagram' => array(
 			'client_id' => $this->getConf("InstagramOauth_CLIENT_ID"),
-			'client_secret' => $this->getConf("InstagramOauth_CLIENT_SECRET")
+			'client_secret' => $this->getConf("InstagramOauth_CLIENT_SECRET"),
+			'scope' => (is_array($this->getConf("InstagramOauth_SCOPE"))) ? implode(' ',$this->getConf("InstagramOauth_SCOPE")) : 'basic public_content follower_list comments relationships likes',
+
 		),
 		'Twitter' => array(
 			'key' => $this->getConf("TwitterOauth_KEY"),

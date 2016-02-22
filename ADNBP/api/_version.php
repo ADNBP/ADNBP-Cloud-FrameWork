@@ -12,10 +12,10 @@ if(!$api->error) {
 	
 	// CLIENT AUTH	
 	if(isset($_GET['security'])) {
-		$data['API-CLIENT-HEADERS']['conf var: CloudServiceUrl']=$this->getConf("CloudServiceUrl");
-		$data['API-CLIENT-HEADERS']['conf var: CloudServiceId']=$this->getConf("CloudServiceId");
+		$data['CloudServiceClientParams']['conf var: CloudServiceUrl']=$this->getConf("CloudServiceUrl");
+		$data['CloudServiceClientParams']['conf var: CloudServiceId']=$this->getConf("CloudServiceId");
 		if(strlen($this->getConf("CloudServiceId")))
-			$data['API-CLIENT-HEADERS']['conf var: CloudServiceSecret'] =(strlen($this->getConf("CloudServiceSecret")))?'******':'missing' ;
+			$data['CloudServiceClientParams']['conf var: CloudServiceSecret'] =(strlen($this->getConf("CloudServiceSecret")))?'******':'missing' ;
 		
 		// API-SERVER-HEADERS
 		$serverHeaders = null;
@@ -31,7 +31,7 @@ if(!$api->error) {
 				$apiKeys[] = $this->getConf('API_KEY-'.$id);
 			} 
 		}
-		$data['API-SERVER-HEADER'] = $serverHeaders;
+		$data['CloudServiceServerIds'] = $serverHeaders;
 		$data['API-SERVER-KEYS'] = $apiKeys;
 		$api->addReturnData($data);
 		

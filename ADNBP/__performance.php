@@ -61,6 +61,7 @@
                 $this->data['info'][] = $line;
 
                 if ($title) {
+                    if(!isset($this->data['titles'][$title])) $this->data['titles'][$title] = ['mem'=>'','time'=>0,'lastIndex'=>''];
                     $this->data['titles'][$title]['mem'] = $_mem;
                     $this->data['titles'][$title]['time'] += $_time;
                     $this->data['titles'][$title]['lastIndex'] = $this->data['lastIndex'];
