@@ -326,12 +326,18 @@ if (!defined("_ADNBP_CLASS_")) {
                     case "webapp":
                         $this->setWebApp($vars);
                         break;
+                    case "redirect":
+                        if(is_array($vars)){
+                            foreach ($vars as $urlOrig=>$urlDest) {
+                                $this->urlRedirect($urlOrig,$urlDest);
+                            }
+                        }
+                        break;
                     case "true":
                         $include = true;
                         break;
                     case "auth":
                     case "noauth":
-
                         if(trim(strtolower($tagcode))=='auth')
                             $include = $this->isAuth();
                         else
