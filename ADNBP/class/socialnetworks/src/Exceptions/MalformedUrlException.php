@@ -6,7 +6,8 @@
         /**
          * Error codes
          *
-         *      600     'redirectUrl' is malformed
+         *      601    'redirectUrl' is malformed
+         *      602     'authUrl' is malformed
          *
          */
     }

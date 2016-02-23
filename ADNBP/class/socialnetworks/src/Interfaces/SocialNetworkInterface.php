@@ -7,15 +7,20 @@ namespace CloudFramework\Service\SocialNetworks\Interfaces;
  */
 interface SocialNetworkInterface {
 
-    function getAuth(array $credentials, $redirectUrl);
-    function getAuthUrl(array $credentials, $redirectUrl);
-    function getFollowers($userId, array $credentials);
-    function getFollowersInfo($postId, array $credentials);
-    function getSubscribers($userId, array $credentials);
-    function getPosts($userId, array $credentials);
-    function getProfile($userId, array $credentials);
-    function import(array $credentials, $maxResults, $userId);
-    function export(array $credentials, array $parameters);
-    function revokeToken(array $credentials);
-    function authorize(array $credentials);
+    function setApiKeys($clientId, $clientSecret, $clientScope);
+    function requestAuthorization($redirectUrl);
+    function authorize($code, $redirectUrl);
+    function setAccessToken(array $credentials);
+    function revokeToken();
+    function getFollowers($userId, $maxResultsPerPage, $numberOfPages, $pageToken);
+    function getFollowersInfo($userId, $postId);
+    function getSubscribers($userId, $maxResultsPerPage, $numberOfPages, $nextPageUrl);
+    function getPosts($userId, $maxResultsPerPage, $numberOfPages, $pageToken);
+    function getProfile($userId);
+    function importMedia($userId, $mediaType, $value, $title, $albumId);
+    function exportMedia($userId, $maxResultsPerPage, $numberOfPages, $pageToken);
+    function post(array $parameters);
+    function getUserRelationship($authenticatedUserId, $userId);
+    function modifyUserRelationship($authenticatedUserId, $userId, $action);
+    function searchUsers($userId, $name, $maxTotalResults, $numberOfPages, $nextPageUrl);
 }
