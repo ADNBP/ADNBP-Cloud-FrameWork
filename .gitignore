@@ -1,5 +1,5 @@
 .project
-app.yaml
+**/app.yaml
 README.md
 .git/*
 .idea/*
