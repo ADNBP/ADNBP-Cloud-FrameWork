@@ -457,7 +457,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function importMedia($userId, $mediaType, $value)
+    public function importMedia($userId, $mediaType, $value, $title = null)
     {
         $this->checkExpiredToken();
         $this->checkUser($userId);
