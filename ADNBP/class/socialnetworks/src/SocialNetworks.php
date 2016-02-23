@@ -240,14 +240,15 @@ class SocialNetworks extends Singleton
      * @param string $userId
      * @param string $mediaType "url"|"path"
      * @param string $value url or path
-     * @param string $title message for the media
+     * @param string $title message for the media (facebook)
+     * @param string $albumId Album where media will be saved in
      * @return mixed
      * @throws \Exception
      */
-    public function importMedia($social, $userId, $mediaType, $value, $title = null)
+    public function importMedia($social, $userId, $mediaType, $value, $title = null, $albumId = null)
     {
         $connector = $this->getSocialApi($social);
-        return $connector->importMedia($userId, $mediaType, $value, $title);
+        return $connector->importMedia($userId, $mediaType, $value, $title, $albumId);
     }
 
     /**

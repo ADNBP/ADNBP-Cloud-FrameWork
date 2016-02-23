@@ -17,7 +17,7 @@ interface SocialNetworkInterface {
     function getSubscribers($userId, $maxResultsPerPage, $numberOfPages, $nextPageUrl);
     function getPosts($userId, $maxResultsPerPage, $numberOfPages, $pageToken);
     function getProfile($userId);
-    function importMedia($userId, $mediaType, $value, $title);
+    function importMedia($userId, $mediaType, $value, $title, $albumId);
     function exportMedia($userId, $maxResultsPerPage, $numberOfPages, $pageToken);
     function post(array $parameters);
     function getUserRelationship($authenticatedUserId, $userId);

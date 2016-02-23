@@ -184,7 +184,7 @@ class FacebookApi extends Singleton implements SocialNetworkInterface
     }
 
     /**
-     * Service that upload a media file (image/video) to Google+
+     * Service that upload a media file (image) to Facebook
      * @param string $userId
      * @param string $mediaType "url"|"path"
      * @param string $value url or path
@@ -194,7 +194,7 @@ class FacebookApi extends Singleton implements SocialNetworkInterface
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function importMedia($userId, $mediaType, $value, $title)
+    public function importMedia($userId, $mediaType, $value, $title, $albumId)
     {
         $this->checkUser($userId);
 
@@ -215,8 +215,8 @@ class FacebookApi extends Singleton implements SocialNetworkInterface
                 $mimeType = $finfo->file($value);
 
                 //$mimeType = $finfo
-                if ((false === strpos($mimeType, "image/")) && (false === strpos($mimeType, "video/"))) {
-                    throw new ConnectorConfigException("file must be an image or a video");
+                if (false === strpos($mimeType, "image/")) {
+                    throw new ConnectorConfigException("file must be an image");
                 } else {
                     $filesize = filesize($value);
                     if ($filesize > self::MAX_IMPORT_FILE_SIZE) {
@@ -236,8 +236,8 @@ class FacebookApi extends Singleton implements SocialNetworkInterface
 
             $mimeType = $finfo->file($info["uri"]);
 
-            if ((false === strpos($mimeType, "image/")) && (false === strpos($mimeType, "video/"))) {
-                throw new ConnectorConfigException("file must be an image or a video");
+            if (false === strpos($mimeType, "image/")) {
+                throw new ConnectorConfigException("file must be an image");
             } else {
                 $filesize = filesize($info["uri"]);
                 if ($filesize > self::MAX_IMPORT_FILE_SIZE) {
@@ -256,7 +256,11 @@ class FacebookApi extends Singleton implements SocialNetworkInterface
         }
 
         try {
-            $response = $this->client->post("/".self::FACEBOOK_SELF_USER."/photos", $parameters, $this->accessToken);
+            if (null === $albumId) {
+                $response = $this->client->post("/".self::FACEBOOK_SELF_USER."/photos", $parameters, $this->accessToken);
+            } else {
+                $response = $this->client->post("/".$albumId."/photos", $parameters, $this->accessToken);
+            }
         } catch (Exception $e) {
             throw new ConnectorServiceException("Error importing '".$value."'': " . $e->getMessage(), $e->getCode());
         }
