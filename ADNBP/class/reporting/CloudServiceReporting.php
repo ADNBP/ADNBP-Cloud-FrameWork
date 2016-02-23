@@ -747,6 +747,9 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                                         $value = $propData['values'][$colKey . '|_|' . $rowKey][$valueField][0];
                                     }
                                     break;
+                                case "count":
+                                    $value = count($propData['values'][$colKey.'|_|'.$rowKey][$valueField]);
+                                    break;
                                 default:
                                     $value = $propData['values'][$colKey.'|_|'.$rowKey][$valueField];
                                     break;
