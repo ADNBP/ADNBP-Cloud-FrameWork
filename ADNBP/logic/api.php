@@ -48,7 +48,8 @@ if(!strlen($api->service)) {
     $ret['url']=(($_SERVER['HTTPS']=='on')?'https://':'http://').$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
     $ret['method'] = $api->method;
     if(strlen($__includePath)) $ret['time']=$__p->data['init']['include_logic'][$__includePath]['time'];
-	
+
+	// Debug params
 	if(isset($api->formParams['debug'])) {
 		$ret['header'] = $api->getResponseHeader();
 		$ret['session'] = session_id();
@@ -61,7 +62,17 @@ if(!strlen($api->service)) {
     if($api->error) {
             $ret['error']['message']=$api->errorMsg;
     }
-	
+
+	// If I have been called from a queue the response has to be 200 to avoid…
+	if(isset($api->formParams['cloudframework_queued'])) {
+		if($api->error) {
+			$ret['queued_return_code'] = $api->error;
+			$api->error = 0;
+			$api->ok = 200;
+		}
+	}
+
+
 	// Send Logs APILog
 	if($api->service != 'logs' && strlen($this->getConf("ApiLogsURL"))) {
 		if(isset($_REQUEST['addLog']) && !isset($_REQUEST['test'])) {
@@ -87,8 +98,11 @@ if(!strlen($api->service)) {
 	}
 
 	if(is_array($api->returnData)) $ret = array_merge($ret,$api->returnData);
-	
-	// the following line is deprectated
+
+
+
+
+	// Sending info.
 	$api->sendHeaders();
 	// Output Value
 	__p('END logic/api ');
