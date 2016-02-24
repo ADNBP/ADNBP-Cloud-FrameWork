@@ -452,12 +452,14 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * @param string $userId
      * @param string $mediaType "url"|"path"
      * @param string $value url or path
+     * @param string $title message for the media (facebook)
+     * @param string $albumId Album where media will be saved in (facebook)
      * @return JSON
      * @throws AuthenticationException
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function importMedia($userId, $mediaType, $value, $title = null)
+    public function importMedia($userId, $mediaType, $value, $title = null, $albumId = null)
     {
         $this->checkExpiredToken();
         $this->checkUser($userId);

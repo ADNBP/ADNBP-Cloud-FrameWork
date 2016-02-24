@@ -153,7 +153,51 @@ class FacebookApi extends Singleton implements SocialNetworkInterface
     }
 
     public function getPosts($userId, $maxResultsPerPage, $numberOfPages, $pageToken) {
-        return;
+        $this->checkUser($userId);
+        $this->checkPagination($maxResultsPerPage, $numberOfPages);
+
+        $posts = array();
+        $count = 0;
+        do {
+            try {
+                $endpoint = "/".self::FACEBOOK_SELF_USER."/feed?limit=".$maxResultsPerPage;
+                if ($pageToken) {
+                    $endpoint .= "&until=".$pageToken;
+                }
+
+                $response = $this->client->get($endpoint, $this->accessToken);
+
+                $postsEdge = $response->getGraphEdge();
+
+                foreach ($postsEdge as $post) {
+                    $posts[$count][] = $post->asArray();
+                }
+                $count++;
+
+                // Extract until parameter to set pagetoken
+                $nextPageEndPoint = $postsEdge->getNextPageRequest()->getEndPoint();
+                $parameters = array();
+                parse_str(parse_url($nextPageEndPoint, PHP_URL_QUERY), $parameters);
+_printe($parameters);
+                $pageToken = null;
+                if (array_key_exists("until", $parameters)) {
+                    $pageToken = $parameters["until"];
+                }
+
+                // If number of pages == 0, then all elements are returned
+                if (($numberOfPages > 0) && ($count == $numberOfPages)) {
+                    break;
+                }
+            } catch (Exception $e) {
+                throw new ConnectorServiceException("Error exporting posts: " . $e->getMessage(), $e->getCode());
+                $pageToken = null;
+            }
+        } while ($pageToken);
+
+
+        $posts["pageToken"] = $pageToken;
+
+        return json_encode($posts);
     }
 
     /**
@@ -355,7 +399,7 @@ class FacebookApi extends Singleton implements SocialNetworkInterface
         $count = 0;
         do {
             try {
-                $endpoint = "/".$userId."/albums?limit=".$maxResultsPerPage;
+                $endpoint = "/".self::FACEBOOK_SELF_USER."/albums?limit=".$maxResultsPerPage;
                 if ($pageToken) {
                     $endpoint .= "&after=".$pageToken;
                 }

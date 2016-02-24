@@ -241,7 +241,7 @@ class SocialNetworks extends Singleton
      * @param string $mediaType "url"|"path"
      * @param string $value url or path
      * @param string $title message for the media (facebook)
-     * @param string $albumId Album where media will be saved in
+     * @param string $albumId Album where media will be saved in (facebook)
      * @return mixed
      * @throws \Exception
      */
