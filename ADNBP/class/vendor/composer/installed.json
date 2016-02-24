@@ -156,48 +156,5 @@
             "facebook",
             "sdk"
         ]
-    },
-    {
-        "name": "cloudframework-io/core",
-        "version": "dev-master",
-        "version_normalized": "9999999-dev",
-        "source": {
-            "type": "git",
-            "url": "https://github.com/CloudFramework-io/CFCore.git",
-            "reference": "3ee42d0f8c51312ccdf3218cfad9cfc49c4b6579"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https://api.github.com/repos/CloudFramework-io/CFCore/zipball/3ee42d0f8c51312ccdf3218cfad9cfc49c4b6579",
-            "reference": "3ee42d0f8c51312ccdf3218cfad9cfc49c4b6579",
-            "shasum": ""
-        },
-        "require-dev": {
-            "phpunit/phpunit": "4.8.x-dev"
-        },
-        "time": "2016-01-19 08:39:48",
-        "type": "library",
-        "installation-source": "source",
-        "autoload": {
-            "psr-4": {
-                "CloudFramework\\": "src/",
-                "CloudFrameworkTest\\": "tests/"
-            }
-        },
-        "notification-url": "https://packagist.org/downloads/",
-        "license": [
-            "MIT"
-        ],
-        "authors": [
-            {
-                "name": "Adrián Martínez Maldonado",
-                "email": "am@bloombees.com"
-            },
-            {
-                "name": "Fran López Quesada",
-                "email": "fl@bloombees.com"
-            }
-        ],
-        "description": "Application Core for Cloud Framework"
     }
 ]
