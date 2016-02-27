@@ -294,16 +294,14 @@ if (!defined("_ADNBP_CLASS_")) {
 
                 // Convert into string if we received an array
                 if($_array) $data = json_encode($data);
-
                 // Tags Conversions
-                $data = str_replace('{rootPath}', $this->_rootpath, $data);
-                $data = str_replace('{appPath}', $this->_webapp, $data);
-                while(strpos($data,'{confVar:')!==false) {
-                    list($foo,$var) = explode("{confVar:",$data,2);
-                    list($var,$foo) = explode("}",$var,2);
-                    $data = str_replace('{confVar:'.$var.'}',$this->getConf(trim($var)),$data);
+                $data = str_replace('{{rootPath}}', $this->_rootpath, $data);
+                $data = str_replace('{{appPath}}', $this->_webapp, $data);
+                while(strpos($data,'{{confVar:')!==false) {
+                    list($foo,$var) = explode("{{confVar:",$data,2);
+                    list($var,$foo) = explode("}}",$var,2);
+                    $data = str_replace('{{confVar:'.$var.'}}',$this->getConf(trim($var)),$data);
                 }
-
                 // Convert into array if we received an array
                 if($_array) $data = json_decode($data,true);
                 return $data;
@@ -329,6 +327,7 @@ if (!defined("_ADNBP_CLASS_")) {
                     case "redirect":
                         if(is_array($vars)){
                             foreach ($vars as $urlOrig=>$urlDest) {
+
                                 $this->urlRedirect($urlOrig,$urlDest);
                             }
                         }
@@ -361,8 +360,29 @@ if (!defined("_ADNBP_CLASS_")) {
                                     $include = true;
                             }
                         }
-
                     break;
+                    case "inurl":
+                    case "notinurl":
+                        $urls = explode(",",$tagvalue);
+                        foreach ($urls as $ind=>$inurl ) {
+                            if(trim(strtolower($tagcode))=="inurl") {
+                                if((strpos($this->_url, trim($inurl)) !== false))
+                                    $include = true;
+                            } else {
+                                if((strpos($this->_url, trim($inurl)) === false))
+                                    $include = true;
+                            }
+                        }
+                        break;
+                    case "menu":
+                        if(is_array($vars)) {
+                            foreach ($vars as $key => $value) {
+                                $this->pushMenu($value);
+                            }
+                        } else {
+                            $this->addError("menu: tag does not contain an array");
+                        }
+                        break;
                     case "false":
                         break;
                     default:
@@ -492,7 +512,6 @@ if (!defined("_ADNBP_CLASS_")) {
             // if it is a permilink
             if ($scriptname == "adnbppl.php" && !$_found) {
                 if (!strlen($this->getConf("template")) && !$this->getConf("notemplate")) {
-
                     if (is_file($this->_webapp . "/templates/" . $this->_basename) || is_file($this->_rootpath . "/ADNBP/templates/" . $this->_basename))
                         $this->setConf("template", $this->_basename);
                     elseif (is_file($this->_webapp . "/logic/" . $this->_basename) || is_file($this->_rootpath . "/ADNBP/logic/" . $this->_basename))
@@ -573,6 +592,7 @@ if (!defined("_ADNBP_CLASS_")) {
                 if (strlen($this->getConf("templateVarContent"))) {
                     $var = $this->getConf("templateVarContent");
                     // exist a var with the content of the template
+                    if(strtolower($var)!= 'this' && strtolower($var)!= '_server' && strtolower($var)!= 'adnbp')
                     echo $$var;
 
                     // Content of template is stored in a file
@@ -587,12 +607,19 @@ if (!defined("_ADNBP_CLASS_")) {
 
                         }
                     } else {
-                        if (strpos($this->getConf("template"), 'gs://') === 0 || strpos($this->getConf("template"), '/') === 0) $_file = $this->getConf("template");
+                        if(strpos($this->getConf("template"),'{Bucket}')!==false) {
+                            $_file = str_replace('{Bucket}',$this->getConf('Bucket'),$this->getConf("template"));
+                        }
+                        elseif(strpos($this->getConf("template"), 'gs://') === 0 || strpos($this->getConf("template"), '/') === 0) {
+                            $_file = $this->getConf("template");
+                        }
                         elseif (is_file($this->_webapp . "/templates/" . $this->getConf("template"))) {
                             $_file = ($this->_webapp . "/templates/" . $this->getConf("template"));
-                        } elseif (is_file($this->_rootpath . "/ADNBP/templates/" . $this->getConf("template"))) {
+                        }
+                        elseif (is_file($this->_rootpath . "/ADNBP/templates/" . $this->getConf("template"))) {
                             $_file = ($this->_rootpath . "/ADNBP/templates/" . $this->getConf("template"));
-                        } else
+                        }
+                        else
                             echo "No template found: " . $this->getConf("template");
                     }
                 }
