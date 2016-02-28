@@ -325,11 +325,22 @@ if (!defined("_ADNBP_CLASS_")) {
                         $this->setWebApp($vars);
                         break;
                     case "redirect":
+                        // Array of redirections
                         if(is_array($vars)){
-                            foreach ($vars as $urlOrig=>$urlDest) {
+                            foreach ($vars as $ind=>$urls)
+                                if(!is_array($urls)) {
+                                    $this->setError('Wrong redirect format. It has to be an array of redirect elements: [{prog:dest},{..}..]');
+                                } else {
+                                    foreach ($urls as $urlOrig=>$urlDest) {
+                                        if($urlOrig=='*' || !strlen($urlOrig))
+                                            $this->urlRedirect($urlDest);
+                                        else
+                                            $this->urlRedirect($urlOrig,$urlDest);
+                                    }
+                                }
 
-                                $this->urlRedirect($urlOrig,$urlDest);
-                            }
+                        } else {
+                            $this->setError('Wrong redirect format. It has to be an array of redirect elements: [{prog:dest},{..}..]');
                         }
                         break;
                     case "true":
@@ -351,7 +362,7 @@ if (!defined("_ADNBP_CLASS_")) {
                     case "indomain":
                     case "domain":
                         $domains = explode(",",$tagvalue);
-                        foreach ($domains as $ind=>$inddomain ) {
+                        foreach ($domains as $ind=>$inddomain ) if(strlen(trim($inddomain))) {
                             if(trim(strtolower($tagcode))=="domain") {
                                 if (strtolower($_SERVER['HTTP_HOST']) ==  strtolower(trim($inddomain)))
                                     $include = true;
@@ -364,13 +375,16 @@ if (!defined("_ADNBP_CLASS_")) {
                     case "inurl":
                     case "notinurl":
                         $urls = explode(",",$tagvalue);
-                        foreach ($urls as $ind=>$inurl ) {
+
+                        // If notinurl the condition is upsidedown
+                        if(trim(strtolower($tagcode))=="notinurl") $include = true;
+                        foreach ($urls as $ind=>$inurl )if(strlen(trim($inurl)))  {
                             if(trim(strtolower($tagcode))=="inurl") {
                                 if((strpos($this->_url, trim($inurl)) !== false))
                                     $include = true;
                             } else {
-                                if((strpos($this->_url, trim($inurl)) === false))
-                                    $include = true;
+                                if((strpos($this->_url, trim($inurl)) !== false))
+                                    $include = false;
                             }
                         }
                         break;
