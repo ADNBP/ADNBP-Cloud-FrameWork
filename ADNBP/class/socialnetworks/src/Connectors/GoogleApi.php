@@ -7,6 +7,7 @@ use CloudFramework\Service\SocialNetworks\Exceptions\ConnectorConfigException;
 use CloudFramework\Service\SocialNetworks\Exceptions\ConnectorServiceException;
 use CloudFramework\Service\SocialNetworks\Exceptions\MalformedUrlException;
 use CloudFramework\Service\SocialNetworks\Interfaces\SocialNetworkInterface;
+use CloudFramework\Service\SocialNetworks\SocialNetworks;
 
 /**
  * Class GoogleApi
@@ -70,7 +71,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         if ((null === $redirectUrl) || (empty($redirectUrl))) {
             throw new ConnectorConfigException("'redirectUrl' parameter is required");
         } else {
-            if (!$this->wellFormedUrl($redirectUrl)) {
+            if (!SocialNetworks::wellFormedUrl($redirectUrl)) {
                 throw new MalformedUrlException("'redirectUrl' is malformed");
             }
         }
@@ -86,7 +87,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         if ((null === $authUrl) || (empty($authUrl))) {
             throw new ConnectorConfigException("'authUrl' parameter is required");
         } else {
-            if (!$this->wellFormedUrl($authUrl)) {
+            if (!SocialNetworks::wellFormedUrl($authUrl)) {
                 throw new MalformedUrlException("'authUrl' is malformed");
             }
         }
@@ -115,7 +116,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         if ((null === $redirectUrl) || (empty($redirectUrl))) {
             throw new ConnectorConfigException("'redirectUrl' parameter is required");
         } else {
-            if (!$this->wellFormedUrl($redirectUrl)) {
+            if (!SocialNetworks::wellFormedUrl($redirectUrl)) {
                 throw new MalformedUrlException("'redirectUrl' is malformed");
             }
         }
@@ -177,12 +178,14 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * @throws ConnectorServiceException
      */
     public function refreshCredentials($credentials) {
-        try {
-            $this->client->setClientId($this->clientId);
-            $this->client->setClientSecret($this->clientSecret);
-            $this->client->refreshToken($credentials["refresh_token"]);
-        } catch(\Exception $e) {
-            throw new AuthenticationException("Error refreshing token: " . $e->getMessage());
+        if ($this->client->isAccessTokenExpired()) {
+            try {
+                $this->client->setClientId($this->clientId);
+                $this->client->setClientSecret($this->clientSecret);
+                $this->client->refreshToken($credentials["refresh_token"]);
+            } catch(\Exception $e) {
+                throw new AuthenticationException("Error refreshing token: " . $e->getMessage());
+            }
         }
 
         return json_decode($this->client->getAccessToken(), true);
@@ -232,7 +235,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
 
         do {
             try {
-                $plusDomainService = new \Google_Service_PlusDomains($this->client);
+                $plusDomainsService = new \Google_Service_PlusDomains($this->client);
                 $parameters = array();
                 $parameters["maxResults"] = $maxResultsPerPage;
 
@@ -240,7 +243,11 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                     $parameters["pageToken"] = $pageToken;
                 }
 
-                $peopleList = $plusDomainService->people->listPeople($userId, "circled", $parameters);
+                $peopleList = $plusDomainsService->people->listPeople($userId, "circled", $parameters);
+
+                if (!isset($people["total"])) {
+                    $people["total"] = $peopleList->getTotalItems();
+                }
 
                 $people[$count] = array();
                 foreach($peopleList->getItems() as $person) {
@@ -286,23 +293,23 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         try {
             $people = array();
             $plusDomainsService = new \Google_Service_PlusDomains($this->client);
-            $plusoners = $plusDomainsService->people->listByActivity($postId, "plusoners")->getItems();
-            $resharers = $plusDomainsService->people->listByActivity($postId, "resharers")->getItems();
-            $sharedto = $plusDomainsService->people->listByActivity($postId, "sharedto")->getItems();
+            $plusoners = $plusDomainsService->people->listByActivity($postId, "plusoners");
+            $resharers = $plusDomainsService->people->listByActivity($postId, "resharers");
+            $sharedto = $plusDomainsService->people->listByActivity($postId, "sharedto");
 
-            $people["plusoners"] = array();
-            $people["resharers"] = array();
-            $people["sharedto"] = array();
+            $people["plusoners"] = array("total" => (null === $plusoners->getTotalItems())?0:$plusoners->getTotalItems());
+            $people["resharers"] = array("total" => (null === $resharers->getTotalItems())?0:$resharers->getTotalItems());
+            $people["sharedto"] = array("total" => (null === $sharedto->getTotalItems())?0:$sharedto->getTotalItems());
 
-            foreach($plusoners as $plusoner) {
+            foreach($plusoners->getItems() as $plusoner) {
                 $people["plusoners"][] = $plusoner->toSimpleObject();
             }
 
-            foreach($resharers as $resharer) {
+            foreach($resharers->getItems() as $resharer) {
                 $people["resharers"][] = $resharer->toSimpleObject();
             }
 
-            foreach($sharedto as $shared) {
+            foreach($sharedto->getItems() as $shared) {
                 $people["sharedto"][] = $shared->toSimpleObject();
             }
         } catch(\Exception $e) {
@@ -415,6 +422,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         $count = 0;
         do {
             try {
+                $bug = false;
                 $driveService = new \Google_Service_Drive($this->client);
                 $parameters = array();
                 $parameters["q"] = "((mimeType contains 'image' or mimeType contains 'video') and trashed = false)";
@@ -431,6 +439,14 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
 
                 $pageToken = $filesList->getNextPageToken();
 
+                // Avoid bug on getting files from drive
+                if (($count == 1) && ($pageToken) && (count($files[0]) == 0)) {
+                    $count = 0;
+                    $pageToken = 0;
+                    $bug = true;
+                    continue;
+                }
+
                 // If number of pages == 0, then all elements are returned
                 if (($numberOfPages > 0) && ($count == $numberOfPages)) {
                     break;
@@ -439,8 +455,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                 throw new ConnectorServiceException("Error exporting images: " . $e->getMessage(), $e->getCode());
                 $pageToken = null;
             }
-        } while ($pageToken);
-
+        } while ($pageToken || $bug);
 
         $files["pageToken"] = $pageToken;
 
@@ -472,15 +487,8 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             if (!file_exists($value)) {
                 throw new ConnectorConfigException("file doesn't exist");
             } else {
-                $finfo = new \finfo(FILEINFO_MIME_TYPE);
+                $mimeType = SocialNetworks::mime_content_type($value);
 
-                if (!$finfo) {
-                    throw new ConnectorConfigException("error getting mime type of the media file");
-                }
-
-                $mimeType = $finfo->file($value);
-
-                //$mimeType = $finfo
                 if ((false === strpos($mimeType,"image/")) && (false === strpos($mimeType,"video/"))) {
                     throw new ConnectorConfigException("file must be an image or a video");
                 } else {
@@ -491,35 +499,29 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                 }
             }
         } else {
-            $tempMedia = tmpfile();
-            fwrite($tempMedia, file_get_contents($value));
-            $info = stream_get_meta_data($tempMedia);
-            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+            $tempMedia = tempnam("bloombees","media");
+            file_put_contents($tempMedia, file_get_contents($value));
 
-            if (!$finfo) {
-                throw new ConnectorConfigException("error getting mime type of the media file");
-            }
-
-            $mimeType = $finfo->file($info["uri"]);
+            $mimeType = SocialNetworks::mime_content_type($value);
 
             if ((false === strpos($mimeType,"image/")) && (false === strpos($mimeType,"video/"))) {
                 throw new ConnectorConfigException("file must be an image or a video");
             } else {
-                $filesize = filesize($info["uri"]);
+                $filesize = filesize($tempMedia);
                 if ($filesize > self::MAX_IMPORT_FILE_SIZE) {
                     throw new ConnectorConfigException("Maximum file size is ".(self::MAX_IMPORT_FILE_SIZE_MB)."MB");
                 }
             }
-            $value = $info["uri"];
+            $value = $tempMedia;
         }
+
+        // Pending to find out the best way to get mime type
+        $mimeType = "image/png";
 
         try {
             $plusDomainsService = new \Google_Service_PlusDomains($this->client);
             $plusDomainsMedia = new \Google_Service_PlusDomains_Media();
             $plusDomainsMedia->setDisplayName("Uploaded media file");
-
-            $params = array();
-            $params["uploadType"] = "media";
 
             // Size of each chunk of data in bytes. Setting it higher leads faster upload (less chunks,
             // for reliable connections). Setting it lower leads better recovery (fine-grained chunks)
@@ -529,7 +531,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             // with ->execute(); instead of making the API call immediately.
             $this->client->setDefer(true);
 
-            $insertRequest = $plusDomainsService->media->insert($userId, "cloud", $plusDomainsMedia, $params);
+            $insertRequest = $plusDomainsService->media->insert($userId, "cloud", $plusDomainsMedia);
 
             $media = new \Google_Http_MediaFileUpload(
                 $this->client,
@@ -547,7 +549,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             $handle = fopen($value, "rb");
 
             while (!$status && !feof($handle)) {
-                $chunk = fread($handle, $chunkSizeBytes);
+                $chunk = stream_get_contents($handle, $chunkSizeBytes);
                 $status = $media->nextChunk($chunk);
             }
 
@@ -558,10 +560,6 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             }
 
             fclose($handle);
-
-            if (isset($tempMedia)) {
-                fclose($tempMedia);
-            }
 
             // Reset to the client to execute requests immediately in the future.
             $this->client->setDefer(false);
@@ -641,7 +639,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                 ("" === $parameters["attachment"][1]))) {
                 throw new ConnectorConfigException("'attachment' value must be an url ('link') or a file path ('photo' or 'video')");
             } else {
-                if (("link" === $parameters["attachment"][0]) && (!$this->wellFormedUrl($parameters["attachment"][1]))) {
+                if (("link" === $parameters["attachment"][0]) && (!SocialNetworks::wellFormedUrl($parameters["attachment"][1]))) {
                     throw new ConnectorConfigException("'attachment' value url is malformed");
                 }
             }
@@ -702,13 +700,137 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         $postBody->setAccess($access);
 
         try {
-            $plusDomainService = new \Google_Service_PlusDomains($this->client);
-            $activity = $plusDomainService->activities->insert($parameters["user_id"], $postBody);
+            $plusDomainsService = new \Google_Service_PlusDomains($this->client);
+            $activity = $plusDomainsService->activities->insert($parameters["user_id"], $postBody);
         } catch(\Exception $e) {
             throw new ConnectorServiceException("Error creating post: " . $e->getMessage(), $e->getCode());
         }
 
         return json_encode($activity);
+    }
+
+    /**
+     * Service that query to Google Api for a list of circles for an user
+     * @param string $userId
+     * @param integer $maxResultsPerPage maximum elements per page
+     * @param integer $numberOfPages number of pages
+     * @param string $pageToken Indicates a specific page for pagination
+     * @return JSON
+     * @throws AuthenticationException
+     * @throws ConnectorConfigException
+     * @throws ConnectorServiceException
+     */
+    public function exportCircles($userId, $maxResultsPerPage, $numberOfPages, $pageToken)
+    {
+        $this->checkExpiredToken();
+        $this->checkUser($userId);
+        $this->checkPagination($maxResultsPerPage, $numberOfPages);
+
+        $circles = array();
+        $count = 0;
+
+        do {
+            try {
+                $plusDomainsService = new \Google_Service_PlusDomains($this->client);
+                $parameters = array();
+                $parameters["maxResults"] = $maxResultsPerPage;
+
+                if ($pageToken) {
+                    $parameters["pageToken"] = $pageToken;
+                }
+
+                $circlesList = $plusDomainsService->circles->listCircles($userId, $parameters);
+
+                if (!isset($circles["total"])) {
+                    $circles["total"] = $circlesList->getTotalItems();
+                }
+
+                $circles[$count] = array();
+                foreach($circlesList->getItems() as $circle) {
+                    $circles[$count][] = $circle->toSimpleObject();
+                }
+                $count++;
+
+                $pageToken = $circlesList->getNextPageToken();
+
+                // If number of pages is zero, then all elements are returned
+                if (($numberOfPages > 0) && ($count == $numberOfPages)) {
+                    break;
+                }
+            } catch (Exception $e) {
+                throw new ConnectorServiceException("Error exporting circles: " . $e->getMessage(), $e->getCode());
+                $pageToken = null;
+            }
+        } while ($pageToken);
+
+        $circles["pageToken"] = $pageToken;
+
+        return json_encode($circles);
+    }
+
+    /**
+     * Service that query to Google Api for people in an specific circle
+     * @param string $userId
+     * @param string $circleId
+     * @param integer $maxResultsPerPage maximum elements per page
+     * @param integer $numberOfPages number of pages
+     * @param string $pageToken Indicates a specific page for pagination
+     * @return JSON
+     * @throws AuthenticationException
+     * @throws ConnectorConfigException
+     * @throws ConnectorServiceException
+     */
+    public function exportPeopleInCircle($userId, $circleId, $maxResultsPerPage, $numberOfPages, $pageToken)
+    {
+        $this->checkExpiredToken();
+        $this->checkUser($userId);
+
+        if ((null === $circleId) || ("" === $circleId)) {
+            throw new ConnectorConfigException("'circleId' parameter is required");
+        }
+
+        $this->checkPagination($maxResultsPerPage, $numberOfPages);
+
+        $people = array();
+        $count = 0;
+
+        do {
+            try {
+                $plusDomainsService = new \Google_Service_PlusDomains($this->client);
+                $parameters = array();
+                $parameters["maxResults"] = $maxResultsPerPage;
+
+                if ($pageToken) {
+                    $parameters["pageToken"] = $pageToken;
+                }
+
+                $peopleList = $plusDomainsService->people->listByCircle($circleId, $parameters);
+
+                if (!isset($people["total"])) {
+                    $circles["total"] = $peopleList->getTotalItems();
+                }
+
+                $people[$count] = array();
+                foreach($peopleList->getItems() as $person) {
+                    $people[$count][] = $person->toSimpleObject();
+                }
+                $count++;
+
+                $pageToken = $peopleList->getNextPageToken();
+
+                // If number of pages is zero, then all elements are returned
+                if (($numberOfPages > 0) && ($count == $numberOfPages)) {
+                    break;
+                }
+            } catch (Exception $e) {
+                throw new ConnectorServiceException("Error exporting people in circle with id '".$circleId."' :" . $e->getMessage(), $e->getCode());
+                $pageToken = null;
+            }
+        } while ($pageToken);
+
+        $people["pageToken"] = $pageToken;
+
+        return json_encode($people);
     }
 
     public function getUserRelationship($authenticatedUserId, $userId) {
@@ -780,19 +902,6 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     private function checkExpiredToken() {
         if ($this->client->isAccessTokenExpired()) {
             throw new ConnectorServiceException("The token has expired, has been tampered with, or the permissions revoked.");
-        }
-    }
-
-    /**
-     * Private function to check url format
-     * @param $redirectUrl
-     * @return bool
-     */
-    private function wellFormedUrl($redirectUrl) {
-        if (!filter_var($redirectUrl, FILTER_VALIDATE_URL) === false) {
-            return true;
-        } else {
-            return false;
         }
     }
 }
