@@ -599,7 +599,12 @@ if (!defined("_ADNBP_CLASS_")) {
                 }
 
             } else {
-                if (strpos($this->getConf("logic"), 'gs://') === 0 || strpos($this->getConf("logic"), '/') === 0) $_file = $this->getConf("logic");
+                if(strpos($this->getConf("logic"),'{Bucket}')!==false) {
+                    $_file = str_replace('{Bucket}',$this->getConf('Bucket'),$this->getConf("logic"));
+                }
+                elseif (strpos($this->getConf("logic"), 'gs://') === 0 || strpos($this->getConf("logic"), '/') === 0) {
+                    $_file = $this->getConf("logic");
+                }
                 elseif (is_file($this->_webapp . "/logic/" . $this->getConf("logic"))) {
                     $_file = ($this->_webapp . "/logic/" . $this->getConf("logic"));
                 } else {
