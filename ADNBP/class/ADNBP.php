@@ -1834,10 +1834,10 @@ if (!defined("_ADNBP_CLASS_")) {
             $params['title'] = $title;
             if (!is_string($text)) $text = json_encode($text);
             $params['text'] = $text . ((strlen($text)) ? "\n\n" : '');
-            if ($this->error) $params['text'] .= "Errors: " . json_encode($this->errorMsg) . "\n\n";
-            if (count($this->_log)) $params['text'] .= "Errors: " . json_encode($this->errorMsg);
+            if ($this->error) $params['text'] .= "Errors: " . json_encode($this->errorMsg,JSON_PRETTY_PRINT) . "\n\n";
+            if (count($this->_log)) $params['text'] .= "Errors: " . json_encode($this->errorMsg,JSON_PRETTY_PRINT);
             $params['ip'] = $this->_ip;
-            $params['fingerprint'] = json_encode($this->getRequestFingerPrint());
+            $params['fingerprint'] = json_encode($this->getRequestFingerPrint(),JSON_PRETTY_PRINT);
 
             // Tell the service to send email of the report.
             if (strlen($email) && $this->validateField($email, 'email'))
