@@ -319,7 +319,8 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
 
     /**
      * Service that query to Instagram Api service for media files
-     * @param string $userId
+     * @param string $entity "user"
+     * @param string $id    user id
      * @param integer $maxTotalResults.
      * @param integer $numberOfPages
      * @param string $nextPageUrl
@@ -327,13 +328,13 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function exportMedia($userId, $maxTotalResults, $numberOfPages, $nextPageUrl)
+    public function exportMedia($entity, $id, $maxTotalResults, $numberOfPages, $nextPageUrl)
     {
-        $this->checkUser($userId);
+        $this->checkUser($id);
         $this->checkPagination($numberOfPages, $maxTotalResults);
 
         if (!$nextPageUrl) {
-            $nextPageUrl = self::INSTAGRAM_API_USERS_URL . $userId .
+            $nextPageUrl = self::INSTAGRAM_API_USERS_URL . $id .
                         "/media/recent/?access_token=" . $this->accessToken .
                         "&count=".$maxTotalResults;
         }

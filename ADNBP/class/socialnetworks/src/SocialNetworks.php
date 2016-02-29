@@ -9,6 +9,9 @@ use CloudFramework\Patterns\Singleton;
  */
 class SocialNetworks extends Singleton
 {
+    const ENTITY_USER = 'user';
+    const ENTITY_PAGE = 'page';
+
     /**
      * @return string
      */
@@ -209,17 +212,18 @@ class SocialNetworks extends Singleton
     /**
      * Service that connect to social network api and request for media files for authenticated user
      * @param string $social
-     * @param string $userId
+     * @param string $entity "user"|"page"
+     * @param string $id    user or page id
      * @param integer $maxResultsPerPage maximum elements per page
      * @param integer $numberOfPages number of pages
      * @param string $pageToken Indicates a specific page for pagination
      * @return mixed
      * @throws \Exception
      */
-    public function exportMedia($social, $userId, $maxResultsPerPage, $numberOfPages, $pageToken)
+    public function exportMedia($social, $entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken)
     {
         $connector = $this->getSocialApi($social);
-        return $connector->exportMedia($userId, $maxResultsPerPage, $numberOfPages, $pageToken);
+        return $connector->exportMedia($entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken);
     }
 
     /**
@@ -240,18 +244,23 @@ class SocialNetworks extends Singleton
     /**
      * Service that connect to social network api and upload a media file (image/video)
      * @param string $social
-     * @param string $userId
-     * @param string $mediaType "url"|"path"
-     * @param string $value url or path
-     * @param string $title message for the media (facebook)
-     * @param string $albumId Album where media will be saved in (facebook)
+     * @param array $parameters
+     * COMMON TO ALL SOCIAL NETWORKS
+     *      "entity"        =>      "user"|"page"
+     *      "id"            =>      user or page id
+     *      "media_type"    =>      "url"|"path"
+     *      "value"         =>      url or path
+     * FACEBOOK
+     *      "title"         =>      message for the media (mandatory)
+     *      "album_id"      =>      album where media will be saved in
+     *
      * @return mixed
      * @throws \Exception
      */
-    public function importMedia($social, $userId, $mediaType, $value, $title = null, $albumId = null)
+    public function importMedia($social, $parameters)
     {
         $connector = $this->getSocialApi($social);
-        return $connector->importMedia($userId, $mediaType, $value, $title, $albumId);
+        return $connector->importMedia($parameters);
     }
 
     /**

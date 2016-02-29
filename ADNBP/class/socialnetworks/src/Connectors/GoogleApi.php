@@ -403,7 +403,8 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
 
     /**
      * Service that query to Google Api Drive service for images
-     * @param string $userId
+     * @param string $entity "user"
+     * @param string $id    user id
      * @param integer $maxResultsPerPage maximum elements per page
      * @param integer $numberOfPages number of pages
      * @param string $pageToken Indicates a specific page
@@ -412,10 +413,10 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function exportMedia($userId, $maxResultsPerPage, $numberOfPages, $pageToken)
+    public function exportMedia($entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken)
     {
         $this->checkExpiredToken();
-        $this->checkUser($userId);
+        $this->checkUser($id);
         $this->checkPagination($maxResultsPerPage, $numberOfPages);
 
         $files = array();
@@ -464,35 +465,35 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
 
     /**
      * Service that upload a media file (image/video) to Google+
-     * @param string $userId
-     * @param string $mediaType "url"|"path"
-     * @param string $value url or path
-     * @param string $title message for the media (facebook)
-     * @param string $albumId Album where media will be saved in (facebook)
+     * @param string $parameters
+     *      "entity"        =>      "user"
+     *      "id"            =>      user id
+     *      "media_type"    =>      "url"|"path"
+     *      "value"         =>      url or path
      * @return JSON
      * @throws AuthenticationException
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function importMedia($userId, $mediaType, $value, $title = null, $albumId = null)
+    public function importMedia($parameters)
     {
         $this->checkExpiredToken();
-        $this->checkUser($userId);
+        $this->checkUser($parameters["id"]);
 
-        if ((null === $mediaType) || ("" === $mediaType)) {
+        if ((null === $parameters["media_type"]) || ("" === $parameters["media_type"])) {
             throw new ConnectorConfigException("Media type must be 'url' or 'path'");
-        } elseif ((null === $value) || ("" === $value)) {
-            throw new ConnectorConfigException($mediaType." value is required");
-        } elseif ("path" === $mediaType) {
-            if (!file_exists($value)) {
+        } elseif ((null === $parameters["value"]) || ("" === $parameters["value"])) {
+            throw new ConnectorConfigException($parameters["media_type"]." value is required");
+        } elseif ("path" === $parameters["media_type"]) {
+            if (!file_exists($parameters["value"])) {
                 throw new ConnectorConfigException("file doesn't exist");
             } else {
-                $mimeType = SocialNetworks::mime_content_type($value);
+                $mimeType = SocialNetworks::mime_content_type($parameters["value"]);
 
                 if ((false === strpos($mimeType,"image/")) && (false === strpos($mimeType,"video/"))) {
                     throw new ConnectorConfigException("file must be an image or a video");
                 } else {
-                    $filesize = filesize($value);
+                    $filesize = filesize($parameters["value"]);
                     if ($filesize > self::MAX_IMPORT_FILE_SIZE) {
                         throw new ConnectorConfigException("Maximum file size is ".(self::MAX_IMPORT_FILE_SIZE_MB)."MB");
                     }
@@ -500,9 +501,9 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             }
         } else {
             $tempMedia = tempnam("bloombees","media");
-            file_put_contents($tempMedia, file_get_contents($value));
+            file_put_contents($tempMedia, file_get_contents($parameters["value"]));
 
-            $mimeType = SocialNetworks::mime_content_type($value);
+            $mimeType = SocialNetworks::mime_content_type($parameters["value"]);
 
             if ((false === strpos($mimeType,"image/")) && (false === strpos($mimeType,"video/"))) {
                 throw new ConnectorConfigException("file must be an image or a video");
@@ -512,11 +513,8 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                     throw new ConnectorConfigException("Maximum file size is ".(self::MAX_IMPORT_FILE_SIZE_MB)."MB");
                 }
             }
-            $value = $tempMedia;
+            $parameters["value"] = $tempMedia;
         }
-
-        // Pending to find out the best way to get mime type
-        $mimeType = "image/png";
 
         try {
             $plusDomainsService = new \Google_Service_PlusDomains($this->client);
@@ -531,7 +529,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
             // with ->execute(); instead of making the API call immediately.
             $this->client->setDefer(true);
 
-            $insertRequest = $plusDomainsService->media->insert($userId, "cloud", $plusDomainsMedia);
+            $insertRequest = $plusDomainsService->media->insert($parameters["id"], "cloud", $plusDomainsMedia);
 
             $media = new \Google_Http_MediaFileUpload(
                 $this->client,
@@ -546,7 +544,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
 
             // Upload the various chunks. $status will be false until the process is complete.
             $status = false;
-            $handle = fopen($value, "rb");
+            $handle = fopen($parameters["value"], "rb");
 
             while (!$status && !feof($handle)) {
                 $chunk = stream_get_contents($handle, $chunkSizeBytes);
@@ -566,7 +564,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
 
             return json_encode($result);
         } catch (Exception $e) {
-            throw new ConnectorServiceException("Error importing '".$value."'': " . $e->getMessage(), $e->getCode());
+            throw new ConnectorServiceException("Error importing '".$parameters["value"]."'': " . $e->getMessage(), $e->getCode());
         }
     }
 
