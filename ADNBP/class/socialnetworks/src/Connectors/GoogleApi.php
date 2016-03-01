@@ -156,8 +156,6 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
     public function checkCredentials(array $credentials) {
         $this->checkCredentialsParameters($credentials);
 
-        $this->checkExpiredToken();
-
         try {
             $oauthService = new \Google_Service_Oauth2($this->client);
             $optParams["access_token"] = $credentials["access_token"];
