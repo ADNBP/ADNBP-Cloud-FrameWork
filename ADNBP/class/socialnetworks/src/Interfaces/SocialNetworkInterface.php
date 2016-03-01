@@ -12,13 +12,13 @@ interface SocialNetworkInterface {
     function authorize($code, $redirectUrl);
     function setAccessToken(array $credentials);
     function revokeToken();
+    function getProfile($userId);
     function getFollowers($userId, $maxResultsPerPage, $numberOfPages, $pageToken);
     function getFollowersInfo($userId, $postId);
     function getSubscribers($userId, $maxResultsPerPage, $numberOfPages, $nextPageUrl);
     function getPosts($userId, $maxResultsPerPage, $numberOfPages, $pageToken);
-    function getProfile($userId);
-    function importMedia($userId, $mediaType, $value, $title, $albumId);
-    function exportMedia($userId, $maxResultsPerPage, $numberOfPages, $pageToken);
+    function importMedia($parameters);
+    function exportMedia($entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken);
     function post(array $parameters);
     function getUserRelationship($authenticatedUserId, $userId);
     function modifyUserRelationship($authenticatedUserId, $userId, $action);
