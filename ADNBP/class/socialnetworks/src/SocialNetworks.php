@@ -266,6 +266,8 @@ class SocialNetworks extends Singleton
     /**
      * Service that connect to social network api and export data for authenticated user
      * @param string $social
+     * @param string $entity "user"|"page"
+     * @param string $id    user or page id
      * @param array $parameters
      * GOOGLE
      *      "user_id"    => User whose google domain the stream will be published in
@@ -289,10 +291,10 @@ class SocialNetworks extends Singleton
      * @return mixed
      * @throws \Exception
      */
-    public function post($social, $parameters)
+    public function post($social, $entity, $id, $parameters)
     {
         $connector = $this->getSocialApi($social);
-        return $connector->post($parameters);
+        return $connector->post($entity, $id, $parameters);
     }
 
     /**
@@ -339,36 +341,39 @@ class SocialNetworks extends Singleton
     /**
      * Service that creates a new photo album for the user in a social network
      * @param $social
-     * @param $userId
+     * @param string $entity "user"|"page"
+     * @param string $id    user or page id
      * @param $title
      * @param $caption
      * @return mixed
      * @throws \Exception
      */
-    public function createPhotosAlbum($social, $userId, $title, $caption) {
+    public function createPhotosAlbum($social, $entity, $id, $title, $caption) {
         $connector = $this->getSocialApi($social);
-        return $connector->createPhotosAlbum($userId, $title, $caption);
+        return $connector->createPhotosAlbum($entity, $id, $title, $caption);
     }
 
     /**
      * Service that gets photos albums owned by users in a social network
      * @param $social
-     * @param $userId
+     * @param string $entity "user"|"page"
+     * @param string $id    user or page id
      * @param $maxResultsPerPage
      * @param $numberOfPages
      * @param $pageToken
      * @return mixed
      * @throws \Exception
      */
-    public function exportPhotosAlbumsList($social, $userId, $maxResultsPerPage, $numberOfPages, $pageToken) {
+    public function exportPhotosAlbumsList($social, $entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken) {
         $connector = $this->getSocialApi($social);
-        return $connector->exportPhotosAlbumsList($userId, $maxResultsPerPage, $numberOfPages, $pageToken);
+        return $connector->exportPhotosAlbumsList($entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken);
     }
 
     /**
      * Service that gets photos from an album owned by user in a social network
      * @param $social
-     * @param $userId
+     * @param string $entity "user"|"page"
+     * @param string $id    user or page id
      * @param $albumId
      * @param $maxResultsPerPage
      * @param $numberOfPages
@@ -376,9 +381,9 @@ class SocialNetworks extends Singleton
      * @return mixed
      * @throws \Exception
      */
-    public function exportPhotosFromAlbum($social, $userId, $albumId, $maxResultsPerPage, $numberOfPages, $pageToken) {
+    public function exportPhotosFromAlbum($social, $entity, $id, $albumId, $maxResultsPerPage, $numberOfPages, $pageToken) {
         $connector = $this->getSocialApi($social);
-        return $connector->exportPhotosFromAlbum($userId, $albumId, $maxResultsPerPage, $numberOfPages, $pageToken);
+        return $connector->exportPhotosFromAlbum($entity, $id, $albumId, $maxResultsPerPage, $numberOfPages, $pageToken);
     }
 
     /**

@@ -419,7 +419,6 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         $count = 0;
         do {
             try {
-                $bug = false;
                 $driveService = new \Google_Service_Drive($this->client);
                 $parameters = array();
                 $parameters["q"] = "((mimeType contains 'image' or mimeType contains 'video') and trashed = false)";
@@ -430,19 +429,15 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                 }
 
                 $filesList = $driveService->files->listFiles($parameters);
-
-                $files[$count] = $filesList->getItems();
-                $count++;
-
                 $pageToken = $filesList->getNextPageToken();
 
-                // Avoid bug on getting files from drive
-                if (($count == 1) && ($pageToken) && (count($files[0]) == 0)) {
-                    $count = 0;
-                    $pageToken = 0;
-                    $bug = true;
+                $items = $filesList->getItems();
+                if (count($items) == 0) {
                     continue;
                 }
+
+                $files[$count] = $items;
+                $count++;
 
                 // If number of pages == 0, then all elements are returned
                 if (($numberOfPages > 0) && ($count == $numberOfPages)) {
@@ -452,7 +447,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                 throw new ConnectorServiceException("Error exporting images: " . $e->getMessage(), $e->getCode());
                 $pageToken = null;
             }
-        } while ($pageToken || $bug);
+        } while ($pageToken);
 
         $files["pageToken"] = $pageToken;
 
@@ -566,6 +561,8 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
 
     /**
      * Service that publish in Google +
+     * @param string $entity "user"
+     * @param string $id    user id
      * @param array $parameters
      *      "user_id"    => User whose google domain the stream will be published in
      *      "content"   => Text of the comment
@@ -586,7 +583,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function post(array $parameters) {
+    public function post($entity, $id, array $parameters) {
         $this->checkExpiredToken();
 
         if ((null === $parameters) || (!is_array($parameters)) || (count($parameters) == 0)) {

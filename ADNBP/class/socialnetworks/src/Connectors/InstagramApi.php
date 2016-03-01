@@ -449,7 +449,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function post(array $parameters) {
+    public function post($entity, $id, array $parameters) {
         if ((null === $parameters) || (!is_array($parameters)) || (count($parameters) == 0)) {
             throw new ConnectorConfigException("Invalid post parameters'");
         }

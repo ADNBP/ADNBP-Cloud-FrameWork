@@ -19,7 +19,7 @@ interface SocialNetworkInterface {
     function getPosts($userId, $maxResultsPerPage, $numberOfPages, $pageToken);
     function importMedia($parameters);
     function exportMedia($entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken);
-    function post(array $parameters);
+    function post($entity, $id, array $parameters);
     function getUserRelationship($authenticatedUserId, $userId);
     function modifyUserRelationship($authenticatedUserId, $userId, $action);
     function searchUsers($userId, $name, $maxTotalResults, $numberOfPages, $nextPageUrl);
