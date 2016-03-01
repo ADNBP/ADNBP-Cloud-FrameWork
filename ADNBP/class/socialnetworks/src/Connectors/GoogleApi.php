@@ -178,14 +178,12 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      * @throws ConnectorServiceException
      */
     public function refreshCredentials($credentials) {
-        if ($this->client->isAccessTokenExpired()) {
-            try {
-                $this->client->setClientId($this->clientId);
-                $this->client->setClientSecret($this->clientSecret);
-                $this->client->refreshToken($credentials["refresh_token"]);
-            } catch(\Exception $e) {
-                throw new AuthenticationException("Error refreshing token: " . $e->getMessage());
-            }
+        try {
+            $this->client->setClientId($this->clientId);
+            $this->client->setClientSecret($this->clientSecret);
+            $this->client->refreshToken($credentials["refresh_token"]);
+        } catch(\Exception $e) {
+            throw new AuthenticationException("Error refreshing token: " . $e->getMessage());
         }
 
         return json_decode($this->client->getAccessToken(), true);
