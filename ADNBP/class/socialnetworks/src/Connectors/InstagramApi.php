@@ -7,6 +7,7 @@ use CloudFramework\Service\SocialNetworks\Exceptions\ConnectorConfigException;
 use CloudFramework\Service\SocialNetworks\Exceptions\ConnectorServiceException;
 use CloudFramework\Service\SocialNetworks\Exceptions\MalformedUrlException;
 use CloudFramework\Service\SocialNetworks\Interfaces\SocialNetworkInterface;
+use CloudFramework\Service\SocialNetworks\SocialNetworks;
 
 /**
  * Class InstagramApi
@@ -67,7 +68,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         if ((null === $redirectUrl) || (empty($redirectUrl))) {
             throw new ConnectorConfigException("'redirectUrl' parameter is required");
         } else {
-            if (!$this->wellFormedUrl($redirectUrl)) {
+            if (!SocialNetworks::wellFormedUrl($redirectUrl)) {
                 throw new MalformedUrlException("'redirectUrl' is malformed");
             }
         }
@@ -81,7 +82,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         if ((null === $authUrl) || (empty($authUrl))) {
             throw new ConnectorConfigException("'authUrl' parameter is required");
         } else {
-            if (!$this->wellFormedUrl($authUrl)) {
+            if (!SocialNetworks::wellFormedUrl($authUrl)) {
                 throw new MalformedUrlException("'authUrl' is malformed");
             }
         }
@@ -107,7 +108,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         if ((null === $redirectUrl) || (empty($redirectUrl))) {
             throw new ConnectorConfigException("'redirectUrl' parameter is required");
         } else {
-            if (!$this->wellFormedUrl($redirectUrl)) {
+            if (!SocialNetworks::wellFormedUrl($redirectUrl)) {
                 throw new MalformedUrlException("'redirectUrl' is malformed");
             }
         }
@@ -202,9 +203,9 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         while ($pagination) {
             $data = $this->curlGet($nextPageUrl);
 
-            if (null === $data["data"]) {
+            if ((null === $data["data"]) && ($data["meta"]["code"] !== 200)) {
                 throw new ConnectorServiceException("Error getting followers:".
-                    $data["meta"]["code"], $data["meta"]["error_message"]);
+                    $data["meta"]["error_message"], $data["meta"]["code"]);
             }
 
             $followers[$count] = array();
@@ -260,9 +261,9 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         while ($pagination) {
             $data = $this->curlGet($nextPageUrl);
 
-            if (null === $data["data"]) {
+            if ((null === $data["data"]) && ($data["meta"]["code"] !== 200)) {
                 throw new ConnectorServiceException("Error getting subscribers: " .
-                    $data["meta"]["code"], $data["meta"]["error_message"]);
+                    $data["meta"]["error_message"], $data["meta"]["code"]);
             }
 
             $subscribers[$count] = array();
@@ -307,9 +308,9 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
 
         $data = $this->curlGet($url);
 
-        if (null === $data["data"]) {
+        if ((null === $data["data"]) && ($data["meta"]["code"] !== 200)) {
             throw new ConnectorServiceException("Error getting user profile: " .
-                                $data["meta"]["code"], $data["meta"]["error_message"]);
+                $data["meta"]["error_message"], $data["meta"]["code"]);
         }
 
         // Instagram API doesn't return the user's e-mail
@@ -318,7 +319,8 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
 
     /**
      * Service that query to Instagram Api service for media files
-     * @param string $userId
+     * @param string $entity "user"
+     * @param string $id    user id
      * @param integer $maxTotalResults.
      * @param integer $numberOfPages
      * @param string $nextPageUrl
@@ -326,13 +328,13 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function exportMedia($userId, $maxTotalResults, $numberOfPages, $nextPageUrl)
+    public function exportMedia($entity, $id, $maxTotalResults, $numberOfPages, $nextPageUrl)
     {
-        $this->checkUser($userId);
+        $this->checkUser($id);
         $this->checkPagination($numberOfPages, $maxTotalResults);
 
         if (!$nextPageUrl) {
-            $nextPageUrl = self::INSTAGRAM_API_USERS_URL . $userId .
+            $nextPageUrl = self::INSTAGRAM_API_USERS_URL . $id .
                         "/media/recent/?access_token=" . $this->accessToken .
                         "&count=".$maxTotalResults;
         }
@@ -344,9 +346,9 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         while ($pagination) {
             $data = $this->curlGet($nextPageUrl);
 
-            if (null === $data["data"]) {
+            if ((null === $data["data"]) && ($data["meta"]["code"] !== 200)) {
                 throw new ConnectorServiceException("Error exporting media: " .
-                                    $data["meta"]["code"], $data["meta"]["error_message"]);
+                    $data["meta"]["error_message"], $data["meta"]["code"]);
             }
 
             $files[$count] = array();
@@ -404,9 +406,9 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         while ($pagination) {
             $data = $this->curlGet($nextPageUrl);
 
-            if (null === $data["data"]) {
+            if ((null === $data["data"]) && ($data["meta"]["code"] !== 200)) {
                 throw new ConnectorServiceException("Error exporting media: " .
-                                            $data["meta"]["code"], $data["meta"]["error_message"]);
+                    $data["meta"]["error_message"], $data["meta"]["code"]);
             }
 
             $files[$count] = array();
@@ -434,7 +436,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         return json_encode($files);
     }
 
-    public function importMedia($userId, $mediaType, $value) {
+    public function importMedia($parameters) {
         return;
     }
 
@@ -469,9 +471,9 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
 
         $data = $this->curlPost($url, $fields);
 
-        if (null === $data["data"]) {
+        if ((null === $data["data"]) && ($data["meta"]["code"] !== 200)) {
             throw new ConnectorServiceException("Error making comments on an Instagram media: " . 
-                                            $data["meta"]["code"], $data["meta"]["error_message"]);
+                $data["meta"]["error_message"], $data["meta"]["code"]);
         }
 
         return json_encode($data);
@@ -493,9 +495,9 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
 
         $data = $this->curlGet($url);
 
-        if (null === $data["data"]) {
+        if ((null === $data["data"]) && ($data["meta"]["code"] !== 200)) {
             throw new ConnectorServiceException("Error getting relationship info: " .
-                $data["meta"]["code"], $data["meta"]["error_message"]);
+                $data["meta"]["error_message"], $data["meta"]["code"]);
         }
 
         return json_encode($data["data"]);
@@ -518,12 +520,12 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
 
         $data = $this->curlPost($url, $fields);
 
-        if (null === $data["data"]) {
+        if ((null === $data["data"]) && ($data["meta"]["code"] !== 200)) {
             throw new ConnectorServiceException("Error modifying relationship: " .
-                $data["meta"]["code"], $data["meta"]["error_message"]);
+                $data["meta"]["error_message"], $data["meta"]["code"]);
         }
 
-        return json_encode($data["data"]);
+        return $this->getUserRelationship($authenticatedUserId, $userId);
     }
 
     /**
@@ -556,9 +558,9 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         while ($pagination) {
             $data = $this->curlGet($nextPageUrl);
 
-            if (null === $data["data"]) {
+            if ((null === $data["data"]) && ($data["meta"]["code"] !== 200)) {
                 throw new ConnectorServiceException("Error searching users: " .
-                    $data["meta"]["code"], $data["meta"]["error_message"]);
+                    $data["meta"]["error_message"], $data["meta"]["code"]);
             }
 
             $users[$count] = array();
@@ -680,18 +682,5 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
             throw \Exception("Error calling service: ".curl_error($ch), curl_errno($ch));
         }
         return json_decode($data, true);
-    }
-
-    /**
-     * Private function to check url format
-     * @param $redirectUrl
-     * @return bool
-     */
-    private function wellFormedUrl($redirectUrl) {
-        if (!filter_var($redirectUrl, FILTER_VALIDATE_URL) === false) {
-            return true;
-        } else {
-            return false;
-        }
     }
 }
