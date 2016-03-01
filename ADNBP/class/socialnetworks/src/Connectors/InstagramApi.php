@@ -436,7 +436,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         return json_encode($files);
     }
 
-    public function importMedia($userId, $mediaType, $value, $title, $albumId) {
+    public function importMedia($parameters) {
         return;
     }
 

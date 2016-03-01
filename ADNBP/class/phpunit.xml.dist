@@ -7,7 +7,7 @@
          bootstrap="./autoload.php">
     <testsuites>
         <testsuite name="socialnetworks">
-            <directory>./socialnetworks/tests/</directory>
+            <directory>./socialnetworks/Tests/</directory>
         </testsuite>
     </testsuites>
 </phpunit>
