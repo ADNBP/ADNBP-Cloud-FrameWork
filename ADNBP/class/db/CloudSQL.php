@@ -151,18 +151,15 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                 $this->_dbsocket = $socket;
         	}
             
-
-
-
 			if(strlen($this->_dbserver) || strlen($this->_dbsocket)) {
 			    try {
-			    if(strlen($this->_dbsocket))
-                    $this->_db = new mysqli(null, $this->_dbuser, $this->_dbpassword, $this->_dbdatabase, 0,$this->_dbsocket);
-                else 
-                    $this->_db = new mysqli($this->_dbserver, $this->_dbuser, $this->_dbpassword, $this->_dbdatabase, $this->_dbport);
-				
-                    if($this->_db->connect_error)  $this->setError('Connect Error to: '.((strlen($this->_dbsocket))?$this->_dbsocket:$this->_dbserver).' (' . $this->_db->connect_errno . ') '. $mysqli->connect_error);
-                    else $this->_dblink = true;
+                    if(strlen($this->_dbsocket))
+                        $this->_db = new mysqli(null, $this->_dbuser, $this->_dbpassword, $this->_dbdatabase, 0,$this->_dbsocket);
+                    else
+                        $this->_db = new mysqli($this->_dbserver, $this->_dbuser, $this->_dbpassword, $this->_dbdatabase, $this->_dbport);
+
+                        if($this->_db->connect_error)  $this->setError('Connect Error to: '.((strlen($this->_dbsocket))?$this->_dbsocket:$this->_dbserver).' (' . $this->_db->connect_errno . ') '. $mysqli->connect_error);
+                        else $this->_dblink = true;
                     
                 } catch (Exception $e) {
                     $this->setError('Connect Error to: '.((strlen($this->_dbsocket))?$this->_dbsocket:$this->_dbserver).' (' . $this->_db->connect_errno . ') '. $mysqli->connect_error);

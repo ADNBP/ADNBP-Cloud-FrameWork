@@ -144,7 +144,6 @@ if (!defined("_ADNBP_CLASS_")) {
 
                     $_configs .= implode(' - ',$this->_configPaths).' - ';
             }
-
             // Deprecated
             if (is_file($this->_rootpath . "/adnbp_framework_config.php")) {
                 include_once($this->_rootpath . "/adnbp_framework_config.php");
@@ -294,16 +293,14 @@ if (!defined("_ADNBP_CLASS_")) {
 
                 // Convert into string if we received an array
                 if($_array) $data = json_encode($data);
-
                 // Tags Conversions
-                $data = str_replace('{rootPath}', $this->_rootpath, $data);
-                $data = str_replace('{appPath}', $this->_webapp, $data);
-                while(strpos($data,'{confVar:')!==false) {
-                    list($foo,$var) = explode("{confVar:",$data,2);
-                    list($var,$foo) = explode("}",$var,2);
-                    $data = str_replace('{confVar:'.$var.'}',$this->getConf(trim($var)),$data);
+                $data = str_replace('{{rootPath}}', $this->_rootpath, $data);
+                $data = str_replace('{{appPath}}', $this->_webapp, $data);
+                while(strpos($data,'{{confVar:')!==false) {
+                    list($foo,$var) = explode("{{confVar:",$data,2);
+                    list($var,$foo) = explode("}}",$var,2);
+                    $data = str_replace('{{confVar:'.$var.'}}',$this->getConf(trim($var)),$data);
                 }
-
                 // Convert into array if we received an array
                 if($_array) $data = json_decode($data,true);
                 return $data;
@@ -312,62 +309,135 @@ if (!defined("_ADNBP_CLASS_")) {
             // going through $data
             foreach ($data as $cond => $vars) {
                 if ($cond == '--') continue; // comment
-                list($tagcode,$tagvalue) = explode(":",$cond,2);
-                $include = false;
+                $tagcode = '';
+                if(strpos($cond,':')!== false) {
+                    list($tagcode, $tagvalue) = explode(":", $cond, 2);
+                    $include = false;
+                } else {
+                    $include = true;
+                    $vars = [$cond=>$vars];
+                }
 
                 // Substitute tags for strings
                 $vars = $convertTags($vars);
-
-                switch(trim(strtolower($tagcode))) {
-                    case "include":
-                        // Recursive Call
-                        $this->readJSONConfig($vars);
-                        break;
-                    case "webapp":
-                        $this->setWebApp($vars);
-                        break;
-                    case "redirect":
-                        if(is_array($vars)){
-                            foreach ($vars as $urlOrig=>$urlDest) {
-                                $this->urlRedirect($urlOrig,$urlDest);
-                            }
-                        }
-                        break;
-                    case "true":
-                        $include = true;
-                        break;
-                    case "auth":
-                    case "noauth":
-                        if(trim(strtolower($tagcode))=='auth')
-                            $include = $this->isAuth();
-                        else
-                            $include = !$this->isAuth();
-                        break;
-                    case "development":
-                        $include = $this->is("development");
-                        break;
-                    case "production":
-                        $include = $this->is("production");
-                        break;
-                    case "indomain":
-                    case "domain":
-                        $domains = explode(",",$tagvalue);
-                        foreach ($domains as $ind=>$inddomain ) {
-                            if(trim(strtolower($tagcode))=="domain") {
-                                if (strtolower($_SERVER['HTTP_HOST']) ==  strtolower(trim($inddomain)))
+                // If there is a condition tag
+                if(!$include) {
+                    switch (trim(strtolower($tagcode))) {
+                        case "include":
+                            // Recursive Call
+                            $this->readJSONConfig($vars);
+                            break;
+                        case "webapp":
+                            $this->setWebApp($vars);
+                            break;
+                        case "authvar":
+                            if(strpos($tagvalue,'=')!==false) {
+                                list($authvar, $authvalue) = explode("=", $tagvalue);
+                                if ($this->isAuth() && $this->getAuthUserData($authvar) == $authvalue)
                                     $include = true;
+                            }
+                            break;
+                        case "confvar":
+                            if(strpos($tagvalue,'=')!==false) {
+                                list($confvar, $confvalue) = explode("=", $tagvalue);
+                                if ($this->getConf($confvar) == $confvalue)
+                                    $include = true;
+                            }
+                            break;
+                        case "sessionvar":
+                            if(strpos($tagvalue,'=')!==false) {
+                                list($sessionvar, $sessionvalue) = explode("=", $tagvalue);
+                                if ($this->getSessionVar($sessionvar) == $sessionvalue)
+                                    $include = true;
+                            }
+                            break;
+                        case "servervar":
+                            if(strpos($tagvalue,'=')!==false) {
+                                list($servervar, $servervalue) = explode("=", $tagvalue);
+                                if ($_SERVER($servervar) == $servervalue)
+                                    $include = true;
+                            }
+                            break;
+                        case "redirect":
+                            // Array of redirections
+                            if (is_array($vars)) {
+                                foreach ($vars as $ind => $urls)
+                                    if (!is_array($urls)) {
+                                        $this->setError('Wrong redirect format. It has to be an array of redirect elements: [{prog:dest},{..}..]');
+                                    } else {
+                                        foreach ($urls as $urlOrig => $urlDest) {
+                                            if ($urlOrig == '*' || !strlen($urlOrig))
+                                                $this->urlRedirect($urlDest);
+                                            else
+                                                $this->urlRedirect($urlOrig, $urlDest);
+                                        }
+                                    }
+
                             } else {
-                                if (stripos($_SERVER['HTTP_HOST'], trim($inddomain)) !== false)
-                                    $include = true;
+                                $this->setError('Wrong redirect format. It has to be an array of redirect elements: [{prog:dest},{..}..]');
                             }
-                        }
+                            break;
+                        case "true":
+                            $include = true;
+                            break;
+                        case "auth":
+                        case "noauth":
+                            if (trim(strtolower($tagcode)) == 'auth')
+                                $include = $this->isAuth();
+                            else
+                                $include = !$this->isAuth();
+                            break;
+                        case "development":
+                            $include = $this->is("development");
+                            break;
+                        case "production":
+                            $include = $this->is("production");
+                            break;
+                        case "indomain":
+                        case "domain":
+                            $domains = explode(",", $tagvalue);
+                            foreach ($domains as $ind => $inddomain) if (strlen(trim($inddomain))) {
+                                if (trim(strtolower($tagcode)) == "domain") {
+                                    if (strtolower($_SERVER['HTTP_HOST']) == strtolower(trim($inddomain)))
+                                        $include = true;
+                                } else {
+                                    if (stripos($_SERVER['HTTP_HOST'], trim($inddomain)) !== false)
+                                        $include = true;
+                                }
+                            }
+                            break;
+                        case "inurl":
+                        case "notinurl":
+                            $urls = explode(",", $tagvalue);
 
-                    break;
-                    case "false":
-                        break;
-                    default:
-                        $this->setError('unknown tag:' .$tagcode);
-                        break;
+                            // If notinurl the condition is upsidedown
+                            if (trim(strtolower($tagcode)) == "notinurl") $include = true;
+                            foreach ($urls as $ind => $inurl) if (strlen(trim($inurl))) {
+                                if (trim(strtolower($tagcode)) == "inurl") {
+                                    if ((strpos($this->_url, trim($inurl)) !== false))
+                                        $include = true;
+                                } else {
+                                    if ((strpos($this->_url, trim($inurl)) !== false))
+                                        $include = false;
+                                }
+                            }
+                            break;
+
+                        case "menu":
+                            if (is_array($vars)) {
+                                foreach ($vars as $key => $value) {
+                                    $this->pushMenu($value);
+                                }
+                            } else {
+                                $this->addError("menu: tag does not contain an array");
+                            }
+                            break;
+                        case "false":
+                            break;
+                        default:
+                            $this->setError('unknown tag: |' . $tagcode . '|');
+                            break;
+                    }
                 }
                 // Include config vars.
                 if($include) {
@@ -375,7 +445,10 @@ if (!defined("_ADNBP_CLASS_")) {
                         foreach ($vars as $key => $value) {
                             if ($key == '--') continue; // comment
                             // Recursive call to analyze subelements
-                            if (strpos($key, ':')) $this->processConfigData([$key => $value]);
+                            if (strpos($key, ':')) {
+
+                                $this->processConfigData([$key => $value]);
+                            }
                             else {
                                 // Assign conf var values converting {} tags
                                 $this->setConf($key, $convertTags($value));
@@ -492,7 +565,6 @@ if (!defined("_ADNBP_CLASS_")) {
             // if it is a permilink
             if ($scriptname == "adnbppl.php" && !$_found) {
                 if (!strlen($this->getConf("template")) && !$this->getConf("notemplate")) {
-
                     if (is_file($this->_webapp . "/templates/" . $this->_basename) || is_file($this->_rootpath . "/ADNBP/templates/" . $this->_basename))
                         $this->setConf("template", $this->_basename);
                     elseif (is_file($this->_webapp . "/logic/" . $this->_basename) || is_file($this->_rootpath . "/ADNBP/logic/" . $this->_basename))
@@ -506,9 +578,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
 
             // Create the object to control Auth
-            __p('checkAuth', '', 'note');
             $this->checkAuth();
-            __p('checkAuth', '', 'endnote');
 
             //_printe($_found,$this->getConf('requireAuth'),$this->_url);
             // if requiredAuth and not Auth... Redirects
@@ -529,7 +599,12 @@ if (!defined("_ADNBP_CLASS_")) {
                 }
 
             } else {
-                if (strpos($this->getConf("logic"), 'gs://') === 0 || strpos($this->getConf("logic"), '/') === 0) $_file = $this->getConf("logic");
+                if(strpos($this->getConf("logic"),'{Bucket}')!==false) {
+                    $_file = str_replace('{Bucket}',$this->getConf('Bucket'),$this->getConf("logic"));
+                }
+                elseif (strpos($this->getConf("logic"), 'gs://') === 0 || strpos($this->getConf("logic"), '/') === 0) {
+                    $_file = $this->getConf("logic");
+                }
                 elseif (is_file($this->_webapp . "/logic/" . $this->getConf("logic"))) {
                     $_file = ($this->_webapp . "/logic/" . $this->getConf("logic"));
                 } else {
@@ -573,6 +648,7 @@ if (!defined("_ADNBP_CLASS_")) {
                 if (strlen($this->getConf("templateVarContent"))) {
                     $var = $this->getConf("templateVarContent");
                     // exist a var with the content of the template
+                    if(strtolower($var)!= 'this' && strtolower($var)!= '_server' && strtolower($var)!= 'adnbp')
                     echo $$var;
 
                     // Content of template is stored in a file
@@ -587,12 +663,19 @@ if (!defined("_ADNBP_CLASS_")) {
 
                         }
                     } else {
-                        if (strpos($this->getConf("template"), 'gs://') === 0 || strpos($this->getConf("template"), '/') === 0) $_file = $this->getConf("template");
+                        if(strpos($this->getConf("template"),'{Bucket}')!==false) {
+                            $_file = str_replace('{Bucket}',$this->getConf('Bucket'),$this->getConf("template"));
+                        }
+                        elseif(strpos($this->getConf("template"), 'gs://') === 0 || strpos($this->getConf("template"), '/') === 0) {
+                            $_file = $this->getConf("template");
+                        }
                         elseif (is_file($this->_webapp . "/templates/" . $this->getConf("template"))) {
                             $_file = ($this->_webapp . "/templates/" . $this->getConf("template"));
-                        } elseif (is_file($this->_rootpath . "/ADNBP/templates/" . $this->getConf("template"))) {
+                        }
+                        elseif (is_file($this->_rootpath . "/ADNBP/templates/" . $this->getConf("template"))) {
                             $_file = ($this->_rootpath . "/ADNBP/templates/" . $this->getConf("template"));
-                        } else
+                        }
+                        else
                             echo "No template found: " . $this->getConf("template");
                     }
                 }
@@ -1314,13 +1397,18 @@ if (!defined("_ADNBP_CLASS_")) {
 
         function checkAuth()
         {
-
             $_ret = $this->isAuth();
             if (strlen($this->getConf("activeAuth"))) {
-                if (is_file($this->_webapp . "/logic/CloudFrameWorkAuth.php"))
+                if (is_file($this->_webapp . "/logic/CloudFrameWorkAuth.php")) {
+                    __p('checkAuth', '/logic/CloudFrameWorkAuth.php', 'note');
                     include($this->_webapp . "/logic/CloudFrameWorkAuth.php");
+                    __p('checkAuth', '', 'endnote');
+                }
                 else {
+                    __p('checkAuth', '/ADNBP/logic/CloudFrameWorkAuth.php', 'note');
                     include($this->_rootpath . "/ADNBP/logic/CloudFrameWorkAuth.php");
+                    __p('checkAuth', '', 'endnote');
+
                 }
             }
         }
@@ -1751,10 +1839,10 @@ if (!defined("_ADNBP_CLASS_")) {
             $params['title'] = $title;
             if (!is_string($text)) $text = json_encode($text);
             $params['text'] = $text . ((strlen($text)) ? "\n\n" : '');
-            if ($this->error) $params['text'] .= "Errors: " . json_encode($this->errorMsg) . "\n\n";
-            if (count($this->_log)) $params['text'] .= "Errors: " . json_encode($this->errorMsg);
+            if ($this->error) $params['text'] .= "Errors: " . json_encode($this->errorMsg,JSON_PRETTY_PRINT) . "\n\n";
+            if (count($this->_log)) $params['text'] .= "Errors: " . json_encode($this->errorMsg,JSON_PRETTY_PRINT);
             $params['ip'] = $this->_ip;
-            $params['fingerprint'] = json_encode($this->getRequestFingerPrint());
+            $params['fingerprint'] = json_encode($this->getRequestFingerPrint(),JSON_PRETTY_PRINT);
 
             // Tell the service to send email of the report.
             if (strlen($email) && $this->validateField($email, 'email'))
