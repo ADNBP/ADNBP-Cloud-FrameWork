@@ -168,7 +168,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
                 if (is_file($this->_rootpath . "/local_config.json")) {
                     if($this->readJSONConfig($this->_rootpath . "/local_config.json"))
-                        $_configs .= '/local_config.json - ';
+                        $_configs .= implode(' - ',$this->_configPaths).' - ';
                 }
 
                 if (is_file($this->_rootpath . "/local_config.php")) {
