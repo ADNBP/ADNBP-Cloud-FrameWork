@@ -166,19 +166,16 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         $this->checkCredentialsParameters($credentials);
 
         try {
-            $this->getProfile(self::INSTAGRAM_SELF_USER);
+            $this->getProfile(SocialNetworks::ENTITY_USER, self::INSTAGRAM_SELF_USER);
         } catch(\Exception $e) {
             throw new ConnectorConfigException("Invalid credentials set'");
         }
     }
 
-    function revokeToken() {
-        return;
-    }
-
     /**
      * Service that query to Instagram Api for users the user is followed by
-     * @param string $userId
+     * @param string $entity "user"
+     * @param string $id    user id
      * @param integer $maxResultsPerPage.
      * @param integer $numberOfPages
      * @param string $nextPageUrl
@@ -186,13 +183,13 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    function getFollowers($userId, $maxResultsPerPage, $numberOfPages, $nextPageUrl) {
-        $this->checkUser($userId);
+    public function exportFollowers($entity, $id, $maxResultsPerPage, $numberOfPages, $nextPageUrl) {
+        $this->checkUser($id);
 
         $this->checkPagination($numberOfPages);
 
         if (!$nextPageUrl) {
-            $nextPageUrl = self::INSTAGRAM_API_USERS_URL . $userId .
+            $nextPageUrl = self::INSTAGRAM_API_USERS_URL . $id .
                 "/followed-by?access_token=" . $this->accessToken;
         }
 
@@ -231,13 +228,14 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         return json_encode($followers);
     }
 
-    function getFollowersInfo($userId, $postId) {
+    public function exportFollowersInfo($entity, $id, $postId) {
         return;
     }
 
     /**
      * Service that query to Instagram Api for users the user is following
-     * @param string $userId
+     * @param string $entity "user"
+     * @param string $id    user id
      * @param integer $maxResultsPerPage.
      * @param integer $numberOfPages
      * @param string $nextPageUrl
@@ -245,12 +243,12 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    function getSubscribers($userId, $maxResultsPerPage, $numberOfPages, $nextPageUrl) {
-        $this->checkUser($userId);
+    public function exportSubscribers($entity, $id, $maxResultsPerPage, $numberOfPages, $nextPageUrl) {
+        $this->checkUser($id);
         $this->checkPagination($numberOfPages);
 
         if (!$nextPageUrl) {
-            $nextPageUrl = self::INSTAGRAM_API_USERS_URL . $userId .
+            $nextPageUrl = self::INSTAGRAM_API_USERS_URL . $id .
                 "/follows?access_token=" . $this->accessToken;
         }
 
@@ -289,22 +287,23 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         return json_encode($subscribers);
     }
 
-    function getPosts($userId, $maxResultsPerPage, $numberOfPages, $pageToken) {
+    public function exportPosts($entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken) {
         return;
     }
 
     /**
      * Service that query to Instagram Api to get user profile
-     * @param string $userId
+     * @param string $entity "user"
+     * @param string $id    user id
      * @return JSON
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function getProfile($userId)
+    public function getProfile($entity, $id)
     {
-        $this->checkUser($userId);
+        $this->checkUser($id);
 
-        $url = self::INSTAGRAM_API_USERS_URL . $userId . "/?access_token=" . $this->accessToken;
+        $url = self::INSTAGRAM_API_USERS_URL . $id . "/?access_token=" . $this->accessToken;
 
         $data = $this->curlGet($url);
 
@@ -378,7 +377,8 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
 
     /**
      * Service that get the list of recent media liked by the owner
-     * @param $userId
+     * @param string $entity "user"
+     * @param string $id    user id
      * @param $maxTotalResults
      * @param $numberOfPages
      * @param $nextPageUrl
@@ -386,15 +386,15 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function exportMediaRecentlyLiked($userId, $maxTotalResults, $numberOfPages, $nextPageUrl)
+    public function exportMediaRecentlyLiked($entity, $id, $maxTotalResults, $numberOfPages, $nextPageUrl)
     {
-        $this->checkUser($userId);
+        $this->checkUser($id);
         $this->checkPagination($numberOfPages, $maxTotalResults);
 
-        $userId = self::INSTAGRAM_SELF_USER;
+        $id = self::INSTAGRAM_SELF_USER;
 
         if (!$nextPageUrl) {
-            $nextPageUrl = self::INSTAGRAM_API_USERS_URL . $userId .
+            $nextPageUrl = self::INSTAGRAM_API_USERS_URL . $id .
                 "/media/liked/?access_token=" . $this->accessToken .
                 "&count=".$maxTotalResults;
         }
@@ -436,7 +436,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         return json_encode($files);
     }
 
-    public function importMedia($parameters) {
+    public function importMedia($entity, $id, $parameters) {
         return;
     }
 
@@ -481,17 +481,18 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
 
     /**
      * Service that query to Instagram Api to get user relationship information
-     * @param string $authenticatedUserId
+     * @param string $entity "user"
+     * @param string $id    user id
      * @param string $userId
      * @return JSON
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function getUserRelationship($authenticatedUserId, $userId)
+    public function getUserRelationship($entity, $id, $userId)
     {
         $this->checkUser($userId);
 
-        $url = self::INSTAGRAM_API_USERS_URL . $userId . "/relationship?access_token=" . $this->accessToken;
+        $url = self::INSTAGRAM_API_USERS_URL . $id . "/relationship?access_token=" . $this->accessToken;
 
         $data = $this->curlGet($url);
 
@@ -505,15 +506,16 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
 
     /**
      * Service that modify the relationship between the authenticated user and the target user.
-     * @param $authenticatedUserId
+     * @param string $entity "user"
+     * @param string $id    user id
      * @param $userId
      * @param $action
      * @return string
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function modifyUserRelationship($authenticatedUserId, $userId, $action) {
-        $this->checkUser($userId);
+    public function modifyUserRelationship($entity, $id, $userId, $action) {
+        $this->checkUser($id);
 
         $fields = "action=".$action;
         $url = self::INSTAGRAM_API_USERS_URL . $userId . "/relationship?access_token=" . $this->accessToken;
@@ -525,12 +527,13 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
                 $data["meta"]["error_message"], $data["meta"]["code"]);
         }
 
-        return $this->getUserRelationship($authenticatedUserId, $userId);
+        return json_encode($data["data"]);
     }
 
     /**
      * Service that search for users
-     * @param $userId
+     * @param string $entity "user"
+     * @param string $id    user id
      * @param $name
      * @param $maxTotalResults
      * @param $numberOfPages
@@ -539,9 +542,9 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function searchUsers($userId, $name, $maxTotalResults, $numberOfPages, $nextPageUrl)
+    public function searchUsers($entity, $id, $name, $maxTotalResults, $numberOfPages, $nextPageUrl)
     {
-        $this->checkUser($userId);
+        $this->checkUser($id);
         $this->checkName($name);
         $this->checkPagination($numberOfPages, $maxTotalResults);
 
