@@ -915,6 +915,9 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                     if($info=='') $info=12;
                     if($info!='') $this->data[] = array('type'=>$type,'data'=> $info);
                     break;
+                case 'pre':
+                    $this->data[] = array('type'=>$type,'data'=> $info);
+                    break;
                 case 'markdown':
                     $this->data[] = array('type'=>$type,'data'=> $info);
                     break;
@@ -973,6 +976,8 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                     $simple = true;
                     include __DIR__.'/templates/tree.php';
                     $_tables = true;
+                }elseif($type=='form') {
+                    include __DIR__.'/templates/form.php';
                 }
 				elseif($type=='barcode' ) {
 					
@@ -1022,7 +1027,9 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                     echo '    <div class="col-md-'.$data.'">';
                     $cols="\n    </div> <!-- col -->";
                     $lastColSize = $data;
-                } 
+                } elseif($type=='pre'){
+                    echo "<pre>{$data}</pre>";
+                }
             }
             if($container) include __DIR__.'/templates/container.php';
             echo $list.$cols.$rows;
@@ -1031,7 +1038,24 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
             return ob_get_clean();
 
         }
+        function formFieldHtml($data) {
+            $ret = '';
+            $extra='';
+            switch(strtolower($data['type'])) {
+                case 'text':
+                    $data['value'] = htmlentities($data['value']);
+                    $ret = "<input type='text' id='{$data['id']}' placeholder='{$data['placeholder']}' value='{$data['value']}'>";
+                    break;
+                case 'imageurl':
+                    if(isset($data['width'])) $extra.= " width='{$data['width']}'";
+                    if(isset($data['height'])) $extra.= " width='{$data['height']}'";
+                    $ret = "<img id='{$data['id']}' src='{$data['value']}' {$extra}>";
 
+                    break;
+
+            }
+            return $ret;
+        }
         /**
          * @param $errorMsg error message to set.
          */
