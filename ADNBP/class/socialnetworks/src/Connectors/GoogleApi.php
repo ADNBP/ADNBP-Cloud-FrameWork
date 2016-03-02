@@ -432,7 +432,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
                 $pageToken = $filesList->getNextPageToken();
 
                 $items = $filesList->getItems();
-                if (count($items) == 0) {
+                if ((count($items) == 0) && (null !== $pageToken)) {
                     continue;
                 }
 
