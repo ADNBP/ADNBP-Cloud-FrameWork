@@ -829,7 +829,7 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
      */
     private function checkCredentialsParameters(array $credentials) {
         if ((null === $credentials) || (!is_array($credentials)) || (count($credentials) == 0)) {
-            throw new ConnectorConfigException("Invalid credentials set'");
+            throw new ConnectorConfigException("Invalid credentials set");
         }
 
         if ((!isset($credentials["access_token"])) || (null === $credentials["access_token"]) || ("" === $credentials["access_token"])) {

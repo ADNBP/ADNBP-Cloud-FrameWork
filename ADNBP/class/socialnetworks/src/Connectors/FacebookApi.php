@@ -125,7 +125,7 @@ class FacebookApi extends Singleton implements SocialNetworkInterface
         try {
             return $this->getProfile(SocialNetworks::ENTITY_USER, self::FACEBOOK_SELF_USER);
         } catch(\Exception $e) {
-            throw new ConnectorConfigException("Invalid credentials set'");
+            throw new ConnectorConfigException("Invalid credentials set");
         }
     }
 

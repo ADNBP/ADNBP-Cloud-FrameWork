@@ -9,19 +9,20 @@ use CloudFramework\Service\SocialNetworks\Exceptions\MalformedUrlException;
 use CloudFramework\Service\SocialNetworks\Interfaces\SocialNetworkInterface;
 use CloudFramework\Service\SocialNetworks\SocialNetworks;
 
+use DirkGroenen\Pinterest\Pinterest;
+
 /**
- * Class InstagramApi
+ * Class PinterestApi
  * @package CloudFramework\Service\SocialNetworks\Connectors
  * @author Salvador Castro <sc@bloombees.com>
  */
-class InstagramApi extends Singleton implements SocialNetworkInterface {
+class PinterestApi extends Singleton implements SocialNetworkInterface {
 
-    const ID = 'instagram';
-    const INSTAGRAM_OAUTH_URL = "https://api.instagram.com/oauth/authorize/";
-    const INSTAGRAM_OAUTH_ACCESS_TOKEN_URL = "https://api.instagram.com/oauth/access_token";
-    const INSTAGRAM_API_USERS_URL = "https://api.instagram.com/v1/users/";
-    const INSTAGRAM_API_MEDIA_URL = "https://api.instagram.com/v1/media/";
-    const INSTAGRAM_SELF_USER = "self";
+    const ID = 'pinterest';
+    const PINTEREST_SELF_USER = "me";
+
+    // Pinterest client object
+    private $client;
 
     // API keys
     private $clientId;
@@ -32,7 +33,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
     private $accessToken;
 
     /**
-     * Set Instagram Api keys
+     * Set Pinterest Api keys
      * @param $clientId
      * @param $clientSecret
      * @param $clientScope
@@ -54,10 +55,12 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         $this->clientId = $clientId;
         $this->clientSecret = $clientSecret;
         $this->clientScope = $clientScope;
+
+        $this->client = new Pinterest($this->clientId, $this->clientSecret);
     }
 
     /**
-     * Compose Instagram Api credentials array from session data
+     * Compose Pinterest Api credentials array from session data
      * @param string $redirectUrl
      * @throws ConnectorConfigException
      * @throws MalformedUrlException
@@ -73,19 +76,8 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
             }
         }
 
-        $scopes = implode("+", $this->clientScope);
-        $authUrl = self::INSTAGRAM_OAUTH_URL.
-            "?client_id=".$this->clientId.
-            "&redirect_uri=".$redirectUrl.
-            "&response_type=code".
-            "&scope=".$scopes;
-        if ((null === $authUrl) || (empty($authUrl))) {
-            throw new ConnectorConfigException("'authUrl' parameter is required");
-        } else {
-            if (!SocialNetworks::wellFormedUrl($authUrl)) {
-                throw new MalformedUrlException("'authUrl' is malformed");
-            }
-        }
+        $authUrl = $this->client->auth->getLoginUrl($redirectUrl, $this->clientScope);
+
         // Authentication request
         return $authUrl;
     }
@@ -113,39 +105,11 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
             }
         }
 
-        $fields = "client_id=".$this->clientId.
-            "&client_secret=".$this->clientSecret.
-            "&grant_type=authorization_code".
-            "&code=".$code.
-            "&redirect_uri=".$redirectUrl;
+        $token = $this->client->auth->getOAuthToken($code);
 
-        $instagramCredentials = $this->curlPost(self::INSTAGRAM_OAUTH_ACCESS_TOKEN_URL, $fields);
+        $pinterestCredentials = array("access_token" => $token->access_token);
 
-        /**
-         * Returned data format instance
-         *  {
-        "access_token": "fb2e77d.47a0479900504cb3ab4a1f626d174d2d",
-        "user": {
-        "id": "1574083",
-        "username": "snoopdogg",
-        "full_name": "Snoop Dogg",
-        "profile_picture": "...",
-        "bio": "...",
-        "website": "..."
-        }
-        }
-         **/
-
-        if (!isset($instagramCredentials["access_token"])) {
-            throw new AuthenticationException("Error fetching OAuth2 access token, client is invalid");
-        } else if ((!isset($instagramCredentials["user"])) || (!isset($instagramCredentials["user"]["id"])) ||
-            (!isset($instagramCredentials["user"]["full_name"])) ||
-            (!isset($instagramCredentials["user"]["profile_picture"]))) {
-            throw new ConnectorServiceException("Error fetching user profile info");
-        }
-
-        // Instagram doesn't return the user's e-mail
-        return $instagramCredentials;
+        return $pinterestCredentials;
     }
 
     /**
@@ -159,17 +123,40 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
     /**
      * Service that check if credentials are valid
      * @param $credentials
-     * @return null
+     * @return mixed
      * @throws ConnectorConfigException
      */
     public function checkCredentials($credentials) {
         $this->checkCredentialsParameters($credentials);
 
         try {
-            $this->getProfile(SocialNetworks::ENTITY_USER, self::INSTAGRAM_SELF_USER);
+            return $this->getProfile(SocialNetworks::ENTITY_USER, self::PINTEREST_SELF_USER);
         } catch(\Exception $e) {
-            throw new ConnectorConfigException("Invalid credentials set'");
+            throw new ConnectorConfigException("Invalid credentials set");
         }
+    }
+
+    /**
+     * Service that query to Pinterest Api to get user profile
+     * @param string $entity "user"
+     * @param string $id    user id
+     * @return JSON
+     * @throws ConnectorConfigException
+     * @throws ConnectorServiceException
+     */
+    public function getProfile($entity, $id)
+    {
+        $this->checkUser($id);
+
+        try {
+            $this->client->auth->setOAuthToken($this->accessToken);
+            $data = $this->client->users->me();
+        } catch(\Exception $e) {
+            throw new ConnectorConfigException("Invalid credentials set");
+        }
+
+        // Instagram API doesn't return the user's e-mail
+        return json_encode($data);
     }
 
     /**
@@ -289,31 +276,6 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
 
     public function exportPosts($entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken) {
         return;
-    }
-
-    /**
-     * Service that query to Instagram Api to get user profile
-     * @param string $entity "user"
-     * @param string $id    user id
-     * @return JSON
-     * @throws ConnectorConfigException
-     * @throws ConnectorServiceException
-     */
-    public function getProfile($entity, $id)
-    {
-        $this->checkUser($id);
-
-        $url = self::INSTAGRAM_API_USERS_URL . $id . "/?access_token=" . $this->accessToken;
-
-        $data = $this->curlGet($url);
-
-        if ((null === $data["data"]) && ($data["meta"]["code"] !== 200)) {
-            throw new ConnectorServiceException("Error getting user profile: " .
-                $data["meta"]["error_message"], $data["meta"]["code"]);
-        }
-
-        // Instagram API doesn't return the user's e-mail
-        return json_encode($data["data"]);
     }
 
     /**
@@ -596,7 +558,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      */
     private function checkCredentialsParameters(array $credentials) {
         if ((null === $credentials) || (!is_array($credentials)) || (count($credentials) == 0)) {
-            throw new ConnectorConfigException("Invalid credentials set");
+            throw new ConnectorConfigException("Invalid credentials set'");
         }
 
         if ((!isset($credentials["access_token"])) || (null === $credentials["access_token"]) || ("" === $credentials["access_token"])) {
