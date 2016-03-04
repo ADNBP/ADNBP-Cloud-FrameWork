@@ -140,7 +140,7 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
      * Service that query to Pinterest Api to get user profile
      * @param string $entity "user"
      * @param string $id    user id
-     * @return JSON
+     * @return string
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
@@ -160,13 +160,199 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
     }
 
     /**
+     * Service that search for an user
+     * @param string $entity "user"
+     * @param string $id    user id
+     * @param $name
+     * @return string
+     * @throws ConnectorConfigException
+     * @throws ConnectorServiceException
+     */
+    public function searchUsers($entity, $id, $username_or_id, $maxTotalResults = null, $numberOfPages = null,
+                                $nextPageUrl = null)
+    {
+        $this->checkUser($id);
+        $this->checkName($username_or_id);
+
+        try {
+            $this->client->auth->setOAuthToken($this->accessToken);
+            $data = $this->client->users->find($username_or_id);
+        } catch (Exception $e) {
+            throw new ConnectorServiceException("Error searching for an user: " . $e->getMessage(), $e->getCode());
+            $pageToken = null;
+        }
+
+        return json_encode($data);
+    }
+
+    /**
+     * Service that query to Pinterest Api for pins of the user
+     * @param string $entity "user"
+     * @param string $id    user id
+     * @param string $query if not null, search this token in the description of the authenticated user's pins
+     * @param integer $maxResultsPerPage.
+     * @param integer $numberOfPages
+     * @param string $nextPageUrl
+     * @return string
+     * @throws ConnectorConfigException
+     * @throws ConnectorServiceException
+     */
+    public function exportPins($entity, $id, $query = null, $maxResultsPerPage, $numberOfPages, $pageToken) {
+        $this->checkUser($id);
+        $this->checkPagination($maxResultsPerPage, $numberOfPages);
+        $this->client->auth->setOAuthToken($this->accessToken);
+
+        $pins = array();
+        $count = 0;
+
+        do {
+            try {
+                $parameters = array();
+                $parameters["limit"] = $maxResultsPerPage;
+
+                if ($pageToken) {
+                    $parameters["cursor"] = urldecode($pageToken);
+                }
+
+                if (null == $query) {
+                    $pinsList = $this->client->users->getMePins($parameters);
+                } else {
+                    $pinsList = $this->client->users->searchMePins($query, $parameters);
+                }
+
+                // The strange pagination behaviour in Pinterest: although there aren't more elements / more pages,
+                // current list object returns cursor/pagetoken to go to the next page, what is obvously empty, so it
+                // should be checked that pinterest api is returning an empty list
+                if (count($pinsList->all()) == 0) {
+                    $pageToken = null;
+                    break;
+                }
+
+                $pins[$count] = array();
+                foreach($pinsList->all() as $pin) {
+                    $pins[$count][] = $pin;
+                }
+                $count++;
+
+                $pageToken = $pinsList->pagination["cursor"];
+
+                // If number of pages is zero, then all elements are returned
+                if (($numberOfPages > 0) && ($count == $numberOfPages)) {
+                    // Make a last call to check if next page is empty
+                    $parameters["cursor"] = urldecode($pageToken);
+                    if (null == $query) {
+                        $pinsList = $this->client->users->getMePins($parameters);
+                    } else {
+                        $pinsList = $this->client->users->searchMePins($query, $parameters);
+                    }
+
+                    // The strange pagination behaviour in Pinterest: although there aren't more elements / more pages,
+                    // current list object returns cursor/pagetoken to go to the next page, what is obvously empty, so it
+                    // should be checked that pinterest api is returning an empty list
+                    if (count($pinsList->all()) == 0) {
+                        $pageToken = null;
+                    }
+                    break;
+                }
+            } catch (Exception $e) {
+                $pageToken = null;
+                throw new ConnectorServiceException("Error exporting pins: " . $e->getMessage(), $e->getCode());
+            }
+        } while ($pinsList->hasNextPage());
+
+        $pins["pageToken"] = $pageToken;
+
+        return json_encode($pins);
+    }
+
+    /**
+     * Service that query to Pinterest Api for boards of the user
+     * @param string $entity "user"
+     * @param string $id    user id
+     * @param string $query if not null, search this token in the description of the authenticated user's pins
+     * @param integer $maxResultsPerPage.
+     * @param integer $numberOfPages
+     * @param string $nextPageUrl
+     * @return string
+     * @throws ConnectorConfigException
+     * @throws ConnectorServiceException
+     */
+    public function exportBoards($entity, $id, $query = null, $maxResultsPerPage, $numberOfPages, $pageToken) {
+        $this->checkUser($id);
+        $this->checkPagination($maxResultsPerPage, $numberOfPages);
+        $this->client->auth->setOAuthToken($this->accessToken);
+
+        $boards = array();
+        $count = 0;
+
+        do {
+            try {
+                $parameters = array();
+                $parameters["limit"] = $maxResultsPerPage;
+
+                if ($pageToken) {
+                    $parameters["cursor"] = urldecode($pageToken);
+                }
+
+                if (null == $query) {
+                    $boardsList = $this->client->users->getMeBoards($parameters);
+                } else {
+                    $boardsList = $this->client->users->searchMeBoards($query, $parameters);
+                }
+
+                // The strange pagination behaviour in Pinterest: although there aren't more elements / more pages,
+                // current list object returns cursor/pagetoken to go to the next page, what is obvously empty, so it
+                // should be checked that pinterest api is returning an empty list
+                if (count($boardsList->all()) == 0) {
+                    $pageToken = null;
+                    break;
+                }
+
+                $boards[$count] = array();
+                foreach($boardsList->all() as $pin) {
+                    $boards[$count][] = $pin;
+                }
+                $count++;
+
+                $pageToken = $boardsList->pagination["cursor"];
+
+                // If number of pages is zero, then all elements are returned
+                if (($numberOfPages > 0) && ($count == $numberOfPages)) {
+                    // Make a last call to check if next page is empty
+                    $parameters["cursor"] = urldecode($pageToken);
+                    if (null == $query) {
+                        $boardsList = $this->client->users->getMeBoards($parameters);
+                    } else {
+                        $boardsList = $this->client->users->searchMeBoards($query, $parameters);
+                    }
+
+                    // The strange pagination behaviour in Pinterest: although there aren't more elements / more pages,
+                    // current list object returns cursor/pagetoken to go to the next page, what is obvously empty, so it
+                    // should be checked that pinterest api is returning an empty list
+                    if (count($boardsList->all()) == 0) {
+                        $pageToken = null;
+                    }
+                    break;
+                }
+            } catch (Exception $e) {
+                $pageToken = null;
+                throw new ConnectorServiceException("Error exporting boards: " . $e->getMessage(), $e->getCode());
+            }
+        } while ($boardsList->hasNextPage());
+
+        $boards["pageToken"] = $pageToken;
+
+        return json_encode($boards);
+    }
+
+    /**
      * Service that query to Instagram Api for users the user is followed by
      * @param string $entity "user"
      * @param string $id    user id
      * @param integer $maxResultsPerPage.
      * @param integer $numberOfPages
      * @param string $nextPageUrl
-     * @return JSON
+     * @return string
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
@@ -226,7 +412,7 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
      * @param integer $maxResultsPerPage.
      * @param integer $numberOfPages
      * @param string $nextPageUrl
-     * @return JSON
+     * @return string
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
@@ -285,7 +471,7 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
      * @param integer $maxTotalResults.
      * @param integer $numberOfPages
      * @param string $nextPageUrl
-     * @return JSON
+     * @return string
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
@@ -407,7 +593,7 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
      * @param array $parameters
      *      "content" => Text of the comment
      *      "media_id" => Instagram media's ID
-     * @return JSON
+     * @return string
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
@@ -446,7 +632,7 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
      * @param string $entity "user"
      * @param string $id    user id
      * @param string $userId
-     * @return JSON
+     * @return string
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
@@ -493,65 +679,6 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
     }
 
     /**
-     * Service that search for users
-     * @param string $entity "user"
-     * @param string $id    user id
-     * @param $name
-     * @param $maxTotalResults
-     * @param $numberOfPages
-     * @param $nextPageUrl
-     * @return string
-     * @throws ConnectorConfigException
-     * @throws ConnectorServiceException
-     */
-    public function searchUsers($entity, $id, $name, $maxTotalResults, $numberOfPages, $nextPageUrl)
-    {
-        $this->checkUser($id);
-        $this->checkName($name);
-        $this->checkPagination($numberOfPages, $maxTotalResults);
-
-        if (!$nextPageUrl) {
-            $nextPageUrl = self::INSTAGRAM_API_USERS_URL .
-                "search?q=".$name."&access_token=" . $this->accessToken .
-                "&count=".$maxTotalResults;
-        }
-
-        $pagination = true;
-        $users = array();
-        $count = 0;
-
-        while ($pagination) {
-            $data = $this->curlGet($nextPageUrl);
-
-            if ((null === $data["data"]) && ($data["meta"]["code"] !== 200)) {
-                throw new ConnectorServiceException("Error searching users: " .
-                    $data["meta"]["error_message"], $data["meta"]["code"]);
-            }
-
-            $users[$count] = array();
-
-            foreach ($data["data"] as $key => $user) {
-                $users[$count][] = $user;
-            }
-
-            // If number of pages is zero, then all elements are returned
-            if ((($numberOfPages > 0) && ($count == $numberOfPages)) || (!isset($data->pagination->next_url))) {
-                $pagination = false;
-                if (!isset($data->pagination->next_url)) {
-                    $nextPageUrl = null;
-                }
-            } else {
-                $nextPageUrl = $data->pagination->next_url;
-                $count++;
-            }
-        }
-
-        $users["nextPageUrl"] = $nextPageUrl;
-
-        return json_encode($users);
-    }
-
-    /**
      * Method that check credentials are present and valid
      * @param array $credentials
      * @throws ConnectorConfigException
@@ -579,18 +706,18 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
 
     /**
      * Method that check pagination parameters are ok
-     * @param integer $maxTotalResults
-     * @param integer $numberOfPages
+     * @param $maxResultsPerPage
+     * @param $numberOfPages
      * @throws ConnectorConfigException
      */
-    private function checkPagination($numberOfPages, $maxTotalResults = 0) {
-        if (null === $maxTotalResults) {
-            throw new ConnectorConfigException("'maxTotalResults' parameter is required");
-        } else if (!is_numeric($maxTotalResults)) {
-            throw new ConnectorConfigException("'maxTotalResults' parameter is not numeric");
+    private function checkPagination($maxResultsPerPage, $numberOfPages) {
+        if (null === $maxResultsPerPage) {
+            throw new ConnectorConfigException("'maxResultsPerPage' parameter is required");
+        } else if (!is_numeric($maxResultsPerPage)) {
+            throw new ConnectorConfigException("'maxResultsPerPage' parameter is not numeric");
         }
 
-        if (null === $numberOfPages) {
+        if (null === $maxResultsPerPage) {
             throw new ConnectorConfigException("'numberOfPages' parameter is required");
         } else if (!is_numeric($numberOfPages)) {
             throw new ConnectorConfigException("'numberOfPages' parameter is not numeric");

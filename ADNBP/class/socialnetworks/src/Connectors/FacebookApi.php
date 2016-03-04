@@ -241,7 +241,7 @@ class FacebookApi extends Singleton implements SocialNetworkInterface
      * @param string $mediaType "url"|"path"
      * @param string $value url or path
      * @param string $title message for the media
-     * @return JSON
+     * @return string
      * @throws AuthenticationException
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
@@ -330,7 +330,7 @@ class FacebookApi extends Singleton implements SocialNetworkInterface
      * @param integer $maxResultsPerPage maximum elements per page
      * @param integer $numberOfPages number of pages
      * @param string $pageToken Indicates a specific page
-     * @return JSON
+     * @return string
      * @throws AuthenticationException
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException

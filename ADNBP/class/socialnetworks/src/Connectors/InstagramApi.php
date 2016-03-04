@@ -179,7 +179,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @param integer $maxResultsPerPage.
      * @param integer $numberOfPages
      * @param string $nextPageUrl
-     * @return JSON
+     * @return string
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
@@ -239,7 +239,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @param integer $maxResultsPerPage.
      * @param integer $numberOfPages
      * @param string $nextPageUrl
-     * @return JSON
+     * @return string
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
@@ -295,7 +295,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * Service that query to Instagram Api to get user profile
      * @param string $entity "user"
      * @param string $id    user id
-     * @return JSON
+     * @return string
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
@@ -323,7 +323,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @param integer $maxTotalResults.
      * @param integer $numberOfPages
      * @param string $nextPageUrl
-     * @return JSON
+     * @return string
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
@@ -445,7 +445,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @param array $parameters
      *      "content" => Text of the comment
      *      "media_id" => Instagram media's ID
-     * @return JSON
+     * @return string
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
@@ -484,7 +484,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
      * @param string $entity "user"
      * @param string $id    user id
      * @param string $userId
-     * @return JSON
+     * @return string
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
@@ -492,7 +492,7 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
     {
         $this->checkUser($userId);
 
-        $url = self::INSTAGRAM_API_USERS_URL . $id . "/relationship?access_token=" . $this->accessToken;
+        $url = self::INSTAGRAM_API_USERS_URL . $userId . "/relationship?access_token=" . $this->accessToken;
 
         $data = $this->curlGet($url);
 

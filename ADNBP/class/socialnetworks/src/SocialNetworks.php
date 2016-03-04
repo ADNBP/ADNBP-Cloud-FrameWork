@@ -471,6 +471,60 @@ class SocialNetworks extends Singleton
         return $connector->getPage($entity, $id);
     }
 
+    /******************************************************************************************************
+     **                                         PINTEREST END POINTS                                      **
+     ******************************************************************************************************/
+
+    /**
+     * Service that export / search the user's pins in a social network
+     * @param $social
+     * @param string $entity "user"|"page"
+     * @param string $id    user or page id
+     * @param $query
+     * @param $maxResultsPerPage
+     * @param $numberOfPages
+     * @param $pageToken
+     * @return mixed
+     * @throws \Exception
+     */
+    public function exportPins($social, $entity, $id, $query, $maxResultsPerPage, $numberOfPages, $pageToken) {
+        $connector = $this->getSocialApi($social);
+        return $connector->exportPins($entity, $id, $query, $maxResultsPerPage, $numberOfPages, $pageToken);
+    }
+
+    /**
+     * Service that export / search the pins user has liked in a social network
+     * @param $social
+     * @param string $entity "user"|"page"
+     * @param string $id    user or page id
+     * @param $query
+     * @param $maxResultsPerPage
+     * @param $numberOfPages
+     * @param $pageToken
+     * @return mixed
+     * @throws \Exception
+     */
+    public function exportPinsLiked($social, $entity, $id, $query, $maxResultsPerPage, $numberOfPages, $pageToken) {
+        $connector = $this->getSocialApi($social);
+        return $connector->exportPinsLiked($entity, $id, $query, $maxResultsPerPage, $numberOfPages, $pageToken);
+    }
+
+    /**
+     * Service that export / search the user's boards in a social network
+     * @param $social
+     * @param string $entity "user"|"page"
+     * @param string $id    user or page id
+     * @param $query
+     * @param $maxResultsPerPage
+     * @param $numberOfPages
+     * @param $pageToken
+     * @return mixed
+     * @throws \Exception
+     */
+    public function exportBoards($social, $entity, $id, $query, $maxResultsPerPage, $numberOfPages, $pageToken) {
+        $connector = $this->getSocialApi($social);
+        return $connector->exportBoards($entity, $id, $query, $maxResultsPerPage, $numberOfPages, $pageToken);
+    }
 
     /******************************************************************************************************
      **                                         GENERAL UTILITIES                                        **
