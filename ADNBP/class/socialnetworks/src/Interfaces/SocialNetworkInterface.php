@@ -11,16 +11,10 @@ interface SocialNetworkInterface {
     function requestAuthorization($redirectUrl);
     function authorize($code, $redirectUrl);
     function setAccessToken(array $credentials);
-    function revokeToken();
-    function getProfile($userId);
-    function getFollowers($userId, $maxResultsPerPage, $numberOfPages, $pageToken);
-    function getFollowersInfo($userId, $postId);
-    function getSubscribers($userId, $maxResultsPerPage, $numberOfPages, $nextPageUrl);
-    function getPosts($userId, $maxResultsPerPage, $numberOfPages, $pageToken);
-    function importMedia($parameters);
+    function getProfile($entity, $id);
+    function exportFollowers($entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken);
+    function exportPosts($entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken);
     function exportMedia($entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken);
-    function post(array $parameters);
-    function getUserRelationship($authenticatedUserId, $userId);
-    function modifyUserRelationship($authenticatedUserId, $userId, $action);
-    function searchUsers($userId, $name, $maxTotalResults, $numberOfPages, $nextPageUrl);
+    function importMedia($entity, $id, $parameters);
+    function post($entity, $id, array $parameters);
 }
