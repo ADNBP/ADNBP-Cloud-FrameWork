@@ -432,7 +432,7 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
     }
 
     /**
-     * Service that query to Pinterest Api to get board settings
+     * Service that query to Pinterest Api to get settings of a board
      * @param $entity   "board"
      * @param $username
      * @param $boardname
@@ -485,7 +485,7 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
     }
 
     /**
-     * Service that edit an existing board for the user in Pinterest
+     * Service that edit an existing board in Pinterest
      * @param $entity   "board"
      * @param $username
      * @param $boardname
@@ -519,276 +519,97 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
     }
 
     /**
-     * Service that query to Instagram Api for users the user is following
-     * @param string $entity "user"
-     * @param string $id    user id
-     * @param integer $maxResultsPerPage.
-     * @param integer $numberOfPages
-     * @param string $nextPageUrl
+     * Service that delete an existing board in Pinterest
+     * @param $entity   "board"
+     * @param $username
+     * @param $boardname
      * @return string
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function exportSubscribers($entity, $id, $maxResultsPerPage, $numberOfPages, $nextPageUrl) {
+    public function deleteBoard($entity, $username, $boardname) {
+        $this->checkBoard($username, $boardname);
+        $this->client->auth->setOAuthToken($this->accessToken);
+
+        try {
+            $boardname = strtolower(str_replace(" ","-",urldecode($boardname)));
+            $this->client->boards->delete($username."/".$boardname);
+        } catch(\Exception $e) {
+            throw new ConnectorServiceException('Error deleting board: ' . $e->getMessage(), $e->getCode());
+        }
+
+        return json_encode(array("status"=>"success"));
+    }
+
+    /**
+     * Service that query to Pinterest Api to get settings of a pin
+     * @param $entity   "pin"
+     * @param $id       pin id
+     * @return string
+     * @throws ConnectorConfigException
+     * @throws ConnectorServiceException
+     */
+    public function getPin($entity, $id) {
+        $this->checkPin($id);
+        $this->client->auth->setOAuthToken($this->accessToken);
+
+        try {
+            $parameters["fields"] = "id,link,url,creator,board,created_at,note,color,counts,media,attribution,image,metadata,original_link";
+            $pin = $this->client->pins->get($id, $parameters);
+        } catch(\Exception $e) {
+            throw new ConnectorServiceException('Error getting pin settings: ' . $e->getMessage(), $e->getCode());
+        }
+
+        return json_encode($pin);
+    }
+
+    /**
+     * Service that creates a new pin in one of the user's boards in Pinterest
+     * @param $entity   "user"
+     * @param $id       user id
+     * @param $username
+     * @param $boardname
+     * @param $note
+     * @param $imageType
+     * @param $image
+     * @return string
+     * @throws ConnectorConfigException
+     * @throws ConnectorServiceException
+     */
+    public function createPin($entity, $id, $username, $boardname, $note, $imageType, $image) {
         $this->checkUser($id);
-        $this->checkPagination($numberOfPages);
+        $this->client->auth->setOAuthToken($this->accessToken);
 
-        if (!$nextPageUrl) {
-            $nextPageUrl = self::INSTAGRAM_API_USERS_URL . $id .
-                "/follows?access_token=" . $this->accessToken;
+        try {
+            $boardname = strtolower(str_replace(" ","-",urldecode($boardname)));
+            $parameters = array(
+                "note" => $note,
+                $imageType => $image,
+                "board" => $username."/".$boardname
+            );
+
+            $pin = $this->client->pins->create($parameters);
+        } catch(\Exception $e) {
+            throw new ConnectorServiceException('Error creating pin: ' . $e->getMessage(), $e->getCode());
         }
 
-        $pagination = true;
-        $subscribers = array();
-        $count = 0;
-
-        while ($pagination) {
-            $data = $this->curlGet($nextPageUrl);
-
-            if ((null === $data["data"]) && ($data["meta"]["code"] !== 200)) {
-                throw new ConnectorServiceException("Error getting subscribers: " .
-                    $data["meta"]["error_message"], $data["meta"]["code"]);
-            }
-
-            $subscribers[$count] = array();
-
-            foreach ($data["data"] as $key => $subscriber) {
-                $subscribers[$count][] = $subscriber;
-            }
-
-            // If number of pages is zero, then all elements are returned
-            if ((($numberOfPages > 0) && ($count == $numberOfPages)) || (!isset($data->pagination->next_url))) {
-                $pagination = false;
-                if (!isset($data->pagination->next_url)) {
-                    $nextPageUrl = null;
-                }
-            } else {
-                $nextPageUrl = $data->pagination->next_url;
-                $count++;
-            }
-        }
-
-        $subscribers["nextPageUrl"] = $nextPageUrl;
-
-        return json_encode($subscribers);
+        return json_encode($pin);
     }
 
     public function exportPosts($entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken) {
         return;
     }
 
-    /**
-     * Service that query to Instagram Api service for media files
-     * @param string $entity "user"
-     * @param string $id    user id
-     * @param integer $maxTotalResults.
-     * @param integer $numberOfPages
-     * @param string $nextPageUrl
-     * @return string
-     * @throws ConnectorConfigException
-     * @throws ConnectorServiceException
-     */
-    public function exportMedia($entity, $id, $maxTotalResults, $numberOfPages, $nextPageUrl)
-    {
-        $this->checkUser($id);
-        $this->checkPagination($numberOfPages, $maxTotalResults);
-
-        if (!$nextPageUrl) {
-            $nextPageUrl = self::INSTAGRAM_API_USERS_URL . $id .
-                        "/media/recent/?access_token=" . $this->accessToken .
-                        "&count=".$maxTotalResults;
-        }
-
-        $pagination = true;
-        $files = array();
-        $count = 0;
-
-        while ($pagination) {
-            $data = $this->curlGet($nextPageUrl);
-
-            if ((null === $data["data"]) && ($data["meta"]["code"] !== 200)) {
-                throw new ConnectorServiceException("Error exporting media: " .
-                    $data["meta"]["error_message"], $data["meta"]["code"]);
-            }
-
-            $files[$count] = array();
-
-            foreach ($data["data"] as $key => $media) {
-                if ("image" === $media["type"]) {
-                    $files[$count][] = $media;
-                }
-            }
-
-            // If number of pages is zero, then all elements are returned
-            if ((($numberOfPages > 0) && ($count == $numberOfPages)) || (!isset($data->pagination->next_url))) {
-                $pagination = false;
-                if (!isset($data->pagination->next_url)) {
-                    $nextPageUrl = null;
-                }
-            } else {
-                $nextPageUrl = $data->pagination->next_url;
-                $count++;
-            }
-        }
-
-        $files["nextPageUrl"] = $nextPageUrl;
-
-        return json_encode($files);
-    }
-
-    /**
-     * Service that get the list of recent media liked by the owner
-     * @param string $entity "user"
-     * @param string $id    user id
-     * @param $maxTotalResults
-     * @param $numberOfPages
-     * @param $nextPageUrl
-     * @return string
-     * @throws ConnectorConfigException
-     * @throws ConnectorServiceException
-     */
-    public function exportMediaRecentlyLiked($entity, $id, $maxTotalResults, $numberOfPages, $nextPageUrl)
-    {
-        $this->checkUser($id);
-        $this->checkPagination($numberOfPages, $maxTotalResults);
-
-        $id = self::INSTAGRAM_SELF_USER;
-
-        if (!$nextPageUrl) {
-            $nextPageUrl = self::INSTAGRAM_API_USERS_URL . $id .
-                "/media/liked/?access_token=" . $this->accessToken .
-                "&count=".$maxTotalResults;
-        }
-
-        $pagination = true;
-        $files = array();
-        $count = 0;
-
-        while ($pagination) {
-            $data = $this->curlGet($nextPageUrl);
-
-            if ((null === $data["data"]) && ($data["meta"]["code"] !== 200)) {
-                throw new ConnectorServiceException("Error exporting media: " .
-                    $data["meta"]["error_message"], $data["meta"]["code"]);
-            }
-
-            $files[$count] = array();
-
-            foreach ($data["data"] as $key => $media) {
-                if ("image" === $media["type"]) {
-                    $files[$count][] = $media;
-                }
-            }
-
-            // If number of pages is zero, then all elements are returned
-            if ((($numberOfPages > 0) && ($count == $numberOfPages)) || (!isset($data->pagination->next_url))) {
-                $pagination = false;
-                if (!isset($data->pagination->next_url)) {
-                    $nextPageUrl = null;
-                }
-            } else {
-                $nextPageUrl = $data->pagination->next_url;
-                $count++;
-            }
-        }
-
-        $files["nextPageUrl"] = $nextPageUrl;
-
-        return json_encode($files);
+    public function exportMedia($entity, $id, $maxTotalResults, $numberOfPages, $nextPageUrl) {
+        return;
     }
 
     public function importMedia($entity, $id, $parameters) {
         return;
     }
 
-    /**
-     * Service that publish a comment in an Instagram media
-     * @param array $parameters
-     *      "content" => Text of the comment
-     *      "media_id" => Instagram media's ID
-     * @return string
-     * @throws ConnectorConfigException
-     * @throws ConnectorServiceException
-     */
     public function post($entity, $id, array $parameters) {
-        if ((null === $parameters) || (!is_array($parameters)) || (count($parameters) == 0)) {
-            throw new ConnectorConfigException("Invalid post parameters'");
-        }
-
-        if ((!array_key_exists('content', $parameters)) ||
-            (null === $parameters["content"]) || (empty($parameters["content"]))) {
-            throw new ConnectorConfigException("'content' parameter is required");
-        }
-
-        if ((!array_key_exists('media_id', $parameters)) ||
-            (null === $parameters["media_id"]) || (empty($parameters["media_id"]))) {
-            throw new ConnectorConfigException("'media_id' parameter is required");
-        }
-
-        $url = self::INSTAGRAM_API_MEDIA_URL.$parameters["media_id"]."/comments";
-
-        $fields = "access_token=".$this->accessToken.
-                    "&text=".$parameters["content"];
-
-        $data = $this->curlPost($url, $fields);
-
-        if ((null === $data["data"]) && ($data["meta"]["code"] !== 200)) {
-            throw new ConnectorServiceException("Error making comments on an Instagram media: " . 
-                $data["meta"]["error_message"], $data["meta"]["code"]);
-        }
-
-        return json_encode($data);
-    }
-
-    /**
-     * Service that query to Instagram Api to get user relationship information
-     * @param string $entity "user"
-     * @param string $id    user id
-     * @param string $userId
-     * @return string
-     * @throws ConnectorConfigException
-     * @throws ConnectorServiceException
-     */
-    public function getUserRelationship($entity, $id, $userId)
-    {
-        $this->checkUser($userId);
-
-        $url = self::INSTAGRAM_API_USERS_URL . $id . "/relationship?access_token=" . $this->accessToken;
-
-        $data = $this->curlGet($url);
-
-        if ((null === $data["data"]) && ($data["meta"]["code"] !== 200)) {
-            throw new ConnectorServiceException("Error getting relationship info: " .
-                $data["meta"]["error_message"], $data["meta"]["code"]);
-        }
-
-        return json_encode($data["data"]);
-    }
-
-    /**
-     * Service that modify the relationship between the authenticated user and the target user.
-     * @param string $entity "user"
-     * @param string $id    user id
-     * @param $userId
-     * @param $action
-     * @return string
-     * @throws ConnectorConfigException
-     * @throws ConnectorServiceException
-     */
-    public function modifyUserRelationship($entity, $id, $userId, $action) {
-        $this->checkUser($id);
-
-        $fields = "action=".$action;
-        $url = self::INSTAGRAM_API_USERS_URL . $userId . "/relationship?access_token=" . $this->accessToken;
-
-        $data = $this->curlPost($url, $fields);
-
-        if ((null === $data["data"]) && ($data["meta"]["code"] !== 200)) {
-            throw new ConnectorServiceException("Error modifying relationship: " .
-                $data["meta"]["error_message"], $data["meta"]["code"]);
-        }
-
-        return json_encode($data["data"]);
+        return;
     }
 
     /**
@@ -818,6 +639,17 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
     }
 
     /**
+     * Method that check search name is ok
+     * @param $name
+     * @throws ConnectorConfigException
+     */
+    private function checkName($name) {
+        if ((null === $name) || ("" === $name)) {
+            throw new ConnectorConfigException("'name' parameter is required");
+        }
+    }
+
+    /**
      * Method that check boardId is ok
      * @param $username
      * @param $boardname
@@ -827,6 +659,17 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
         if ((null === $username) || ("" === $username) ||
             (null === $boardname) || ("" === $boardname)) {
             throw new ConnectorConfigException("'boardId' parameter is required");
+        }
+    }
+
+    /**
+     * Method that check pinId is ok
+     * @param $pinId
+     * @throws ConnectorConfigException
+     */
+    private function checkPin($pinId) {
+        if ((null === $pinId) || ("" === $pinId)) {
+            throw new ConnectorConfigException("'pinId' parameter is required");
         }
     }
 
@@ -848,57 +691,5 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
         } else if (!is_numeric($numberOfPages)) {
             throw new ConnectorConfigException("'numberOfPages' parameter is not numeric");
         }
-    }
-
-    /**
-     * Method that check search name is ok
-     * @param $name
-     * @throws ConnectorConfigException
-     */
-    private function checkName($name) {
-        if ((null === $name) || ("" === $name)) {
-            throw new ConnectorConfigException("'name' parameter is required");
-        }
-    }
-
-    /**
-     * Method that calls url with GET method
-     * @param $url
-     * @return array
-     * @throws \Exception
-     */
-    private function curlGet($url) {
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        $data = curl_exec($ch);
-        curl_close($ch);
-
-        if (!$data) {
-            throw \Exception("Error calling service: ".curl_error($ch), curl_errno($ch));
-        }
-        return json_decode($data, true);
-    }
-
-    /**
-     * Method that calls url with POST method
-     * @param $url
-     * @param $fields
-     * @return array
-     * @throws \Exception
-     */
-    private function curlPost($url, $fields) {
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $fields);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        $data = curl_exec($ch);
-        curl_close($ch);
-
-        if (!$data) {
-            throw \Exception("Error calling service: ".curl_error($ch), curl_errno($ch));
-        }
-        return json_decode($data, true);
     }
 }

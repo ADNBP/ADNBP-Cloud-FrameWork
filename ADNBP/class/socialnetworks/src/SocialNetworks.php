@@ -476,6 +476,82 @@ class SocialNetworks extends Singleton
      ******************************************************************************************************/
 
     /**
+     * Service that export / search the user's boards in a social network
+     * @param $social
+     * @param string $entity "user"|"page"
+     * @param string $id    user or page id
+     * @param $query
+     * @param $maxResultsPerPage
+     * @param $numberOfPages
+     * @param $pageToken
+     * @return mixed
+     * @throws \Exception
+     */
+    public function exportBoards($social, $entity, $id, $query, $maxResultsPerPage, $numberOfPages, $pageToken) {
+        $connector = $this->getSocialApi($social);
+        return $connector->exportBoards($entity, $id, $query, $maxResultsPerPage, $numberOfPages, $pageToken);
+    }
+
+    /**
+     * Service that query to a social network api to get settings of a board
+     * @param string $social
+     * @param string $entity    "board"
+     * @param $username
+     * @param $boardname
+     * @return mixed
+     * @throws \Exception
+     */
+    public function getBoard($social, $entity, $username, $boardname)    {
+        $connector = $this->getSocialApi($social);
+        return $connector->getBoard($entity, $username, $boardname);
+    }
+
+    /**
+     * Service that creates a new board for the user in a social network
+     * @param $social
+     * @param string $entity "user"
+     * @param string $id    user id
+     * @param $name
+     * @param $description
+     * @return mixed
+     * @throws \Exception
+     */
+    public function createBoard($social, $entity, $id, $name, $description) {
+        $connector = $this->getSocialApi($social);
+        return $connector->createBoard($entity, $id, $name, $description);
+    }
+
+    /**
+     * Service that edit an existing board in a social network
+     * @param $social
+     * @param string $entity "board"
+     * @param $username
+     * @param $boardname
+     * @param $name
+     * @param $description
+     * @return mixed
+     * @throws \Exception
+     */
+    public function editBoard($social, $entity, $username, $boardname, $name, $description) {
+        $connector = $this->getSocialApi($social);
+        return $connector->editBoard($entity, $username, $boardname, $name, $description);
+    }
+
+    /**
+     * Service that delete an existing board in a social network
+     * @param $social
+     * @param string $entity "board"
+     * @param $username
+     * @param $boardname
+     * @return mixed
+     * @throws \Exception
+     */
+    public function deleteBoard($social, $entity, $username, $boardname) {
+        $connector = $this->getSocialApi($social);
+        return $connector->deleteBoard($entity, $username, $boardname);
+    }
+
+    /**
      * Service that export / search the user's pins in a social network
      * @param $social
      * @param string $entity "user"|"page"
@@ -510,65 +586,33 @@ class SocialNetworks extends Singleton
     }
 
     /**
-     * Service that export / search the user's boards in a social network
-     * @param $social
-     * @param string $entity "user"|"page"
-     * @param string $id    user or page id
-     * @param $query
-     * @param $maxResultsPerPage
-     * @param $numberOfPages
-     * @param $pageToken
-     * @return mixed
-     * @throws \Exception
-     */
-    public function exportBoards($social, $entity, $id, $query, $maxResultsPerPage, $numberOfPages, $pageToken) {
-        $connector = $this->getSocialApi($social);
-        return $connector->exportBoards($entity, $id, $query, $maxResultsPerPage, $numberOfPages, $pageToken);
-    }
-
-    /**
-     * Service that query to a social network api to get board setting
+     * Service that query to a social network api to get settings of a pin
      * @param string $social
-     * @param string $entity    "board"
-     * @param $username
-     * @param $boardname
+     * @param string $entity    "pin"
+     * @param string $id    pin id
      * @return mixed
      * @throws \Exception
      */
-    public function getBoard($social, $entity, $username, $boardname)    {
+    public function getPin($social, $entity, $id)    {
         $connector = $this->getSocialApi($social);
-        return $connector->getBoard($entity, $username, $boardname);
+        return $connector->getPin($entity, $id);
     }
 
     /**
-     * Service that creates a new board for the user in a social network
+     * Service that creates a new pin for the user in a social network
      * @param $social
      * @param string $entity "user"
      * @param string $id    user id
-     * @param $name
-     * @param $description
+     * @param $note
+     * @param $imageType
+     * @param $image
+     * @param $board
      * @return mixed
      * @throws \Exception
      */
-    public function createBoard($social, $entity, $id, $name, $description) {
+    public function createPin($social, $entity, $id, $username, $boardname, $note, $imageType, $image) {
         $connector = $this->getSocialApi($social);
-        return $connector->createBoard($entity, $id, $name, $description);
-    }
-
-    /**
-     * Service that edit an existing board for the user in a social network
-     * @param $social
-     * @param string $entity "board"
-     * @param $username
-     * @param $boardname
-     * @param $name
-     * @param $description
-     * @return mixed
-     * @throws \Exception
-     */
-    public function editBoard($social, $entity, $username, $boardname, $name, $description) {
-        $connector = $this->getSocialApi($social);
-        return $connector->editBoard($entity, $username, $boardname, $name, $description);
+        return $connector->createPin($entity, $id, $username, $boardname, $note, $imageType, $image);
     }
 
     /******************************************************************************************************
