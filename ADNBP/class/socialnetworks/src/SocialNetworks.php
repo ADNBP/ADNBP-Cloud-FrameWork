@@ -489,7 +489,7 @@ class SocialNetworks extends Singleton
      */
     public function exportPins($social, $entity, $id, $query, $maxResultsPerPage, $numberOfPages, $pageToken) {
         $connector = $this->getSocialApi($social);
-        return $connector->exportPins($entity, $id, $query, $maxResultsPerPage, $numberOfPages, $pageToken);
+        return $connector->exportPins($entity, $id, $query, false, $maxResultsPerPage, $numberOfPages, $pageToken);
     }
 
     /**
@@ -506,7 +506,7 @@ class SocialNetworks extends Singleton
      */
     public function exportPinsLiked($social, $entity, $id, $query, $maxResultsPerPage, $numberOfPages, $pageToken) {
         $connector = $this->getSocialApi($social);
-        return $connector->exportPinsLiked($entity, $id, $query, $maxResultsPerPage, $numberOfPages, $pageToken);
+        return $connector->exportPins($entity, $id, $query, true, $maxResultsPerPage, $numberOfPages, $pageToken);
     }
 
     /**
