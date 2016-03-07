@@ -446,10 +446,36 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
 
         try {
             $parameters["fields"] = "id,name,url,description,creator,created_at,counts,image";
+            $boardname = strtolower(str_replace(" ","-",urldecode($boardname)));
             $board = $this->client->boards->get($username."/".$boardname, $parameters);
-
         } catch(\Exception $e) {
             throw new ConnectorServiceException('Error getting board settings: ' . $e->getMessage(), $e->getCode());
+        }
+
+        return json_encode($board);
+    }
+
+    /**
+     * Service that creates a new board for the user in Pinterest
+     * @param $entity
+     * @param $id
+     * @param $name
+     * @param $description
+     */
+    public function createBoard($entity, $id, $name, $description) {
+        $this->checkUser($id);
+        $this->client->auth->setOAuthToken($this->accessToken);
+
+        try {
+            $parameters = array("name" => $name);
+
+            if (null !== $description) {
+                $parameters["description"] = $description;
+            }
+
+            $board = $this->client->boards->create($parameters);
+        } catch(\Exception $e) {
+            throw new ConnectorServiceException('Error creating board: ' . $e->getMessage(), $e->getCode());
         }
 
         return json_encode($board);

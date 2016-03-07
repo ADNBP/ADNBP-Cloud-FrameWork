@@ -540,6 +540,20 @@ class SocialNetworks extends Singleton
         return $connector->getBoard($entity, $username, $boardname);
     }
 
+    /**
+     * Service that creates a new board for the user in a social network
+     * @param $social
+     * @param string $entity "user"
+     * @param string $id    user id
+     * @param $name
+     * @param $description
+     * @return mixed
+     * @throws \Exception
+     */
+    public function createBoard($social, $entity, $id, $name, $description) {
+        $connector = $this->getSocialApi($social);
+        return $connector->createBoard($entity, $id, $name, $description);
+    }
 
     /******************************************************************************************************
      **                                         GENERAL UTILITIES                                        **
