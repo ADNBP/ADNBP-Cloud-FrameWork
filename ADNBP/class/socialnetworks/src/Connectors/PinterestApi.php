@@ -149,8 +149,10 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
         $this->checkUser($id);
 
         try {
+            $parameters = array();
+            $parameters["fields"] = "id,username,first_name,last_name,bio,created_at,counts,image";
             $this->client->auth->setOAuthToken($this->accessToken);
-            $data = $this->client->users->me();
+            $data = $this->client->users->me($parameters);
         } catch(\Exception $e) {
             throw new ConnectorConfigException("Invalid credentials set");
         }
@@ -214,6 +216,8 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
                 if ($pageToken) {
                     $parameters["cursor"] = urldecode($pageToken);
                 }
+
+                $parameters["fields"] = "id,link,url,creator,board,created_at,note,color,counts,media,attribution,image,metadata,original_link";
 
                 if (null == $query) {
                     if ($liked) {
@@ -303,6 +307,8 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
                     $parameters["cursor"] = urldecode($pageToken);
                 }
 
+                $parameters["fields"] = "id,name,url,description,creator,created_at,counts,image";
+
                 if (null == $query) {
                     $boardsList = $this->client->users->getMeBoards($parameters);
                 } else {
@@ -355,7 +361,7 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
     }
 
     /**
-     * Service that query to Instagram Api for users the user is followed by
+     * Service that query to Pinterest Api for users the user is followed by
      * @param string $entity "user"
      * @param string $id    user id
      * @param $maxResultsPerPage
@@ -423,6 +429,30 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
         $followers["pageToken"] = $pageToken;
 
         return json_encode($followers);
+    }
+
+    /**
+     * Service that query to Pinterest Api to get board settings
+     * @param $entity   "board"
+     * @param $username
+     * @param $boardname
+     * @return string
+     * @throws ConnectorConfigException
+     * @throws ConnectorServiceException
+     */
+    public function getBoard($entity, $username, $boardname) {
+        $this->checkBoard($username, $boardname);
+        $this->client->auth->setOAuthToken($this->accessToken);
+
+        try {
+            $parameters["fields"] = "id,name,url,description,creator,created_at,counts,image";
+            $board = $this->client->boards->get($username."/".$boardname, $parameters);
+
+        } catch(\Exception $e) {
+            throw new ConnectorServiceException('Error getting board settings: ' . $e->getMessage(), $e->getCode());
+        }
+
+        return json_encode($board);
     }
 
     /**
@@ -721,6 +751,19 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
     private function checkUser($userId) {
         if ((null === $userId) || ("" === $userId)) {
             throw new ConnectorConfigException("'userId' parameter is required");
+        }
+    }
+
+    /**
+     * Method that check boardId is ok
+     * @param $username
+     * @param $boardname
+     * @throws ConnectorConfigException
+     */
+    private function checkBoard($username, $boardname) {
+        if ((null === $username) || ("" === $username) ||
+            (null === $boardname) || ("" === $boardname)) {
+            throw new ConnectorConfigException("'boardId' parameter is required");
         }
     }
 

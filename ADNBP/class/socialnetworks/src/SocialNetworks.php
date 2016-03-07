@@ -526,6 +526,21 @@ class SocialNetworks extends Singleton
         return $connector->exportBoards($entity, $id, $query, $maxResultsPerPage, $numberOfPages, $pageToken);
     }
 
+    /**
+     * Service that query to a social network api to get board setting
+     * @param string $social
+     * @param string $entity    "board"
+     * @param $username
+     * @param $boardname
+     * @return mixed
+     * @throws \Exception
+     */
+    public function getBoard($social, $entity, $username, $boardname)    {
+        $connector = $this->getSocialApi($social);
+        return $connector->getBoard($entity, $username, $boardname);
+    }
+
+
     /******************************************************************************************************
      **                                         GENERAL UTILITIES                                        **
      ******************************************************************************************************/
