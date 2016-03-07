@@ -457,10 +457,13 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
 
     /**
      * Service that creates a new board for the user in Pinterest
-     * @param $entity
-     * @param $id
+     * @param $entity   "user"
+     * @param $id       user id
      * @param $name
      * @param $description
+     * @return string
+     * @throws ConnectorConfigException
+     * @throws ConnectorServiceException
      */
     public function createBoard($entity, $id, $name, $description) {
         $this->checkUser($id);
@@ -476,6 +479,40 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
             $board = $this->client->boards->create($parameters);
         } catch(\Exception $e) {
             throw new ConnectorServiceException('Error creating board: ' . $e->getMessage(), $e->getCode());
+        }
+
+        return json_encode($board);
+    }
+
+    /**
+     * Service that edit an existing board for the user in Pinterest
+     * @param $entity   "board"
+     * @param $username
+     * @param $boardname
+     * @param $name
+     * @param $description
+     * @return string
+     * @throws ConnectorConfigException
+     * @throws ConnectorServiceException
+     */
+    public function editBoard($entity, $username, $boardname, $name, $description) {
+        $this->checkBoard($username, $boardname);
+        $this->client->auth->setOAuthToken($this->accessToken);
+
+        try {
+            $parameters = array();
+            if (null !== $name) {
+                $parameters["name"] = $name;
+            }
+
+            if (null !== $description) {
+                $parameters["description"] = $description;
+            }
+
+            $boardname = strtolower(str_replace(" ","-",urldecode($boardname)));
+            $board = $this->client->boards->edit($username."/".$boardname,$parameters);
+        } catch(\Exception $e) {
+            throw new ConnectorServiceException('Error editing board: ' . $e->getMessage(), $e->getCode());
         }
 
         return json_encode($board);

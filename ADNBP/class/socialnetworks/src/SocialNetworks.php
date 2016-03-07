@@ -555,6 +555,22 @@ class SocialNetworks extends Singleton
         return $connector->createBoard($entity, $id, $name, $description);
     }
 
+    /**
+     * Service that edit an existing board for the user in a social network
+     * @param $social
+     * @param string $entity "board"
+     * @param $username
+     * @param $boardname
+     * @param $name
+     * @param $description
+     * @return mixed
+     * @throws \Exception
+     */
+    public function editBoard($social, $entity, $username, $boardname, $name, $description) {
+        $connector = $this->getSocialApi($social);
+        return $connector->editBoard($entity, $username, $boardname, $name, $description);
+    }
+
     /******************************************************************************************************
      **                                         GENERAL UTILITIES                                        **
      ******************************************************************************************************/
