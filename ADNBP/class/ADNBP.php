@@ -1097,7 +1097,7 @@ if (!defined("_ADNBP_CLASS_")) {
                 if (isset($this->_isAuth[$namespace]['data']))
                     unset($this->_isAuth[$namespace]['data']);
                 $this->_isAuth[$namespace]['auth'] = false;
-                $this->deleteSessionVar('UserRoles');
+                $this->resetRoles();
             } else {
                 $this->_isAuth[$namespace]['auth'] = true;
             }
