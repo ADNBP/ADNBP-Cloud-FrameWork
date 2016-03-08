@@ -79,6 +79,7 @@ if (!defined("_ADNBP_CLASS_")) {
         var $system = array();
         var $__p = null;
         var $_configPaths = array();
+        var $_gzEnabled = false;
 
         /**
          * Constructor
@@ -88,6 +89,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
             $__p = Performance::getInstance();
             $this->__p = &$__p;
+            $this->_gzEnabled = (function_exists('gzcompress') && function_exists('gzuncompress'));
 
             // HTTP_REFERER
             $this->_referer = $_SERVER['HTTP_REFERER'];
@@ -1195,9 +1197,9 @@ if (!defined("_ADNBP_CLASS_")) {
 
             if (is_array($keys)) {
                 foreach ($keys as $key=>$value)
-                    $this->_isAuth[$namespace]['data'][$key] =  gzcompress(serialize($value));
+                    $this->_isAuth[$namespace]['data'][$key] = ($this->_gzEnabled) ? gzcompress(serialize($value)) : serialize($value);
             } else {
-                $this->_isAuth[$namespace]['data'][$keys] = gzcompress(serialize($value));
+                $this->_isAuth[$namespace]['data'][$keys] = ($this->_gzEnabled) ? gzcompress(serialize($value)) : serialize($value);
             }
             $this->setAuth(true, $namespace);
         }
@@ -1209,13 +1211,19 @@ if (!defined("_ADNBP_CLASS_")) {
             if (!strlen($namespace))
                 return false;
 
-            if (strlen($key))
-                return (isset($this->_isAuth[$namespace]['data'][$key]))?unserialize(gzuncompress($this->_isAuth[$namespace]['data'][$key])):null;
+            if (strlen($key)) {
+                if($this->_gzEnabled) {
+                    return (isset($this->_isAuth[$namespace]['data'][$key]))?unserialize(gzuncompress($this->_isAuth[$namespace]['data'][$key])):null;
+                } else {
+                    return (isset($this->_isAuth[$namespace]['data'][$key]))?unserialize($this->_isAuth[$namespace]['data'][$key]):null;
+                }
+            }
+
             else {
                 $ret = $this->_isAuth[$namespace]['data'];
                 if(is_array($ret))
                     foreach ($ret as $key=>$value) {
-                        $ret[$key] = unserialize(gzuncompress($value));
+                        $ret[$key] = $this->_gzEnabled ? unserialize(gzuncompress($value)) : unserialize($value);
                     }
                 return $ret;
             }
@@ -1251,7 +1259,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
         function setSessionVar($var, $value)
         {
-            $_SESSION['adnbpSessionVar_' . $var] = gzcompress(serialize($value));
+            $_SESSION['adnbpSessionVar_' . $var] = $this->_gzEnabled ? gzcompress(serialize($value)) : serialize($value);
         }
 
         function deleteSessionVar($var)
@@ -1261,7 +1269,14 @@ if (!defined("_ADNBP_CLASS_")) {
 
         function getSessionVar($var)
         {
-            return ((isset($_SESSION['adnbpSessionVar_' . $var])) ? unserialize(gzuncompress($_SESSION['adnbpSessionVar_' . $var])) : null);
+            if(array_key_exists('adnbpSessionVar_' . $var, $_SESSION)) {
+                if($this->_gzEnabled) {
+                    return unserialize(gzuncompress($_SESSION['adnbpSessionVar_' . $var]));
+                } else {
+                    return unserialize($_SESSION['adnbpSessionVar_' . $var]);
+                }
+            }
+            return null;
         }
 
 
@@ -1282,7 +1297,7 @@ if (!defined("_ADNBP_CLASS_")) {
             if (!strlen($key)) {
                 $this->_dicKeys['__internal__'][$dic] = $data;
             } else {
-                if (!strlen($lang)) $lang = $this->_lang;
+                if (!isset($lang)) $lang = $this->_lang;
                 $this->_dicKeys[$dic]->$key = ($convertHtml) ? htmlentities($data) : $data;
                 $this->dics[$dic] = true;
             }
