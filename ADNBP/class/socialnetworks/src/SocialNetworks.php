@@ -604,15 +604,45 @@ class SocialNetworks extends Singleton
      * @param string $entity "user"
      * @param string $id    user id
      * @param $note
+     * @param $link
      * @param $imageType
      * @param $image
      * @param $board
      * @return mixed
      * @throws \Exception
      */
-    public function createPin($social, $entity, $id, $username, $boardname, $note, $imageType, $image) {
+    public function createPin($social, $entity, $id, $username, $boardname, $note, $link, $imageType, $image) {
         $connector = $this->getSocialApi($social);
-        return $connector->createPin($entity, $id, $username, $boardname, $note, $imageType, $image);
+        return $connector->createPin($entity, $id, $username, $boardname, $note, $link, $imageType, $image);
+    }
+
+    /**
+     * Service that edit an existing pin in a social network
+     * @param $social
+     * @param string $entity "pin"
+     * @param string $id    pin id
+     * @param string $board
+     * @param $note
+     * @param $link
+     * @return mixed
+     * @throws \Exception
+     */
+    public function editPin($social, $entity, $id, $board, $note, $link) {
+        $connector = $this->getSocialApi($social);
+        return $connector->editPin($entity, $id, $board, $note, $link);
+    }
+
+    /**
+     * Service that delete an existing pin in a social network
+     * @param $social
+     * @param string $entity "pin"
+     * @param string $id    pin id
+     * @return mixed
+     * @throws \Exception
+     */
+    public function deletePin($social, $entity, $id) {
+        $connector = $this->getSocialApi($social);
+        return $connector->deletePin($entity, $id);
     }
 
     /******************************************************************************************************

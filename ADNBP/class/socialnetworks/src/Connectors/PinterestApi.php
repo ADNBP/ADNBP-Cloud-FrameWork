@@ -570,13 +570,14 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
      * @param $username
      * @param $boardname
      * @param $note
+     * @param $link
      * @param $imageType
      * @param $image
      * @return string
      * @throws ConnectorConfigException
      * @throws ConnectorServiceException
      */
-    public function createPin($entity, $id, $username, $boardname, $note, $imageType, $image) {
+    public function createPin($entity, $id, $username, $boardname, $note, $link, $imageType, $image) {
         $this->checkUser($id);
         $this->client->auth->setOAuthToken($this->accessToken);
 
@@ -588,12 +589,71 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
                 "board" => $username."/".$boardname
             );
 
+            if (null !== $link) {
+                $parameters["link"] = $link;
+            }
+
             $pin = $this->client->pins->create($parameters);
         } catch(\Exception $e) {
             throw new ConnectorServiceException('Error creating pin: ' . $e->getMessage(), $e->getCode());
         }
 
         return json_encode($pin);
+    }
+
+    /**
+     * Service that edit an existing pin in Pinterest
+     * @param $entity   "pin"
+     * @param $id
+     * @param $board
+     * @param $note
+     * @param $link
+     * @return string
+     * @throws ConnectorConfigException
+     * @throws ConnectorServiceException
+     */
+    public function editPin($entity, $id, $board, $note, $link) {
+        $this->client->auth->setOAuthToken($this->accessToken);
+
+        try {
+            $parameters = array(
+                "note" => $note
+            );
+
+            if (null !== $board) {
+                $parameters["board"] = strtolower(str_replace(" ","-",$board));
+            }
+
+            if (null !== $link) {
+                $parameters["link"] = $link;
+            }
+
+            $pin = $this->client->pins->edit($id, $parameters);
+        } catch(\Exception $e) {
+            throw new ConnectorServiceException('Error editing pin: ' . $e->getMessage(), $e->getCode());
+        }
+
+        return json_encode($pin);
+    }
+
+    /**
+     * Service that delete an existing board in Pinterest
+     * @param $entity   "pin"
+     * @param $id
+     * @return string
+     * @throws ConnectorConfigException
+     * @throws ConnectorServiceException
+     */
+    public function deletePin($entity, $id) {
+        $this->client->auth->setOAuthToken($this->accessToken);
+
+        try {
+            $this->client->pins->delete($id);
+        } catch(\Exception $e) {
+            throw new ConnectorServiceException('Error deleting pin: ' . $e->getMessage(), $e->getCode());
+        }
+
+        return json_encode(array("status"=>"success"));
     }
 
     public function exportPosts($entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken) {
