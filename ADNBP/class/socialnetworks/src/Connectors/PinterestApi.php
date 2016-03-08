@@ -507,6 +507,223 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
     }
 
     /**
+     * Service that query to Pinterest Api for users the user follows
+     * @param string $entity "user"
+     * @param string $id    user id
+     * @param $maxResultsPerPage
+     * @param $numberOfPages
+     * @param $pageToken
+     * @return string
+     * @throws ConnectorConfigException
+     * @throws ConnectorServiceException
+     */
+    public function exportSubscribers($entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken) {
+        $this->checkUser($id);
+        $this->checkPagination($maxResultsPerPage, $numberOfPages);
+        $this->client->auth->setOAuthToken($this->accessToken);
+
+        $subscribers = array();
+        $count = 0;
+
+        do {
+            try {
+                $parameters = array();
+                $parameters["limit"] = $maxResultsPerPage;
+
+                if ($pageToken) {
+                    $parameters["cursor"] = urldecode($pageToken);
+                }
+
+                $subscribersList = $this->client->following->users($parameters);
+
+                // The strange pagination behaviour in Pinterest: although there aren't more elements / more pages,
+                // current list object returns cursor/pagetoken to go to the next page, what is obvously empty, so it
+                // should be checked that pinterest api is returning an empty list
+                if (count($subscribersList->all()) == 0) {
+                    $pageToken = null;
+                    break;
+                }
+
+                $subscribers[$count] = array();
+                foreach($subscribersList->all() as $subscriber) {
+                    $subscribers[$count][] = $subscriber;
+                }
+                $count++;
+
+                $pageToken = $subscribersList->pagination["cursor"];
+
+                // If number of pages is zero, then all elements are returned
+                if (($numberOfPages > 0) && ($count == $numberOfPages)) {
+                    // Make a last call to check if next page is empty
+                    $parameters["cursor"] = urldecode($pageToken);
+                    $subscribersList = $this->client->following->users($parameters);
+
+                    // The strange pagination behaviour in Pinterest: although there aren't more elements / more pages,
+                    // current list object returns cursor/pagetoken to go to the next page, what is obvously empty, so it
+                    // should be checked that pinterest api is returning an empty list
+                    if (count($subscribersList->all()) == 0) {
+                        $pageToken = null;
+                    }
+                    break;
+                }
+            } catch (Exception $e) {
+                $pageToken = null;
+                throw new ConnectorServiceException("Error exporting subscribers: " . $e->getMessage(), $e->getCode());
+            }
+        } while ($subscribersList->hasNextPage());
+
+        $subscribers["pageToken"] = $pageToken;
+
+        return json_encode($subscribers);
+    }
+
+    /**
+     * Service that query to Pinterest Api for the boards that the authenticated user follows
+     * @param string $entity "user"
+     * @param string $id    user id
+     * @param integer $maxResultsPerPage.
+     * @param integer $numberOfPages
+     * @param string $pageToken
+     * @return string
+     * @throws ConnectorConfigException
+     * @throws ConnectorServiceException
+     */
+    public function exportFollowingBoards($entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken) {
+        $this->checkUser($id);
+        $this->checkPagination($maxResultsPerPage, $numberOfPages);
+        $this->client->auth->setOAuthToken($this->accessToken);
+
+        $boards = array();
+        $count = 0;
+
+        do {
+            try {
+                $parameters = array();
+                $parameters["limit"] = $maxResultsPerPage;
+
+                if ($pageToken) {
+                    $parameters["cursor"] = urldecode($pageToken);
+                }
+
+                $parameters["fields"] = "id,name,url,description,creator,created_at,counts,image";
+
+                $boardsList = $this->client->following->boards($parameters);
+
+                // The strange pagination behaviour in Pinterest: although there aren't more elements / more pages,
+                // current list object returns cursor/pagetoken to go to the next page, what is obvously empty, so it
+                // should be checked that pinterest api is returning an empty list
+                if (count($boardsList->all()) == 0) {
+                    $pageToken = null;
+                    break;
+                }
+
+                $boards[$count] = array();
+                foreach($boardsList->all() as $board) {
+                    $boards[$count][] = $board;
+                }
+                $count++;
+
+                $pageToken = $boardsList->pagination["cursor"];
+
+                // If number of pages is zero, then all elements are returned
+                if (($numberOfPages > 0) && ($count == $numberOfPages)) {
+                    // Make a last call to check if next page is empty
+                    $parameters["cursor"] = urldecode($pageToken);
+                    $boardsList = $this->client->following->boards($parameters);
+
+                    // The strange pagination behaviour in Pinterest: although there aren't more elements / more pages,
+                    // current list object returns cursor/pagetoken to go to the next page, what is obvously empty, so it
+                    // should be checked that pinterest api is returning an empty list
+                    if (count($boardsList->all()) == 0) {
+                        $pageToken = null;
+                    }
+                    break;
+                }
+            } catch (Exception $e) {
+                $pageToken = null;
+                throw new ConnectorServiceException("Error exporting following boards: " . $e->getMessage(), $e->getCode());
+            }
+        } while ($boardsList->hasNextPage());
+
+        $boards["pageToken"] = $pageToken;
+
+        return json_encode($boards);
+    }
+
+    /**
+     * Service that query to Pinterest Api for the topics that the authenticated user follows
+     * @param string $entity "user"
+     * @param string $id    user id
+     * @param integer $maxResultsPerPage.
+     * @param integer $numberOfPages
+     * @param string $pageToken
+     * @return string
+     * @throws ConnectorConfigException
+     * @throws ConnectorServiceException
+     */
+    public function exportFollowingInterests($entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken) {
+        $this->checkUser($id);
+        $this->checkPagination($maxResultsPerPage, $numberOfPages);
+        $this->client->auth->setOAuthToken($this->accessToken);
+
+        $interests = array();
+        $count = 0;
+
+        do {
+            try {
+                $parameters = array();
+                $parameters["limit"] = $maxResultsPerPage;
+
+                if ($pageToken) {
+                    $parameters["cursor"] = urldecode($pageToken);
+                }
+
+                //$parameters["fields"] = "id,name,url,description,creator,created_at,counts,image";
+
+                $interestsList = $this->client->following->interests($parameters);
+
+                // The strange pagination behaviour in Pinterest: although there aren't more elements / more pages,
+                // current list object returns cursor/pagetoken to go to the next page, what is obvously empty, so it
+                // should be checked that pinterest api is returning an empty list
+                if (count($interestsList->all()) == 0) {
+                    $pageToken = null;
+                    break;
+                }
+
+                $boards[$count] = array();
+                foreach($interestsList->all() as $interest) {
+                    $interests[$count][] = $interest;
+                }
+                $count++;
+
+                $pageToken = $interestsList->pagination["cursor"];
+
+                // If number of pages is zero, then all elements are returned
+                if (($numberOfPages > 0) && ($count == $numberOfPages)) {
+                    // Make a last call to check if next page is empty
+                    $parameters["cursor"] = urldecode($pageToken);
+                    $interestsList = $this->client->following->interests($parameters);
+
+                    // The strange pagination behaviour in Pinterest: although there aren't more elements / more pages,
+                    // current list object returns cursor/pagetoken to go to the next page, what is obvously empty, so it
+                    // should be checked that pinterest api is returning an empty list
+                    if (count($interestsList->all()) == 0) {
+                        $pageToken = null;
+                    }
+                    break;
+                }
+            } catch (Exception $e) {
+                $pageToken = null;
+                throw new ConnectorServiceException("Error exporting following interests: " . $e->getMessage(), $e->getCode());
+            }
+        } while ($interestsList->hasNextPage());
+
+        $interests["pageToken"] = $pageToken;
+
+        return json_encode($interests);
+    }
+
+    /**
      * Service that query to Pinterest Api to get settings of a board
      * @param $entity   "board"
      * @param $username
@@ -731,20 +948,24 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
         return json_encode(array("status"=>"success"));
     }
 
-    public function exportPosts($entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken) {
-        return;
+    public function exportPosts($entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken)
+    {
+        // TODO: Implement exportPosts() method.
     }
 
-    public function exportMedia($entity, $id, $maxTotalResults, $numberOfPages, $nextPageUrl) {
-        return;
+    public function exportMedia($entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken)
+    {
+        // TODO: Implement exportMedia() method.
     }
 
-    public function importMedia($entity, $id, $parameters) {
-        return;
+    public function importMedia($entity, $id, $parameters)
+    {
+        // TODO: Implement importMedia() method.
     }
 
-    public function post($entity, $id, array $parameters) {
-        return;
+    public function post($entity, $id, array $parameters)
+    {
+        // TODO: Implement post() method.
     }
 
     /**

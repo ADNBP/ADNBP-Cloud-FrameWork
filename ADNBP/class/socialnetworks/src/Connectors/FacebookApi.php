@@ -144,6 +144,11 @@ class FacebookApi extends Singleton implements SocialNetworkInterface
         return $response["summary"]["total_count"];
     }
 
+    public function exportSubscribers($entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken)
+    {
+        // TODO: Implement exportSubscribers() method.
+    }
+
     /**
      * Service that query to Facebook Api a followers count
      * @param $entity

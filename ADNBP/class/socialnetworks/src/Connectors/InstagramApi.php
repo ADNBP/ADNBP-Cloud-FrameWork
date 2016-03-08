@@ -228,10 +228,6 @@ class InstagramApi extends Singleton implements SocialNetworkInterface {
         return json_encode($followers);
     }
 
-    public function exportFollowersInfo($entity, $id, $postId) {
-        return;
-    }
-
     /**
      * Service that query to Instagram Api for users the user is following
      * @param string $entity "user"

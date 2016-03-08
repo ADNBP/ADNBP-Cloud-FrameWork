@@ -170,6 +170,23 @@ class SocialNetworks extends Singleton
     }
 
     /**
+     * Service that query to a social network api to get subscribers
+     * @param string $social
+     * @param string $entity "user"
+     * @param string $id    user id
+     * @param integer $maxResultsPerPage maximum elements per page
+     * @param integer $numberOfPages number of pages
+     * @param string $pageToken/$nextPageUrl Indicates a page token / specific page for pagination
+     * @return mixed
+     * @throws \Exception
+     */
+    public function exportSubscribers($social, $entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken)
+    {
+        $connector = $this->getSocialApi($social);
+        return $connector->exportSubscribers($entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken);
+    }
+
+    /**
      * Service that query to a social network api to get posts info
      * @param string $entity "user"|"page"
      * @param string $id    user or page id
@@ -313,23 +330,6 @@ class SocialNetworks extends Singleton
     /******************************************************************************************************
      **                                         INSTAGRAM END POINTS                                     **
      ******************************************************************************************************/
-
-    /**
-     * Service that query to a social network api to get subscribers
-     * @param string $social
-     * @param string $entity "user"
-     * @param string $id    user id
-     * @param integer $maxResultsPerPage maximum elements per page
-     * @param integer $numberOfPages number of pages
-     * @param string $nextPageUrl Indicates a specific page for pagination
-     * @return mixed
-     * @throws \Exception
-     */
-    public function exportSubscribers($social, $entity, $id, $maxResultsPerPage, $numberOfPages, $nextPageUrl)
-    {
-        $connector = $this->getSocialApi($social);
-        return $connector->exportSubscribers($entity, $id, $maxResultsPerPage, $numberOfPages, $nextPageUrl);
-    }
 
     /**
      * Service that get the list of recent media liked by the owner
@@ -660,6 +660,38 @@ class SocialNetworks extends Singleton
     public function deletePin($social, $entity, $id) {
         $connector = $this->getSocialApi($social);
         return $connector->deletePin($entity, $id);
+    }
+
+    /**
+     * Service that export the boards that the authenticated user follows in a social network
+     * @param $social
+     * @param string $entity "user"
+     * @param string $id    user id
+     * @param $maxResultsPerPage
+     * @param $numberOfPages
+     * @param $pageToken
+     * @return mixed
+     * @throws \Exception
+     */
+    public function exportFollowingBoards($social, $entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken) {
+        $connector = $this->getSocialApi($social);
+        return $connector->exportFollowingBoards($entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken);
+    }
+
+    /**
+     * Service that export the topics that the authenticated user follows in a social network
+     * @param $social
+     * @param string $entity "user"
+     * @param string $id    user id
+     * @param $maxResultsPerPage
+     * @param $numberOfPages
+     * @param $pageToken
+     * @return mixed
+     * @throws \Exception
+     */
+    public function exportFollowingInterests($social, $entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken) {
+        $connector = $this->getSocialApi($social);
+        return $connector->exportFollowingInterests($entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken);
     }
 
     /******************************************************************************************************

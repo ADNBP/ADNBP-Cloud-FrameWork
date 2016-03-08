@@ -266,6 +266,11 @@ class GoogleApi extends Singleton implements SocialNetworkInterface {
         return json_encode($people);
     }
 
+    public function exportSubscribers($entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken)
+    {
+        // TODO: Implement exportSubscribers() method.
+    }
+
     /**
      * Service that query to Google Api for followers info (likes and shares) of a post
      * @param string $userId
