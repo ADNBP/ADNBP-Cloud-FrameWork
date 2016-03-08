@@ -1472,41 +1472,6 @@ if (!defined("_ADNBP_CLASS_")) {
             return (crypt($passw, $compare) == $compare);
         }
 
-        /*
-         * String replace KeyCodes
-         */
-        function strCFReplace($str)
-        {
-            $str = str_replace('CURRENT_DATE', date('Y-m-d'), $str);
-            $str = str_replace('{DirectoryOrganization_Id}', $this->getOrganizationDefault(), $str);
-            $str = str_replace('{OrganizationsInGroupId}', (strlen($this->getAuthUserData("currentOrganizationsInGroupId"))) ? $this->getAuthUserData("currentOrganizationsInGroupId") : $this->getAuthUserData("currentOrganizationId"), $str);
-            $str = str_replace('{organizations_scope}', (strlen($this->getAuthUserData("organizations_scope"))) ? $this->getAuthUserData("organizations_scope") : $this->getAuthUserData("currentOrganizationId"), $str);
-
-            // Replaces getting info from  getAuthUserData
-            if (strpos($str, '{AuthUserData.') !== false) {
-                $parts = explode('{AuthUserData.', $str);
-                unset($parts[0]);
-
-                foreach ($parts as $key => $tag) {
-                    $tag = preg_replace('/}.*/', '', $tag);
-                    $subparts = explode('.', $tag);
-
-                    $value = $this->getAuthUserData($subparts[0]);
-                    unset($subparts[0]);
-                    foreach ($subparts as $key2 => $value2) {
-                        if (is_array($value)) $value = $value[$value2];
-                        elseif (is_object($value)) $value = $value->{$value2};
-                        else {
-                            $value = null;
-                            break;
-                        }
-                    }
-                    $str = str_replace('{AuthUserData.' . $tag . '}', $value, $str);
-                }
-            }
-            return ($str);
-        }
-
         function getSubstitutionsTags($str)
         {
             $ret = null;
@@ -1689,13 +1654,13 @@ if (!defined("_ADNBP_CLASS_")) {
 
         }
 
-        function getCache($str)
+        function getCache($str,$time=-1)
         {
             if ($this->_cache === null) return (null);
 
             switch ($this->_cache['type']) {
                 case 'memory':
-                    return ($this->_cache['object']->get($str));
+                    return ($this->_cache['object']->get($str,$time));
                     break;
             }
         }
@@ -1738,42 +1703,57 @@ if (!defined("_ADNBP_CLASS_")) {
                 $_userOrganizations['__org__'] = $orgId;
 
             $_userOrganizations['__orgs__'][$orgId]= $orgData;
-            if(!strlen($group)) $group = 'OTHER';
+            if(!strlen($group)) $group = '__OTHER__';
                 $_userOrganizations['__groups__'][$group][$orgId]= true;
 
             $this->setSessionVar("userOrganizations", $_userOrganizations);
         }
 
         function setOrganizationDefault($orgId) {
-            $_userOrganizations = $this->getSessionVar("userOrganizations");
-            if(is_array($_userOrganizations) && isset($_userOrganizations['__orgs__'][$orgId]))
-                $_userOrganizations['__org__'] = $orgId;
-            $this->setSessionVar("userOrganizations", $_userOrganizations);
+            if(strlen($orgId)) {
+                $_userOrganizations = $this->getSessionVar("userOrganizations");
+                if (is_array($_userOrganizations) && isset($_userOrganizations['__orgs__'][$orgId])) {
+                    $_userOrganizations['__org__'] = $orgId;
+                    $this->setSessionVar("userOrganizations", $_userOrganizations);
+                }
+            }
         }
 
         function getOrganizationDefault() {
             $_userOrganizations = $this->getSessionVar("userOrganizations");
-            if(is_array($_userOrganizations) && isset($_userOrganizations['__orgs__']))
+            if(is_array($_userOrganizations) && isset($_userOrganizations['__org__']))
                 return $_userOrganizations['__org__'];
             else return '__orgNotNefined__';
         }
 
-        function getOrganizations($orgId='')
+        function getOrganizations()
         {
             $_userOrganizations = $this->getSessionVar("userOrganizations");
 
             if (empty($_userOrganizations)
-                || (strlen($orgId) && !isset($_userOrganizations['__orgs__'][$orgId]))
+                || (!isset($_userOrganizations['__orgs__']))
                )
                 return array();
 
-            if(strlen($orgId)) return $_userOrganizations['__orgs__'][$orgId];
-            else return $_userOrganizations;
+            return $_userOrganizations['__orgs__'];
         }
-
-        function getOrganization()
+        function getOrganizationsGroups()
         {
-            return($this->getOrganizations($this->getOrganizationDefault()));
+            $_userOrganizations = $this->getSessionVar("userOrganizations");
+
+            if (empty($_userOrganizations)
+                || (!isset($_userOrganizations['__groups__']))
+            )
+                return array();
+
+            return $_userOrganizations['__groups__'];
+        }
+        function getOrganization($id='')
+        {
+            if(!strlen($id)) $id = $this->getOrganizationDefault();
+            $orgs = $this->getOrganizations();
+            if(isset($orgs[$id])) return($orgs[$id]);
+            else return null;
         }
 
         function resetOrganizations()
