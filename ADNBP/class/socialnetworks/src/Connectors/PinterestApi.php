@@ -678,8 +678,6 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
                     $parameters["cursor"] = urldecode($pageToken);
                 }
 
-                //$parameters["fields"] = "id,name,url,description,creator,created_at,counts,image";
-
                 $interestsList = $this->client->following->interests($parameters);
 
                 // The strange pagination behaviour in Pinterest: although there aren't more elements / more pages,
@@ -943,6 +941,60 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
             $this->client->pins->delete($id);
         } catch(\Exception $e) {
             throw new ConnectorServiceException('Error deleting pin: ' . $e->getMessage(), $e->getCode());
+        }
+
+        return json_encode(array("status"=>"success"));
+    }
+
+    /**
+     * Service that modify the relationship between the authenticated user and the target user.
+     * @param string $entity "user"
+     * @param string $id    user id
+     * @param $userId
+     * @param $action
+     * @return string
+     * @throws ConnectorConfigException
+     * @throws ConnectorServiceException
+     */
+    public function modifyUserRelationship($entity, $id, $userId, $action) {
+        $this->client->auth->setOAuthToken($this->accessToken);
+
+        try {
+            if ("follow" === $action) {
+                $this->client->following->followUser($userId);
+            } else {
+                $this->client->following->unfollowUser($userId);
+            }
+        } catch(\Exception $e) {
+            throw new ConnectorServiceException('Error modifying relationship with user "'.$userId.'": ' .
+                                                                        $e->getMessage(), $e->getCode());
+        }
+
+        return json_encode(array("status"=>"success"));
+    }
+
+    /**
+     * Service that modify the relationship between the authenticated user and a board.
+     * @param string $entity "user"
+     * @param string $id    user id
+     * @param $boardId
+     * @param $action
+     * @return string
+     * @throws ConnectorConfigException
+     * @throws ConnectorServiceException
+     */
+    public function modifyBoardRelationship($entity, $id, $boardId, $action) {
+        $this->client->auth->setOAuthToken($this->accessToken);
+
+        try {
+            if ("follow" === $action) {
+                $this->client->following->followBoard($boardId);
+            } else {
+                $this->client->following->unfollowBoard($boardId);
+            }
+        } catch(\Exception $e) {
+            throw new ConnectorServiceException('Error modifying relationship with board "'.$boardId.'": ' .
+                $e->getMessage(), $e->getCode());
         }
 
         return json_encode(array("status"=>"success"));

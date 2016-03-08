@@ -275,6 +275,21 @@ class SocialNetworks extends Singleton
         return $connector->post($entity, $id, $parameters);
     }
 
+    /**
+     * Service that modify the relationship between the authenticated user and the target user in a social network.
+     * @param $social
+     * @param string $entity "user"
+     * @param string $id    user id
+     * @param $userId
+     * @param $action
+     * @return mixed
+     * @throws \Exception
+     */
+    public function modifyUserRelationship($social, $entity, $id, $userId, $action) {
+        $connector = $this->getSocialApi($social);
+        return $connector->modifyUserRelationship($entity, $id, $userId, $action);
+    }
+
     /******************************************************************************************************
      **                                         GOOGLE END POINTS                                        **
      ******************************************************************************************************/
@@ -359,21 +374,6 @@ class SocialNetworks extends Singleton
     public function getUserRelationship($social, $entity, $id, $userId) {
         $connector = $this->getSocialApi($social);
         return $connector->getUserRelationship($entity, $id, $userId);
-    }
-
-    /**
-     * Service that modify the relationship between the authenticated user and the target user in a social network.
-     * @param $social
-     * @param string $entity "user"
-     * @param string $id    user id
-     * @param $userId
-     * @param $action
-     * @return mixed
-     * @throws \Exception
-     */
-    public function modifyUserRelationship($social, $entity, $id, $userId, $action) {
-        $connector = $this->getSocialApi($social);
-        return $connector->modifyUserRelationship($entity, $id, $userId, $action);
     }
 
     /**
@@ -692,6 +692,21 @@ class SocialNetworks extends Singleton
     public function exportFollowingInterests($social, $entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken) {
         $connector = $this->getSocialApi($social);
         return $connector->exportFollowingInterests($entity, $id, $maxResultsPerPage, $numberOfPages, $pageToken);
+    }
+
+    /**
+     * Service that modify the relationship between the authenticated user and the target board in a social network.
+     * @param $social
+     * @param string $entity "user"
+     * @param string $id    user id
+     * @param $boardId
+     * @param $action
+     * @return mixed
+     * @throws \Exception
+     */
+    public function modifyBoardRelationship($social, $entity, $id, $boardId, $action) {
+        $connector = $this->getSocialApi($social);
+        return $connector->modifyBoardRelationship($entity, $id, $boardId, $action);
     }
 
     /******************************************************************************************************
