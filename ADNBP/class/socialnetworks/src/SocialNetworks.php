@@ -478,8 +478,8 @@ class SocialNetworks extends Singleton
     /**
      * Service that export / search the user's boards in a social network
      * @param $social
-     * @param string $entity "user"|"page"
-     * @param string $id    user or page id
+     * @param string $entity "user"
+     * @param string $id    user id
      * @param $query
      * @param $maxResultsPerPage
      * @param $numberOfPages
@@ -583,6 +583,23 @@ class SocialNetworks extends Singleton
     public function exportPinsLiked($social, $entity, $id, $query, $maxResultsPerPage, $numberOfPages, $pageToken) {
         $connector = $this->getSocialApi($social);
         return $connector->exportPins($entity, $id, $query, true, $maxResultsPerPage, $numberOfPages, $pageToken);
+    }
+
+    /**
+     * Service that export pins from a board in a social network
+     * @param $social
+     * @param string $entity    "board"
+     * @param $username
+     * @param $boardname
+     * @param $maxResultsPerPage
+     * @param $numberOfPages
+     * @param $pageToken
+     * @return mixed
+     * @throws \Exception
+     */
+    public function exportPinsFromBoard($social, $entity, $username, $boardname, $maxResultsPerPage, $numberOfPages, $pageToken) {
+        $connector = $this->getSocialApi($social);
+        return $connector->exportPinsFromBoard($entity, $username, $boardname, $maxResultsPerPage, $numberOfPages, $pageToken);
     }
 
     /**

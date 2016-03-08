@@ -279,6 +279,81 @@ class PinterestApi extends Singleton implements SocialNetworkInterface {
     }
 
     /**
+     * Service that query to Pinterest Api for pins in a board
+     * @param string $entity "board"
+     * @param string $username
+     * @param string $boardname
+     * @param integer $maxResultsPerPage.
+     * @param integer $numberOfPages
+     * @param string $pageToken
+     * @return string
+     * @throws ConnectorConfigException
+     * @throws ConnectorServiceException
+     */
+    public function exportPinsFromBoard($entity, $username, $boardname, $maxResultsPerPage, $numberOfPages, $pageToken) {
+        $this->checkBoard($username, $boardname);
+        $this->checkPagination($maxResultsPerPage, $numberOfPages);
+        $this->client->auth->setOAuthToken($this->accessToken);
+
+        $pins = array();
+        $count = 0;
+
+        do {
+            try {
+                $parameters = array();
+                $parameters["limit"] = $maxResultsPerPage;
+
+                if ($pageToken) {
+                    $parameters["cursor"] = urldecode($pageToken);
+                }
+
+                $parameters["fields"] = "id,link,url,creator,board,created_at,note,color,counts,media,attribution,image,metadata,original_link";
+                $boardname = strtolower(str_replace(" ","-",urldecode($boardname)));
+                $pinsList = $this->client->pins->fromBoard($username."/".$boardname, $parameters);
+
+                // The strange pagination behaviour in Pinterest: although there aren't more elements / more pages,
+                // current list object returns cursor/pagetoken to go to the next page, what is obvously empty, so it
+                // should be checked that pinterest api is returning an empty list
+                if (count($pinsList->all()) == 0) {
+                    $pageToken = null;
+                    break;
+                }
+
+                $pins[$count] = array();
+                foreach($pinsList->all() as $pin) {
+                    $pins[$count][] = $pin;
+                }
+                $count++;
+
+                $pageToken = $pinsList->pagination["cursor"];
+
+                // If number of pages is zero, then all elements are returned
+                if (($numberOfPages > 0) && ($count == $numberOfPages)) {
+                    // Make a last call to check if next page is empty
+                    $parameters["cursor"] = urldecode($pageToken);
+                    $pinsList = $this->client->pins->fromBoard($username."/".$boardname, $parameters);
+
+                    // The strange pagination behaviour in Pinterest: although there aren't more elements / more pages,
+                    // current list object returns cursor/pagetoken to go to the next page, what is obvously empty, so it
+                    // should be checked that pinterest api is returning an empty list
+                    if (count($pinsList->all()) == 0) {
+                        $pageToken = null;
+                    }
+                    break;
+                }
+            } catch (Exception $e) {
+                $pageToken = null;
+                throw new ConnectorServiceException("Error exporting pins from board '".$username."/".$boardname."'': " .
+                                                                            $e->getMessage(), $e->getCode());
+            }
+        } while ($pinsList->hasNextPage());
+
+        $pins["pageToken"] = $pageToken;
+
+        return json_encode($pins);
+    }
+
+    /**
      * Service that query to Pinterest Api for boards of the user
      * @param string $entity "user"
      * @param string $id    user id
