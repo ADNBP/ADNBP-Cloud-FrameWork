@@ -46,19 +46,19 @@ if (!defined ("_CFDB_CLASS_") ) {
 		function readMenu() {
 			
 		 		// Let's cache a DB content very frecuently 
-		        $tmpZip = $this->memCache->get("CFEditObjects".$this->super->getAuthUserData("currentOrganizationId"));
+		        $tmpZip = $this->memCache->get("CFEditObjects".$this->super->getOrganizationDefault());
 			    if(!strlen($tmpZip) || isset($_REQUEST['nocache'])) {
 				    unset($_CloudFrameWorkData);
-					if($this->super->getAuthUserData("currentOrganizationId") == 1) {
+					if($this->super->getOrganizationDefault() == 1) {
 			    		$_CloudFrameWorkData['DirectoryObjects'] = "%"; 
 						if(isset($_GET['dbdebug'])) _print("INIT QUERY to retrieve Directory Objects: Calling query from menuObjects.php");  
 					    $tmp = $this->db->CloudFrameWork("getRecords",$_CloudFrameWorkData);
 					} else {      
 						if(isset($_GET['dbdebug'])) _print("INIT QUERY  to retrieve Directory Objects: Calling query from menuObjects.php");  
-			    		$_CloudFrameWorkData['DirectoryOrganization_Id'] = $this->super->getAuthUserData("currentOrganizationId");   
+			    		$_CloudFrameWorkData['DirectoryOrganization_Id'] = $this->super->getOrganizationDefault();   
 					    $tmp = $db->CloudFrameWork("getRecords",$_CloudFrameWorkData,'Rel_DirectoryObjects_DirectoryOrganizations');
 					}
-					$this->memCache->set("CFEditObjects".$this->super->getAuthUserData("currentOrganizationId"),gzcompress(serialize($tmp)));
+					$this->memCache->set("CFEditObjects".$this->super->getOrganizationDefault(),gzcompress(serialize($tmp)));
 			    } else {
 			    	$tmp = unserialize(gzuncompress($tmpZip));
 			    }
@@ -75,7 +75,7 @@ if (!defined ("_CFDB_CLASS_") ) {
 		                $this->objects['_title_'] = $tmp[$i]['DirectoryObject_LangEN'];
 						
 						// get from caché las version
-						$tmpZip = $this->memCache->get("CFEditObject_".$tmp[$i]['DirectoryObject_LangEN'].'_'.$this->super->getAuthUserData("currentOrganizationId"));
+						$tmpZip = $this->memCache->get("CFEditObject_".$tmp[$i]['DirectoryObject_LangEN'].'_'.$this->super->getOrganizationDefault());
 						if(!strlen($tmpZip) || isset($_REQUEST['nocache'])) {
 							$this->selectedObject =$tmp[$i];
 							
@@ -87,7 +87,7 @@ if (!defined ("_CFDB_CLASS_") ) {
 							//Split Labels for the object 
 							
 							//Put in cachñe the results..
-							$this->memCache->set("CFEditObject_".$tmp[$i]['DirectoryObject_LangEN'].'_'.$this->super->getAuthUserData("currentOrganizationId"),gzcompress(serialize($this->selectedObject)));
+							$this->memCache->set("CFEditObject_".$tmp[$i]['DirectoryObject_LangEN'].'_'.$this->super->getOrganizationDefault(),gzcompress(serialize($this->selectedObject)));
 						} else {
 							$this->selectedObject = unserialize(gzuncompress($tmpZip));
 						}

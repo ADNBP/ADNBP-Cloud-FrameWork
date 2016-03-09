@@ -459,11 +459,6 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 		function isAvoidFilterCalculation($field) {
 			return(isset($this->_cloudFilterToAvoidCalculation[$field]));
 		}
-		
-		
-			
-
-
 
 		function getSecuredSqlString($ret) {
 		    if(strlen($ret)) {
@@ -580,7 +575,13 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                 $table ="CF_".$table;
 
             // Field Types of the table
-            if(!isset($this->_queryFieldTypes[$table])) $this->_queryFieldTypes[$table] = $this->getDataFromQuery("SHOW COLUMNS FROM %s",$table );
+            if(!isset($this->_queryFieldTypes[$table])) {
+                $this->_queryFieldTypes[$table] = $this->_super->getCache('cloudFrameWork_show_colums_'.$table,3600);
+                if(!is_array($this->_queryFieldTypes[$table]) || isset($_GET['nocache']) || isset($_GET['reload'])) {
+                    $this->_queryFieldTypes[$table] = $this->getDataFromQuery("SHOW COLUMNS FROM %s", $table);
+                    $this->_super->setCache('cloudFrameWork_show_colums_'.$table,$this->_queryFieldTypes[$table]);
+                }
+            }
             if($this->error()) return(false);
             $types = $this->_queryFieldTypes[$table];                     
             
