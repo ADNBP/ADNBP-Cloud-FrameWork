@@ -53,11 +53,12 @@ switch ($command) {
 							$dataToken_hash = sha1(json_encode($dataToken).json_encode($finger_print));
 							
 							// If is auth and API_KEY match then return true
-							if($this->isAuth() 
-							   && $this->getAuthUserData('API_KEY')->key == $key 
-							   && $this->getAuthUserData('API_KEY')->hash == $dataToken_hash) 
+							if($this->isAuth()) {
+								$userData = $this->getAuthUserData('API_KEY');
+								if(is_array($userData) && $userData['key']==$key && $userData['hash']==$dataToken_hash)
 									return true;
-								
+							}
+
 							// Restart auth session
 							$this->setAuth(false);
 							$api_key_data['key'] = $key;
@@ -67,7 +68,7 @@ switch ($command) {
 							$api_key_data['data'] = $dataToken;
 							foreach ($_api_key_conf['allowed_referers'] as $index => $content) 
 								if($content=="*" || strpos($referer,$content)!==false) {
-									$this->setAuthUserData('API_KEY',json_decode(json_encode($api_key_data)));
+									$this->setAuthUserData('API_KEY',$api_key_data);
 									return(true);
 								}
 							$this->addLog("HTTP_REFERER '$referer' does not match with allowed_referers.");
