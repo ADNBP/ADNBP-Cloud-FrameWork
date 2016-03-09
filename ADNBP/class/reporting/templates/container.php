@@ -20,7 +20,7 @@ if(!$container) {?>
     
         -->
         <header>
-            <span class="widget-icon"> <i class="fa fa-table"></i> </span>
+            <span class="widget-icon"> <i class="fa fa-<?=(strlen($data->ico))?$data->ico:'table'?>"></i> </span>
             <h2><?=htmlentities($data->title)?></h2>
     
         </header>

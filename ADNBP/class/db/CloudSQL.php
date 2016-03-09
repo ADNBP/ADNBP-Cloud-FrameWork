@@ -65,6 +65,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 		var $_cloudFilterWhereFields = array();
 		var $_cloudFilterToAvoidCalculation = array();
 		var $_queryFieldTypes = array();
+        var $_super = null;
                 
         protected $_dblink=false;                // Database Connection Link
         var $_debug=false;
@@ -72,6 +73,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
         Function __construct ($h='',$u='',$p='',$db='',$port='3306',$socket='') {
             
             global $adnbp;
+            $this->_super = &$adnbp;
             
         	if(strlen($h)) {
         		$this->_dbserver = trim($h);
@@ -767,25 +769,26 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 					    // case 'getRecordsForEdit':
                         // case 'getRecordsToExplore':                           
                         else {
-                           // Eplore types
+
+                           // Eplore types evaluting to cache
                            for($k=0,$tr3=count($types);$k<$tr3;$k++) {
-                           	   	
+
                            	   if(preg_match("/(int|numb|deci)/i", $types[$k]['Type']))
                                    $_ret[$types[$k]['Field']]['type'] = 'text';
 							   else if(preg_match("/(text)/i", $types[$k]['Type']))
 							       $_ret[$types[$k]['Field']]['type'] = 'textarea';
 							   else
 							   	   $_ret[$types[$k]['Field']]['type'] = 'text';
-                               
+
                                list($foo,$field,$rels) = explode("_", $types[$k]['Field'],3);
-                               
-                               if(($field=="Id" && $rels=="" && !$_relTable) || ($_relTable && $foo=="Id")) 
+
+                               if(($field=="Id" && $rels=="" && !$_relTable) || ($_relTable && $foo=="Id"))
                                    $_ret[$types[$k]['Field']]['type'] = "key";
                                else if($rels=='Id'   || ($_relTable && strlen($field))) {
-                               	
-							   // Getting Rel data to this field                               	
+
+							   // Getting Rel data to this field
                                    $_ret[$types[$k]['Field']]['type'] = "rel";
-								   
+
                                    if($_relTable) {
                                        $reltable=$foo."s";
 									   $_f= $foo;
@@ -793,11 +796,11 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                                        $reltable=$field."s";
                                    	   $_f= $field;
                                    }
-								   
+
 								   // Fields dependences and WhereConditions
 								   $_fqWhere = '';
 								   if(($dependences = $this->getFieldDependence($types[$k]['Field'])) !== false)  $_fqWhere .=  ' (R.'.$dependences.')';
-								   
+
 								   if(($fieldwheres = $this->getWhereField($types[$k]['Field'])) !== false) {
 								   	if(strlen($_fqWhere)) $_fqWhere .= ' AND ';
 								   	$_fqWhere .=  ' ('.$fieldwheres.')';
@@ -807,7 +810,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 								   	if(strlen($_fqWhere)) $_fqWhere .= ' AND ';
 								   	$_fqWhere .=  ' ('.$fieldwheres.')';
 								   }
-								   
+
 								   $_refField = str_replace('_Id', '_Name', $types[$k]['Field']);
 								   if($this->getReferalField($types[$k]['Field']) !==false ) {
 								   	   $selectFields .=',CONCAT_WS(" - ",'.$this->getReferalField($types[$k]['Field']).') '.$_refField;
@@ -818,41 +821,50 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 								   }
 								   // include all referal Fields in the query.
 								   //$_refFields = 'R.'.str_replace(',', ',R.', $this->getReferalField($types[$k]['Field']));
-								   
-								   
-								   
+
+
+
 								   $_fn = 'R.'.$_f.'_Id Id,'.$_refFields;
 								   if(!strlen($_fqWhere )) $_fqWhere .=  '1=1';
 								   // $_fq = " SELECT DISTINCT $_fn FROM  $table R  WHERE $_fqWhere ";
 								   $_fq = " SELECT DISTINCT $_fn FROM  $reltable R LEFT JOIN  $table P ON (R.".$_f."_Id = P.".$types[$k]['Field'].") WHERE $_fqWhere ";
-								   
+
 								   if($this->isAvoidFilterCalculation($types[$k]['Field'])) {
 								   		$_ret[$types[$k]['Field']]['relData'] = array();
 								   } else {
-	                                   $relData = $this->getDataFromQuery($_fq); 
-									   if($this->error()) return false;
+                                       $relData = $this->_super->getCache('getRecordsForEdit_'.md5($_fq),3600);
+                                       if(!is_array($relData) || isset($_GET['nocache']) || isset($_GET['reload'])) {
+                                           $relData = $this->getDataFromQuery($_fq);
+                                           if ($this->error()) return false;
+                                           $this->_super->setCache('getRecordsForEdit_'.md5($_fq),$relData);
+                                       }
 	                                   $_ret[$types[$k]['Field']]['relData'] =$relData;
                                    }
-								   
+
                                } else if($this->isAutoSelectField($types[$k]['Field'])) {
                                	   $_fqWhere = '';
 								   if(($dependences = $this->getFieldDependence($types[$k]['Field'])) !== false)  $_fqWhere .=  ' ('.$dependences.')';
                                	   $_fn = $types[$k]['Field'].' AS Id,'.$types[$k]['Field'].' AS Name';
                                	   if(!strlen($_fqWhere )) $_fqWhere .=  '1=1';
-                               	   
+
                                	   $_fq = " SELECT DISTINCT $_fn FROM  $table  WHERE $_fqWhere ";
-                                   $relData = $this->getDataFromQuery($_fq); 
-								   if($this->error()) return false;
+                                   $relData = $this->_super->getCache('getRecordsForEdit_'.md5($_fq),3600);
+                                   if(!is_array($relData) || isset($_GET['nocache']) || isset($_GET['reload'])) {
+                                       $relData = $this->getDataFromQuery($_fq);
+                                       if($this->error()) return false;
+                                       $this->_super->setCache('getRecordsForEdit_'.md5($_fq),$relData);
+                                   }
                                    $_ret[$types[$k]['Field']]['relData'] =$relData;
-                               	
+
                                }
-	
-	                           // add where to Global Query: 
+
+	                           // add where to Global Query:
 							   if(($fieldwheres = $this->getWhereField($types[$k]['Field'])) !== false) {
 									$value['selectWhere'] .= ' AND   ('.$fieldwheres.')';
-							   }	
-    
-	                       } 
+							   }
+
+	                       }
+
 						   // Let see how many rows it has
                            $nrows = $this->getDataFromQuery("select count(1) TOT from $table main where ".$value['selectWhere'],$value['values']);
 						   if($this->error()) return false;

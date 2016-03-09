@@ -79,6 +79,7 @@ if (!defined("_ADNBP_CLASS_")) {
         var $system = array();
         var $__p = null;
         var $_configPaths = array();
+        var $_gzEnabled = false;
 
         /**
          * Constructor
@@ -88,6 +89,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
             $__p = Performance::getInstance();
             $this->__p = &$__p;
+            $this->_gzEnabled = (function_exists('gzcompress') && function_exists('gzuncompress'));
 
             // HTTP_REFERER
             $this->_referer = $_SERVER['HTTP_REFERER'];
@@ -168,7 +170,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
                 if (is_file($this->_rootpath . "/local_config.json")) {
                     if($this->readJSONConfig($this->_rootpath . "/local_config.json"))
-                        $_configs .= '/local_config.json - ';
+                        $_configs .= implode(' - ',$this->_configPaths).' - ';
                 }
 
                 if (is_file($this->_rootpath . "/local_config.php")) {
@@ -613,7 +615,9 @@ if (!defined("_ADNBP_CLASS_")) {
             }
             if ($_file) {
                 __p('Including logic file: ', $_file, 'note');
-                include($_file);
+                if(! @include($_file)) {
+                    $this->addError('Error including file: '.$_file);
+                }
                 __p('Including logic file: ', '', 'endnote');
             }
             // Load top
@@ -637,7 +641,9 @@ if (!defined("_ADNBP_CLASS_")) {
             }
             if ($_file) {
                 __p('Including top html: ', $_file, 'note');
-                include($_file);
+                if(! @include($_file)) {
+                    $this->addError('Error including file: '.$_file);
+                }
                 __p('Including top html: ', '', 'endnote');
             }
 
@@ -682,7 +688,9 @@ if (!defined("_ADNBP_CLASS_")) {
             }
             if ($_file) {
                 __p('Including main html: ', $_file, 'note');
-                include($_file);
+                if(! @include($_file)) {
+                    $this->addError('Error including file: '.$_file);
+                }
                 __p('Including main html: ', '', 'endnote');
             }
 
@@ -1091,7 +1099,10 @@ if (!defined("_ADNBP_CLASS_")) {
                 if (isset($this->_isAuth[$namespace]['data']))
                     unset($this->_isAuth[$namespace]['data']);
                 $this->_isAuth[$namespace]['auth'] = false;
-                $this->deleteSessionVar('UserRoles');
+                $this->resetRoles();
+                $this->resetOrganizations();
+                $this->resetPrivileges();
+
             } else {
                 $this->_isAuth[$namespace]['auth'] = true;
             }
@@ -1186,9 +1197,9 @@ if (!defined("_ADNBP_CLASS_")) {
 
             if (is_array($keys)) {
                 foreach ($keys as $key=>$value)
-                    $this->_isAuth[$namespace]['data'][$key] = $value;
+                    $this->_isAuth[$namespace]['data'][$key] = ($this->_gzEnabled) ? gzcompress(serialize($value)) : serialize($value);
             } else {
-                $this->_isAuth[$namespace]['data'][$keys] = $value;
+                $this->_isAuth[$namespace]['data'][$keys] = ($this->_gzEnabled) ? gzcompress(serialize($value)) : serialize($value);
             }
             $this->setAuth(true, $namespace);
         }
@@ -1200,10 +1211,22 @@ if (!defined("_ADNBP_CLASS_")) {
             if (!strlen($namespace))
                 return false;
 
-            if (strlen($key))
-                return ($this->_isAuth[$namespace]['data'][$key]);
-            else
-                return ($this->_isAuth[$namespace]['data']);
+            if (strlen($key)) {
+                if($this->_gzEnabled) {
+                    return (isset($this->_isAuth[$namespace]['data'][$key]))?unserialize(gzuncompress($this->_isAuth[$namespace]['data'][$key])):null;
+                } else {
+                    return (isset($this->_isAuth[$namespace]['data'][$key]))?unserialize($this->_isAuth[$namespace]['data'][$key]):null;
+                }
+            }
+
+            else {
+                $ret = $this->_isAuth[$namespace]['data'];
+                if(is_array($ret))
+                    foreach ($ret as $key=>$value) {
+                        $ret[$key] = $this->_gzEnabled ? unserialize(gzuncompress($value)) : unserialize($value);
+                    }
+                return $ret;
+            }
         }
 
         function getAuthUserNameSpace($namespace = '')
@@ -1236,7 +1259,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
         function setSessionVar($var, $value)
         {
-            $_SESSION['adnbpSessionVar_' . $var] = $value;
+            $_SESSION['adnbpSessionVar_' . $var] = $this->_gzEnabled ? gzcompress(serialize($value)) : serialize($value);
         }
 
         function deleteSessionVar($var)
@@ -1246,7 +1269,19 @@ if (!defined("_ADNBP_CLASS_")) {
 
         function getSessionVar($var)
         {
-            return ((isset($_SESSION['adnbpSessionVar_' . $var])) ? $_SESSION['adnbpSessionVar_' . $var] : null);
+            if(array_key_exists('adnbpSessionVar_' . $var, $_SESSION)) {
+                if($this->_gzEnabled) {
+                    try {
+                        $ret = unserialize(gzuncompress($_SESSION['adnbpSessionVar_' . $var]));
+                    } catch (Exception $e) {
+                        return null;
+                    }
+                    return $ret;
+                } else {
+                    return unserialize($_SESSION['adnbpSessionVar_' . $var]);
+                }
+            }
+            return null;
         }
 
 
@@ -1267,7 +1302,7 @@ if (!defined("_ADNBP_CLASS_")) {
             if (!strlen($key)) {
                 $this->_dicKeys['__internal__'][$dic] = $data;
             } else {
-                if (!strlen($lang)) $lang = $this->_lang;
+                if (!isset($lang)) $lang = $this->_lang;
                 $this->_dicKeys[$dic]->$key = ($convertHtml) ? htmlentities($data) : $data;
                 $this->dics[$dic] = true;
             }
@@ -1457,41 +1492,6 @@ if (!defined("_ADNBP_CLASS_")) {
             return (crypt($passw, $compare) == $compare);
         }
 
-        /*
-         * String replace KeyCodes
-         */
-        function strCFReplace($str)
-        {
-            $str = str_replace('CURRENT_DATE', date('Y-m-d'), $str);
-            $str = str_replace('{DirectoryOrganization_Id}', $this->getAuthUserData("currentOrganizationId"), $str);
-            $str = str_replace('{OrganizationsInGroupId}', (strlen($this->getAuthUserData("currentOrganizationsInGroupId"))) ? $this->getAuthUserData("currentOrganizationsInGroupId") : $this->getAuthUserData("currentOrganizationId"), $str);
-            $str = str_replace('{organizations_scope}', (strlen($this->getAuthUserData("organizations_scope"))) ? $this->getAuthUserData("organizations_scope") : $this->getAuthUserData("currentOrganizationId"), $str);
-
-            // Replaces getting info from  getAuthUserData
-            if (strpos($str, '{AuthUserData.') !== false) {
-                $parts = explode('{AuthUserData.', $str);
-                unset($parts[0]);
-
-                foreach ($parts as $key => $tag) {
-                    $tag = preg_replace('/}.*/', '', $tag);
-                    $subparts = explode('.', $tag);
-
-                    $value = $this->getAuthUserData($subparts[0]);
-                    unset($subparts[0]);
-                    foreach ($subparts as $key2 => $value2) {
-                        if (is_array($value)) $value = $value[$value2];
-                        elseif (is_object($value)) $value = $value->{$value2};
-                        else {
-                            $value = null;
-                            break;
-                        }
-                    }
-                    $str = str_replace('{AuthUserData.' . $tag . '}', $value, $str);
-                }
-            }
-            return ($str);
-        }
-
         function getSubstitutionsTags($str)
         {
             $ret = null;
@@ -1674,13 +1674,13 @@ if (!defined("_ADNBP_CLASS_")) {
 
         }
 
-        function getCache($str)
+        function getCache($str,$time=-1)
         {
             if ($this->_cache === null) return (null);
 
             switch ($this->_cache['type']) {
                 case 'memory':
-                    return ($this->_cache['object']->get($str));
+                    return ($this->_cache['object']->get($str,$time));
                     break;
             }
         }
@@ -1708,12 +1708,86 @@ if (!defined("_ADNBP_CLASS_")) {
 
 
         /*
+       * Manage User Organizations
+       */
+
+        function addOrganization($orgId, $orgData,$group='')
+        {
+            $_userOrganizations = $this->getSessionVar("userOrganizations");
+            if (empty($_userOrganizations))
+                $_userOrganizations = array();
+
+
+            // Default Organization
+            if(count($_userOrganizations)==0)
+                $_userOrganizations['__org__'] = $orgId;
+
+            $_userOrganizations['__orgs__'][$orgId]= $orgData;
+            if(!strlen($group)) $group = '__OTHER__';
+                $_userOrganizations['__groups__'][$group][$orgId]= true;
+
+            $this->setSessionVar("userOrganizations", $_userOrganizations);
+        }
+
+        function setOrganizationDefault($orgId) {
+            if(strlen($orgId)) {
+                $_userOrganizations = $this->getSessionVar("userOrganizations");
+                if (is_array($_userOrganizations) && isset($_userOrganizations['__orgs__'][$orgId])) {
+                    $_userOrganizations['__org__'] = $orgId;
+                    $this->setSessionVar("userOrganizations", $_userOrganizations);
+                }
+            }
+        }
+
+        function getOrganizationDefault() {
+            $_userOrganizations = $this->getSessionVar("userOrganizations");
+            if(is_array($_userOrganizations) && isset($_userOrganizations['__org__']))
+                return $_userOrganizations['__org__'];
+            else return '__orgNotNefined__';
+        }
+
+        function getOrganizations()
+        {
+            $_userOrganizations = $this->getSessionVar("userOrganizations");
+
+            if (empty($_userOrganizations)
+                || (!isset($_userOrganizations['__orgs__']))
+               )
+                return array();
+
+            return $_userOrganizations['__orgs__'];
+        }
+        function getOrganizationsGroups()
+        {
+            $_userOrganizations = $this->getSessionVar("userOrganizations");
+
+            if (empty($_userOrganizations)
+                || (!isset($_userOrganizations['__groups__']))
+            )
+                return array();
+
+            return $_userOrganizations['__groups__'];
+        }
+        function getOrganization($id='')
+        {
+            if(!strlen($id)) $id = $this->getOrganizationDefault();
+            $orgs = $this->getOrganizations();
+            if(isset($orgs[$id])) return($orgs[$id]);
+            else return null;
+        }
+
+        function resetOrganizations()
+        {
+            $this->setSessionVar("userOrganizations", array());
+        }
+
+        /*
          * Manage User Roles
          */
 
         function setRole($rolId, $rolName = '', $org = '')
         {
-            if (!strlen($org)) $org = $this->getAuthUserData("currentOrganizationId");
+            if (!strlen($org)) $org = $this->getOrganizationDefault();
             if (!strlen($rolName)) $rolName = $rolId;
 
             $_userRoles = $this->getSessionVar("UserRoles");
@@ -1727,7 +1801,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
         function hasRoleId($rolId, $org = '')
         {
-            if (!strlen($org)) $org = $this->getAuthUserData("currentOrganizationId");
+            if (!strlen($org)) $org = $this->getOrganizationDefault();
             $_userRoles = $this->getSessionVar("UserRoles");
             if (empty($_userRoles))
                 $_userRoles = array();
@@ -1746,7 +1820,7 @@ if (!defined("_ADNBP_CLASS_")) {
         function hasRoleName($roleName, $org = '')
         {
             if (!strlen($org))
-                $org = $this->getAuthUserData("currentOrganizationId");
+                $org = $this->getOrganizationDefault();
             $_userRoles = $this->getSessionVar("UserRoles");
             if (empty($_userRoles))
                 $_userRoles = array();
@@ -1766,10 +1840,61 @@ if (!defined("_ADNBP_CLASS_")) {
             $this->setSessionVar("UserRoles", array());
         }
 
-        function getRoles()
+        function getRoles($org='')
         {
-            return ($this->getSessionVar("UserRoles"));
+            if (!strlen($org))
+                $org = $this->getOrganizationDefault();
+
+            $ret = $this->getSessionVar("UserRoles");
+            if(!is_array($ret)) $ret = [];
+            else {
+
+                if(strlen($org)) $ret = (isset($ret[$org]))?$ret[$org]:[];
+            }
+            return ($ret);
         }
+
+
+        /*
+         * Manage User Privileges by App
+         */
+
+        function setPrivilege($appId, $privileges = array(), $org = '')
+        {
+            if (!strlen($org)) $org = $this->getOrganizationDefault();
+
+            $_userPrivileges = $this->getSessionVar("UserPrivileges");
+            if (empty($_userPrivileges))
+                $_userPrivileges = array();
+
+            $_userPrivileges[$org][$appId] = $privileges;
+            $this->setSessionVar("UserPrivileges", $_userPrivileges);
+        }
+
+        function getPrivileges($appId='',$privilege='' , $org = '')
+        {
+            if (!strlen($org)) $org = $this->getOrganizationDefault();
+            $_userPrivileges = $this->getSessionVar("UserPrivileges");
+
+            if (empty($_userPrivileges)
+                || (strlen($appId) && !isset($_userPrivileges[$org][$appId]))
+                || (strlen($privilege) && !isset($_userPrivileges[$org][$appId][$privilege])))
+                return null;
+
+            if(!strlen($appId)) return $_userPrivileges[$org];
+            elseif(!strlen($privilege)) return $_userPrivileges[$org][$appId];
+            else return $_userPrivileges[$org][$appId][$privilege];
+        }
+
+        function resetPrivileges()
+        {
+            $this->setSessionVar("UserPrivileges", array());
+        }
+
+
+        /*
+         * Number Format
+         */
 
         function numberFormat($n, $decs = 0)
         {
