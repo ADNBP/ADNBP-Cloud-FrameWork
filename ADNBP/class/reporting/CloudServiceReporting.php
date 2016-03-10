@@ -170,37 +170,42 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                             if (!is_array($fieldCond)) {
                                 $fieldCond = array(  '=', $fieldCond );
                             }
+                            if (!isset($row[$key])) $row[$key]='';
                             switch (strtolower($fieldCond[0])) {
                                 case '=':
-                                    if (!isset($row[$key]) || $row[$key] != $fieldCond[1]) $inc = false;
+                                    if ( $row[$key] != $fieldCond[1]) $inc = false;
                                     break;
                                 case '>':
                                 case '>=':
                                 case '<':
                                 case '<=':
                                     $inc = false;
-                                    if (isset($row[$key])) {
-                                        $op = strtolower($fieldCond[0]);
-                                        if($op =='>')
-                                            $inc = (trim($row[$key]) > trim($fieldCond[1]));
-                                        else if($op =='>=')
-                                            $inc = (trim($row[$key]) >= trim($fieldCond[1]));
-                                        else if($op =='<')
-                                            $inc = (trim($row[$key]) < trim($fieldCond[1]));
-                                        else if($op =='<=')
-                                            $inc = (trim($row[$key]) <= trim($fieldCond[1]));
-                                    }
+                                    $op = strtolower($fieldCond[0]);
+                                    if(!strlen($row[$key])) $row[$key] = 0;
+                                    if($op =='>')
+                                        $inc = (trim($row[$key]) > trim($fieldCond[1]));
+                                    else if($op =='>=')
+                                        $inc = (trim($row[$key]) >= trim($fieldCond[1]));
+                                    else if($op =='<')
+                                        $inc = (trim($row[$key]) < trim($fieldCond[1]));
+                                    else if($op =='<=')
+                                        $inc = (trim($row[$key]) <= trim($fieldCond[1]));
                                     break;
+
                                 case '!=':
-                                    if (!isset($row[$key]) || trim($row[$key]) == trim($fieldCond[1])) $inc = false;
+                                    if ( trim($row[$key]) == trim($fieldCond[1])) $inc = false;
+
                                     break;
                                 case 'like':
-                                    if (!isset($row[$key]) || stripos($row[$key],$fieldCond[1])===false) $inc = false;
+                                    if (stripos($row[$key],$fieldCond[1])===false) $inc = false;
                                     break;
                                 case 'not like':
-                                    if (!isset($row[$key]) || stripos($row[$key],$fieldCond[1])!==false) $inc = false;
+
+                                    if (stripos($row[$key],$fieldCond[1])!==false) $inc = false;
                                     break;
                             }
+
+                            if(!$inc) break;  // if there is a condition with false, break the loop.
                         }
 
                         // Add Row if $inc is true

@@ -1271,7 +1271,12 @@ if (!defined("_ADNBP_CLASS_")) {
         {
             if(array_key_exists('adnbpSessionVar_' . $var, $_SESSION)) {
                 if($this->_gzEnabled) {
-                    return unserialize(gzuncompress($_SESSION['adnbpSessionVar_' . $var]));
+                    try {
+                        $ret = unserialize(gzuncompress($_SESSION['adnbpSessionVar_' . $var]));
+                    } catch (Exception $e) {
+                        return null;
+                    }
+                    return $ret;
                 } else {
                     return unserialize($_SESSION['adnbpSessionVar_' . $var]);
                 }
