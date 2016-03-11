@@ -75,7 +75,6 @@ class GoogleStrategy extends OpauthStrategy{
 
 			if (!empty($results) && !empty($results->access_token)){
 				$userinfo = $this->userinfo($results->access_token);
-
 				$this->auth = array(
 						'uid' => $userinfo['id'],
 						'info' => array(),
@@ -88,6 +87,11 @@ class GoogleStrategy extends OpauthStrategy{
 				if (!empty($results->refresh_token))
 				{
 					$this->auth['credentials']['refresh_token'] = $results->refresh_token;
+				}
+
+				if (!empty($results->id_token))
+				{
+					$this->auth['credentials']['id_token'] = $results->id_token;
 				}
 
 				$this->mapProfile($userinfo, 'name', 'info.name');
