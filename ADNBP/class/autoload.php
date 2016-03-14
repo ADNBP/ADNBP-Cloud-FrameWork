@@ -9,8 +9,6 @@
     //CloudFramework
     require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'cloudframework-io' . DIRECTORY_SEPARATOR . 'autoload.php';
 
-    //Social network autoloader
-    require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'socialnetworks' . DIRECTORY_SEPARATOR . 'autoload.php';
     //Notifications autoloader
     require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'notifications' . DIRECTORY_SEPARATOR . 'autoload.php';
     //Datastore autoloader
