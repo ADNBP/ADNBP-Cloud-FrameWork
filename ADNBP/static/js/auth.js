@@ -28,10 +28,10 @@ $(document).ready(function() {
 			$('#CloudServiceInputPassword').focus();
 		} else {
 			$('#CloudServiceAuthButton').text( $('#CloudServiceAuthButton').attr('data-sending'));
-			$.post('/api/auth'
+			$.post('/api/cf_credentials/signin?scope=roles'
 			,{  "user":$('#CloudServiceInputUser').val()
 			    ,"password": $('#CloudServiceInputPassword').val()
-			    ,"clientfingerprint": 'improving'
+			    
 			 } 
 			,function(ret) {
 				if(ret.success) {

@@ -915,6 +915,7 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 	                        $this->command($_q,array_merge($value['values']));
 						}
 						if($this->error()) return false;
+                        else return $this->_affectedRows;
                         
                         break;
                     default:
