@@ -2,7 +2,8 @@
 /**
  * Opauth Strategy
  * Individual strategies are to be extended from this class
- *
+ * Based: https://github.com/dirkgroenen/Pinterest-API-PHP & Pinterest
+ * 
  * @copyright    Copyright © 2012 U-Zyn Chua (http://uzyn.com)
  * @link         http://opauth.org
  * @package      Opauth.Strategy

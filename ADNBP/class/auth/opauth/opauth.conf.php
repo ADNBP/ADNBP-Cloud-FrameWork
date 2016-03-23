@@ -4,6 +4,7 @@
  * ==========================================================
  * To use: rename to opauth.conf.php and tweak as you like
  * If you require advanced configuration options, refer to opauth.conf.php.advanced
+ * https://github.com/opauth/opauth/wiki/List-of-strategies
  */
 
 
