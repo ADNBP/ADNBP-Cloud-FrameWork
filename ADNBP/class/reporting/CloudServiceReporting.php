@@ -583,6 +583,9 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
 
             foreach ($rowData as $key=> $item) {
                 if($y==0)  $y=$ncols; // Start the index under the cols
+                if(isset($props[$nrow]['link'])) {
+                    $props[$nrow]['link'] = $this->super->applyVarsSubsitutions($props[$nrow]['link'],array_map(urlencode,['self'=>$key]));
+                }
                 $output[$y][$nrow] = array_merge(array('value'=>$key,'stringIndex'=>((strlen($stringIndex))?$stringIndex.'|f|':'').$key),$props[$nrow]);
                 $lastY=$y;
                 if($nrow+1 < $nrows)
