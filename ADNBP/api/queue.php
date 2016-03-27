@@ -9,6 +9,9 @@ unset($api->formParams['_raw_input_']);
 
 $api->formParams['cloudframework_queued'] = true;
 $api->formParams['cloudframework_queued_id'] = uniqid('queue',true);
+$api->formParams['cloudframework_queued_ip'] = $this->_ip;
+$api->formParams['cloudframework_queued_fingerprint'] = json_encode($this->getRequestFingerPrint(),JSON_PRETTY_PRINT);
+
 $headers = $this->getHeaders();
 
 $value['url_queued'] =$_url;

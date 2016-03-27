@@ -1966,8 +1966,18 @@ if (!defined("_ADNBP_CLASS_")) {
             $params['text'] = $text . ((strlen($text)) ? "\n\n" : '');
             if ($this->error) $params['text'] .= "Errors: " . json_encode($this->errorMsg,JSON_PRETTY_PRINT) . "\n\n";
             if (count($this->_log)) $params['text'] .= "Errors: " . json_encode($this->errorMsg,JSON_PRETTY_PRINT);
-            $params['ip'] = $this->_ip;
-            $params['fingerprint'] = json_encode($this->getRequestFingerPrint(),JSON_PRETTY_PRINT);
+
+            // IP gathered from queue
+            if(isset($_REQUEST['cloudframework_queued_ip']))
+                $params['ip'] = $_REQUEST['cloudframework_queued_ip'];
+            else
+                $params['ip'] = $this->_ip;
+
+            // IP gathered from queue
+            if(isset($_REQUEST['cloudframework_queued_fingerprint']))
+                $params['fingerprint'] = $_REQUEST['cloudframework_queued_fingerprint'];
+            else
+                $params['fingerprint'] = json_encode($this->getRequestFingerPrint(),JSON_PRETTY_PRINT);
 
             // Tell the service to send email of the report.
             if (strlen($email) && $this->validateField($email, 'email'))
