@@ -1972,10 +1972,8 @@ if (!defined("_ADNBP_CLASS_")) {
             // Tell the service to send email of the report.
             if (strlen($email) && $this->validateField($email, 'email'))
                 $params['email'] = $email;
-            //_printe($app,$text,$params);
             if ($this->getConf('CloudServiceLog')) {
-                if ($interactive) $params['interactive'] = 1;
-                $ret = json_decode($this->getCloudServiceResponse('queue/log/' . urlencode($app) . '/' . urlencode($type), $params, 'POST'));
+                $ret = json_decode($this->getCloudServiceResponse('queue/cf_logs/' . urlencode($app) . '/' . urlencode($type), $params, 'POST'));
                 if (!$ret->success) $this->addError($ret);
                 return ($ret);
             } else {
