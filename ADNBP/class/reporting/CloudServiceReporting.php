@@ -8,21 +8,18 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
         var $errorMsg = array();
         var $data = array();
         var $db = null;
+        var $ds = null;
         var $super = null;
         var $queryResults = array();
         var $matrixReports = array();
 
         var $filters = array();
         
-        function __construct(&$db=null) {
+        function __construct() {
             global $adnbp;
             $this->super = &$adnbp;
             $this->super->initCache();
-
-
         }
-
-
 
         /**
          * Add filter for the report
@@ -88,9 +85,11 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
          * @param $data array with the potential parameters %s of $q
          * @return bool
          */
-        function createCubeFromQuery($cubeId, $q, $data=null) {return($this->query($cubeId, $q, $data));}
+        function createCubeFromQuery($cubeId, $q, $data=null) {return($this->DBquery($cubeId, $q, $data));}
+        function createCubeFromDBQuery($cubeId, $q, $data=null) {return($this->DBquery($cubeId, $q, $data));}
+        function createCubeFromDSQuery($cubeId, $q, $data=null) {return($this->DSquery($cubeId, $q, $data));}
         // Alias
-        function query($cubeId, $q, $data=null) {
+        function DBquery($cubeId, $q, $data=null) {
             if($this->error) return false;
             $q = "SELECT ".$q;
             
@@ -130,6 +129,40 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
         //Close the db connection of a query.
         function queryEnd() {
             if(is_object($this->db)) $this->db->close();
+        }
+
+        function DSquery($cubeId, $q, $data=null) {
+            if($this->error) return false;
+            if(!is_object($this->ds)) {
+                $this->setError('No DataStore Object assigned. Use: reportObject->ds = &$DataStoreObject');
+                return false;
+            }
+            $q = "SELECT ".$q;
+            // Check cache
+            if(!isset($_REQUEST['reload'])) {
+                $this->queryResults[$cubeId]['data'] = $this->super->getCache('Reporting_'.$cubeId.'_'.md5($cubeId.$q.json_encode($data)));
+                if(is_array($this->queryResults[$cubeId]['data'])) {
+                    return true;
+                }
+            }
+
+
+
+            // Query
+            $ret = $this->ds->query($q,$data);
+            _printe($ret);
+
+            //$this->queryResults[$cubeId]['query'] = $this->ds->getQuery();
+            if(!$this->ds->error()) {
+                $this->queryResults[$cubeId]['data'] = $ret;
+                $this->super->setCache('Reporting_'.$cubeId.'_'.md5($cubeId.$q.json_encode($data)),$ret);
+                unset($ret);
+                return true;
+            } else {
+                $this->addError($this->ds->getError());
+                //$this->addError($this->db->getQuery()); //TODO: Securize this output
+                return false;
+            }
         }
 
         /**
