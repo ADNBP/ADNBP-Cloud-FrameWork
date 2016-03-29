@@ -1168,7 +1168,7 @@ if (!defined("_ADNBP_CLASS_")) {
                 $this->addLog('conf-var CLOUDFRAMEWORK-ID-' . $id . ' missing.');
             } else {
                 if (!strlen($time)) $time = microtime(true);
-                $date = new DateTime(null, new DateTimeZone('UTC'));
+                $date = new \DateTime(null, new \DateTimeZone('UTC'));
                 $time += $date->getOffset();
                 $ret = $id . '__UTC__' . $time;
                 $ret .= '__' . hash_hmac('sha1', $ret, $secret);

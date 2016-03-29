@@ -11,5 +11,6 @@
 
     //Notifications autoloader
     require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'notifications' . DIRECTORY_SEPARATOR . 'autoload.php';
-    //Datastore autoloader
+
+    //Notifications autoloader
     require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'datastore' . DIRECTORY_SEPARATOR . 'autoload.php';
