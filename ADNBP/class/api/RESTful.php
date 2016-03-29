@@ -194,11 +194,10 @@ if (!defined ("_RESTfull_CLASS_") ) {
 			 $this->returnData = $response; 
 		}
         function updateReturnResponse($response) {
-            if(is_array($this->returnData))
-            foreach ($this->returnData as $key => $value) {
-                if(!isset($response[$key])) $response[$key] = $value;
-            }
-            $this->returnData = $response; 
+            if(is_array($response))
+				foreach ($response as $key => $value) {
+					$this->returnData[$key] =$value;
+				}
         }
 
 		function setReturnData($data) {
