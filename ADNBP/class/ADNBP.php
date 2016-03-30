@@ -80,6 +80,7 @@ if (!defined("_ADNBP_CLASS_")) {
         var $__p = null;
         var $_configPaths = array();
         var $_gzEnabled = false;
+        var $_responseHeaders = null;
 
         /**
          * Constructor
@@ -871,7 +872,12 @@ if (!defined("_ADNBP_CLASS_")) {
             $ret = $this->getCache($_qHash);
             if (isset($_GET['reload']) || isset($_REQUEST['CF_cleanCache']) || $ret === false || $ret === null) {
                 $ret = $this->getCloudServiceResponse($rute, $data, $verb, $extraheaders, $raw);
-                $this->setCache($_qHash, $ret);
+
+                // Only cache successful responses.
+                $headers = $this->getCloudServiceResponseHeaders();
+                if(is_array($headers) && isset($headers[0]) && strpos($headers[0],'OK')) {
+                    $this->setCache($_qHash, $ret);
+                }
             }
             return ($ret);
         }
@@ -881,6 +887,9 @@ if (!defined("_ADNBP_CLASS_")) {
             return (hash('md5', $value));
         }
 
+        function getCloudServiceResponseHeaders() {
+            return $this->_responseHeaders;
+        }
 
         /**
          * Call External Cloud Service
@@ -941,9 +950,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
                     // You have to calculate the Content-Length to run as script
                     $options['http']['header'] .= sprintf('Content-Length: %d', strlen($build_data)) . "\r\n";
-
                 }
-
 
             // Context creation
             $context = stream_context_create($options);
@@ -951,6 +958,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
             try {
                 $ret = @file_get_contents($_url, false, $context);
+                $this->_responseHeaders = $http_response_header;
                 if ($ret === false) $this->addError(error_get_last());
             } catch (Exception $e) {
                 $this->addError(error_get_last());
