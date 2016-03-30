@@ -776,6 +776,9 @@ if (!defined("_ADNBP_CLASS_")) {
             __p('Calling getGeoCityIP(' . $ip . ')', 'https://1-dot-adnbp-first-web-site.appspot.com/api/cf_geocityip?' . $_ip, 'time');
 
             $ret = json_decode($this->getCloudServiceResponseCache('https://1-dot-adnbp-first-web-site.appspot.com/api/cf_geocityip?' . $_ip), true);
+            if(!array_key_exists('data', $ret)) {
+                return array();
+            }
             // Patch to avoid
             return ($ret['data']);
         }
