@@ -411,6 +411,27 @@ class Insightly{
         }
         return $request->body($opportunity)->asJSON();
     }
+
+    public function getOpportunitiesCount($options = null){
+        $request = $this->GET("/v2.2/Opportunities?brief=true&count_total=true&top=1");
+        $ret = $request->asString(true);
+        list($headerText,$body) = explode("\r\n\r\n",$ret,2);
+        $headerLines = explode("\r\n",$headerText);
+        foreach ($headerLines as $line) {
+            list($key,$value) = explode(": ",$line);
+            $header[$key] = $value;
+        }
+        return($header['X-Total-Count']);
+    }
+
+    public function getOpportunitiesSearch($options = null){
+        $request = $this->GET("/v2.2/Opportunities");
+        $this->buildODataQuery($request, $options);
+        return $request->asJSON();
+    }
+    
+    
+    
     public function deleteOpportunity($id){
         $this->DELETE("/v2.1/Opportunities/$id")->asString();
         return true;
@@ -1346,12 +1367,15 @@ class InsightlyRequest{
      * @throws Exception
      * @return string
      */
-    public function asString(){
+    public function asString($returnHeader=false){
         // This may be useful for debugging
         //curl_setopt($this->curl, CURLOPT_VERBOSE, true);
         $url =  InsightlyRequest::URL_BASE . $this->url_path . $this->buildQueryString();
         curl_setopt($this->curl, CURLOPT_URL, $url);
         curl_setopt($this->curl, CURLOPT_HTTPHEADER, $this->headers);
+        if($returnHeader)
+            curl_setopt($this->curl, CURLOPT_HEADER, 1);
+
         $response = curl_exec($this->curl);
         $errno = curl_errno($this->curl);
         if($errno != 0){
@@ -1363,6 +1387,7 @@ class InsightlyRequest{
         }
         return $response;
     }
+
     /**
      * Return decoded JSON response
      *
