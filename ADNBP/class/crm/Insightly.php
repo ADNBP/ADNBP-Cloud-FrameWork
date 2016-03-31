@@ -424,9 +424,11 @@ class Insightly{
         return($header['X-Total-Count']);
     }
 
-    public function getOpportunitiesSearch($options = null){
+    public function getOpportunitiesV2($options = null){
         $request = $this->GET("/v2.2/Opportunities");
-        $this->buildODataQuery($request, $options);
+        if(is_array($options))
+            foreach ($options as $key=>$value)
+                $request->queryParam($key, $value);
         return $request->asJSON();
     }
     
@@ -738,6 +740,7 @@ class Insightly{
         }
         return $request;
     }
+
     /**
      * Create GET request
      *
