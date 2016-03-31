@@ -616,7 +616,7 @@ if (!defined("_ADNBP_CLASS_")) {
             }
             if ($_file) {
                 __p('Including logic file: ', $_file, 'note');
-                if(! @include($_file)) {
+                if(! include($_file)) {
                     $this->addError('Error including file: '.$_file);
                 }
                 __p('Including logic file: ', '', 'endnote');
@@ -642,7 +642,7 @@ if (!defined("_ADNBP_CLASS_")) {
             }
             if ($_file) {
                 __p('Including top html: ', $_file, 'note');
-                if(! @include($_file)) {
+                if(! include($_file)) {
                     $this->addError('Error including file: '.$_file);
                 }
                 __p('Including top html: ', '', 'endnote');
