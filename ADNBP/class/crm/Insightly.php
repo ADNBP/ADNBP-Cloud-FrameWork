@@ -402,7 +402,7 @@ class Insightly{
             $return = $this->getOpportunities(array("top" => 1));
             return $return[0];
         }
-        $url_path = "/v2.1/Opportunities";
+        $url_path = "/v2.2/Opportunities";
         if(isset($opportunity->OPPORTUNITY_ID) && ($opportunity->OPPORTUNITY_ID > 0)){
             $request = $this->PUT($url_path);
         }
