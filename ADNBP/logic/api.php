@@ -115,6 +115,8 @@ if(!strlen($api->service)) {
 				$ret['errors'] = $this->errorMsg;
             
             $ret['_totTime'] = $__p->data['init']['include_logic'][$this->_url]['time'];
+
+			if(count($api->rewrite)) $ret = $api->rewrite;
             die(json_encode($ret));    
 			               
             break;

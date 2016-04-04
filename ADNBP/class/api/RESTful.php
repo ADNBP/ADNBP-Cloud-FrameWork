@@ -25,6 +25,7 @@ if (!defined ("_RESTfull_CLASS_") ) {
 		var $service ='';
 		var $serviceParam ='';
         var $org_id='';
+		var $rewrite = [];
         
         function RESTful ($apiUrl='/api') {
         	
@@ -199,6 +200,10 @@ if (!defined ("_RESTfull_CLASS_") ) {
 					$this->returnData[$key] =$value;
 				}
         }
+
+		function rewriteReturnResponse($response) {
+			$this->rewrite = $response;
+		}
 
 		function setReturnData($data) {
 			 $this->returnData['data'] = $data; 
