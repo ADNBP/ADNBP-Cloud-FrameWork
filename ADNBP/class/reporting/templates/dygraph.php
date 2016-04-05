@@ -9,7 +9,7 @@
 <div id="dygraph_<?=$controlVars->reportNumber.'_'.md5($data->title)?>" style="width:100%; height:300px;"></div>
 
 <!-- DYGRAPH -->
-<?php if(!$controlVars->dygraphJS){?><script src="<?=$this->getConf('urlPrefix')?>/adnbp-public/static/v1/sa151/js/plugin/dygraphs/dygraph-combined.min.js"></script><?php $controlVars->dypgraphJS = true;} ?>
+<?php if(!$controlVars->dygraphJS){?><script src="<?=$this->super->getConf('urlPrefix')?>/adnbp-public/static/v1/sa151/js/plugin/dygraphs/dygraph-combined.min.js"></script><?php $controlVars->dypgraphJS = true;} ?>
 <script type="text/javascript">
     <?php if(is_array($data->rows)) {?>
     function dygraph_<?=$controlVars->reportNumber.'_'.md5($data->title)?>_data(){
