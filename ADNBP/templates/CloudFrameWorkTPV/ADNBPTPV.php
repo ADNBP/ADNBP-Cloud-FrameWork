@@ -45,7 +45,7 @@
   			  	  			  	  
 	         <div class="input-group">
 		       <?php if($this->getConf("TPV_requireAuth") && !strlen($this->getConf("TPV_ClientId"))) {?>
-		       <a href='/CloudFrameWorkOauth/google?ret=<?=urlencode($_SERVER['REQUEST_URI'])?>'><img src ='/ADNBP/static/img/sign-in-with-google.png' alt='Google Auth' width=220 ></a>	
+		       <a href='/CloudFrameWorkOauth/google?ret=<?=urlencode($_SERVER['REQUEST_URI'])?>'><img src ='<?=$this->getConf('urlPrefix')?>/adnbp-public/static/v1/img/sign-in-with-google.png' alt='Google Auth' width=220 ></a>	
 			   <?php } else { ?>
 	       	
            <?php if(!strlen($this->getConf("TPV_ClientId")))  {?>

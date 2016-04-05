@@ -16,18 +16,18 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>ADNBP Business Performance | Welcome</title>
         
-        <link rel="shortcut icon" href="/ADNBP/static/img/ico/favicon.ico">  
-        <link rel="apple-touch-icon" href="/ADNBP/static/img/apple-touch-icon-iphone.png" /> 
-        <link rel="apple-touch-icon" sizes="72x72" href="/ADNBP/static/img/ico/apple-touch-icon-ipad.png" /> 
-        <link rel="apple-touch-icon" sizes="114x114" href="/ADNBP/static/img/ico/apple-touch-icon-iphone4.png" />
-        <link rel="apple-touch-icon" sizes="144x144" href="/ADNBP/static/img/ico/apple-touch-icon-ipad3.png" />    
+        <link rel="shortcut icon" href="<?=$this->getConf('urlPrefix')?>/adnbp-public/static/v1/img/ico/favicon.ico">  
+        <link rel="apple-touch-icon" href="<?=$this->getConf('urlPrefix')?>/adnbp-public/static/v1/img/apple-touch-icon-iphone.png" /> 
+        <link rel="apple-touch-icon" sizes="72x72" href="<?=$this->getConf('urlPrefix')?>/adnbp-public/static/v1/img/ico/apple-touch-icon-ipad.png" /> 
+        <link rel="apple-touch-icon" sizes="114x114" href="<?=$this->getConf('urlPrefix')?>/adnbp-public/static/v1/img/ico/apple-touch-icon-iphone4.png" />
+        <link rel="apple-touch-icon" sizes="144x144" href="<?=$this->getConf('urlPrefix')?>/adnbp-public/static/v1/img/ico/apple-touch-icon-ipad3.png" />    
             
-        <link rel="stylesheet" href="/ADNBP/static/css/foundation.css" />
-        <link rel="stylesheet" type="text/css" href="/ADNBP/static/css/jquery.vegas.css" />
-        <link rel="stylesheet" href="/ADNBP/static/css/adnbp.css">
-        <link rel="stylesheet" href="/ADNBP/static/css/animate.css">
+        <link rel="stylesheet" href="<?=$this->getConf('urlPrefix')?>/adnbp-public/static/v1/css/foundation.css" />
+        <link rel="stylesheet" type="text/css" href="<?=$this->getConf('urlPrefix')?>/adnbp-public/static/v1/css/jquery.vegas.css" />
+        <link rel="stylesheet" href="<?=$this->getConf('urlPrefix')?>/adnbp-public/static/v1/css/adnbp.css">
+        <link rel="stylesheet" href="<?=$this->getConf('urlPrefix')?>/adnbp-public/static/v1/css/animate.css">
             
-        <script src="/ADNBP/static/js/modernizr.js"></script>
+        <script src="<?=$this->getConf('urlPrefix')?>/adnbp-public/static/v1/js/modernizr.js"></script>
     </head>
   
 <body id="home">
@@ -35,14 +35,14 @@
             <section class="section-home">  
                 <div class="row">
                     <div class="large-12 columns text-center  animated fadeInDownBig"  style="margin-bottom:-50px;">
-                        <img class="logo" src="/ADNBP/static/img/logo.png"><br />
+                        <img class="logo" src="<?=$this->getConf('urlPrefix')?>/adnbp-public/static/v1/img/logo.png"><br />
                         <a href="/CloudFrameWork">[Go to ADNBP Cloud FrameWork <?=$this->version();?>]</a> 
                     </div>
                 </div>
             </section>          
     
-    <script src="/ADNBP/static/js/jquery.js"></script>
-    <script src="/ADNBP/static/js/foundation.min.js"></script>
+    <script src="<?=$this->getConf('urlPrefix')?>/adnbp-public/static/v1/js/jquery.js"></script>
+    <script src="<?=$this->getConf('urlPrefix')?>/adnbp-public/static/v1/js/foundation.min.js"></script>
     <!--
     <script src="js/foundation/foundation.js"></script>
     <script src="js/foundation/foundation.topbar.js"></script>
@@ -55,18 +55,19 @@
         $('.off-canvas-wrap').removeClass('move-right');
     });
     </script>
-    <script type="text/javascript" src="/ADNBP/static/js/jquery.vegas.js"></script>
+    <script type="text/javascript" src="<?=$this->getConf('urlPrefix')?>/adnbp-public/static/v1/js/jquery.vegas.js"></script>
     
     <script type="text/javascript">
+        var _urlPrefix = '<?=$this->getConf('urlPrefix')?>';
         $.vegas('slideshow', {
             delay:10000,
           backgrounds:[
-            { src:'/ADNBP/static/img/bg0.jpg', fade:1000 },
-            { src:'/ADNBP/static/img/bg1.jpg', fade:1000 },
-            { src:'/ADNBP/static/img/bg2.jpg', fade:1000 },
-            { src:'/ADNBP/static/img/bg3.jpg', fade:1000 },
-            { src:'/ADNBP/static/img/bg4.jpg', fade:1000 },
-            { src:'/ADNBP/static/img/bg5.jpg', fade:1000 }
+            { src:_urlPrefix+'/adnbp-public/static/v1/img/bg0.jpg', fade:1000 },
+            { src:_urlPrefix+'/adnbp-public/static/v1/img/bg1.jpg', fade:1000 },
+            { src:_urlPrefix+'/adnbp-public/static/v1/img/bg2.jpg', fade:1000 },
+            { src:_urlPrefix+'/adnbp-public/static/v1/img/bg3.jpg', fade:1000 },
+            { src:_urlPrefix+'/adnbp-public/static/v1/img/bg4.jpg', fade:1000 },
+            { src:_urlPrefix+'/adnbp-public/static/v1/img/bg5.jpg', fade:1000 }
           ]
         })('overlay', {
           /** src:'/overlays/05.png' **/
@@ -131,8 +132,8 @@
         });
     </script>
     <!-- FIN JS para Scroll suave desde .mainmenu -->
-<script type="text/javascript" src="/ADNBP/static/js/formy.js"></script>
-<script type="text/javascript" src="/ADNBP/static/js/jquery.simplyscroll.min.js"></script>
+<script type="text/javascript" src="<?=$this->getConf('urlPrefix')?>/adnbp-public/static/v1/js/formy.js"></script>
+<script type="text/javascript" src="<?=$this->getConf('urlPrefix')?>/adnbp-public/static/v1/js/jquery.simplyscroll.min.js"></script>
 
   </body>
 </html>

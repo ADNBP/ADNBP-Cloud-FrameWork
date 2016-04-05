@@ -8,7 +8,7 @@
     <meta name="author" content="ADNBP Business & IT Solutions.">
 
     <!-- Bootstrap theme -->
-    <link href="/ADNBP/static/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="<?=$this->getConf('urlPrefix')?>/adnbp-public/static/v1/css/bootstrap.min.css" rel="stylesheet" media="screen">
 
     <style type="text/css">
 		body {
@@ -33,7 +33,7 @@
       <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
 
-    <script src="/ADNBP/static/js/adnbpcloudframework.js"></script>
+    <script src="<?=$this->getConf('urlPrefix')?>/adnbp-public/static/v1/js/adnbpcloudframework.js"></script>
     <script>
         _adnbpKeepSession=0;  // Change this milliseconds value >0 to activate keepSession
         keepSession();
@@ -48,11 +48,11 @@
          <?php } ?>
 
     <!-- Fav and touch icons -->
-    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/ADNBP/static/img/ico/apple-touch-icon-ipad3.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="/ADNBP/static/img/ico/apple-touch-icon-iphone4.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="/ADNBP/static/img/ico/apple-touch-icon-ipad.png" />
-    <link rel="apple-touch-icon-precomposed" href="/ADNBP/static/img/ico/apple-touch-icon-iphone.png" />
-    <link rel="shortcut icon" href="<?=((strlen($this->getConf('favicon')))?$this->getConf('favicon'):'/ADNBP/static/img/ico/favicon.ico')?>">
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="<?=$this->getConf('urlPrefix')?>/adnbp-public/static/v1/img/ico/apple-touch-icon-ipad3.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="<?=$this->getConf('urlPrefix')?>/adnbp-public/static/v1/img/ico/apple-touch-icon-iphone4.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="<?=$this->getConf('urlPrefix')?>/adnbp-public/static/v1/img/ico/apple-touch-icon-ipad.png" />
+    <link rel="apple-touch-icon-precomposed" href="<?=$this->getConf('urlPrefix')?>/adnbp-public/static/v1/img/ico/apple-touch-icon-iphone.png" />
+    <link rel="shortcut icon" href="<?=((strlen($this->getConf('favicon')))?$this->getConf('favicon'):$this->getConf('urlPrefix').'/adnbp-public/static/v1/img/ico/favicon.ico')?>">
 
 
     </head>

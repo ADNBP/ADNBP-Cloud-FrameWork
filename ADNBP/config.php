@@ -24,3 +24,5 @@ $this->system['stream_context_default']['http']['header'] = 'Connection: close' 
 // About Buckets
 // -- it is used in {bucket:<bucketname-path>} tags.
 $this->setConf('BucketPrefix','gs://');  // Change to $_SERVER['DOCUMENT_ROOT'].'{dirpath}' for development writable/readble dirs
+$this->setConf('pathPrefix','gs:/');
+$this->setConf('urlPrefix','https://storage.googleapis.com');
