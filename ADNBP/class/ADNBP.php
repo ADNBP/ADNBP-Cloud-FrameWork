@@ -970,15 +970,77 @@ if (!defined("_ADNBP_CLASS_")) {
             return ($ret);
         }
 
+        /*
+         * BASIC AUTH
+         */
+        function existBasicAuth() {
+            return isset($_SERVER['PHP_AUTH_USER']) || isset($_SERVER['HTTP_AUTHORIZATION']);
+        }
+
+        function getDataFromBasicAuth() {
+            $username = null;
+            $password = null;
+            // mod_php
+            if (isset($_SERVER['PHP_AUTH_USER'])) {
+                $username = $_SERVER['PHP_AUTH_USER'];
+                $password = $_SERVER['PHP_AUTH_PW'];
+                // most other servers
+            } elseif (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+                if (strpos(strtolower($_SERVER['HTTP_AUTHORIZATION']),'basic')===0)
+                    list($username,$password) = explode(':',base64_decode(substr($_SERVER['HTTP_AUTHORIZATION'], 6)));
+            }
+            return([$username,$password]);
+        }
+
         function checkBasicAuth($user, $passw)
         {
-            include_once(dirname(__FILE__) . '/ADNBP/checkBasicAuth.php');
-            return $res;
+            list($username,$password) = $this->getDataFromBasicAuth();
+            return (!is_null($username) && $user==$username && $passw==$password);
+        }
+
+
+        /*
+         * API KEY
+         */
+        function existAPIKey() {
+        }
+        function getDataFromAPIKey() {
+
+        }
+
+        function checkAPIKey() {
+
         }
 
         function checkAPIAuth(&$msg)
         {
-            include_once(dirname(__FILE__) . '/ADNBP/checkAPIAuth.php');
+            $msgerror ='';
+            // Auth Process
+            if(!strlen($this->getHeader('X-Cloudservice-Id'))) $msgerror.="(Missing X-Cloudservice-Id Header)";
+            else {
+                $token = $this->getConf("CloudServiceToken-".$this->getHeader('X-Cloudservice-Id'));
+                if(!strlen($token)) $msgerror.="(X-Cloudservice-Id doesn't exist)";
+            }
+
+            if(!strlen($this->getHeader('X-Cloudservice-Date'))) $msgerror.="(Missing X-Cloudservice-Date Header)";
+            else {
+                $date = $this->getHeader('X-Cloudservice-Date');
+                // Check control if Date is too old (more than 10 min for example.) PENDING
+            }
+
+            if(!strlen($this->getHeader('X-Cloudservice-Signature'))) $msgerror.="(Missing X-Cloudservice-Signature Header)";
+            else if(!strlen($msgerror)){
+                $signature = $this->getHeader('X-Cloudservice-Signature');
+                $signaureCreate = strtoupper(sha1($this->getHeader('X-Cloudservice-Id').$date.$token));
+                if($signature != $signaureCreate) {
+                    if(!(strlen($this->getHeader('X-Cloudservice-Mastersignature'))
+                        && strlen($this->getConf("adminPassword"))
+                        && $this->checkPassword($this->getHeader('X-Cloudservice-Mastersignature'), $this->getConf("adminPassword")))
+                    )
+                        $msgerror.="(Signature doesnt match)";
+                }
+            }
+
             if (strlen($msgerror)) {
                 $msg .= $msgerror;
                 return (false);
