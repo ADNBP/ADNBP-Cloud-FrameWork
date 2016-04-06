@@ -215,6 +215,8 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                                     $inc = false;
                                     $op = strtolower($fieldCond[0]);
                                     if(!strlen($row[$key])) $row[$key] = 0;
+                                    $type =  ($fieldCond[2])?strtolower($fieldCond[2]):'int';
+
                                     if($op =='>')
                                         $inc = (trim($row[$key]) > trim($fieldCond[1]));
                                     else if($op =='>=')
@@ -1020,6 +1022,10 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                 }elseif($type=='form') {
                     include __DIR__.'/templates/form.php';
                 }
+                elseif($type=='inlineChart') {
+                    if(is_array($data->values)) $data->values = implode(',',array_values($data->values));
+                    include __DIR__.'/templates/inline.php';
+                }
 				elseif($type=='barcode' ) {
 					
 					_printe($data->data);
@@ -1112,6 +1118,59 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
             $this -> error = true;
             $this -> errorMsg[] = $errorMsg;            
         }
+
+        /**
+         * @param $errorMsg error messageto add.
+         */
+        function getArray($type,$data) {
+            $ret = [];
+            switch ($type) {
+                case "dates":
+                case "yearmonth":
+
+                    if($type=='dates') $fortmat = ['date'=>'Y-m-d','inctype'=>'D'];
+                    else if($type=='yearmonth') $fortmat = ['date'=>'Y-m','inctype'=>'M'];
+
+                    $init = ($data['init'])?$data['init']:'now';
+                    $end = ($data['end'])?$data['end']:'now';
+                    $inc = ($data['inc'])?$data['inc']:1;
+                    $value = (isset($data['asvalue']))?$data['asvalue']:null;
+
+                    if($init=='now') $init = date('Y-m-d');
+                    if($end=='now') $end = date('Y-m-d');
+
+                    $init = new DateTime($init);
+                    $i = new DateInterval("P{$inc}".$fortmat['inctype']);
+                    $end = new DateTime($end);
+
+                    // Get last day in the iteration
+                    if($type=='dates')
+                        $end->add($i);
+
+                    $period = new DatePeriod(
+                        $init,
+                        $i ,
+                        $end
+                    );
+                    foreach( $period as $date) {
+                        if(null!== $value)
+                            $ret[$date->format($fortmat['date'])] = $value;
+                        else
+                            $ret[] = $date->format($fortmat['date']);
+                    }
+
+                    // Order reverse if required
+                    if(isset($data['reverse'])) {
+                        if (null !== $value)
+                            krsort($ret);
+                        else
+                            rsort($ret);
+                    }
+                    break;
+            }
+            return $ret;
+        }
+
 
     }
 } 
