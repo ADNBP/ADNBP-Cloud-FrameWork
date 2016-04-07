@@ -977,7 +977,7 @@ if (!defined("_ADNBP_CLASS_")) {
             return isset($_SERVER['PHP_AUTH_USER']) || isset($_SERVER['HTTP_AUTHORIZATION']);
         }
 
-        function getDataFromBasicAuth() {
+        function getBasicAuth() {
             $username = null;
             $password = null;
             // mod_php
@@ -994,7 +994,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
         function checkBasicAuth($user, $passw)
         {
-            list($username,$password) = $this->getDataFromBasicAuth();
+            list($username,$password) = $this->getBasicAuth();
             return (!is_null($username) && $user==$username && $passw==$password);
         }
 
@@ -1002,51 +1002,68 @@ if (!defined("_ADNBP_CLASS_")) {
         /*
          * API KEY
          */
-        function existAPIKey() {
+        function existWebKey() {
+            return (isset($_GET['web_key']) || isset($_POST['web_key']));
         }
-        function getDataFromAPIKey() {
-
+        function getWebKey() {
+            if(isset($_GET['web_key'])) return $_GET['web_key'];
+            else if(isset($_POST['web_key'])) return $_POST['web_key'];
+            else return '';
         }
 
-        function checkAPIKey() {
+        function checkWebKey($keys) {
+            if(!is_array($keys)) $keys = [[$keys,'*']];
+            else if(!is_array($keys[0])) $keys = [$keys];
+            $web_key = $this->getWebKey();
 
-        }
-
-        function checkAPIAuth(&$msg)
-        {
-            $msgerror ='';
-            // Auth Process
-            if(!strlen($this->getHeader('X-Cloudservice-Id'))) $msgerror.="(Missing X-Cloudservice-Id Header)";
-            else {
-                $token = $this->getConf("CloudServiceToken-".$this->getHeader('X-Cloudservice-Id'));
-                if(!strlen($token)) $msgerror.="(X-Cloudservice-Id doesn't exist)";
-            }
-
-            if(!strlen($this->getHeader('X-Cloudservice-Date'))) $msgerror.="(Missing X-Cloudservice-Date Header)";
-            else {
-                $date = $this->getHeader('X-Cloudservice-Date');
-                // Check control if Date is too old (more than 10 min for example.) PENDING
-            }
-
-            if(!strlen($this->getHeader('X-Cloudservice-Signature'))) $msgerror.="(Missing X-Cloudservice-Signature Header)";
-            else if(!strlen($msgerror)){
-                $signature = $this->getHeader('X-Cloudservice-Signature');
-                $signaureCreate = strtoupper(sha1($this->getHeader('X-Cloudservice-Id').$date.$token));
-                if($signature != $signaureCreate) {
-                    if(!(strlen($this->getHeader('X-Cloudservice-Mastersignature'))
-                        && strlen($this->getConf("adminPassword"))
-                        && $this->checkPassword($this->getHeader('X-Cloudservice-Mastersignature'), $this->getConf("adminPassword")))
-                    )
-                        $msgerror.="(Signature doesnt match)";
+            if(strlen($web_key))
+            foreach ($keys as $key) {
+                if($key[0] == $web_key) {
+                    if(!isset($key[1])) $key[1]="*";
+                    if($key[1]=='*') return true;
+                    elseif(!strlen($_SERVER['HTTP_ORIGIN'])) return false;
+                    else {
+                        $allows = explode(',',$key[1]);
+                        foreach ($allows as $host) {
+                            if(preg_match('/^.*'.trim($host).'.*$/',$_SERVER['HTTP_ORIGIN'])>0) return true;
+                        }
+                        return false;
+                    }
                 }
             }
-
-            if (strlen($msgerror)) {
-                $msg .= $msgerror;
-                return (false);
-            } else
-                return (true);
+            return false;
         }
+
+        function existServerKey() {
+            return (strlen($this->getHeader('X-CLOUDFRAMEWORK-SERVER-KEY'))>0);
+        }
+        function getServerKey() {
+            return $this->getHeader('X-CLOUDFRAMEWORK-SERVER-KEY');
+        }
+
+        function checkServerKey($keys) {
+            if(!is_array($keys)) $keys = [[$keys,'*']];
+            else if(!is_array($keys[0])) $keys = [$keys];
+            $web_key = $this->getServerKey();
+
+            if(strlen($web_key))
+                foreach ($keys as $key) {
+                    if($key[0] == $web_key) {
+                        if(!isset($key[1])) $key[1]="*";
+                        if($key[1]=='*') return true;
+                        elseif(!strlen($_SERVER['HTTP_ORIGIN'])) return false;
+                        else {
+                            $allows = explode(',',$key[1]);
+                            foreach ($allows as $host) {
+                                if(preg_match('/^.*'.trim($host).'.*$/',$_SERVER['REMOTE_ADDR'])>0) return true;
+                            }
+                            return false;
+                        }
+                    }
+                }
+            return false;
+        }
+
 
         function getAPIMethod()
         {

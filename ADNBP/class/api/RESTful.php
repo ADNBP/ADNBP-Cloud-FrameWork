@@ -29,21 +29,6 @@ if (!defined ("_RESTfull_CLASS_") ) {
         
         function RESTful ($apiUrl='/api') {
         	
-			// Rules for Cross-Domain AJAX
-			// https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS
-			header("Access-Control-Allow-Origin: ".((strlen($_SERVER['HTTP_ORIGIN']))?preg_replace('/\/$/', '', $_SERVER['HTTP_ORIGIN']):'*'));
-			header("Access-Control-Allow-Methods: POST,GET,PUT");
-			header("Access-Control-Allow-Headers: Content-Type,X-CloudFramWork-Token,X-CloudFrameWork-AuthToken");
-            header("Access-Control-Allow-Credentials: true");
-			header('Access-Control-Max-Age: 1000');
-            
-            // To avoid angular Cross-Reference
-            if($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-               header( "HTTP/1.1 200 OK" );
-               exit();
-            }
-        	
-			
 			// $this->requestHeaders = apache_request_headers();
 			$this->method = (strlen($_SERVER['REQUEST_METHOD']))?$_SERVER['REQUEST_METHOD']:'GET';
 		    if($this->method=='GET' ) {
@@ -92,6 +77,27 @@ if (!defined ("_RESTfull_CLASS_") ) {
 			$this->params =  explode('/',$this->serviceParam);
 			
         }
+
+		function sendCorsHeaders($methods='GET,POST,PUT',$origin='') {
+
+			// Rules for Cross-Domain AJAX
+			// https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS
+			// $origin =((strlen($_SERVER['HTTP_ORIGIN']))?preg_replace('/\/$/', '', $_SERVER['HTTP_ORIGIN']):'*')
+			if(!strlen($origin)) $origin =((strlen($_SERVER['HTTP_ORIGIN']))?preg_replace('/\/$/', '', $_SERVER['HTTP_ORIGIN']):'*');
+			header("Access-Control-Allow-Origin: $origin");
+			header("Access-Control-Allow-Methods: $methods");
+			header("Access-Control-Allow-Headers: Content-Type,Authorization,X-CLOUDFRAMEWORK-AUTH-TOKEN");
+			header("Access-Control-Allow-Credentials: true");
+			header('Access-Control-Max-Age: 1000');
+
+			// To avoid angular Cross-Reference
+			if($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+				header( "HTTP/1.1 200 OK" );
+				exit();
+			}
+
+
+		}
 
 		function setAuth($val,$msg='') {
 			if(!$val) {
