@@ -2,9 +2,8 @@
 // CORS Control from a potential Cross-Reference.
 $db_keys = [$api->formParams['test_assign_web_key'],$api->formParams['test_assign_web_referers_allowed']];
 if($this->checkWebKey($db_keys)) {
-    $api->sendCorsHeaders('POST');
+    $api->sendCorsHeaders('GET');
 }
-_printe($_SERVER);
 
 $api->checkMethod('GET');
 $data = ['vars.for.testing'=>[
@@ -27,29 +26,40 @@ if($api->params[0]=='test') {
     }
 
     if(strlen($api->formParams['test_assign_web_key'])) {
-        $data['Web.Client.Auth'] = ['method'=>'$passed = $this->checkWebKey([\''.$api->formParams["test_assign_web_key"].'\'=>\''.$api->formParams["test_assign_web_referers_allowed"].'\')]'];
+        $data['Web.Client.Auth'] = ['method'=>'$passed = $this->checkWebKey([\''.$api->formParams["test_assign_web_key"].'\',\''.$api->formParams["test_assign_web_referers_allowed"].'\')]'];
         $data['Web.Client.Auth']['notes'] = 'you have also: (bool)$this->existWebKey() and (array)$this->getWebKey()';
         $data['Web.Client.Auth']['HTTP_REFERER'] = $_SERVER['HTTP_REFERER'];
         $data['Web.Client.Auth']['passed'] = $this->checkWebKey($db_keys);
         if (!$data['Web.Client.Auth']['passed']) {
             if(!strlen($_SERVER['HTTP_REFERER']))
-                $data['Web.Client.Auth']['message'][] = "Missing HTTP_REFERER: only referers_allowed:*";
+                $data['Web.Client.Auth']['message'][] = "Missing HTTP_REFERER: only *.rule referers_allowed";
             $data['Web.Client.Auth']['message'][] = "Error. Send X-CLOUDFRAMEWORK-WEB-KEY header or _GET['web_key']  with the following info: "
                 . $api->formParams['test_assign_web_key'];
         }
 
     }
 
+    if(strlen($api->formParams['test_assign_server_key'])) {
+        $data['Web.Server.Auth'] = ['method'=>'$passed = $this->checkWebKey([\''.$api->formParams["test_assign_server_key"].'\',\''.$api->formParams["test_assign_ips_allowed"].'\')]'];
+        $data['Web.Server.Auth']['notes'] = 'you have also: (bool)$this->existServerKey() and (array)$this->getServerKey()';
+        $data['Web.Server.Auth']['REMOTE_ADDR'] = $_SERVER['REMOTE_ADDR'];
+        $data['Web.Server.Auth']['passed'] = $this->checkServerKey([$api->formParams["test_assign_server_key"],$api->formParams["test_assign_ips_allowed"]]);
+        if (!$data['Web.Server.Auth']['passed']) {
+            $data['Web.Server.Auth']['message'][] = "Error. Send X-CLOUDFRAMEWORK-SERVER-KEY header]  with the following info: "
+                . $api->formParams['test_assign_server_key'];
+        }
 
-    if(strlen($api->formParams['test_assign_server_key_id'])) {
+    }
+
+
+    if(strlen($api->formParams['test_assign_security_token_id'])) {
         $secret='WerErty';
-        $data['Server.Auth'] = ['method'=>'$passed = $this->checkCloudFrameWorkSecurity(3600,\''.$api->formParams["test_assign_server_key_id"].'\',$secret)]'];
-        $data['Server.Auth']['notes'] = 'The key can be generated using: $this->generateCloudFrameWorkSecurityString($api->formParams[\'test_assign_server_key_id\'],\'\',$secret)';
-
-        $data['Server.Auth']['passed'] = $this->checkCloudFrameWorkSecurity(3600,$api->formParams['server_key_id'],$secret);
-        if (!$data['Server.Auth']['passed'])
-            $data['Server.Auth']['message'] = "Error. Send X-CLOUDFRAMEWORK-SECURITY header with the following info: "
-                  .$this->generateCloudFrameWorkSecurityString($api->formParams["test_assign_server_key_id"],'',$secret);
+        $data['SecurityToken.Auth'] = ['method'=>'$passed = $this->checkCloudFrameWorkSecurity(3600,\''.$api->formParams["test_assign_security_token_id"].'\',$secret)]'];
+        $data['SecurityToken.Auth']['notes'] = 'The key can be generated using: $this->generateCloudFrameWorkSecurityString($api->formParams[\'test_assign_security_token_id\'],[\'\'|{current_time}],$secret)';
+        $data['SecurityToken.Auth']['passed'] = $this->checkCloudFrameWorkSecurity(3600,$api->formParams['test_assign_security_token_id'],$secret);
+        if (!$data['SecurityToken.Auth']['passed'])
+            $data['SecurityToken.Auth']['message'] = "Error. Send X-CLOUDFRAMEWORK-SECURITY header with the following info: "
+                  .$this->generateCloudFrameWorkSecurityString($api->formParams["test_assign_security_token_id"],'',$secret);
 
     }
 
