@@ -235,6 +235,35 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
         }
     }
     // Core dependent classes
+    Class Core
+    {
+        public $obj = [];
+        public $__p,$session,$system,$logs,$errors,$is,$user,$config;
+        function __construct($sessionId = '') {
+            $this->__p  = new Performance();
+            $this->session  = new Session($sessionId);
+            $this->system  = new System();
+            $this->logs  = new Loggin();
+            $this->errors= new Loggin();
+            $this->is = new Is();
+            $this->__p->add('Construct Class with objects (__p,__session,__system,__logs,__errors):' . __CLASS__, __FILE__);
+        }
+        public function run()
+        {
+            $this->user = new User($this);
+            $this->config = new Config($this, __DIR__ . '/config.json');
+            $this->__p->add('Loaded user and config objects:' , __METHOD__);
+
+        }
+        function setAppPath($dir) {
+            if(is_dir($this->system->root_path.$dir)) {
+                $this->system->app_path = $this->system->root_path.$dir;
+                $this->system->app_url = $dir;
+            } else {
+                $this->errors->add($dir . " doesn't exist. The path has to begin with /");
+            }
+        }
+    }
     Class User
     {
         private $core;
@@ -498,36 +527,6 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
                 $this->core->errors->add(error_get_last());
                 $this->core->errors->add($e->getMessage());
                 return false;
-            }
-        }
-    }
-
-    Class Core
-    {
-        public $obj = [];
-        public $__p,$session,$system,$logs,$errors,$is,$user,$config;
-        function __construct($sessionId = '') {
-            $this->__p  = new Performance();
-            $this->session  = new Session($sessionId);
-            $this->system  = new System();
-            $this->logs  = new Loggin();
-            $this->errors= new Loggin();
-            $this->is = new Is();
-            $this->__p->add('Construct Class with objects (__p,__session,__system,__logs,__errors):' . __CLASS__, __FILE__);
-        }
-        public function run()
-        {
-            $this->user = new User($this);
-            $this->config = new Config($this, __DIR__ . '/config.json');
-            $this->__p->add('Loaded user and config objects:' , __METHOD__);
-
-        }
-        function setAppPath($dir) {
-            if(is_dir($this->system->root_path.$dir)) {
-                $this->system->app_path = $this->system->root_path.$dir;
-                $this->system->app_url = $dir;
-            } else {
-                $this->errors->add($dir . " doesn't exist. The path has to begin with /");
             }
         }
     }
