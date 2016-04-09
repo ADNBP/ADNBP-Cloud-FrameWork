@@ -6,6 +6,8 @@ include_once (__DIR__ . "/Core.php"); //
 $core = new Core();
 $core->run();
 if($core->errors->lines) {
-    _printe($core->errors->data);
+    _print($core->errors->data);
 }
+if(isset($_GET['__p']))
+    _print($core->__p->data['info']);
 ?>

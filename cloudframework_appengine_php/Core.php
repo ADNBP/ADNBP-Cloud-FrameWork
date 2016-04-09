@@ -52,7 +52,7 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
     // Independend classes
     Class Performance
     {
-        private $data = [];
+        var $data = [];
         function __construct()
         {
             // Performance Vars
@@ -110,11 +110,17 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
             $this->data['lastIndex']++;
 
         }
+        function getTotalTime($prec=3) {
+            return (round(microtime(TRUE) - $this->data['initMicrotime'], $prec));
+        }
+        function getTotalMemory($prec=3) {
+            return number_format(round(memory_get_usage() / (1024 * 1024), $prec), $prec);
+        }
     }
     Class Session
     {
-        private $start = false;
-        private $id = '';
+        var $start = false;
+        var $id = '';
 
         function __construct($id='')
         {
@@ -153,19 +159,41 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
     Class System
     {
         var $url,$root_path,$app_path,$app_url;
+        var $config=[];
+        var $ip, $user_agent,$format,$time_zone;
         function __construct()
         {
             list($this->url['url'],$this->url['params']) = explode('?', $_SERVER['REQUEST_URI'], 2);
             $this->url['https'] = $_SERVER['HTTPS'];
             $this->url['host'] = $_SERVER['HTTP_HOST'];
-            $this->url['parts'] = explode('/', substr($this->_url, 1));
+            $this->url['parts'] = explode('/', substr($this->url['url'], 1));
             $this->url['url_full'] = $_SERVER['REQUEST_URI'];
             $this->url['host_url'] = (($_SERVER['HTTPS'] == 'on') ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'];
-            $this->url['host_url_full'] = (($_SERVER['HTTPS'] == 'on') ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+            $this->url['host_url_uri'] = (($_SERVER['HTTPS'] == 'on') ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
             $this->url['script_name'] = $_SERVER['SCRIPT_NAME'];
 
-            $this->root_path = (strlen($_SERVER['DOCUMENT_ROOT']))?$_SERVER['DOCUMENT_ROOT']: __DIR__ . '/../';
+            // paths
+            $this->root_path = (strlen($_SERVER['DOCUMENT_ROOT']))?$_SERVER['DOCUMENT_ROOT']: __DIR__ . '/../../../';
             $this->app_path = $this->rootPath;
+
+            // Remote user:
+            $this->ip = $_SERVER['REMOTE_ADDR'];
+            $this->user_agent = $_SERVER['HTTP_USER_AGENT'];
+
+            // About timeZone, Date & Number format
+            $this->time_zone = array(date_default_timezone_get(), date('Y-m-d h:i:s'), date("P"), time());
+            //date_default_timezone_set(($this->getConf('timeZone')) ? $this->getConf('timeZone') : 'Europe/Madrid');
+            //$this->_timeZone = array(date_default_timezone_get(), date('Y-m-d h:i:s'), date("P"), time());
+            $this->format['formatDate'] = "Y-m-d";
+            $this->format['formatDateTime'] = "Y-m-d h:i:s";
+            $this->format['formatDBDate'] = "Y-m-d h:i:s";
+            $this->format['formatDBDateTime'] = "Y-m-d h:i:s";
+            $this->format['formatDecimalPoint'] = ",";
+            $this->format['formatThousandSep'] = ".";
+
+            // General conf
+            // TODO default formats, currencies, timezones, etc..
+            $this->config['setLanguageByPath']= false;
 
         }
         function urlRedirect($url, $dest = '') {
@@ -185,6 +213,25 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
                 exit;
             }
         }
+
+        function getRequestFingerPrint($extra = '')
+        {
+            $ret['ip'] =  $_SERVER['REMOTE_ADDR'];
+            $ret['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
+            $ret['http_referer'] = $_SERVER['HTTP_REFERER'];
+            $ret['host'] = $_SERVER['HTTP_HOST'];
+            $ret['software'] = $_SERVER['SERVER_SOFTWARE'];
+            if ($extra == 'geodata') {
+                $ret['geoData'] = $this->core->getGeoData();
+                unset($ret['geoData']['source_ip']);
+                unset($ret['geoData']['credit']);
+            }
+            $ret['hash'] = sha1(implode(",", $ret));
+            $ret['time'] = date('Ymdhis');
+            $ret['uri'] = $_SERVER['REQUEST_URI'];
+            return ($ret);
+        }
+
     }
     Class Loggin
     {
@@ -239,6 +286,7 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
     {
         public $obj = [];
         public $__p,$session,$system,$logs,$errors,$is,$user,$config;
+        var $_version = '20160408';
         function __construct($sessionId = '') {
             $this->__p  = new Performance();
             $this->session  = new Session($sessionId);
@@ -246,13 +294,14 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
             $this->logs  = new Loggin();
             $this->errors= new Loggin();
             $this->is = new Is();
-            $this->__p->add('Construct Class with objects (__p,__session,__system,__logs,__errors):' . __CLASS__, __FILE__);
+            $this->__p->add('Construct Class with objects (__p,__session[started='.(($this->session->start)?'true':'false').'],__system,__logs,__errors):' . __CLASS__, __FILE__);
         }
         public function run()
         {
             $this->user = new User($this);
             $this->config = new Config($this, __DIR__ . '/config.json');
-            $this->__p->add('Loaded user and config objects:' , __METHOD__);
+            $this->__p->add('Loaded user and config objects. __session[started='.(($this->session->start)?'true':'false').'],' , __METHOD__);
+            $this->dispatch();
 
         }
         function setAppPath($dir) {
@@ -261,6 +310,47 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
                 $this->system->app_url = $dir;
             } else {
                 $this->errors->add($dir . " doesn't exist. The path has to begin with /");
+            }
+        }
+
+        function dispatch() {
+            // API end points
+            if(strpos($this->system->url['url'],'/h/api')===0 ) {
+                if(!strlen($this->system->url['parts'][2])) $this->errors->add('missing api end point');
+                else {
+                    $apifile = $this->system->url['parts'][2];
+
+                    // path to file
+                    if($apifile[0]=='_' || $apifile[0]=='queue')
+                        $pathfile = __DIR__ . "/api/{$apifile}.php";
+                    else
+                        $pathfile = $this->system->app_path."/api/{$apifile}.php";
+
+                    // IF NOT EXIST
+                    if (!file_exists(__DIR__ . "/api/{$apifile}.php")) {
+                        $this->errors->add("api $apifile does not exist");
+
+                    } elseif(!$this->errors->lines){
+                        try {
+                            include_once __DIR__ . '/class/RESTful.php';
+                            include_once __DIR__ . "/api/{$apifile}.php";
+                            if (class_exists('API')) {
+                                $api = new API($this);
+                                $api->main();
+                                $this->__p->add("Executed RESTfull->main()", "/api/{$apifile}.php");
+                                $api->send();
+
+                            } else {
+                                $this->errors->add("api $apifile does not include a API class extended from RESTFul with method ->main()");
+                            }
+                        } catch (Exception $e) {
+                            $this->errors->add(error_get_last());
+                            $this->errors->add($e->getMessage());
+                        }
+                        $this->__p->add("API including RESTfull.php and {$apifile}.php: ",'There are ERRORS');
+                    }
+                    return false;
+                }
             }
         }
     }
@@ -313,9 +403,11 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
         private $core;
         private $_configPaths = [];
         var $data = [];
+        var $menu = [];
         function __construct(Core &$core,$path)
         {
             $this->core = $core;
+
             $this->readConfigJSONFile($path);
         }
         function get($var)
@@ -324,6 +416,9 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
         }
         function set($var,$data) {
             $this->data[$var] = $data;
+        }
+        function pushMenu($var) {
+            $this->menu[] = $var;
         }
 
         function processConfigData($data)
@@ -459,10 +554,10 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
                             if (trim(strtolower($tagcode)) == "notinurl") $include = true;
                             foreach ($urls as $ind => $inurl) if (strlen(trim($inurl))) {
                                 if (trim(strtolower($tagcode)) == "inurl") {
-                                    if ((strpos($this->_url, trim($inurl)) !== false))
+                                    if ((strpos($this->core->system->url['url'], trim($inurl)) !== false))
                                         $include = true;
                                 } else {
-                                    if ((strpos($this->_url, trim($inurl)) !== false))
+                                    if ((strpos($this->core->system->url['url'], trim($inurl)) !== false))
                                         $include = false;
                                 }
                             }
@@ -530,4 +625,5 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
             }
         }
     }
+
 }
