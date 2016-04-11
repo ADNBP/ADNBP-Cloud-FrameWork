@@ -575,10 +575,10 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 
             // Field Types of the table
             if(!isset($this->_queryFieldTypes[$table])) {
-                $this->_queryFieldTypes[$table] = $this->core->getCache('cloudFrameWork_show_colums_'.$table,3600);
+                $this->_queryFieldTypes[$table] = $this->core->cache->get('cloudFrameWork_show_colums_'.$table,3600);
                 if(!is_array($this->_queryFieldTypes[$table]) || isset($_GET['nocache']) || isset($_GET['reload'])) {
                     $this->_queryFieldTypes[$table] = $this->getDataFromQuery("SHOW COLUMNS FROM %s", $table);
-                    $this->core->setCache('cloudFrameWork_show_colums_'.$table,$this->_queryFieldTypes[$table]);
+                    $this->core->cache->set('cloudFrameWork_show_colums_'.$table,$this->_queryFieldTypes[$table]);
                 }
             }
             if($this->error()) return(false);
@@ -832,11 +832,11 @@ if (!defined ("_MYSQLI_CLASS_") ) {
 								   if($this->isAvoidFilterCalculation($types[$k]['Field'])) {
 								   		$_ret[$types[$k]['Field']]['relData'] = array();
 								   } else {
-                                       $relData = $this->core->getCache('getRecordsForEdit_'.md5($_fq),3600);
+                                       $relData = $this->core->cache->get('getRecordsForEdit_'.md5($_fq),3600);
                                        if(!is_array($relData) || isset($_GET['nocache']) || isset($_GET['reload'])) {
                                            $relData = $this->getDataFromQuery($_fq);
                                            if ($this->error()) return false;
-                                           $this->core->setCache('getRecordsForEdit_'.md5($_fq),$relData);
+                                           $this->core->cache->set('getRecordsForEdit_'.md5($_fq),$relData);
                                        }
 	                                   $_ret[$types[$k]['Field']]['relData'] =$relData;
                                    }
@@ -848,11 +848,11 @@ if (!defined ("_MYSQLI_CLASS_") ) {
                                	   if(!strlen($_fqWhere )) $_fqWhere .=  '1=1';
 
                                	   $_fq = " SELECT DISTINCT $_fn FROM  $table  WHERE $_fqWhere ";
-                                   $relData = $this->core->getCache('getRecordsForEdit_'.md5($_fq),3600);
+                                   $relData = $this->core->cache->get('getRecordsForEdit_'.md5($_fq),3600);
                                    if(!is_array($relData) || isset($_GET['nocache']) || isset($_GET['reload'])) {
                                        $relData = $this->getDataFromQuery($_fq);
                                        if($this->error()) return false;
-                                       $this->core->setCache('getRecordsForEdit_'.md5($_fq),$relData);
+                                       $this->core->cache->set('getRecordsForEdit_'.md5($_fq),$relData);
                                    }
                                    $_ret[$types[$k]['Field']]['relData'] =$relData;
 

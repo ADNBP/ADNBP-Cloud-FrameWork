@@ -151,7 +151,7 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
 
         function get($var) {
             if(!$this->start) $this->init();
-            if(array_key_exists('CloudSessionVar_' . $var, $_SESSION)) {
+            if(key_exists('CloudSessionVar_' . $var, $_SESSION)) {
                     try {
                         $ret = unserialize(gzuncompress($_SESSION['CloudSessionVar_' . $var]));
                     } catch (Exception $e) {
@@ -163,7 +163,7 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
         }
         function set($var,$value) {
             if(!$this->start) $this->init();
-            $_SESSION['CloudSessionVar_' . $var] = $this->_gzEnabled ? gzcompress(serialize($value)) : serialize($value);
+            $_SESSION['CloudSessionVar_' . $var] = gzcompress(serialize($value));
         }
         function delete($var) {
             if(!$this->start) $this->init();
@@ -246,6 +246,22 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
             $ret['time'] = date('Ymdhis');
             $ret['uri'] = $_SERVER['REQUEST_URI'];
             return ($ret);
+        }
+
+        function crypt($input, $rounds = 7)
+        {
+            $salt = "";
+            $salt_chars = array_merge(range('A', 'Z'), range('a', 'z'), range(0, 9));
+            for ($i = 0; $i < 22; $i++) {
+                $salt .= $salt_chars[array_rand($salt_chars)];
+            }
+            return crypt($input, sprintf('$2a$%02d$', $rounds) . $salt);
+        }
+
+        // Compare Password
+        function checkPassword($passw, $compare)
+        {
+            return (crypt($passw, $compare) == $compare);
         }
 
     }
@@ -507,16 +523,24 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
             if(null === $this->data[$this->namespace]) $this->data[$this->namespace] =['__auth'=>false];
         }
 
-        function setVar($var,$data) {
+        function setVar($var,$data='') {
             if(null === $this->data[$this->namespace]) $this->init();
-            $this->data[$this->namespace][$var] = $data;
+            if(is_array($var)) {
+                foreach ($var as $key => $value)
+                    $this->data[$this->namespace][$key] = $value;
+            } else {
+                $this->data[$this->namespace][$var] = $data;
+            }
             $this->data[$this->namespace]['__auth'] = true;
             $this->core->session->set("_User_".$this->namespace,$this->data[$this->namespace]);
         }
 
-        function getVar($var) {
+        function getVar($var='') {
             if(null === $this->data[$this->namespace]) $this->init();
-            return (array_key_exists($var,$this->data[$this->namespace]))?$this->data[$this->namespace][$var]:null;
+            if(!strlen($var))
+                return $this->data[$this->namespace];
+            else
+                return (key_exists($var,$this->data[$this->namespace]))?$this->data[$this->namespace][$var]:null;
         }
 
         function isAuth() {
