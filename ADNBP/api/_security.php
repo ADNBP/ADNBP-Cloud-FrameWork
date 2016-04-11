@@ -40,11 +40,13 @@ if($api->params[0]=='test') {
     }
 
     if(strlen($api->formParams['test_assign_server_key'])) {
-        $data['Web.Server.Auth'] = ['method'=>'$passed = $this->checkWebKey([\''.$api->formParams["test_assign_server_key"].'\',\''.$api->formParams["test_assign_ips_allowed"].'\')]'];
+        $data['Web.Server.Auth'] = ['method'=>'$passed = $this->checkServerKey([\''.$api->formParams["test_assign_server_key"].'\',\''.$api->formParams["test_assign_ips_allowed"].'\')]'];
         $data['Web.Server.Auth']['notes'] = 'you have also: (bool)$this->existServerKey() and (array)$this->getServerKey()';
         $data['Web.Server.Auth']['REMOTE_ADDR'] = $_SERVER['REMOTE_ADDR'];
         $data['Web.Server.Auth']['passed'] = $this->checkServerKey([$api->formParams["test_assign_server_key"],$api->formParams["test_assign_ips_allowed"]]);
         if (!$data['Web.Server.Auth']['passed']) {
+            if(strlen($_SERVER['REMOTE_ADDR']) < 10)
+                $data['Web.Server.Auth']['message'][] = "REMOTE_ADD short. Maybe only *.rule ips_allowed will work";
             $data['Web.Server.Auth']['message'][] = "Error. Send X-CLOUDFRAMEWORK-SERVER-KEY header]  with the following info: "
                 . $api->formParams['test_assign_server_key'];
         }

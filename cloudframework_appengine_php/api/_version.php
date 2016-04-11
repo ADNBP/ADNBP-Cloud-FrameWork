@@ -11,6 +11,8 @@ class API extends RESTful
             if(isset($_GET['fingerprint']))
                 $this->addReturnData(array('fingerprint'=>$this->core->system->getRequestFingerPrint()));
 
+            if(isset($_GET['headers']))
+                $this->addReturnData(array('headers'=>$this->getHeaders()));
             if(isset($_GET['vars']))
                 $this->addReturnData(array('vars'=>$_SERVER));
 

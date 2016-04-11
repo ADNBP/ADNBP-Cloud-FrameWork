@@ -144,7 +144,7 @@ if (!defined ("_RESTfull_CLASS_") ) {
 
 		function setError($value,$key=400) {
 			$this->error = $key;
-			$this->errorMsg = $value;
+			$this->core->errors->add($value);
 		}
 
 		function addHeader($key,$value) {
@@ -263,9 +263,8 @@ if (!defined ("_RESTfull_CLASS_") ) {
 		}	
 	    
 	    function checkCloudFrameWorkSecurity($time=0,$id='') {
-	        global $adnbp;
 	        $ret = false;
-	        $info = $adnbp->checkCloudFrameWorkSecurity($time); // Max. 10 min for the Security Token and return $this->getConf('CLOUDFRAMEWORK-ID-'.$id);
+	        $info = $this->core->security->checkCloudFrameWorkSecurity($time); // Max. 10 min for the Security Token and return $this->getConf('CLOUDFRAMEWORK-ID-'.$id);
             if($info===false) $this->setError($adnbp->getLog(),401);
             else {
                 $ret=true;
@@ -277,9 +276,8 @@ if (!defined ("_RESTfull_CLASS_") ) {
 	    }
 
         function getCloudFrameWorkSecurityInfo() {
-            global $adnbp;
             if(isset($this->returnData['SECURITY-ID'])) {
-                return $adnbp->getConf('CLOUDFRAMEWORK-ID-'.$this->returnData['SECURITY-ID']);
+                return $this->core->config->get('CLOUDFRAMEWORK-ID-'.$this->returnData['SECURITY-ID']);
             } else
 				die('false!!!');
                 return false;
@@ -300,10 +298,6 @@ if (!defined ("_RESTfull_CLASS_") ) {
 				$ret['user_agent']=($this->core->system->user_agent!=null)?$this->core->system->user_agent:$this->requestHeaders['User-Agent'];
 				$ret['urlParams']=$this->params;
 				$ret['form-raw Params']=$this->formParams;
-			}
-
-			if($this->core->errors->lines) {
-				$ret['error']=$this->core->errors->data;
 			}
 
 			// If I have been called from a queue the response has to be 200 to avoid…

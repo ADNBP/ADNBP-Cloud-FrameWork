@@ -50,7 +50,7 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
     }
 
     // Independend classes
-    Class Performance
+    class Performance
     {
         var $data = [];
         function __construct()
@@ -116,8 +116,22 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
         function getTotalMemory($prec=3) {
             return number_format(round(memory_get_usage() / (1024 * 1024), $prec), $prec);
         }
+        function init($spacename, $key)
+        {
+            $this->data['init'][$spacename][$key]['mem'] = memory_get_usage();
+            $this->data['init'][$spacename][$key]['time'] = microtime(TRUE);
+            $this->data['init'][$spacename][$key]['ok'] = TRUE;
+        }
+
+        function end($spacename, $key, $ok = TRUE, $msg = FALSE)
+        {
+            $this->data['init'][$spacename][$key]['mem'] = round((memory_get_usage() - $this->data['init'][$spacename][$key]['mem']) / (1024 * 1024), 3) . ' Mb';
+            $this->data['init'][$spacename][$key]['time'] = round(microtime(TRUE) - $this->data['init'][$spacename][$key]['time'], 3) . ' secs';
+            $this->data['init'][$spacename][$key]['ok'] = $ok;
+            if ($msg !== FALSE) $this->data['init'][$spacename][$key]['notes'] = $msg;
+        }
     }
-    Class Session
+    class Session
     {
         var $start = false;
         var $id = '';
@@ -156,21 +170,22 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
             unset($_SESSION['CloudSessionVar_' . $var]);
         }
     }
-    Class System
+    class System
     {
         var $url,$root_path,$app_path,$app_url;
         var $config=[];
         var $ip, $user_agent,$format,$time_zone;
         function __construct()
         {
-            list($this->url['url'],$this->url['params']) = explode('?', $_SERVER['REQUEST_URI'], 2);
             $this->url['https'] = $_SERVER['HTTPS'];
+            $this->url['protocol'] = ($_SERVER['HTTPS'] == 'on') ? 'https' : 'http';
             $this->url['host'] = $_SERVER['HTTP_HOST'];
-            $this->url['parts'] = explode('/', substr($this->url['url'], 1));
-            $this->url['url_full'] = $_SERVER['REQUEST_URI'];
-            $this->url['host_url'] = (($_SERVER['HTTPS'] == 'on') ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'];
+            $this->url['url_uri'] = $_SERVER['REQUEST_URI'];
+            list($this->url['url'],$this->url['params']) = explode('?', $_SERVER['REQUEST_URI'], 2);
+            $this->url['host_url'] = (($_SERVER['HTTPS'] == 'on') ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'].$this->url['url'];
             $this->url['host_url_uri'] = (($_SERVER['HTTPS'] == 'on') ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
             $this->url['script_name'] = $_SERVER['SCRIPT_NAME'];
+            $this->url['parts'] = explode('/', substr($this->url['url'], 1));
 
             // paths
             $this->root_path = (strlen($_SERVER['DOCUMENT_ROOT']))?$_SERVER['DOCUMENT_ROOT']: __DIR__ . '/../../../';
@@ -182,7 +197,7 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
 
             // About timeZone, Date & Number format
             $this->time_zone = array(date_default_timezone_get(), date('Y-m-d h:i:s'), date("P"), time());
-            //date_default_timezone_set(($this->getConf('timeZone')) ? $this->getConf('timeZone') : 'Europe/Madrid');
+            //date_default_timezone_set(($this->core->config->get('timeZone')) ? $this->core->config->get('timeZone') : 'Europe/Madrid');
             //$this->_timeZone = array(date_default_timezone_get(), date('Y-m-d h:i:s'), date("P"), time());
             $this->format['formatDate'] = "Y-m-d";
             $this->format['formatDateTime'] = "Y-m-d h:i:s";
@@ -233,7 +248,7 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
         }
 
     }
-    Class Loggin
+    class Loggin
     {
         var $lines = 0;
         var $data = [];
@@ -255,7 +270,7 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
         }
 
     }
-    Class Is
+    class Is
     {
         function development()
         {
@@ -281,12 +296,104 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
             }
         }
     }
+    class CacheFile  {
+        function __construct()
+        {
+        }
+
+        function set($var,$data)
+        {
+            return true;
+        }
+
+        function delete($var)
+        {
+            return true;
+        }
+
+        function get($var)
+        {
+            return null;
+        }
+    }
+    class Cache {
+        var $cache = null;
+        var $spacename = 'CloudMemory';
+        var $type = 'memory';
+
+        function Cache($spacename='',$type='memory') {
+            if(!strlen(trim($spacename)))  $spacename = $_SERVER['HTTP_HOST'];
+            $this->setSpaceName($spacename);
+            if($type=='memory') $this->type = 'memory';
+        }
+
+        function init() {
+            if($this->type=='memory')
+                $this->cache = new Memcache;
+            else
+                $this->cache = new CacheFile();
+        }
+
+        function setSpaceName($name) {
+            if(strlen(trim($name)))
+                $this->spacename = 'CloudMemory_.'.trim($name);
+        }
+
+        function set($str,$data) {
+            if(null === $this->cache) $this->init();
+
+            if(!strlen(trim($str))) return false;
+            $info['_microtime_']=microtime(true);
+            $info['_data_']=gzcompress(serialize($data));
+            $this -> cache ->set($this->spacename.'-'.$str,serialize($info));
+            return true;
+        }
+
+        function delete($str) {
+            if(null === $this->cache) $this->init();
+            if(!strlen(trim($str))) return false;
+            $this -> cache ->delete($this->spacename.'-'.$str);
+            return true;
+        }
+
+        function get($str,$expireTime=-1) {
+            if(null === $this->cache) $this->init();
+            if(!strlen(trim($str))) return false;
+            $info = $this -> cache ->get($this->spacename.'-'.$str);
+            if(strlen($info) && $info!==null) {
+                $info = unserialize($info);
+                // Expire Caché
+                if($expireTime >=0 && microtime(true)-$info['_microtime_'] >= $expireTime) {
+                    $this -> cache ->delete($this->spacename.'-'.$str);
+                    return null;
+                } else {
+                    return(unserialize(gzuncompress($info['_data_'])));
+                }
+            } else {
+                return null;
+            }
+        }
+
+        function getTime($str,$expireTime=-1) {
+            if(null === $this->cache) $this->init();
+            if(!strlen(trim($str))) return false;
+            $info = $this -> cache ->get($this->spacename.'-'.$str);
+            if(strlen($info) && $info!==null) {
+                $info = unserialize($info);
+                return(microtime(true)-$info['_microtime_']);
+            } else {
+                return null;
+            }
+        }
+
+    }
+
     // Core dependent classes
-    Class Core
+    class Core
     {
         public $obj = [];
-        public $__p,$session,$system,$logs,$errors,$is,$user,$config;
-        var $_version = '20160408';
+        public $__p,$session,$system,$logs,$errors,$is,$cache,$security,$user,$config;
+        var $_version = '20160410';
         function __construct($sessionId = '') {
             $this->__p  = new Performance();
             $this->session  = new Session($sessionId);
@@ -294,13 +401,20 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
             $this->logs  = new Loggin();
             $this->errors= new Loggin();
             $this->is = new Is();
-            $this->__p->add('Construct Class with objects (__p,__session[started='.(($this->session->start)?'true':'false').'],__system,__logs,__errors):' . __CLASS__, __FILE__);
+            $this->cache = new Cache();
+
+            $this->__p->add('Construct Class with objects (__p,__session[started='.(($this->session->start)?'true':'false').'],__system,__logs,__errors,is,cache):' . __CLASS__, __FILE__);
         }
         public function run()
         {
+            $this->security = new Security($this);
             $this->user = new User($this);
             $this->config = new Config($this, __DIR__ . '/config.json');
-            $this->__p->add('Loaded user and config objects. __session[started='.(($this->session->start)?'true':'false').'],' , __METHOD__);
+            // Local configuration
+            if($this->is->development() && is_file($this->system->root_path.'/local_config.json'))
+                    $this->config->readConfigJSONFile($this->system->root_path.'/local_config.json');
+
+            $this->__p->add('Loaded user and config objects with __session[started='.(($this->session->start)?'true':'false').']: ,' , __METHOD__);
             $this->dispatch();
 
         }
@@ -311,6 +425,23 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
             } else {
                 $this->errors->add($dir . " doesn't exist. The path has to begin with /");
             }
+        }
+
+        function loadClass($class) {
+
+            if(key_exists($class,$this->obj)) return $this->obj[$class];
+
+            if (is_file(__DIR__ . "/class/{$class}.php"))
+                include_once(__DIR__ .  "/class/{$class}.php");
+            elseif (is_file($this->system->app_path . "/class/" . $class . ".php"))
+                include_once($this->system->app_path . "/class/" . $class . ".php");
+            else {
+                $this->errors->add("Class $class not found");
+                return null;
+            }
+            $this->obj[$class] = new $class($this);
+            return $this->obj[$class];
+            
         }
 
         function dispatch() {
@@ -327,12 +458,16 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
                         $pathfile = $this->system->app_path."/api/{$apifile}.php";
 
                     // IF NOT EXIST
+                    include_once __DIR__ . '/class/RESTful.php';
                     if (!file_exists(__DIR__ . "/api/{$apifile}.php")) {
-                        $this->errors->add("api $apifile does not exist");
+
+                        $api = new RESTful($this);
+                        $api->setError("api $apifile does not exist",503);
+                        $api->send();
+
 
                     } elseif(!$this->errors->lines){
                         try {
-                            include_once __DIR__ . '/class/RESTful.php';
                             include_once __DIR__ . "/api/{$apifile}.php";
                             if (class_exists('API')) {
                                 $api = new API($this);
@@ -354,7 +489,7 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
             }
         }
     }
-    Class User
+    class User
     {
         private $core;
         private $isAuth = null;
@@ -398,7 +533,7 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
             }
         }
     }
-    Class Config
+    class Config
     {
         private $core;
         private $_configPaths = [];
@@ -407,7 +542,6 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
         function __construct(Core &$core,$path)
         {
             $this->core = $core;
-
             $this->readConfigJSONFile($path);
         }
         function get($var)
@@ -605,7 +739,7 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
                 $this->core->errors->add("Recursive config file: ".$path);
                 return false;
             }
-            $this->_configPaths[$path] = $path; // Control wich config paths are beeing loaded.
+            $this->_configPaths[$path] = 1; // Control wich config paths are beeing loaded.
             try {
                 $data = json_decode(@file_get_contents($path),true);
                 if(!is_array($data)) {
@@ -625,5 +759,176 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
             }
         }
     }
+    class Security
+    {
+        private $core;
+        function __construct(Core &$core)
+        {
+            $this->core = $core;
 
+        }
+        /*
+         * BASIC AUTH
+         */
+        function existBasicAuth() {
+            return isset($_SERVER['PHP_AUTH_USER']) || isset($_SERVER['HTTP_AUTHORIZATION']);
+        }
+
+        function getBasicAuth() {
+            $username = null;
+            $password = null;
+            // mod_php
+            if (isset($_SERVER['PHP_AUTH_USER'])) {
+                $username = $_SERVER['PHP_AUTH_USER'];
+                $password = $_SERVER['PHP_AUTH_PW'];
+                // most other servers
+            } elseif (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+                if (strpos(strtolower($_SERVER['HTTP_AUTHORIZATION']),'basic')===0)
+                    list($username,$password) = explode(':',base64_decode(substr($_SERVER['HTTP_AUTHORIZATION'], 6)));
+            }
+            return([$username,$password]);
+        }
+
+        function checkBasicAuth($user, $passw)
+        {
+            list($username,$password) = $this->getBasicAuth();
+            return (!is_null($username) && $user==$username && $passw==$password);
+        }
+
+        /*
+         * API KEY
+         */
+        function existWebKey() {
+            return (isset($_GET['web_key']) || isset($_POST['web_key']));
+        }
+        function getWebKey() {
+            if(isset($_GET['web_key'])) return $_GET['web_key'];
+            else if(isset($_POST['web_key'])) return $_POST['web_key'];
+            else return '';
+        }
+
+        function checkWebKey($keys) {
+            if(!is_array($keys)) $keys = [[$keys,'*']];
+            else if(!is_array($keys[0])) $keys = [$keys];
+            $web_key = $this->getWebKey();
+
+            if(strlen($web_key))
+                foreach ($keys as $key) {
+                    if($key[0] == $web_key) {
+                        if(!isset($key[1])) $key[1]="*";
+                        if($key[1]=='*') return true;
+                        elseif(!strlen($_SERVER['HTTP_ORIGIN'])) return false;
+                        else {
+                            $allows = explode(',',$key[1]);
+                            foreach ($allows as $host) {
+                                if(preg_match('/^.*'.trim($host).'.*$/',$_SERVER['HTTP_ORIGIN'])>0) return true;
+                            }
+                            return false;
+                        }
+                    }
+                }
+            return false;
+        }
+
+        function existServerKey() {
+            return (strlen($this->getHeader('X-CLOUDFRAMEWORK-SERVER-KEY'))>0);
+        }
+        function getServerKey() {
+            return $this->getHeader('X-CLOUDFRAMEWORK-SERVER-KEY');
+        }
+
+        function checkServerKey($keys) {
+            if(!is_array($keys)) $keys = [[$keys,'*']];
+            else if(!is_array($keys[0])) $keys = [$keys];
+            $web_key = $this->getServerKey();
+
+            if(strlen($web_key))
+                foreach ($keys as $key) {
+                    if($key[0] == $web_key) {
+                        if(!isset($key[1])) $key[1]="*";
+                        if($key[1]=='*') return true;
+                        elseif(!strlen($_SERVER['HTTP_ORIGIN'])) return false;
+                        else {
+                            $allows = explode(',',$key[1]);
+                            foreach ($allows as $host) {
+                                if(preg_match('/^.*'.trim($host).'.*$/',$_SERVER['REMOTE_ADDR'])>0) return true;
+                            }
+                            return false;
+                        }
+                    }
+                }
+            return false;
+        }
+        function getHeader($str)
+        {
+            $str = strtoupper($str);
+            $str = str_replace('-', '_', $str);
+            return ((isset($_SERVER['HTTP_' . $str])) ? $_SERVER['HTTP_' . $str] : '');
+        }
+
+        // Check checkCloudFrameWorkSecurity
+        function checkCloudFrameWorkSecurity($maxSeconds = 0, $id = '', $secret = '')
+        {
+            if (!strlen($this->getHeader('X-CLOUDFRAMEWORK-SECURITY')))
+                $this->core->logs->add('X-CLOUDFRAMEWORK-SECURITY missing.');
+            else {
+                list($_id, $_zone, $_time, $_token) = explode('__', $this->getHeader('X-CLOUDFRAMEWORK-SECURITY'), 4);
+                if (!strlen($_id)
+                    || !strlen($_zone)
+                    || !strlen($_time)
+                    || !strlen($_token)
+                ) {
+                    $this->core->logs->add('_wrong format in X-CLOUDFRAMEWORK-SECURITY.');
+                } else {
+                    $date = new DateTime(null, new DateTimeZone($_zone));
+                    $secs = microtime(true) + $date->getOffset() - $_time;
+
+                    if (!strlen($secret)) {
+                        $secArr = $this->core->config->get('CLOUDFRAMEWORK-ID-' . $_id);
+                        if (isset($secArr['secret'])) $secret = $secArr['secret'];
+                    }
+
+                    if (!strlen($secret)) {
+                        $this->core->logs->add('conf-var CLOUDFRAMEWORK-ID-' . $_id . ' missing or it is not a righ CLOUDFRAMEWORK array.');
+                    } elseif (!strlen($_time) || !strlen($_token)) {
+                        $this->core->logs->add('wrong X-CLOUDFRAMEWORK-SECURITY format.');
+                        // We allow an error of 2 min
+                    } elseif (false && $secs < -120) {
+                        $this->core->logs->add('Bad microtime format. Negative value got: ' . $secs . '. Check the clock of the client side.');
+                    } elseif (strlen($id) && $id != $_id) {
+                        $this->core->logs->add($_id . ' ID is not allowed');
+                    } elseif ($this->getHeader('X-CLOUDFRAMEWORK-SECURITY') != $this->generateCloudFrameWorkSecurityString($_id, $_time, $secret)) {
+                        $this->core->logs->add('X-CLOUDFRAMEWORK-SECURITY does not match.');
+                    } elseif ($maxSeconds > 0 && $maxSeconds <= $secs) {
+                        $this->core->logs->add('Security String has reached maxtime: ' . $maxSeconds . ' seconds');
+                    } else {
+                        $secArr['SECURITY-ID'] = $_id;
+                        $secArr['SECURITY-EXPIRATION'] = ($maxSeconds) ? $maxSeconds - $secs : $maxSeconds;
+                        return ($secArr);
+                    }
+                }
+            }
+            return false;
+        }
+
+        // time, has to to be microtime().
+        function generateCloudFrameWorkSecurityString($id, $time = '', $secret = '')
+        {
+            $ret = null;
+            if (!strlen($secret)) {
+                $secArr = $this->core->config->get('CLOUDFRAMEWORK-ID-' . $id);
+                if (isset($secArr['secret'])) $secret = $secArr['secret'];
+            }
+            if (!strlen($secret)) {
+                $this->core->logs->add('conf-var CLOUDFRAMEWORK-ID-' . $id . ' missing.');
+            } else {
+                if (!strlen($time)) $time = microtime(true);
+                $date = new \DateTime(null, new \DateTimeZone('UTC'));
+                $time += $date->getOffset();
+                $ret = $id . '__UTC__' . $time;
+                $ret .= '__' . hash_hmac('sha1', $ret, $secret);
+            }
+            return $ret;
+        }
+    }
 }
