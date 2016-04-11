@@ -99,9 +99,6 @@ if(!strlen($api->service)) {
 
 	if(is_array($api->returnData)) $ret = array_merge($ret,$api->returnData);
 
-
-
-
 	// Sending info.
 	$api->sendHeaders();
 	// Output Value
