@@ -1194,6 +1194,7 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
             return ($ret);
         }
         function getCurl($rute, $data = null, $verb = 'GET', $extra_headers = null, $raw = false) {
+            $this->core->__p->add('Request->getCurl: ', "$rute " . (($data === null) ? '{no params}' : '{with params}'), 'note');
             $rute = $this->getServiceUrl($rute);
             $this->responseHeaders = null;
 
@@ -1208,17 +1209,18 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
             // Cache
             $ch = curl_init();
             curl_setopt_array($ch, $options);
-            $data = curl_exec($ch);
+            $ret = curl_exec($ch);
             if(curl_errno($ch)===0) {
                 $this->responseHeaders = curl_getinfo($ch);
                 curl_close($ch);
-                return $data;
             } else {
                 $this->addError(error_get_last());
                 $this->addError(curl_error($ch));
+                $ret = false;
             }
             curl_close($ch);
-            return false;
+            $this->core->__p->add('Request->getCurl: ', '', 'endnote');
+            return $ret;
 
 
         }
