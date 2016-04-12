@@ -264,7 +264,7 @@ if (!defined ("_RESTfull_CLASS_") ) {
 	    function checkCloudFrameWorkSecurity($time=0,$id='') {
 	        $ret = false;
 	        $info = $this->core->security->checkCloudFrameWorkSecurity($time); // Max. 10 min for the Security Token and return $this->getConf('CLOUDFRAMEWORK-ID-'.$id);
-            if($info===false) $this->setError($adnbp->getLog(),401);
+            if(false === $info) $this->setError($this->core->logs->get(),401);
             else {
                 $ret=true;
                 $response['SECURITY-ID'] = $info['SECURITY-ID'];
@@ -277,9 +277,7 @@ if (!defined ("_RESTfull_CLASS_") ) {
         function getCloudFrameWorkSecurityInfo() {
             if(isset($this->returnData['SECURITY-ID'])) {
                 return $this->core->config->get('CLOUDFRAMEWORK-ID-'.$this->returnData['SECURITY-ID']);
-            } else
-				die('false!!!');
-                return false;
+            } else return [];
         }
 
 		function send() {

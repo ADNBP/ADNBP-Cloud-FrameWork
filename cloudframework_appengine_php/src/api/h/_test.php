@@ -10,8 +10,14 @@ class API extends RESTful
 			$this->core->__p->init('test', 'CloudSQL connect');
 			$db = $this->core->loadClass("CloudSQL");
 			$db->connect();
-			if (!$db->error()) $db->close();
-			$notes = array($db->getError());
+			if (!$db->error()) {
+				$db->close();
+				$notes[] = ['dbServer'=>(strlen($this->core->config->get("dbServer")))?substr($this->core->config->get("dbServer"),0,4).'***':'None'];
+				$notes[] = ['dbSocket'=>(strlen($this->core->config->get("dbSocket")))?'***':'None'];
+			} else {
+				$notes = array($db->getError());
+			}
+
 			/*
 			$notes[] = ['dbServer'=>(strlen($this->core->config->get("dbServer")))?substr($this->core->config->get("dbServer"),0,4).'***':'None'];
 			$notes[] = ['dbSocket'=>(strlen($this->core->config->get("dbSocket")))?'***':'None'];
@@ -37,23 +43,33 @@ class API extends RESTful
 			$this->core->__p->end('test', 'LocalizePath scandir', is_array($ret), $this->core->config->get("LocalizePath") . ': ' . $errMsg);
 		}
 
-		if(!isset($_GET['only']) || $_GET['only']=='cloud') {
-			/* @var CloudServiceRequest $sc */
-			$cs = $this->core->loadClass('CloudServiceRequest');
-			if ($cs->getServiceUrl()) {
-				$this->core->__p->init('test', 'Cloud Service Url');
-				$ret = $cs->get('/_version');
-				if (!$cs->error) {
-					$ret = json_decode($ret);
-					$retOk = $ret->success;
-					if (!$retOk) $retErr = json_encode($ret);
-				} else {
-					$retOk = false;
-				}
-				$this->core->__p->end('test', 'Cloud Service Url', $retOk, $cs->getServiceUrl('/_version') . ' ' . $retErr);
+		// Cloud Service Connections
+		if(!isset($_GET['only']) || $_GET['only']=='cloud')
+		if ($this->core->request->getServiceUrl()) {
+			$this->core->__p->init('test', 'Cloud Service Url request->get');
+			$ret = $this->core->request->get('/_version');
+			if (!$this->core->request->error) {
+				$ret = json_decode($ret);
+				$retOk = $ret->success;
+				if (!$retOk) $retErr = json_encode($ret);
 			} else {
-				$this->addReturnData(array('Cloud Service Url' => 'no CloudServiceUrl configured'));
+				$retOk = false;
 			}
+			$this->core->__p->end('test', 'Cloud Service Url request->get', $retOk, $this->core->request->getServiceUrl('/_version') . ' ' . $retErr);
+
+			$this->core->__p->init('test', 'Cloud Service Url request->getCurl');
+			$ret = $this->core->request->getCurl('/_version');
+			if (!$this->core->request->error) {
+				$ret = json_decode($ret);
+				$retOk = $ret->success;
+				if (!$retOk) $retErr = json_encode($ret);
+			} else {
+				$retOk = false;
+			}
+			$this->core->__p->end('test', 'Cloud Service Url request->getCurl', $retOk, $this->core->request->getServiceUrl('/_version') . ' ' . $retErr);
+		}
+		else {
+			$this->addReturnData(array('Cloud Service Url' => 'no CloudServiceUrl configured'));
 		}
 
 		if (is_file($this->core->system->app_path . '/logic/_test.php')) include($this->core->system->app_path  . '/logic/_test.php');
