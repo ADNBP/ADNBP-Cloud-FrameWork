@@ -972,7 +972,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
         function getCloudServiceResponseCurl($rute, $data = null, $verb = 'GET', $extra_headers = null, $raw = false)
         {
-            __p('getCloudServiceResponse: ', "$rute " . (($data === null) ? '{no params}' : '{with params}'), 'note');
+            __p('getCloudServiceResponseCurl: ', "$rute " . (($data === null) ? '{no params}' : '{with params}'), 'note');
             if (strpos($rute, 'http') === false) $rute = $this->getCloudServiceURL($rute);
 
             $this->responseHeaders = null;
@@ -1041,14 +1041,16 @@ if (!defined("_ADNBP_CLASS_")) {
             curl_setopt_array($ch, $curl_options);
             $ret = curl_exec($ch);
             if(curl_errno($ch)===0) {
-                list($this->responseHeaders, $ret) = explode('\r\n\r\n', $ret, 2);
+                $header_len = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+                $this->responseHeaders = substr($ret, 0, $header_len);
+                $ret = substr($ret, $header_len);
             } else {
                 $this->addError(error_get_last());
                 $this->addError(curl_error($ch));
                 $ret = false;
             }
             curl_close($ch);
-            __p('getCloudServiceResponse: ', '', 'endnote');
+            __p('getCloudServiceResponseCurl: ', '', 'endnote');
             return $ret;
         }
 

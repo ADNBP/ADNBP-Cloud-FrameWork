@@ -38,7 +38,7 @@ if(strlen($this->getConf("LocalizePath"))) {
 if(!isset($_GET['only']) || $_GET['only']=='cloud')
 	if(strlen($this->getCloudServiceUrl())) {
 		  $__p->init('test','Cloud Service Stream Url');
-		  $ret = $this->getCloudServiceResponseStream('_version');
+		  $ret = $this->getCloudServiceResponse('_version');
 
 		  $retOk = !$this->error;
 		  $retErr = $this->errorMsg;
@@ -54,8 +54,8 @@ if(!isset($_GET['only']) || $_GET['only']=='cloud')
 
 if(!isset($_GET['only']) || $_GET['only']=='cloud')
 	if(strlen($this->getCloudServiceUrl())) {
-		$__p->init('test','Cloud Service Url');
-		$ret = $this->getCloudServiceResponse('_version');
+		$__p->init('test','Cloud Service Curl Url');
+		$ret = $this->getCloudServiceResponseCurl('_version');
 
 		$retOk = !$this->error;
 		$retErr = $this->errorMsg;
@@ -64,7 +64,7 @@ if(!isset($_GET['only']) || $_GET['only']=='cloud')
 			$retOk = $ret->success;
 			if(!$retOk) $retErr = json_encode($ret);
 		}
-		$__p->end('test','Cloud Service Url',$retOk,$this->getCloudServiceUrl('_version').' '.$retErr);
+		$__p->end('test','Cloud Service Curl Url',$retOk,$this->getCloudServiceUrl('_version').' '.$retErr);
 	} else {
 		$api->addReturnData(array('Cloud Service Url'=>'no CloudServiceUrl configured'));
 	}

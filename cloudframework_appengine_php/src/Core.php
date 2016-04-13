@@ -1257,18 +1257,19 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
                 CURLOPT_HEADER => true,             // return headers
                 CURLOPT_HTTPHEADER=>$options['http']['header'],
                 CURLOPT_CUSTOMREQUEST =>$verb,
-                CURLOPT_URL => $rute
             ];
             if(isset($options['http']['content'])) {
                 $curl_options[CURLOPT_POSTFIELDS]=$options['http']['content'];
             }
 
             // Cache
-            $ch = curl_init();
+            $ch = curl_init($rute);
             curl_setopt_array($ch, $curl_options);
             $ret = curl_exec($ch);
             if(curl_errno($ch)===0) {
-                list($this->responseHeaders, $ret) = explode("\r\n\r\n", $ret, 2);
+                $header_len = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+                $this->responseHeaders = substr($ret, 0, $header_len);
+                $ret = substr($ret, $header_len);
             } else {
                 $this->addError(error_get_last());
                 $this->addError(curl_error($ch));
