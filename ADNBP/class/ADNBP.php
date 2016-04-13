@@ -894,7 +894,7 @@ if (!defined("_ADNBP_CLASS_")) {
         /**
          * Call External Cloud Service
          */
-        function getCloudServiceResponseStream($rute, $data = null, $verb = 'GET', $extraheaders = null, $raw = false)
+        function getCloudServiceResponse($rute, $data = null, $verb = 'GET', $extraheaders = null, $raw = false)
         {
             // Creating the final URL.
             if (strpos($rute, 'http') !== false) $_url = $rute;
@@ -970,10 +970,9 @@ if (!defined("_ADNBP_CLASS_")) {
             return ($ret);
         }
 
-        function getCloudServiceResponse($rute, $data = null, $verb = 'GET', $extra_headers = null, $raw = false)
+        function getCloudServiceResponseCurl($rute, $data = null, $verb = 'GET', $extra_headers = null, $raw = false)
         {
             __p('getCloudServiceResponse: ', "$rute " . (($data === null) ? '{no params}' : '{with params}'), 'note');
-            $rute = $this->getCloudServiceURL($rute);
             if (strpos($rute, 'http') === false) $rute = $this->getCloudServiceURL($rute);
 
             $this->responseHeaders = null;
@@ -1032,18 +1031,17 @@ if (!defined("_ADNBP_CLASS_")) {
                 CURLOPT_HEADER => true,             // return headers
                 CURLOPT_HTTPHEADER=>$options['http']['header'],
                 CURLOPT_CUSTOMREQUEST =>$verb,
-                CURLOPT_URL => $rute
             ];
             if(isset($options['http']['content'])) {
                 $curl_options[CURLOPT_POSTFIELDS]=$options['http']['content'];
             }
 
             // Cache
-            $ch = curl_init();
+            $ch = curl_init($rute);
             curl_setopt_array($ch, $curl_options);
             $ret = curl_exec($ch);
             if(curl_errno($ch)===0) {
-                list($this->responseHeaders, $ret) = explode("\r\n\r\n", $ret, 2);
+                list($this->responseHeaders, $ret) = explode('\r\n\r\n', $ret, 2);
             } else {
                 $this->addError(error_get_last());
                 $this->addError(curl_error($ch));
