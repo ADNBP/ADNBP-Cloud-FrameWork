@@ -1197,22 +1197,72 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
             $this->core->__p->add('Request->getCurl: ', "$rute " . (($data === null) ? '{no params}' : '{with params}'), 'note');
             $rute = $this->getServiceUrl($rute);
             $this->responseHeaders = null;
+            $options['http']['header'] = ['Connection: close'] ;
+
+
+            // Automatic send header for X-CLOUDFRAMEWORK-SECURITY if it is defined in config
+            if (strlen($this->core->config->get("CloudServiceId")) && strlen($this->core->config->get("CloudServiceSecret")))
+                $options['http']['header'][] = 'X-CLOUDFRAMEWORK-SECURITY: ' . $this->generateCloudFrameWorkSecurityString($this->core->config->get("CloudServiceId"), microtime(true), $this->core->config->get("CloudServiceSecret"));
+
+            // Extra Headers
+            if ($extra_headers !== null && is_array($extra_headers)) {
+                foreach ($extra_headers as $key => $value) {
+                    $options['http']['header'][] .= $key . ': ' . $value ;
+                }
+            }
+
+            # Content-type for something different than get.
+            if ($verb != 'GET') {
+                if (stripos(json_encode($options['http']['header']), 'Content-type') === false) {
+                    if ($raw) {
+                        $options['http']['header'][] = 'Content-type: application/json' ;
+                    } else {
+                        $options['http']['header'][] = 'Content-type: application/x-www-form-urlencoded' ;
+                    }
+                }
+            }
+            // Build contents received in $data as an array
+            if (is_array($data)) {
+                if ($verb == 'GET') {
+                    if (is_array($data)) {
+                        if (strpos($rute, '?') === false) $rute .= '?';
+                        else $rute .= '&';
+                        foreach ($data as $key => $value) $rute .= $key . '=' . rawurlencode($value) . '&';
+                    }
+                } else {
+                    if ($raw) {
+                        if (stripos(json_encode($options['http']['header']), 'application/json') !== false)
+                            $build_data = json_encode($data);
+                        else
+                            $build_data = $data;
+                    } else {
+                        $build_data = http_build_query($data);
+                    }
+                    $options['http']['content'] = $build_data;
+
+                    // You have to calculate the Content-Length to run as script
+                    $options['http']['header'][] = sprintf('Content-Length: %d', strlen($build_data));
+                }
+            }
 
             $options = [
                 CURLOPT_SSL_VERIFYPEER => false,
                 CURLOPT_SSL_VERIFYHOST => false,
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_HEADER => true,             // return headers
+                CURLOPT_HTTPHEADER=>$options['http']['header'],
+                CURLOPT_CUSTOMREQUEST =>$verb,
                 CURLOPT_URL => $rute
             ];
+            if(isset($options['http']['content'])) $options['CURLOPT_POSTFIELDS']=$options['http']['content'];
 
             // Cache
             $ch = curl_init();
             curl_setopt_array($ch, $options);
             $ret = curl_exec($ch);
             if(curl_errno($ch)===0) {
-                $this->responseHeaders = curl_getinfo($ch);
-                curl_close($ch);
+                $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+                $this->responseHeaders = substr($ret, 0, $header_size);
             } else {
                 $this->addError(error_get_last());
                 $this->addError(curl_error($ch));
