@@ -1251,12 +1251,13 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
             }
 
             $curl_options = [
-                CURLOPT_SSL_VERIFYPEER => false,
-                CURLOPT_SSL_VERIFYHOST => false,
+                CURLOPT_SSL_VERIFYPEER => 0,
+                CURLOPT_SSL_VERIFYHOST => 0,
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_HEADER => true,             // return headers
                 CURLOPT_HTTPHEADER=>$options['http']['header'],
-                CURLOPT_CUSTOMREQUEST =>$verb,
+                CURLOPT_CUSTOMREQUEST =>$verb
+
             ];
             if(isset($options['http']['content'])) {
                 $curl_options[CURLOPT_POSTFIELDS]=$options['http']['content'];

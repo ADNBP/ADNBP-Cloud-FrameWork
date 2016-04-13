@@ -4,7 +4,7 @@ $core = new Core();
 
 // Check CloudService
 $core->request->setServiceUrl('https://adnbp-first-web-site.appspot.com/h/api');
-# $core->request->setServiceUrl('https://cloud.adnbp.com/h/api');
+#$core->request->setServiceUrl('https://cloud.adnbp.com/h/api');
 
 $ok = true;
 $ret = json_decode($core->request->get('_api',['a'=>1,'b'=>2]),true);
