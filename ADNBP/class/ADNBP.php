@@ -900,7 +900,7 @@ if (!defined("_ADNBP_CLASS_")) {
             if (strpos($rute, 'http') !== false) $_url = $rute;
             else  $_url = $this->getCloudServiceURL($rute);
 
-            __p('getCloudServiceResponse: ', "$_url " . (($data === null) ? '{no params}' : '{with params}'), 'note');
+            __p('getCloudServiceResponseStream: ', "$_url " . (($data === null) ? '{no params}' : '{with params}'), 'note');
 
             $options = $this->system['stream_context_default']; // Take a look in ADNBP/config.php
 
@@ -966,8 +966,92 @@ if (!defined("_ADNBP_CLASS_")) {
             }
 
 
-            __p('getCloudServiceResponse: ', '', 'endnote');
+            __p('getCloudServiceResponseStream: ', '', 'endnote');
             return ($ret);
+        }
+
+        function getCloudServiceResponseCurl($rute, $data = null, $verb = 'GET', $extra_headers = null, $raw = false)
+        {
+            __p('getCloudServiceResponseCurl: ', "$rute " . (($data === null) ? '{no params}' : '{with params}'), 'note');
+            if (strpos($rute, 'http') === false) $rute = $this->getCloudServiceURL($rute);
+
+            $this->responseHeaders = null;
+            $options['http']['header'] = ['Connection: close','Expect:','ACCEPT:'] ; // improve perfomance and avoid 100 HTTP Header
+
+
+            // Automatic send header for X-CLOUDFRAMEWORK-SECURITY if it is defined in config
+            if (strlen($this->getConf("CloudServiceId")) && strlen($this->getConf("CloudServiceSecret")))
+                $options['http']['header'][] = 'X-CLOUDFRAMEWORK-SECURITY: ' . $this->generateCloudFrameWorkSecurityString($this->getConf("CloudServiceId"), microtime(true), $this->getConf("CloudServiceSecret"));
+
+            // Extra Headers
+            if ($extra_headers !== null && is_array($extra_headers)) {
+                foreach ($extra_headers as $key => $value) {
+                    $options['http']['header'][] .= $key . ': ' . $value ;
+                }
+            }
+
+            # Content-type for something different than get.
+            if ($verb != 'GET') {
+                if (stripos(json_encode($options['http']['header']), 'Content-type') === false) {
+                    if ($raw) {
+                        $options['http']['header'][] = 'Content-type: application/json' ;
+                    } else {
+                        $options['http']['header'][] = 'Content-type: application/x-www-form-urlencoded' ;
+                    }
+                }
+            }
+            // Build contents received in $data as an array
+            if (is_array($data)) {
+                if ($verb == 'GET') {
+                    if (is_array($data)) {
+                        if (strpos($rute, '?') === false) $rute .= '?';
+                        else $rute .= '&';
+                        foreach ($data as $key => $value) $rute .= $key . '=' . rawurlencode($value) . '&';
+                    }
+                } else {
+                    if ($raw) {
+                        if (stripos(json_encode($options['http']['header']), '/json') !== false) {
+                            $build_data = json_encode($data);
+                        } else
+                            $build_data = $data;
+                    } else {
+                        $build_data = http_build_query($data);
+                    }
+                    $options['http']['content'] = $build_data;
+
+                    // You have to calculate the Content-Length to run as script
+                    $options['http']['header'][] = sprintf('Content-Length: %d', strlen($build_data));
+                }
+            }
+
+            $curl_options = [
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_SSL_VERIFYHOST => false,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HEADER => true,             // return headers
+                CURLOPT_HTTPHEADER=>$options['http']['header'],
+                CURLOPT_CUSTOMREQUEST =>$verb,
+            ];
+            if(isset($options['http']['content'])) {
+                $curl_options[CURLOPT_POSTFIELDS]=$options['http']['content'];
+            }
+
+            // Cache
+            $ch = curl_init($rute);
+            curl_setopt_array($ch, $curl_options);
+            $ret = curl_exec($ch);
+            if(curl_errno($ch)===0) {
+                $header_len = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+                $this->responseHeaders = substr($ret, 0, $header_len);
+                $ret = substr($ret, $header_len);
+            } else {
+                $this->addError(error_get_last());
+                $this->addError(curl_error($ch));
+                $ret = false;
+            }
+            curl_close($ch);
+            __p('getCloudServiceResponseCurl: ', '', 'endnote');
+            return $ret;
         }
 
         /*

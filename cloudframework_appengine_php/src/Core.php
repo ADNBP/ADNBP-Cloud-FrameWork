@@ -21,11 +21,14 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
     // Global functions
     function __print($args)
     {
-        echo "<pre>";
+        if(key_exists('PWD',$_SERVER)) echo "\n";
+        else echo "<pre>";
         for ($i = 0, $tr = count($args); $i < $tr; $i++) {
             if ($args[$i] === "exit")
                 exit;
-            echo "\n<li>[$i]: ";
+            if(key_exists('PWD',$_SERVER)) echo "\n[$i]: ";
+            else echo "\n<li>[$i]: ";
+
             if (is_array($args[$i]))
                 echo print_r($args[$i], TRUE);
             else if (is_object($args[$i]))
@@ -36,9 +39,11 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
                 echo 'NULL';
             else
                 echo $args[$i];
-            echo "</li>";
+            if(key_exists('PWD',$_SERVER)) echo "\n";
+            else echo "</li>";
         }
-        echo "</pre>";
+        if(key_exists('PWD',$_SERVER)) echo "\n";
+        else echo "</pre>";
     }
     function _print()
     {
@@ -1229,7 +1234,7 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
             $this->core->__p->add('Request->getCurl: ', "$rute " . (($data === null) ? '{no params}' : '{with params}'), 'note');
             $rute = $this->getServiceUrl($rute);
             $this->responseHeaders = null;
-            $options['http']['header'] = ['Connection: close'] ;
+            $options['http']['header'] = ['Connection: close','Expect:','ACCEPT:'] ; // improve perfomance and avoid 100 HTTP Header
 
 
             // Automatic send header for X-CLOUDFRAMEWORK-SECURITY if it is defined in config
@@ -1263,9 +1268,9 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
                     }
                 } else {
                     if ($raw) {
-                        if (stripos(json_encode($options['http']['header']), 'application/json') !== false)
+                        if (stripos(json_encode($options['http']['header']), '/json') !== false) {
                             $build_data = json_encode($data);
-                        else
+                        } else
                             $build_data = $data;
                     } else {
                         $build_data = http_build_query($data);
@@ -1277,27 +1282,31 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
                 }
             }
 
-            $options = [
-                CURLOPT_SSL_VERIFYPEER => false,
-                CURLOPT_SSL_VERIFYHOST => false,
+            $curl_options = [
+                CURLOPT_SSL_VERIFYPEER => 0,
+                CURLOPT_SSL_VERIFYHOST => 0,
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_HEADER => true,             // return headers
                 CURLOPT_HTTPHEADER=>$options['http']['header'],
-                CURLOPT_CUSTOMREQUEST =>$verb,
-                CURLOPT_URL => $rute
+                CURLOPT_CUSTOMREQUEST =>$verb
+
             ];
-            if(isset($options['http']['content'])) $options['CURLOPT_POSTFIELDS']=$options['http']['content'];
+            if(isset($options['http']['content'])) {
+                $curl_options[CURLOPT_POSTFIELDS]=$options['http']['content'];
+            }
 
             // Cache
-            $ch = curl_init();
-            curl_setopt_array($ch, $options);
+            $ch = curl_init($rute);
+            curl_setopt_array($ch, $curl_options);
             $ret = curl_exec($ch);
             if(curl_errno($ch)===0) {
-                $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
-                $this->responseHeaders = substr($ret, 0, $header_size);
+                $header_len = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+                $this->responseHeaders = substr($ret, 0, $header_len);
+                $ret = substr($ret, $header_len);
             } else {
                 $this->addError(error_get_last());
                 $this->addError(curl_error($ch));
+                _printe(curl_error($ch));
                 $ret = false;
             }
             curl_close($ch);
