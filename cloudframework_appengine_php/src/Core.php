@@ -136,13 +136,15 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
         var $start = false;
         var $id = '';
 
-        function __construct($id='')
+        function __construct()
         {
-            $this->id = $id;
         }
 
-        function init() {
+        function init($id='') {
             // I will only start session if someone call me..
+            $this->id = $id;  // Someone create a session based in one ID and no in a PHPSESSION
+
+
             if (strlen($this->id))
                 session_id($this->id);
             session_start();
@@ -411,9 +413,9 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
         public $obj = [];
         public $__p,$session,$system,$logs,$errors,$is,$cache,$security,$user,$config;
         var $_version = '20160410';
-        function __construct($sessionId = '') {
+        function __construct() {
             $this->__p  = new Performance();
-            $this->session  = new Session($sessionId);
+            $this->session  = new Session();
             $this->system  = new System();
             $this->logs  = new Loggin();
             $this->errors= new Loggin();
@@ -515,6 +517,36 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
         {
             $this->core = $core;
             $this->namespace = (is_string($namespace) && strlen($namespace))?$namespace:'Default';
+
+            // Check if the Auth comes from X-CloudFrameWork-AuthToken and there is a hacking.
+            if (strlen($this->core->security->getHeader('X-CloudFrameWork-AuthToken'))) {
+                list($sessionId, $hash) = explode("_", $this->core->security->getHeader('X-CloudFrameWork-AuthToken'), 2);
+
+                // Checking security
+                $_security = '';
+                if(!strlen(trim($hash)) || $hash != $this->core->system->getRequestFingerPrint()[hash]) {
+                    $_security = 'Wrong token.';
+                    if(strlen($hash)) $_security.=' Violating token integrity, ';
+                } else {
+
+                    $this->core->session->init($sessionId);
+                    if (!$this->isAuth() || $this->getVar('token') != $this->core->security->getHeader('X-CloudFrameWork-AuthToken')) {
+                        $_security = 'Violating session token integrity';
+                        session_destroy();
+                        $_SESSION = array();
+                        session_regenerate_id();
+                        $this->data = [];
+                    }
+                }
+                // Informing security issue
+                // This is top level risk
+                if(strlen($_security)) {
+                    // TODO: Report the log
+                    //$this->sendLog('access', 'Hacking', 'X-CloudFrameWork-AuthToken', 'Ilegal token ' . $this->getHeader('X-CloudFrameWork-AuthToken')
+                    //    , 'Error comparing with internal token: ' . $this->getAuthUserData('token') . ' for user: ' . $this->getAuthUserData('email'), $this->getConf('CloudServiceLogEmail'));
+                    die($_security);
+                }
+            }
         }
 
         function init($namespace='') {
