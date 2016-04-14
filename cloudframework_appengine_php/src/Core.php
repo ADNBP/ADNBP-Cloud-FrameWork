@@ -446,7 +446,7 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
             }
         }
 
-        function loadClass($class) {
+        function loadClass($class,$params=null) {
 
             if(key_exists($class,$this->obj)) return $this->obj[$class];
 
@@ -458,7 +458,7 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
                 $this->errors->add("Class $class not found");
                 return null;
             }
-            $this->obj[$class] = new $class($this);
+            $this->obj[$class] = new $class($this,$params);
             return $this->obj[$class];
             
         }

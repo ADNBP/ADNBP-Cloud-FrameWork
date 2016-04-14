@@ -11,7 +11,7 @@ if (!defined ("_RESTfull_CLASS_") ) {
 		var $params = array();
 		var $error = 0;
 		var $ok = 200;
-		var $errorMsg = '';
+		var $errorMsg = [];
 		var $header = '';
 		var $requestHeaders = array();
 		var $method = '';
@@ -135,14 +135,14 @@ if (!defined ("_RESTfull_CLASS_") ) {
 		
 		function checkMandatoryParam($pos,$msg='') {
 			if(!isset($this->params[$pos]) || !strlen($this->params[$pos])) {
-				$this->error = 400;
-				$this->errorMsg = ($msg=='')?'param '.$pos.' is mandatory':$msg;
+				$this->setError(($msg=='')?'param '.$pos.' is mandatory':$msg);
 			}
-		    return($this->error === 0);	
+		    return($this->error === 0);
 		}	
 
 		function setError($value,$key=400) {
 			$this->error = $key;
+			$this->errorMsg[] = $value;
 			$this->core->errors->add($value);
 		}
 
