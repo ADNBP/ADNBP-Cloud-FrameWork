@@ -509,14 +509,22 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
                 }
             }
         }
+        function jsonDecode($string,$as_array=false) {
+            $ret = json_decode($string,$as_array);
+            if(json_last_error() != JSON_ERROR_NONE) {
+                $this->errors->add('Error decoding JSON: '.$string);
+                $this->errors->add(json_last_error_msg());
+            }
+            return $ret;
+        }
     }
 
     class User
     {
         private $core;
-        private $isAuth = null;
-        private $namespace;
-        private $data = [];
+        var $isAuth = null;
+        var $namespace;
+        var $data = [];
 
         function __construct(Core &$core,$namespace='Default')
         {
@@ -1194,7 +1202,7 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
         {
             $this->core = $core;
             if (!$this->core->config->get("CloudServiceUrl"))
-                $this->core->config->set("CloudServiceUrl", 'https://cloud.adnbp.com/api');
+                $this->core->config->set("CloudServiceUrl", 'https://cloud.adnbp.com/h/api');
             $this->setServiceUrl($this->core->config->get("CloudServiceUrl"));
 
         }
@@ -1419,6 +1427,47 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
             $this->error = true;
             $this->core->errors->add($value);
             $this->errorMsg[] = $value;
+        }
+
+        function sendLog($type, $cat, $subcat, $title, $text = '', $email = '', $app = '', $interactive = false)
+        {
+
+            $this->core->logs->add(['sending logs:'=>[$type, $cat, $subcat, $title]]);
+            if (!$this->core->config->get('CloudServiceLog') && !$this->core->config->get('LogPath')) return false;
+            if (!strlen($app)) $app = $this->core->system->url['host'];
+            $app = str_replace(' ', '_', $app);
+            $params['id'] = $this->core->config->get('CloudServiceId');
+            $params['cat'] = $cat;
+            $params['subcat'] = $subcat;
+            $params['title'] = $title;
+            if (!is_string($text)) $text = json_encode($text);
+            $params['text'] = $text . ((strlen($text)) ? "\n\n" : '');
+            if ($this->core->errors->lines) $params['text'] .= "Errors: " . json_encode($this->core->errors->data,JSON_PRETTY_PRINT) . "\n\n";
+            if (count($this->core->logs->lines)) $params['text'] .= "Logs: " . json_encode($this->core->logs->data,JSON_PRETTY_PRINT);
+
+            // IP gathered from queue
+            if(isset($_REQUEST['cloudframework_queued_ip']))
+                $params['ip'] = $_REQUEST['cloudframework_queued_ip'];
+            else
+                $params['ip'] = $this->core->system->ip;
+
+            // IP gathered from queue
+            if(isset($_REQUEST['cloudframework_queued_fingerprint']))
+                $params['fingerprint'] = $_REQUEST['cloudframework_queued_fingerprint'];
+            else
+                $params['fingerprint'] = json_encode($this->core->system->getRequestFingerPrint(),JSON_PRETTY_PRINT);
+
+            // Tell the service to send email of the report.
+            if (strlen($email) && filter_var($email, FILTER_VALIDATE_EMAIL))
+                $params['email'] = $email;
+            $this->setServiceUrl('http://localhost:9080/h/api');
+            if ($this->core->config->get('CloudServiceLog')) {
+                $ret = $this->core->jsonDecode($this->get('queue/cf_logs/' . urlencode($app) . '/' . urlencode($type), $params, 'POST'),true);
+                if (is_array($ret) && !$ret['success']) $this->addError($ret);
+            } else {
+                $ret = 'Sending to LogPath not yet implemented';
+            }
+            return $ret;
         }
     }
 }

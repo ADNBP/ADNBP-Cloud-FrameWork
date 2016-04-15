@@ -297,6 +297,12 @@ if (!defined ("_RESTfull_CLASS_") ) {
 				$ret['form-raw Params']=$this->formParams;
 			}
 
+			if(is_array($this->returnData)) $ret = array_merge($ret,$this->returnData);
+
+			if($this->core->logs->lines) {
+				$ret['logs']=$this->core->logs->data;
+			}
+
 			// If I have been called from a queue the response has to be 200 to avoid…
 			if(isset($this->formParams['cloudframework_queued'])) {
 				if($this->core->errors->lines) {
@@ -308,7 +314,7 @@ if (!defined ("_RESTfull_CLASS_") ) {
 				$ret['errors']=$this->core->errors->data;
 			}
 
-			if(is_array($this->returnData)) $ret = array_merge($ret,$this->returnData);
+
 			$this->sendHeaders();
 			$this->core->__p->add("RESTFull: ",'','endnote');
 			switch ($this->contentTypeReturn) {
