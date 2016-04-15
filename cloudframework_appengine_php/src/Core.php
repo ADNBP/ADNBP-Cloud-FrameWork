@@ -954,6 +954,10 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
                                 $this->addError("menu: tag does not contain an array");
                             }
                             break;
+                        case "isversion":
+                            if (trim(strtolower($tagvalue)) == 'core')
+                                $include = true;
+                            break;
                         case "false":
                             break;
                         default:
@@ -1460,7 +1464,6 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
             // Tell the service to send email of the report.
             if (strlen($email) && filter_var($email, FILTER_VALIDATE_EMAIL))
                 $params['email'] = $email;
-            $this->setServiceUrl('http://localhost:9080/h/api');
             if ($this->core->config->get('CloudServiceLog')) {
                 $ret = $this->core->jsonDecode($this->get('queue/cf_logs/' . urlencode($app) . '/' . urlencode($type), $params, 'POST'),true);
                 if (is_array($ret) && !$ret['success']) $this->addError($ret);

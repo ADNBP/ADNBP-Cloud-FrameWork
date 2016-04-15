@@ -435,6 +435,9 @@ if (!defined("_ADNBP_CLASS_")) {
                                 $this->addError("menu: tag does not contain an array");
                             }
                             break;
+                        case "isversion":
+                            if (trim(strtolower($tagvalue)) != 'core')
+                                $include = true;
                         case "false":
                             break;
                         default:
