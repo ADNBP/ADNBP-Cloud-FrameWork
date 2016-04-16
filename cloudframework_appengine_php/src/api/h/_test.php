@@ -46,8 +46,10 @@ class API extends RESTful
 		// Cloud Service Connections
 		if(!isset($_GET['only']) || $_GET['only']=='cloud')
 		if ($this->core->request->getServiceUrl()) {
+			$url = '/_version';
+			$retErr = '';
 			$this->core->__p->init('test', 'Cloud Service Url request->get');
-			$ret = $this->core->request->get('/_version');
+			$ret = $this->core->request->get($url);
 			if (!$this->core->request->error) {
 				$ret = json_decode($ret);
 				$retOk = $ret->success;
@@ -59,7 +61,7 @@ class API extends RESTful
 			$this->core->__p->end('test', 'Cloud Service Url request->get', $retOk, $this->core->request->getServiceUrl('/_version') . ' ' . $retErr);
 
 			$this->core->__p->init('test', 'Cloud Service Url request->getCurl');
-			$ret = $this->core->request->getCurl('/_version');
+			$ret = $this->core->request->getCurl($url);
 			if (!$this->core->request->error) {
 				$ret = json_decode($ret);
 				$retOk = $ret->success;

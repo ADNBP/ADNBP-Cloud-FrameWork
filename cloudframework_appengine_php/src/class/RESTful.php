@@ -38,12 +38,12 @@ if (!defined ("_RESTfull_CLASS_") ) {
 			$this->method = (strlen($_SERVER['REQUEST_METHOD']))?$_SERVER['REQUEST_METHOD']:'GET';
 		    if($this->method=='GET' ) {
 			  $this->formParams = &$_GET;
-               if(strlen($_GET['_raw_input_'])) $this->formParams = (count($this->formParams))?array_merge($this->formParams,json_decode($_GET['_raw_input_'],true)):json_decode($_GET['_raw_input_'],true);
+               if(isset($_GET['_raw_input_']) && strlen($_GET['_raw_input_'])) $this->formParams = (count($this->formParams))?array_merge($this->formParams,json_decode($_GET['_raw_input_'],true)):json_decode($_GET['_raw_input_'],true);
 			} else {
 			   if(count($_GET))  $this->formParams = (count($this->formParams))?array_merge($this->formParam,$_GET):$_GET;
 			   if(count($_POST))  $this->formParams = (count($this->formParams))?array_merge($this->formParams,$_POST):$_POST;
-			   if(strlen($_POST['_raw_input_'])) $this->formParams = (count($this->formParams))?array_merge($this->formParams,json_decode($_POST['_raw_input_'],true)):json_decode($_POST['_raw_input_'],true);
-			   if(strlen($_GET['_raw_input_'])) $this->formParams = (count($this->formParams))?array_merge($this->formParams,json_decode($_GET['_raw_input_'],true)):json_decode($_GET['_raw_input_'],true);
+			   if(isset($_POST['_raw_input_']) && strlen($_POST['_raw_input_'])) $this->formParams = (count($this->formParams))?array_merge($this->formParams,json_decode($_POST['_raw_input_'],true)):json_decode($_POST['_raw_input_'],true);
+			   if(isset($_GET['_raw_input_']) && strlen($_GET['_raw_input_'])) $this->formParams = (count($this->formParams))?array_merge($this->formParams,json_decode($_GET['_raw_input_'],true)):json_decode($_GET['_raw_input_'],true);
 			   
 			   // raw data.
 			   $input = file_get_contents("php://input");
@@ -72,13 +72,22 @@ if (!defined ("_RESTfull_CLASS_") ) {
 			
 					
 			// URL splits
-			list($this->url,$this->urlParams) = explode('?',$_SERVER['REQUEST_URI'],2);
+			$this->url = $_SERVER['REQUEST_URI'];
+			$this->urlParams = '';
+			if(strpos($_SERVER['REQUEST_URI'],'?')!== false)
+				list($this->url,$this->urlParams) = explode('?',$_SERVER['REQUEST_URI'],2);
 			
 			// API URL Split
 			list($foo,$url) = explode($apiUrl.'/',$this->url,2);
-			list($this->service,$this->serviceParam) = explode('/',$url,2);
-			$this->service = strtolower($this->service);
-			$this->params =  explode('/',$this->serviceParam);
+			$this->service = $url;
+			$this->serviceParam = '';
+			$this->params = [];
+
+			if(strpos($url,'/')!== false) {
+				list($this->service, $this->serviceParam) = explode('/', $url, 2);
+				$this->service = strtolower($this->service);
+				$this->params = explode('/', $this->serviceParam);
+			}
 			
         }
 

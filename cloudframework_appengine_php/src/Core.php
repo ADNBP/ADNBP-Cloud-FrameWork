@@ -82,13 +82,13 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
             if (strlen($file)) $file = " ($file)";
 
             $_mem = memory_get_usage() / (1024 * 1024) - $this->data['lastMemory'];
-            if ($type == 'all' || $type == 'endnote' || $type == 'memory' || $_GET['data'] == $this->data['lastIndex']) {
+            if ($type == 'all' || $type == 'endnote' || $type == 'memory' || (isset($_GET['data']) && $_GET['data'] == $this->data['lastIndex'])) {
                 $line .= number_format(round($_mem, 3), 3) . ' Mb';
                 $this->data['lastMemory'] = memory_get_usage() / (1024 * 1024);
             }
 
             $_time = microtime(TRUE) - $this->data['lastMicrotime'];
-            if ($type == 'all' || $type == 'endnote' || $type == 'time' || $_GET['data'] == $this->data['lastIndex']) {
+            if ($type == 'all' || $type == 'endnote' || $type == 'time' || (isset($_GET['data']) && $_GET['data'] == $this->data['lastIndex'])) {
                 $line .= (($line == '[') ? '' : ', ') . (round($_time, 3)) . ' secs';
                 $this->data['lastMicrotime'] = microtime(TRUE);
             }
@@ -188,7 +188,12 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
             $this->url['protocol'] = ($_SERVER['HTTPS'] == 'on') ? 'https' : 'http';
             $this->url['host'] = $_SERVER['HTTP_HOST'];
             $this->url['url_uri'] = $_SERVER['REQUEST_URI'];
-            list($this->url['url'],$this->url['params']) = explode('?', $_SERVER['REQUEST_URI'], 2);
+
+            $this->url['url'] = $_SERVER['REQUEST_URI'];
+            $this->url['params'] = '';
+            if(strpos($_SERVER['REQUEST_URI'],'?')!==false)
+                list($this->url['url'],$this->url['params']) = explode('?', $_SERVER['REQUEST_URI'], 2);
+
             $this->url['host_url'] = (($_SERVER['HTTPS'] == 'on') ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'].$this->url['url'];
             $this->url['host_url_uri'] = (($_SERVER['HTTPS'] == 'on') ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
             $this->url['script_name'] = $_SERVER['SCRIPT_NAME'];
@@ -196,14 +201,14 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
 
             // paths
             $this->root_path = (strlen($_SERVER['DOCUMENT_ROOT']))?$_SERVER['DOCUMENT_ROOT']: $_SERVER['PWD'];
-            $this->app_path = $this->rootPath;
+            $this->app_path = $this->root_path;
 
             // Remote user:
             $this->ip = $_SERVER['REMOTE_ADDR'];
             $this->user_agent = $_SERVER['HTTP_USER_AGENT'];
 
             // About timeZone, Date & Number format
-            if(strlen($_SERVER['PWD'])) date_default_timezone_set('UTC'); // necessary for shell run
+            if(isset($_SERVER['PWD']) && strlen($_SERVER['PWD'])) date_default_timezone_set('UTC'); // necessary for shell run
             $this->time_zone = array(date_default_timezone_get(), date('Y-m-d h:i:s'), date("P"), time());
             //date_default_timezone_set(($this->core->config->get('timeZone')) ? $this->core->config->get('timeZone') : 'Europe/Madrid');
             //$this->_timeZone = array(date_default_timezone_get(), date('Y-m-d h:i:s'), date("P"), time());
@@ -1295,14 +1300,22 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
             }
 
             $curl_options = [
-                CURLOPT_SSL_VERIFYPEER => 0,
-                CURLOPT_SSL_VERIFYHOST => 0,
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_SSL_VERIFYHOST => false,
                 CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_HEADER => true,             // return headers
+                CURLOPT_HEADER => true,            // return headers
+                CURLOPT_FOLLOWLOCATION=> false,
                 CURLOPT_HTTPHEADER=>$options['http']['header'],
                 CURLOPT_CUSTOMREQUEST =>$verb
 
             ];
+            // Appengine  workaround
+            // $curl_options[CURLOPT_SSL_VERIFYPEER] = false;
+            // $curl_options[CURLOPT_SSL_VERIFYHOST] = false;
+            // Download https://pki.google.com/GIAG2.crt
+            // openssl x509 -in GIAG2.crt -inform DER -out google.pem -outform PEM
+            // $curl_options[CURLOPT_CAINFO] =__DIR__.'/google.pem';
+
             if(isset($options['http']['content'])) {
                 $curl_options[CURLOPT_POSTFIELDS]=$options['http']['content'];
             }
@@ -1311,17 +1324,19 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
             $ch = curl_init($rute);
             curl_setopt_array($ch, $curl_options);
             $ret = curl_exec($ch);
-            if(curl_errno($ch)===0) {
+
+            if(!curl_errno($ch)) {
                 $header_len = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
                 $this->responseHeaders = substr($ret, 0, $header_len);
                 $ret = substr($ret, $header_len);
             } else {
                 $this->addError(error_get_last());
-                $this->addError(curl_error($ch));
-                _printe(curl_error($ch));
+                $this->addError([('Curl error '.curl_errno($ch))=>curl_error($ch)]);
+                $this->addError(['Curl url'=>$rute]);
                 $ret = false;
             }
             curl_close($ch);
+
             $this->core->__p->add('Request->getCurl: ', '', 'endnote');
             return $ret;
 
