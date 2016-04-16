@@ -68,11 +68,15 @@ if (!defined ("_DATASTORE_CLASS_") ) {
                 if (!is_array($data[0])) $data = [$data];
                 foreach ($data as $i => $row) {
                     $record = [];
-                    $schema_key = [];
+                    $schema_key = null;
+                    $schema_keyname = null;
+
                     // Loading info from Data
                     foreach ($row as $i => $value) {
                         if ($this->schema['props'][$i][1] == 'key') {
-                            $schema_key = [$this->schema['props'][$i][0], $value];
+                            $schema_key =  $value;
+                        } elseif ($this->schema['props'][$i][1] == 'keyname') {
+                            $schema_keyname = $value;
                         } else {
                             if (is_string($value)) {
                                 if ($this->schema['props'][$i][1] == 'date' || $this->schema['props'][$i][1] == 'datetime') {
@@ -85,6 +89,10 @@ if (!defined ("_DATASTORE_CLASS_") ) {
                                         $record = [];
                                         break;
                                     }
+                                } elseif($this->schema['props'][$i][1] == 'geo') {
+                                    if(!strlen($value)) $value='0.00,0.00';
+                                    list($lat,$long) = explode(',',$value,2);
+                                    $value = new Geopoint($lat,$long);
                                 }
                                 $record[$this->schema['props'][$i][0]] = $value;
                             }
@@ -96,11 +104,20 @@ if (!defined ("_DATASTORE_CLASS_") ) {
                     if (count($record)) {
                         try {
                             $entity = $this->store->createEntity($record);
-                            if (count($schema_key)) {
-                                $entity->setKeyId($schema_key[1]);
+                            if (null !== $schema_key) {
+                                $entity->setKeyId($schema_key);
+                            } elseif(null !== $schema_keyname) {
+                                $entity->setKeyName($schema_keyname);
                             }
                             $this->store->upsert($entity);
-                            $record['ID'] = $entity->getKeyId();
+                            foreach ($record as $key=>$value) if($value instanceof Geopoint)
+                                $record[$key] = $value->getLatitude().','.$value->getLongitude();
+
+                            if (null !== $schema_key) {
+                                $record['KeyId'] = $entity->getKeyId();
+                            } elseif(null !== $schema_keyname) {
+                                $record['KeyName'] = $entity->getKeyName();
+                            }
                             $ret[] = $record;
                         } catch (Exception $e) {
                             $this->setError($e->getMessage());
@@ -193,6 +210,7 @@ if (!defined ("_DATASTORE_CLASS_") ) {
 
             $this->lastQuery = $_q . ((is_array($where)) ? ' ' . json_encode($where) : '') . ' limit=' . $limit;
 
+
             try {
                 if ($type == 'one')
                     $data = [$this->store->fetchOne($_q, $where)];
@@ -206,7 +224,11 @@ if (!defined ("_DATASTORE_CLASS_") ) {
                         $data = $this->store->fetchPage($page);
                         if (is_array($data))
                             foreach ($data as $record) {
-                                $ret[] = array_merge(['ID' => $record->getKeyId()], $record->getData());
+                                // GeoData Transformation
+                                foreach ($record->getData() as $key=>$value) if($value instanceof Geopoint)
+                                    $record->{$key} = $value->getLatitude().','.$value->getLongitude();
+
+                                $ret[] = array_merge(['KeyId' => $record->getKeyId(),'KeyName' => $record->getKeyName()], $record->getData());
                                 $tr++;
                                 if ($limit > 0 && $tr == $limit) break;
                             }
@@ -249,7 +271,13 @@ if (!defined ("_DATASTORE_CLASS_") ) {
                 $this->store->query($q, $data);
                 $data = $this->store->fetchAll($q, $data);
                 foreach ($data as $record) {
-                    $ret[] = array_merge(['ID' => $record->getKeyId()], $record->getData());
+
+                    // GeoData Transformation
+                    foreach ($record->getData() as $key=>$value)
+                        if($value instanceof Geopoint)
+                            $record->{$key} = $value->getLatitude().','.$value->getLongitude();
+
+                    $ret[] = array_merge(['KeyId' => $record->getKeyId(),'KeyName' => $record->getKeyName()], $record->getData());
                 }
             } catch (Exception $e) {
                 $this->setError($e->getMessage());
@@ -261,15 +289,15 @@ if (!defined ("_DATASTORE_CLASS_") ) {
 
         function setError($value)
         {
-            $this->error = true;
-            $this->errorMsg = $value;
+            $this->errorMsg = [];
+            $this->addError($value);
         }
 
         function addError($value)
         {
             $this->error = true;
-            if ('' != $this->errorMsg) $this->errorMsg = [$value, $this->errorMsg];
-            else $this->errorMsg = $value;
+            $this->errorMsg[] = $value;
+            $this->core->errors->add($value);
         }
 
     }
@@ -654,7 +682,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
     }
     class Schema
     {
-
         /**
          * Field data types
          */
@@ -663,31 +690,32 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         const PROPERTY_DATETIME = 3;
         const PROPERTY_DOUBLE = 4;
         const PROPERTY_FLOAT = 4; // FLOAT === DOUBLE
+        const PROPERTY_BLOB = 5;
+        const PROPERTY_GEOPOINT = 6;
         const PROPERTY_BOOLEAN = 10; // 10 types of people...
         const PROPERTY_STRING_LIST = 20;
+        const PROPERTY_INTEGER_LIST = 21;
+        const PROPERTY_ENTITY = 30;
+        const PROPERTY_KEY = 40;
         const PROPERTY_DETECT = 99; // used for auto-detection
-
         /**
          * Kind (like database 'Table')
          *
          * @var string|null
          */
         private $str_kind = null;
-
         /**
          * Known fields
          *
          * @var array
          */
         private $arr_defined_properties = [];
-
         /**
          * The class to use when instantiating new Entity objects
          *
          * @var string
          */
         private $str_entity_class = 'Entity';
-
         /**
          * Kind is required
          *
@@ -697,7 +725,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             $this->str_kind = $str_kind;
         }
-
         /**
          * Add a field to the known field array
          *
@@ -714,7 +741,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             ];
             return $this;
         }
-
         /**
          * Add a string field to the schema
          *
@@ -726,7 +752,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             return $this->addProperty($str_name, self::PROPERTY_STRING, $bol_index);
         }
-
         /**
          * Add an integer field to the schema
          *
@@ -738,7 +763,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             return $this->addProperty($str_name, self::PROPERTY_INTEGER, $bol_index);
         }
-
         /**
          * Add a datetime field to the schema
          *
@@ -750,7 +774,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             return $this->addProperty($str_name, self::PROPERTY_DATETIME, $bol_index);
         }
-
         /**
          * Add a float|double field to the schema
          *
@@ -762,7 +785,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             return $this->addProperty($str_name, self::PROPERTY_FLOAT, $bol_index);
         }
-
         /**
          * Add a boolean field to the schema
          *
@@ -774,7 +796,17 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             return $this->addProperty($str_name, self::PROPERTY_BOOLEAN, $bol_index);
         }
-
+        /**
+         * Add a geopoint field to the schema
+         *
+         * @param $str_name
+         * @param bool $bol_index
+         * @return Schema
+         */
+        public function addGeopoint($str_name, $bol_index = TRUE)
+        {
+            return $this->addProperty($str_name, self::PROPERTY_GEOPOINT, $bol_index);
+        }
         /**
          * Add a string-list (array of strings) field to the schema
          *
@@ -786,7 +818,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             return $this->addProperty($str_name, self::PROPERTY_STRING_LIST, $bol_index);
         }
-
         /**
          * Get the Kind
          *
@@ -796,7 +827,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             return $this->str_kind;
         }
-
         /**
          * Get the configured fields
          *
@@ -806,7 +836,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             return $this->arr_defined_properties;
         }
-
         /**
          * Set the class to use when instantiating new Entity objects
          *
@@ -829,7 +858,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             }
             return $this;
         }
-
         /**
          * Create a new instance of this GDS Entity class
          *
@@ -839,53 +867,46 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             return (new $this->str_entity_class())->setSchema($this);
         }
-
     }
+
     class Entity
     {
-
         /**
          * Datastore entity Kind
          *
          * @var string|null
          */
         private $str_kind = null;
-
         /**
          * GDS record Key ID
          *
          * @var string
          */
         private $str_key_id = null;
-
         /**
          * GDS record Key Name
          *
          * @var string
          */
         private $str_key_name = null;
-
         /**
          * Entity ancestors
          *
          * @var null|array|Entity
          */
         private $mix_ancestry = null;
-
         /**
          * Field Data
          *
          * @var array
          */
         private $arr_data = [];
-
         /**
          * The Schema for the Entity, if known.
          *
          * @var Schema|null
          */
         private $obj_schema = null;
-
         /**
          * Get the Entity Kind
          *
@@ -895,7 +916,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             return $this->str_kind;
         }
-
         /**
          * Get the key ID
          *
@@ -905,7 +925,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             return $this->str_key_id;
         }
-
         /**
          * Get the key name
          *
@@ -915,7 +934,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             return $this->str_key_name;
         }
-
         /**
          * @param $str_kind
          * @return $this
@@ -925,7 +943,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             $this->str_kind = $str_kind;
             return $this;
         }
-
         /**
          * Set the key ID
          *
@@ -937,7 +954,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             $this->str_key_id = $str_key_id;
             return $this;
         }
-
         /**
          * Set the key name
          *
@@ -949,7 +965,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             $this->str_key_name = $str_key_name;
             return $this;
         }
-
         /**
          * Magic setter.. sorry
          *
@@ -960,7 +975,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             $this->arr_data[$str_key] = $mix_value;
         }
-
         /**
          * Magic getter.. sorry
          *
@@ -974,7 +988,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             }
             return null;
         }
-
         /**
          * Is a data value set?
          *
@@ -985,7 +998,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             return isset($this->arr_data[$str_key]);
         }
-
         /**
          * Get the entire data array
          *
@@ -995,7 +1007,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             return $this->arr_data;
         }
-
         /**
          * Set the Entity's ancestry. This either an array of paths OR another Entity
          *
@@ -1007,7 +1018,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             $this->mix_ancestry = $mix_path;
             return $this;
         }
-
         /**
          * Get the ancestry of the entity
          *
@@ -1017,7 +1027,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             return $this->mix_ancestry;
         }
-
         /**
          * The Schema for the Entity, if known.
          *
@@ -1027,7 +1036,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             return $this->obj_schema;
         }
-
         /**
          * Set the Schema for the Entity
          *
@@ -1040,7 +1048,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             $this->setKind($obj_schema->getKind());
             return $this;
         }
-
     }
     abstract class Gateway
     {
@@ -1806,14 +1813,12 @@ if (!defined ("_DATASTORE_CLASS_") ) {
     }
     abstract class Mapper
     {
-
         /**
          * Current Schema
          *
          * @var Schema
          */
         protected $obj_schema = null;
-
         /**
          * Set the schema
          *
@@ -1825,7 +1830,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             $this->obj_schema = $obj_schema;
             return $this;
         }
-
         /**
          * Dynamically determine type for a value
          *
@@ -1838,26 +1842,26 @@ if (!defined ("_DATASTORE_CLASS_") ) {
                 case 'boolean':
                     $int_dynamic_type = Schema::PROPERTY_BOOLEAN;
                     break;
-
                 case 'integer':
                     $int_dynamic_type = Schema::PROPERTY_INTEGER;
                     break;
-
                 case 'double':
                     $int_dynamic_type = Schema::PROPERTY_DOUBLE;
                     break;
-
                 case 'string':
                     $int_dynamic_type = Schema::PROPERTY_STRING;
                     break;
-
                 case 'array':
                     $int_dynamic_type = Schema::PROPERTY_STRING_LIST;
                     break;
-
                 case 'object':
-                    if($mix_value instanceof \DateTime) {
+                    if($mix_value instanceof DateTime) {
                         $int_dynamic_type = Schema::PROPERTY_DATETIME;
+                        break;
+                    }
+                    if($mix_value instanceof Geopoint) {
+                        $int_dynamic_type = Schema::PROPERTY_GEOPOINT;
+
                         break;
                     }
                     $int_dynamic_type = Schema::PROPERTY_STRING;
@@ -1867,7 +1871,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
                         $mix_value = null;
                     }
                     break;
-
                 case 'resource':
                 case 'null':
                 case 'unknown type':
@@ -1880,7 +1883,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
                 'value' => $mix_value
             ];
         }
-
         /**
          * Map 1-many results out of the Raw response data array
          *
@@ -1895,7 +1897,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             }
             return $arr_entities;
         }
-
         /**
          * Extract a single property value from a Property object
          *
@@ -1911,30 +1912,24 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             switch ($int_type) {
                 case Schema::PROPERTY_STRING:
                     return $obj_property->getStringValue();
-
                 case Schema::PROPERTY_INTEGER:
                     return $obj_property->getIntegerValue();
-
                 case Schema::PROPERTY_DATETIME:
                     return $this->extractDatetimeValue($obj_property);
-
                 case Schema::PROPERTY_DOUBLE:
                 case Schema::PROPERTY_FLOAT:
                     return $obj_property->getDoubleValue();
-
                 case Schema::PROPERTY_BOOLEAN:
                     return $obj_property->getBooleanValue();
-
+                case Schema::PROPERTY_GEOPOINT:
+                    return $this->extractGeopointValue($obj_property);
                 case Schema::PROPERTY_STRING_LIST:
                     return $this->extractStringListValue($obj_property);
-
                 case Schema::PROPERTY_DETECT:
                     return $this->extractAutoDetectValue($obj_property);
-
             }
             throw new \Exception('Unsupported field type: ' . $int_type);
         }
-
         /**
          * Auto detect & extract a value
          *
@@ -1942,7 +1937,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
          * @return mixed
          */
         abstract protected function extractAutoDetectValue($obj_property);
-
         /**
          * Extract a datetime value
          *
@@ -1950,7 +1944,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
          * @return mixed
          */
         abstract protected function extractDatetimeValue($obj_property);
-
         /**
          * Extract a String List value
          *
@@ -1958,7 +1951,13 @@ if (!defined ("_DATASTORE_CLASS_") ) {
          * @return mixed
          */
         abstract protected function extractStringListValue($obj_property);
-
+        /**
+         * Extract a Geopoint value
+         *
+         * @param $obj_property
+         * @return Geopoint
+         */
+        abstract protected function extractGeopointValue($obj_property);
         /**
          * Map a single result out of the Raw response data array FROM Google TO a GDS Entity
          *
@@ -1967,11 +1966,9 @@ if (!defined ("_DATASTORE_CLASS_") ) {
          * @throws \Exception
          */
         abstract public function mapOneFromResult($obj_result);
-
     }
     class MapperProtoBuf extends Mapper
     {
-
         /**
          * Map from GDS to Google Protocol Buffer
          *
@@ -1982,7 +1979,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             // Key
             $this->configureGoogleKey($obj_entity->mutableKey(), $obj_gds_entity);
-
             // Properties
             $arr_field_defs = $this->obj_schema->getProperties();
             foreach($obj_gds_entity->getData() as $str_field_name => $mix_value) {
@@ -1997,7 +1993,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
                 }
             }
         }
-
         /**
          * Map a single result out of the Raw response data into a supplied Entity object
          *
@@ -2010,7 +2005,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             // Key & Ancestry
             list($obj_gds_entity, $bol_schema_match) = $this->createEntityWithKey($obj_result);
-
             // Properties
             $arr_property_definitions = $this->obj_schema->getProperties();
             foreach($obj_result->getEntity()->getPropertyList() as $obj_property) {
@@ -2024,7 +2018,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             }
             return $obj_gds_entity;
         }
-
         /**
          * Create & populate a Entity with key data
          *
@@ -2037,7 +2030,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             // Get the full key path
             $arr_key_path = $obj_result->getEntity()->getKey()->getPathElementList();
-
             // Key for 'self' (the last part of the KEY PATH)
             /* @var $obj_path_end \google\appengine\datastore\v4\Key\PathElement */
             $obj_path_end = array_pop($arr_key_path);
@@ -2048,14 +2040,12 @@ if (!defined ("_DATASTORE_CLASS_") ) {
                 $bol_schema_match = FALSE;
                 $obj_gds_entity = (new Entity())->setKind($obj_path_end->getKind());
             }
-
             // Set ID or Name (will always have one or the other)
             if($obj_path_end->hasId()) {
                 $obj_gds_entity->setKeyId($obj_path_end->getId());
             } else {
                 $obj_gds_entity->setKeyName($obj_path_end->getName());
             }
-
             // Ancestors?
             $int_ancestor_elements = count($arr_key_path);
             if($int_ancestor_elements > 0) {
@@ -2069,11 +2059,9 @@ if (!defined ("_DATASTORE_CLASS_") ) {
                 }
                 $obj_gds_entity->setAncestry($arr_anc_path);
             }
-
             // Return whether or not the Schema matched
             return [$obj_gds_entity, $bol_schema_match];
         }
-
         /**
          * Populate a ProtoBuf Key from a GDS Entity
          *
@@ -2094,17 +2082,14 @@ if (!defined ("_DATASTORE_CLASS_") ) {
                 // Recursive
                 $this->configureGoogleKey($obj_key, $mix_ancestry);
             }
-
             // Root Key (must be the last in the chain)
             $this->configureGoogleKeyPathElement($obj_key->addPathElement(), [
                 'kind' => $obj_gds_entity->getKind(),
                 'id' => $obj_gds_entity->getKeyId(),
                 'name' => $obj_gds_entity->getKeyName()
             ]);
-
             return $obj_key;
         }
-
         /**
          * Configure a Google Key Path Element object
          *
@@ -2117,7 +2102,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             isset($arr_kpe['id']) && $obj_path_element->setId($arr_kpe['id']);
             isset($arr_kpe['name']) && $obj_path_element->setName($arr_kpe['name']);
         }
-
         /**
          * Populate a ProtoBuf Property Value from a GDS Entity field definition & value
          *
@@ -2135,22 +2119,18 @@ if (!defined ("_DATASTORE_CLASS_") ) {
                 $bol_index = FALSE;
             }
             $obj_val->setIndexed($bol_index);
-
             // null checks
             if(null === $mix_value) {
                 return;
             }
-
             // Value
             switch ($arr_field_def['type']) {
                 case Schema::PROPERTY_STRING:
                     $obj_val->setStringValue((string)$mix_value);
                     break;
-
                 case Schema::PROPERTY_INTEGER:
                     $obj_val->setIntegerValue((int)$mix_value);
                     break;
-
                 case Schema::PROPERTY_DATETIME:
                     if($mix_value instanceof \DateTime) {
                         $obj_dtm = $mix_value;
@@ -2159,28 +2139,26 @@ if (!defined ("_DATASTORE_CLASS_") ) {
                     }
                     $obj_val->setTimestampMicrosecondsValue($obj_dtm->format('Uu'));
                     break;
-
                 case Schema::PROPERTY_DOUBLE:
                 case Schema::PROPERTY_FLOAT:
                     $obj_val->setDoubleValue(floatval($mix_value));
                     break;
-
                 case Schema::PROPERTY_BOOLEAN:
                     $obj_val->setBooleanValue((bool)$mix_value);
                     break;
-
+                case Schema::PROPERTY_GEOPOINT:
+                    $obj_val->mutableGeoPointValue()->setLatitude($mix_value[0])->setLongitude($mix_value[1]);
+                    break;
                 case Schema::PROPERTY_STRING_LIST:
                     $obj_val->clearIndexed(); // Ensure we only index the values, not the list
                     foreach ((array)$mix_value as $str) {
                         $obj_val->addListValue()->setStringValue($str)->setIndexed($bol_index);
                     }
                     break;
-
                 default:
                     throw new \RuntimeException('Unable to process field type: ' . $arr_field_def['type']);
             }
         }
-
         /**
          * Extract a datetime value
          *
@@ -2193,7 +2171,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             return date('Y-m-d H:i:s', $obj_property->getTimestampMicrosecondsValue() / 1000000);
         }
-
         /**
          * Extract a String List value
          *
@@ -2213,7 +2190,17 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             }
             return null;
         }
-
+        /**
+         * Extract a Geopoint value (lat/lon pair)
+         *
+         * @param \google\appengine\datastore\v4\Value $obj_property
+         * @return Geopoint
+         */
+        protected function extractGeopointValue($obj_property)
+        {
+            $obj_gp_value = $obj_property->getGeoPointValue();
+            return new Geopoint($obj_gp_value->getLatitude(), $obj_gp_value->getLongitude());
+        }
         /**
          * Auto detect & extract a value
          *
@@ -2239,6 +2226,9 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             if($obj_property->hasBooleanValue()) {
                 return $obj_property->getBooleanValue();
             }
+            if($obj_property->hasGeoPointValue()) {
+                return $this->extractGeopointValue($obj_property);
+            }
             if($obj_property->getListValueSize() > 0) {
                 return $this->extractStringListValue($obj_property);
             }
@@ -2246,84 +2236,80 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             return null;
         }
     }
+
     class ProtoBufGQLParser
     {
-
+        /**
+         * The schema is used to check if property's type is valid.
+         * This is optional, because Google Datastore is schemaless.
+         *
+         * @var Schema|null
+         */
+        protected $obj_schema = null;
         /**
          * We swap out quoted strings for simple tokens early on to help parsing simplicity
          */
         const TOKEN_PREFIX = '__token__';
-
         /**
          * Tokens detected
          *
          * @var array
          */
         private $arr_tokens = [];
-
         /**
          * A count of the tokens detected
          *
          * @var int
          */
         private $int_token_count = 0;
-
         /**
          * Kind for the query
          *
          * @var string
          */
         private $str_kind = null;
-
         /**
          * Any integer offset
          *
          * @var int
          */
         private $int_offset = null;
-
         /**
          * Any integer limit
          *
          * @var int
          */
         private $int_limit = null;
-
         /**
          * A string cursor (start, like offset)
          *
          * @var string
          */
         private $str_start_cursor = null;
-
         /**
          * A string cursor (end, like limit)
          *
          * @var string
          */
         private $str_end_cursor = null;
-
         /**
          * Conditions (filters)
          *
          * @var array
          */
         private $arr_conditions = [];
-
         /**
          * Order bys
          *
          * @var array
          */
         private $arr_order_bys = [];
-
         /**
          * Any provided named parameters
          *
          * @var array
          */
         private $arr_named_params = [];
-
         /**
          * Sort Direction options
          *
@@ -2333,7 +2319,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             'ASC' => Direction::ASCENDING,
             'DESC' => Direction::DESCENDING
         ];
-
         /**
          * Supported comparison operators
          *
@@ -2350,7 +2335,15 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             '>=' => Operator::GREATER_THAN_OR_EQUAL,
             'HAS ANCESTOR' => Operator::HAS_ANCESTOR
         ];
-
+        /**
+         * Optionally, reference to the Entity schema to check type validity
+         *
+         * @param null|Schema $obj_schema
+         */
+        public function __construct(Schema $obj_schema = null)
+        {
+            $this->obj_schema = $obj_schema;
+        }
         /**
          * Turn a GQL string and parameter array into a "lookup" query
          *
@@ -2370,40 +2363,30 @@ if (!defined ("_DATASTORE_CLASS_") ) {
                     $this->arr_named_params[$obj_param->getName()] = $obj_param->getCursor();
                 }
             }
-
             // Cleanup before we begin...
             $str_gql = trim($str_gql);
-
             // Ensure it's a 'SELECT *' query
             if(!preg_match('/^SELECT\s+\*\s+FROM\s+(.*)/i', $str_gql)) {
                 throw new GQL("Sorry, only 'SELECT *' (full Entity) queries are currently supported by php-gds");
             }
-
             // Tokenize quoted items ** MUST BE FIRST **
             $str_gql = preg_replace_callback("/([`\"'])(?<quoted>.*?)(\\1)/", [$this, 'tokenizeQuoted'], $str_gql);
-
             // Kind
             $str_gql = preg_replace_callback('/^SELECT\s+\*\s+FROM\s+(?<kind>[^\s]*)/i', [$this, 'recordKind'], $str_gql, 1);
-
             // Offset
             $str_gql = preg_replace_callback('/OFFSET\s+(?<offset>[^\s]*)/i', [$this, 'recordOffset'], $str_gql, 1);
-
             // Limit
             $str_gql = preg_replace_callback('/LIMIT\s+(?<limit>[^\s]*)/i', [$this, 'recordLimit'], $str_gql, 1);
-
             // Order
             $str_gql = preg_replace_callback('/ORDER\s+BY\s+(?<order>.*)/i', [$this, 'recordOrder'], $str_gql, 1);
-
             // Where
             $str_gql = preg_replace_callback('/WHERE\s+(?<where>.*)/i', [$this, 'recordWhere'], $str_gql, 1);
-
             // Check we're done
             $str_gql = trim($str_gql);
             if(strlen($str_gql) > 0) {
                 throw new GQL("Failed to parse entire query, remainder: [{$str_gql}]");
             }
         }
-
         /**
          * Record quoted strings, return simple tokens
          *
@@ -2416,7 +2399,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             $this->arr_tokens[$str_token] = $arr['quoted'];
             return $str_token;
         }
-
         /**
          * Record the Kind
          *
@@ -2428,7 +2410,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             $this->str_kind = $this->lookupToken($arr['kind']);
             return '';
         }
-
         /**
          * Record the offset
          *
@@ -2440,7 +2421,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             list($this->int_offset, $this->str_start_cursor) = $this->getIntStringFromValue($this->lookupToken($arr['offset']));
             return '';
         }
-
         /**
          * Record the limit
          *
@@ -2452,7 +2432,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             list($this->int_limit, $this->str_end_cursor) = $this->getIntStringFromValue($this->lookupToken($arr['limit']));
             return '';
         }
-
         /**
          * Extract a string/int tuple from the value. Used for offsets and limits which can be string cursors or integers
          *
@@ -2478,7 +2457,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             }
             return [$int, $str];
         }
-
         /**
          * Process the ORDER BY clause
          *
@@ -2507,7 +2485,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             }
             return '';
         }
-
         /**
          * Process the WHERE clause
          *
@@ -2528,6 +2505,27 @@ if (!defined ("_DATASTORE_CLASS_") ) {
                     } else {
                         throw new GQL("Unsupported operator in condition: [{$arr_matches['comp']}] [{$str_condition}]");
                     }
+                    // If schema is set and its properties is not empty, then we use it to test the validity
+                    if(isset($this->obj_schema) && !empty($this->obj_schema->getProperties())){
+                        // Check left hand side's type
+                        $arr_properties = $this->obj_schema->getProperties();
+                        if(isset($arr_properties[$arr_matches['lhs']])){
+                            $int_current_type = $arr_properties[$arr_matches['lhs']]['type'];
+                            switch($int_current_type) {
+                                case Schema::PROPERTY_STRING:
+                                    if(substr($arr_matches['rhs'], 0, strlen(self::TOKEN_PREFIX))
+                                        != self::TOKEN_PREFIX){
+                                        // If the right hand side has not been tokenized
+                                        throw new GQL("Invalid string representation in: [{$str_condition}]");
+                                    }
+                                    break;
+                                // @todo Add support for other type's validity here
+                            }
+                        } else {
+                            // We have a Schema, but it does not contain a definition for this property.
+                            // So, skip validation checks (we must support onl-the-fly Schemas)
+                        }
+                    }
                     $this->arr_conditions[] = [
                         'lhs' => $arr_matches['lhs'],
                         'comp' => $str_comp,
@@ -2540,7 +2538,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             }
             return '';
         }
-
         /**
          * Lookup the field in our token & named parameter list
          *
@@ -2567,7 +2564,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             }
             return $str_val;
         }
-
         /**
          * Get the query Kind
          *
@@ -2577,7 +2573,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             return $this->str_kind;
         }
-
         /**
          * Get the query limit
          *
@@ -2587,7 +2582,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             return $this->int_limit;
         }
-
         /**
          * Get the offset
          *
@@ -2597,7 +2591,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             return $this->int_offset;
         }
-
         /**
          * Get any start cursor
          *
@@ -2607,7 +2600,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             return $this->str_start_cursor;
         }
-
         /**
          * Get any end cursor
          *
@@ -2617,7 +2609,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             return $this->str_end_cursor;
         }
-
         /**
          * Get any order bys
          *
@@ -2627,7 +2618,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             return $this->arr_order_bys;
         }
-
         /**
          * Get any filters
          *
@@ -2637,7 +2627,96 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             return $this->arr_conditions;
         }
-
-
+    }
+    
+    class Geopoint implements \ArrayAccess
+    {
+        private $flt_lat = 0.0;
+        private $flt_lon = 0.0;
+        public function __construct($latitude = 0.0, $longitude = 0.0)
+        {
+            $this->flt_lat = (float)$latitude;
+            $this->flt_lon = (float)$longitude;
+        }
+        public function getLatitude()
+        {
+            return $this->flt_lat;
+        }
+        public function getLongitude()
+        {
+            return $this->flt_lon;
+        }
+        public function setLatitude($latitude)
+        {
+            $this->flt_lat = (float)$latitude;
+            return $this;
+        }
+        public function setLongitude($longitude)
+        {
+            $this->flt_lon = (float)$longitude;
+            return $this;
+        }
+        /**
+         * ArrayAccess
+         *
+         * @param mixed $offset
+         * @return bool
+         */
+        public function offsetExists($offset)
+        {
+            return (0 === $offset || 1 === $offset);
+        }
+        /**
+         * ArrayAccess
+         *
+         * @param mixed $offset
+         * @return float
+         */
+        public function offsetGet($offset)
+        {
+            if(0 === $offset) {
+                return $this->getLatitude();
+            }
+            if(1 === $offset) {
+                return $this->getLongitude();
+            }
+            throw new \UnexpectedValueException("Cannot get Geopoint data with offset [{$offset}]");
+        }
+        /**
+         * ArrayAccess
+         *
+         * @param mixed $offset
+         * @param mixed $value
+         * @return $this|Geopoint
+         */
+        public function offsetSet($offset, $value)
+        {
+            if(0 === $offset) {
+                $this->setLatitude($value);
+                return;
+            }
+            if(1 === $offset) {
+                $this->setLongitude($value);
+                return;
+            }
+            throw new \UnexpectedValueException("Cannot set Geopoint data with offset [{$offset}]");
+        }
+        /**
+         * ArrayAccess
+         *
+         * @param mixed $offset
+         */
+        public function offsetUnset($offset)
+        {
+            if(0 === $offset) {
+                $this->setLatitude(0.0);
+                return;
+            }
+            if(1 === $offset) {
+                $this->setLongitude(0.0);
+                return;
+            }
+            throw new \UnexpectedValueException("Cannot unset Geopoint data with offset [{$offset}]");
+        }
     }
 }
