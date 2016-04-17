@@ -183,6 +183,23 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             return $ret;
         }
 
+        function fetchOne($fields = '*', $data = null, $order = null)
+        {
+            return $this->fetch('one', $fields, $data, $order);
+        }
+
+        function fetchAll($fields = '*', $data = null, $order = null)
+        {
+            return $this->fetch('all', $fields, $data, $order, 0);
+        }
+
+        function fetchLimit($fields = '*', $data = null, $order = null, $limit = null)
+        {
+            if (!strlen($limit)) $limit = 100;
+            else $limit = intval($limit);
+            return $this->fetch('all', $fields, $data, $order, $limit);
+        }
+
         function fetch($type = 'one', $fields = '*', $where = null, $order = null, $limit = null)
         {
             if ($this->error) return false;
@@ -247,21 +264,30 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             return $ret;
         }
 
-        function fetchOne($fields = '*', $data = null, $order = null)
-        {
-            return $this->fetch('one', $fields, $data, $order);
-        }
 
-        function fetchAll($fields = '*', $data = null, $order = null)
-        {
-            return $this->fetch('all', $fields, $data, $order, 0);
-        }
 
-        function fetchLimit($fields = '*', $data = null, $order = null, $limit = null)
+        function fetchKeys($keys)
         {
-            if (!strlen($limit)) $limit = 100;
-            else $limit = intval($limit);
-            return $this->fetch('all', $fields, $data, $order, $limit);
+
+            // Are keys or names
+            $ret = [];
+            try {
+                if(strpos($keys,'"')===false && strpos($keys,"'")===false) {
+                    $areKeys = true;
+                    $data = $this->store->fetchByIds(explode(',',$keys));
+                } else {
+                    // DOES NOT SUPPORT keys with ',' as values.
+                    $areKeys = false;
+                    $keys = preg_replace('/(\'|")/','',$keys);
+                    $data = $this->store->fetchByNames(explode(',',$keys));
+                }
+                $ret = $this->transformEntities($data);
+            } catch (Exception $e) {
+                $this->setError($e->getMessage());
+                $this->addError('query');
+
+            }
+            return $ret;
         }
 
         function query($q, $data)
@@ -270,21 +296,27 @@ if (!defined ("_DATASTORE_CLASS_") ) {
             try {
                 $this->store->query($q, $data);
                 $data = $this->store->fetchAll($q, $data);
-                foreach ($data as $record) {
-
-                    // GeoData Transformation
-                    foreach ($record->getData() as $key=>$value)
-                        if($value instanceof Geopoint)
-                            $record->{$key} = $value->getLatitude().','.$value->getLongitude();
-
-                    $ret[] = array_merge(['KeyId' => $record->getKeyId(),'KeyName' => $record->getKeyName()], $record->getData());
-                }
+                $ret = $this->transformEntities($data);
             } catch (Exception $e) {
                 $this->setError($e->getMessage());
                 $this->addError('query');
 
             }
             return $ret;
+        }
+
+        private function transformEntities(&$data) {
+            $ret = [];
+            foreach ($data as $record) {
+                // GeoData Transformation
+                foreach ($record->getData() as $key=>$value)
+                    if($value instanceof Geopoint)
+                        $record->{$key} = $value->getLatitude().','.$value->getLongitude();
+
+                $ret[] = array_merge(['KeyId' => $record->getKeyId(),'KeyName' => $record->getKeyName()], $record->getData());
+            }
+            return $ret;
+
         }
 
         function setError($value)
