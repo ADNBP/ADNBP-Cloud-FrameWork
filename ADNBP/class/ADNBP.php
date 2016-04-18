@@ -1560,7 +1560,9 @@ if (!defined("_ADNBP_CLASS_")) {
                 $ret = json_decode($this->getCloudServiceResponse('dictionary/cat/' . rawurlencode($cat) . "/$lang", array('API_KEY' => $this->getConf('CloudServiceKey'))));
                 if (!empty($ret) && $ret->success) {
                     foreach ($ret->data as $key => $value) {
-                        $dic[$value->key] = $value->$lang;
+                        if (property_exists($value, $lang) && property_exists($value, 'key')) {
+                            $dic[$value->key] = $value->$lang;
+                        }
                     }
                     $ret = json_encode($dic);
                     unset($dic);
