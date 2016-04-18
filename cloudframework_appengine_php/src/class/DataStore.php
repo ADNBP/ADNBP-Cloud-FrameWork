@@ -70,7 +70,6 @@ if (!defined ("_DATASTORE_CLASS_") ) {
                     $record = [];
                     $schema_key = null;
                     $schema_keyname = null;
-
                     // Loading info from Data
                     foreach ($row as $i => $value) {
                         if ($this->schema['props'][$i][1] == 'key') {
@@ -329,7 +328,7 @@ if (!defined ("_DATASTORE_CLASS_") ) {
         {
             $this->error = true;
             $this->errorMsg[] = $value;
-            $this->core->errors->add($value);
+            $this->core->errors->add(['DataStore'=>$value]);
         }
 
     }

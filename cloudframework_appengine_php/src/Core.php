@@ -182,8 +182,10 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
         var $url,$root_path,$app_path,$app_url;
         var $config=[];
         var $ip, $user_agent,$format,$time_zone;
-        function __construct()
+        function __construct($root_path='')
         {
+            if(!strlen($root_path)) $root_path = (strlen($_SERVER['DOCUMENT_ROOT']))?$_SERVER['DOCUMENT_ROOT']: $_SERVER['PWD'];
+
             $this->url['https'] = $_SERVER['HTTPS'];
             $this->url['protocol'] = ($_SERVER['HTTPS'] == 'on') ? 'https' : 'http';
             $this->url['host'] = $_SERVER['HTTP_HOST'];
@@ -200,7 +202,7 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
             $this->url['parts'] = explode('/', substr($this->url['url'], 1));
 
             // paths
-            $this->root_path = (strlen($_SERVER['DOCUMENT_ROOT']))?$_SERVER['DOCUMENT_ROOT']: $_SERVER['PWD'];
+            $this->root_path = $root_path;
             $this->app_path = $this->root_path;
 
             // Remote user:
@@ -303,11 +305,11 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
     {
         function development()
         {
-            return (stripos($_SERVER['SERVER_SOFTWARE'], 'Development') !== false);
+            return (stripos($_SERVER['SERVER_SOFTWARE'], 'Development') !== false || isset($_SERVER['PWD']));
         }
         function production()
         {
-            return (stripos($_SERVER['SERVER_SOFTWARE'], 'Development') === false);
+            return (stripos($_SERVER['SERVER_SOFTWARE'], 'Development') === false && !isset($_SERVER['PWD']));
         }
         function dirReadble($dir)
         {
@@ -423,10 +425,10 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
         public $obj = [];
         public $__p,$session,$system,$logs,$errors,$is,$cache,$security,$user,$config;
         var $_version = '20160410';
-        function __construct() {
+        function __construct($root_path='') {
             $this->__p  = new Performance();
             $this->session  = new Session();
-            $this->system  = new System();
+            $this->system  = new System($root_path);
             $this->logs  = new Loggin();
             $this->errors= new Loggin();
             $this->is = new Is();
@@ -453,7 +455,8 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
 
         function loadClass($class,$params=null) {
 
-            if(key_exists($class,$this->obj)) return $this->obj[$class];
+            $hash = hash('md5', $class . json_encode($params));
+            if(key_exists($hash,$this->obj)) return $this->obj[$hash];
 
             if (is_file(__DIR__ . "/class/{$class}.php"))
                 include_once(__DIR__ .  "/class/{$class}.php");
@@ -463,8 +466,8 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
                 $this->errors->add("Class $class not found");
                 return null;
             }
-            $this->obj[$class] = new $class($this,$params);
-            return $this->obj[$class];
+            $this->obj[$hash] = new $class($this,$params);
+            return $this->obj[$hash];
             
         }
 
