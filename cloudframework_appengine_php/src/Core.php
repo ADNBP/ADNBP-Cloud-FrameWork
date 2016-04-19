@@ -326,6 +326,12 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
                 return false;
             }
         }
+        function validEmail($email) {
+            return (filter_var($email, FILTER_VALIDATE_EMAIL));
+        }
+        function validURL($url) {
+            return (filter_var($url, FILTER_VALIDATE_URL));
+        }
     }
     class CacheFile  {
         function __construct()
@@ -353,7 +359,7 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
         var $type = 'memory';
 
         function Cache($spacename='',$type='memory') {
-            if(!strlen(trim($spacename)))  $spacename = $_SERVER['HTTP_HOST'];
+            if(!strlen(trim($spacename)))  $spacename = (isset($_SERVER['HTTP_HOST']))?$_SERVER['HTTP_HOST']:$_SERVER['PWD'];
             $this->setSpaceName($spacename);
             if($type=='memory') $this->type = 'memory';
         }
@@ -1454,9 +1460,10 @@ if (!defined("_ADNBP_CORE_CLASSES_"))
         function sendLog($type, $cat, $subcat, $title, $text = '', $email = '', $app = '', $interactive = false)
         {
 
-            $this->core->logs->add(['sending logs:'=>[$type, $cat, $subcat, $title]]);
-            if (!$this->core->config->get('CloudServiceLog') && !$this->core->config->get('LogPath')) return false;
             if (!strlen($app)) $app = $this->core->system->url['host'];
+
+            $this->core->logs->add(['sending cloud service logs:'=>[$this->getServiceUrl('queue/cf_logs/'.$app),$type, $cat, $subcat, $title]]);
+            if (!$this->core->config->get('CloudServiceLog') && !$this->core->config->get('LogPath')) return false;
             $app = str_replace(' ', '_', $app);
             $params['id'] = $this->core->config->get('CloudServiceId');
             $params['cat'] = $cat;

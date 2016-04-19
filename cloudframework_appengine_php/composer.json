@@ -1,5 +1,6 @@
 {
   "name": "adnbp/core",
+  "keywords": ["appengine", "google", "framework", "sql", "cloud datastore", "nosql","gae"],
   "description": "ADNBP Cloud FrameWork PHP for Appengine",
   "minimum-stability": "dev",
   "license": "MIT",
