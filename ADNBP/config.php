@@ -12,7 +12,7 @@ if($this->is("production")) {
 // More info: 
 // Workaround to avoid EOF: https://code.google.com/p/googleappengine/issues/detail?id=11772&q=certificate%20invalid%20or%20non-existent&colspec=ID%20Type%20Component%20Status%20Stars%20Summary%20Language%20Priority%20Owner%20Log
 // GAE gives error with ssl=>(allow_self_signed' => true)
-$this->system['stream_context_default'] = array('ssl'=>array('verify_peer' => false));
+$this->system['stream_context_default'] = array('ssl'=>array('verify_peer' => 0));
 
 // Avoid long waits in a connection
 $this->system['stream_context_default']['http']['ignore_errors'] ='1';
