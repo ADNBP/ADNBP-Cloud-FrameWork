@@ -1,0 +1,65 @@
+{% block menu %}
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse {{ getConf("portalNavColor") }} navbar-fixed-top" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">Cloud Framework {{ "now"|date("Y") }}</a>
+            </div>
+            <div class="navbar-collapse collapse">
+
+                {% if isAuth() %}
+                <p class="navbar-text pull-right">
+                    Logged in as {{ getAuthUserData("name") }} <a href="?logout=1"
+                                                                        class="navbar-link">[log-out]</a>
+                </p>
+                {% endif %}
+                <ul class="nav navbar-nav">
+                    <li class="{{ (getConf('pageCode')=='home') ? 'active' : '' }}"><a href="/CloudFrameWork">Home</a>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Services <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li class="{{ (getConf('pageCode')=='GeoLocation') ? 'active' : '' }}">
+                                <a href="/CloudFrameWork/GeoLocation">GeoLocation</a>
+                            </li>
+                            <li class="{{ (getConf('pageCode')=='CloudSQL') ? 'active' : '' }}">
+                                <a href="/CloudFrameWork/CloudSQL">CloudSQL/Mysql Access</a>
+                            </li>
+                            <li class="{{ (getConf('pageCode')=='Email') ? 'active' : '' }}">
+                                <a href="/CloudFrameWork/Email">Email Function</a>
+                            </li>
+                            <li class="{{ (getConf('pageCode')=='SMS') ? 'active' : '' }}">
+                                <a href="/CloudFrameWork/SMS">SMS Function</a>
+                            </li>
+                            <li class="{{ (getConf('pageCode')=='File') ? 'active' : '' }}">
+                                <a href="/CloudFrameWork/File">I/O functions</a>
+                            </li>
+                            <li class="{{ (getConf('pageCode')=='oauth') ? 'active' : '' }}">
+                                <a href="/CloudFrameWorkOauth">Testing Oauth</a>
+                            </li>
+                            <li class="{{ (getConf('pageCode')=='TPVSabadell') ? 'active' : '' }}">
+                                <a href="/CloudFrameWorkTPV/SABADELL">TPV Sabadell</a>
+                            </li>
+                            <li class="{{ (getConf('pageCode')=='pushMessages') ? 'active' : '' }}">
+                                <a href="/pushMessages">Mobile Push Messages</a>
+                            </li>
+                        </ul>
+                </ul>
+                {% if not isAuth() %}
+                    <form class="navbar-form navbar-right" role="form" method=post>
+                        <input class="form-control" type="text" placeholder="Email" name='CloudUser'>
+                        <input class="form-control" type="password" placeholder="Password" name='CloudPassword'>
+                        <button type="submit" class="btn btn-success">Sign in</button>
+                    </form>
+                {% endif %}
+
+            </div><!--/.nav-collapse -->
+        </div>
+    </nav>
+{% endblock menu %}

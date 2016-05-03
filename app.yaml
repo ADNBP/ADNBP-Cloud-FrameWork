@@ -33,3 +33,6 @@ handlers:
 # Friendly Links as ADNBP FrameWorkScript  
 - url: /(.+)$
   script: ADNBP/adnbppl.php
+
+skip_files:
+- ^_cache/.*$
