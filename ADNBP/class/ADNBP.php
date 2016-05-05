@@ -38,7 +38,7 @@ if (!defined("_ADNBP_CLASS_")) {
     class ADNBP
     {
 
-        var $_version = "2016_Feb_20";
+        var $_version = "2016_May_6";
         var $_conf = array();
         var $_menu = array();
         var $_lang = "en";
@@ -81,6 +81,47 @@ if (!defined("_ADNBP_CLASS_")) {
         var $_configPaths = array();
         var $_gzEnabled = false;
         var $_responseHeaders = null;
+        /**
+         * Variables for templates
+         * @var array templateVars
+         */
+        private $templateVars = [];
+        /**
+         * @var \Twig_Environment twig
+         */
+        protected $twig;
+
+        /**
+         * Set variables for template engine
+         * @param string $key
+         * @param mixed|null $value
+         */
+        public function setTemplateVar($key, $value = null) {
+            $this->templateVars[$key] = $value;
+        }
+
+        /**
+         * Add a new variable into variable stack
+         * @param string $key
+         * @param mixed|null $value
+         */
+        public function addTemplateVar($key, $value = null) {
+            if(!array_key_exists($key, $this->templateVars)) {
+                $this->templateVars[$key] = [];
+            }
+            $this->templateVars[$key][] = $value;
+        }
+
+        /**
+         * Get variables for template engine
+         * @param string|null $key
+         *
+         * @return mixed|null
+         */
+        public function getTemplateVar($key = null) {
+            if(null === $key) return $this->templateVars;
+            return (array_key_exists($key, $this->templateVars)) ? $this->templateVars[$key] : null;
+        }
 
         /**
          * Constructor
@@ -625,101 +666,102 @@ if (!defined("_ADNBP_CLASS_")) {
                 __p('Including logic file: ', '', 'endnote');
             }
             // Load top
-            $_file = false;
-            if (!$this->getConf("notopbottom") && !$this->getConf("notemplate") && !isset($_GET['__notop'])) {
-                if (!strlen($this->getConf("top"))) {
-                    if (is_file($this->_webapp . "/templates/top.php")) {
-                        $_file = ($this->_webapp . "/templates/top.php");
-                    } elseif (is_file("./ADNBP/templates/top.php"))
-                        $_file = ("./ADNBP/templates/top.php");
-                } else {
-                    if (strpos($this->getConf("top"), 'gs://') === 0 || strpos($this->getConf("top"), '/') === 0) $_file = $this->getConf("top");
-                    if (is_file($this->_webapp . "/templates/" . $this->getConf("top"))) {
-                        $_file = ($this->_webapp . "/templates/" . $this->getConf("top"));
-                    } else if (is_file($this->_rootpath . "/ADNBP/templates/" . $this->getConf("top"))) {
-                        $_file = ($this->_rootpath . "/ADNBP/templates/" . $this->getConf("top"));
-                    } else
-                        echo "No top file found: " . $this->getConf("top");
-
-                }
-            }
-            if ($_file) {
-                __p('Including top html: ', $_file, 'note');
-                if(! include($_file)) {
-                    $this->addError('Error including file: '.$_file);
-                }
-                __p('Including top html: ', '', 'endnote');
-            }
-
-            // Load template
-            $_file = false;
-            if (!$this->getConf("notemplate") && !isset($_GET['__notemplate'])) {
-                // Content of template is stored in a var 'templateVarContent'
-                if (strlen($this->getConf("templateVarContent"))) {
-                    $var = $this->getConf("templateVarContent");
-                    // exist a var with the content of the template
-                    if(strtolower($var)!= 'this' && strtolower($var)!= '_server' && strtolower($var)!= 'adnbp')
-                    echo $$var;
-
-                    // Content of template is stored in a file
-                } else {
-
-                    if (!$this->getConf("template")) {
-                        if (is_file("./templates/" . $this->_basename)) {
-                            $_file = ("./templates/" . $this->_basename);
-                        } elseif (is_file($this->_rootpath . "/ADNBP/templates/" . $this->_basename)) {
-                            $_file = ($this->_rootpath . "/ADNBP/templates/" . $this->_basename);
-                        } elseif ($this->getConf("logic") == "nologic") {
-
-                        }
+            if(!$this->getConf('useTemplateEngine')) {
+                $_file = FALSE;
+                if (!$this->getConf("notopbottom") && !$this->getConf("notemplate") && !isset($_GET['__notop'])) {
+                    if (!strlen($this->getConf("top"))) {
+                        if (is_file($this->_webapp . "/templates/top.php")) {
+                            $_file = ($this->_webapp . "/templates/top.php");
+                        } elseif (is_file("./ADNBP/templates/top.php"))
+                            $_file = ("./ADNBP/templates/top.php");
                     } else {
-                        if(strpos($this->getConf("template"),'{Bucket}')!==false) {
-                            $_file = str_replace('{Bucket}',$this->getConf('Bucket'),$this->getConf("template"));
-                        }
-                        elseif(strpos($this->getConf("template"), 'gs://') === 0 || strpos($this->getConf("template"), '/') === 0) {
-                            $_file = $this->getConf("template");
-                        }
-                        elseif (is_file($this->_webapp . "/templates/" . $this->getConf("template"))) {
-                            $_file = ($this->_webapp . "/templates/" . $this->getConf("template"));
-                        }
-                        elseif (is_file($this->_rootpath . "/ADNBP/templates/" . $this->getConf("template"))) {
-                            $_file = ($this->_rootpath . "/ADNBP/templates/" . $this->getConf("template"));
-                        }
-                        else
-                            echo "No template found: " . $this->getConf("template");
+                        if (strpos($this->getConf("top"), 'gs://') === 0 || strpos($this->getConf("top"), '/') === 0) $_file = $this->getConf("top");
+                        if (is_file($this->_webapp . "/templates/" . $this->getConf("top"))) {
+                            $_file = ($this->_webapp . "/templates/" . $this->getConf("top"));
+                        } else if (is_file($this->_rootpath . "/ADNBP/templates/" . $this->getConf("top"))) {
+                            $_file = ($this->_rootpath . "/ADNBP/templates/" . $this->getConf("top"));
+                        } else
+                            echo "No top file found: " . $this->getConf("top");
+
                     }
                 }
-            }
-            if ($_file) {
-                __p('Including main html: ', $_file, 'note');
-                if(! @include($_file)) {
-                    $this->addError('Error including file: '.$_file);
+                if ($_file) {
+                    __p('Including top html: ', $_file, 'note');
+                    if (!include($_file)) {
+                        $this->addError('Error including file: ' . $_file);
+                    }
+                    __p('Including top html: ', '', 'endnote');
                 }
-                __p('Including main html: ', '', 'endnote');
-            }
 
-            // Load Bottom
-            $_file = false;
-            if (!$this->getConf("notopbottom") && !$this->getConf("notemplate") && !isset($_GET['__nobottom'])) {
-                if (!strlen($this->getConf("bottom"))) {
-                    if (is_file($this->_webapp . "/templates/bottom.php"))
-                        $_file = ($this->_webapp . "/templates/bottom.php");
-                    elseif (is_file($this->_rootpath . "/ADNBP/templates/bottom.php"))
-                        $_file = ($this->_rootpath . "/ADNBP/templates/bottom.php");
-                } else {
-                    if (strpos($this->getConf("bottom"), 'gs://') === 0 || strpos($this->getConf("bottom"), '/') === 0) $_file = $this->getConf("bottom");
-                    if (is_file($this->_webapp . "/templates/" . $this->getConf("bottom")))
-                        $_file = ($this->_webapp . "/templates/" . $this->getConf("bottom"));
-                    elseif (is_file($this->_rootpath . "/ADNBP/templates/" . $this->getConf("bottom")))
-                        $_file = ($this->_rootpath . "/ADNBP/templates/" . $this->getConf("bottom"));
-                    else
-                        echo "No bottom file found: " . $this->getConf("bottom");
+                // Load template
+                $_file = FALSE;
+                if (!$this->getConf("notemplate") && !isset($_GET['__notemplate'])) {
+                    // Content of template is stored in a var 'templateVarContent'
+                    if (strlen($this->getConf("templateVarContent"))) {
+                        $var = $this->getConf("templateVarContent");
+                        // exist a var with the content of the template
+                        if (strtolower($var) != 'this' && strtolower($var) != '_server' && strtolower($var) != 'adnbp')
+                            echo $$var;
+
+                        // Content of template is stored in a file
+                    } else {
+
+                        if (!$this->getConf("template")) {
+                            if (is_file("./templates/" . $this->_basename)) {
+                                $_file = ("./templates/" . $this->_basename);
+                            } elseif (is_file($this->_rootpath . "/ADNBP/templates/" . $this->_basename)) {
+                                $_file = ($this->_rootpath . "/ADNBP/templates/" . $this->_basename);
+                            } elseif ($this->getConf("logic") == "nologic") {
+
+                            }
+                        } else {
+                            if (strpos($this->getConf("template"), '{Bucket}') !== FALSE) {
+                                $_file = str_replace('{Bucket}', $this->getConf('Bucket'), $this->getConf("template"));
+                            } elseif (strpos($this->getConf("template"), 'gs://') === 0 || strpos($this->getConf("template"), '/') === 0) {
+                                $_file = $this->getConf("template");
+                            } elseif (is_file($this->_webapp . "/templates/" . $this->getConf("template"))) {
+                                $_file = ($this->_webapp . "/templates/" . $this->getConf("template"));
+                            } elseif (is_file($this->_rootpath . "/ADNBP/templates/" . $this->getConf("template"))) {
+                                $_file = ($this->_rootpath . "/ADNBP/templates/" . $this->getConf("template"));
+                            } else
+                                echo "No template found: " . $this->getConf("template");
+                        }
+                    }
                 }
-            }
-            if ($_file) {
-                __p('Including bottom html: ', $_file, 'note');
-                include($_file);
-                __p('Including bottom html: ', '', 'endnote');
+                if ($_file) {
+                    __p('Including main html: ', $_file, 'note');
+                    if (!@include($_file)) {
+                        $this->addError('Error including file: ' . $_file);
+                    }
+                    __p('Including main html: ', '', 'endnote');
+                }
+
+                // Load Bottom
+                $_file = FALSE;
+                if (!$this->getConf("notopbottom") && !$this->getConf("notemplate") && !isset($_GET['__nobottom'])) {
+                    if (!strlen($this->getConf("bottom"))) {
+                        if (is_file($this->_webapp . "/templates/bottom.php"))
+                            $_file = ($this->_webapp . "/templates/bottom.php");
+                        elseif (is_file($this->_rootpath . "/ADNBP/templates/bottom.php"))
+                            $_file = ($this->_rootpath . "/ADNBP/templates/bottom.php");
+                    } else {
+                        if (strpos($this->getConf("bottom"), 'gs://') === 0 || strpos($this->getConf("bottom"), '/') === 0) $_file = $this->getConf("bottom");
+                        if (is_file($this->_webapp . "/templates/" . $this->getConf("bottom")))
+                            $_file = ($this->_webapp . "/templates/" . $this->getConf("bottom"));
+                        elseif (is_file($this->_rootpath . "/ADNBP/templates/" . $this->getConf("bottom")))
+                            $_file = ($this->_rootpath . "/ADNBP/templates/" . $this->getConf("bottom"));
+                        else
+                            echo "No bottom file found: " . $this->getConf("bottom");
+                    }
+                }
+                if ($_file) {
+                    __p('Including bottom html: ', $_file, 'note');
+                    include($_file);
+                    __p('Including bottom html: ', '', 'endnote');
+                }
+            } else {
+                $this->createTplLoader();
+                echo $this->renderTpl($this->getConf("template"));
             }
             __p('End Run ' . __CLASS__ . '-' . __FUNCTION__);
 
@@ -2200,6 +2242,80 @@ if (!defined("_ADNBP_CLASS_")) {
             $this->_url = $newPath;
             $this->run();
             exit;
+        }
+
+        /**
+         * Create a template engine
+         * @return \Twig_Environment
+         */
+        public function createTplLoader()
+        {
+            if(null === $this->twig) {
+                $loader = new Twig_Loader_Filesystem($this->_webapp . DIRECTORY_SEPARATOR . "templates");
+                $loader->addPath($this->_rootpath . DIRECTORY_SEPARATOR . 'ADNBP' . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'twig' , 'ADNBP');
+                $this->twig = new Twig_Environment($loader, array(
+                    "cache"       => $this->getConf('Bucket'),
+                    "debug"       => (bool)$this->is('development'),
+                    "auto_reload" => true,
+                ));
+                $this->addConfigFunction()
+                    ->addAuthCheckFunction()
+                    ->addGetAuthDataFunction();
+            }
+
+            return $this;
+        }
+
+        /**
+         * Render a template
+         * @param string $tpl
+         *
+         * @return string
+         */
+        public function renderTpl($tpl) {
+            $tpl = $this->twig->loadTemplate($tpl);
+            $vars = $this->getTemplateVar();
+            $vars['__menu__'] = $this->_menu;
+            return $tpl->render($vars);
+        }
+
+        /**
+         * Add config function to templates
+         * @return $this
+         */
+        private function addConfigFunction()
+        {
+            $function = new \Twig_SimpleFunction('getConf', function($key) {
+                return $this->getConf($key);
+            });
+            $this->twig->addFunction($function);
+            return $this;
+        }
+
+        /**
+         * Add auth checker function to templates
+         * @return $this
+         */
+        private function addAuthCheckFunction()
+        {
+            $function = new \Twig_SimpleFunction('isAuth', function($namespace = null) {
+                return $this->isAuth($namespace);
+            });
+            $this->twig->addFunction($function);
+            return $this;
+        }
+
+        /**
+         * Get Auth info for templates
+         * @return $this
+         */
+        private function addGetAuthDataFunction()
+        {
+            $function = new \Twig_SimpleFunction('getAuthUserData', function($key) {
+                return $this->getAuthUserData($key);
+            });
+            $this->twig->addFunction($function);
+            return $this;
         }
 
     }

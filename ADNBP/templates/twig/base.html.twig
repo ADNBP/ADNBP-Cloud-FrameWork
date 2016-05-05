@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="{{ getConf("portalDescription") }}">
+    <meta name="author" content="ADNBP Business & IT Solutions.">
+
+    {% block styles %}{% endblock styles %}
+    {% block head %}
+        {% block seo %}
+            <title>{{ title | default(getConf('portalTitle')) }}</title>
+            <meta name="author" content="ADNBP Business & IT Solutions.">
+        {% endblock seo %}
+    {% endblock head %}
+    <!-- Bootstrap theme -->
+    <link href="{{ getConf('urlPrefix') }}/adnbp-public/static/v1/css/bootstrap.min.css" rel="stylesheet" media="screen">
+
+    <style type="text/css">
+        body {
+            padding-top: 60px;
+            padding-bottom: 40px;
+        }
+
+        .theme-dropdown .dropdown-menu {
+            position: static;
+            display: block;
+            margin-bottom: 20px;
+        }
+
+        .theme-showcase > p > .btn {
+            margin: 5px 0;
+        }
+    </style>
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    {% if getConf('GooglePublicAPICredential') and getConf('GoogleMapsAPI')%}
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <style type="text/css">
+        #map-canvas { height: 100% }
+    </style>
+    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key={{ getConf("GooglePublicAPICredential") }}&sensor=true"></script>
+    {% endif %}
+
+</head>
+<body>
+{% block menu %}
+    {% include '@ADNBP/top.html.twig' %}
+{% endblock menu %}
+<header role="banner">{% block header %}{% endblock header %}</header>
+<section class="container theme-showcase" role="main">
+    {% block body %}
+        <article class="container">
+            {% block body_header %}
+            {% endblock body_header %}
+            {% block body_content %}
+            {% endblock body_content %}
+            {% block body_footer %}
+            {% endblock body_footer %}
+        </article>
+    {% endblock body %}
+</section>
+{% block footer %}
+
+{% endblock footer %}
+{% include "@ADNBP/scripts.html.twig" %}
+{% block scripts %}
+{% endblock scripts %}
+</body>
+</html>

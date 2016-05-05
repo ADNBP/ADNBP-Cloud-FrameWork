@@ -1,4 +1,9 @@
 <?php
+    /** @var $this ADNBP */
+    $this->setConf('useTemplateEngine', true);
+    $this->setTemplateVar('nombre', 'Fran');
+    $this->addTemplateVar('tests', 'test');
+    $this->setTemplateVar('cf_token', $this->generateCloudFrameWorkSecurityString('test', microtime(true)));
 require_once ROOT_CLASS_DIRECTORY . '/notifications/autoload.php';
 use CloudFramework\Service\Notifications\Notifier;
 

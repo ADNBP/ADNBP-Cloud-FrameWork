@@ -1,4 +1,5 @@
 <?php
+/** @var $this ADNBP */
 
 // ADNBP Methodology  - May 2014
 // Keep here variables with URLs o Passwords or other critical information
@@ -34,5 +35,9 @@ $this->setConf('CloudServiceSecret','$RHThr;We*Ef'); // Password to manage Secur
 
 $this->setConf('CLOUDFRAMEWORK-ID-test',array("secret"=>'$RHThr;We*Ef','data'=>'for test'));
 $this->setConf('API_KEY-test',array('allowed_referers'=>array('localhost','cloudframework.adnbp.com')));
+if(null === $this->getConf('Bucket') && $this->is('development')) {
+    $this->setConf('Bucket', $this->_rootpath . DIRECTORY_SEPARATOR . '_cache');
+    @mkdir($this->_rootpath . DIRECTORY_SEPARATOR . '_cache');
+}
 
 ?>
