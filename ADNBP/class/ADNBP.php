@@ -1494,6 +1494,8 @@ if (!defined("_ADNBP_CLASS_")) {
         function t($dic, $key = '', $raw = false, $lang = '')
         {
 
+            // Debug dictionaries
+            if(isset($_GET['debugDics'])) return  $dic . '-' . $key;
             // Internal contents
             if (!strlen($key)) return ((isset($this->_dicKeys['__internal__'][$dic])) ? $this->_dicKeys['__internal__'][$dic] : '{' . $dic . '}');
 
