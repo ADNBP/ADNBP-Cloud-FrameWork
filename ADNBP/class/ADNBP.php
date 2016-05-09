@@ -437,6 +437,8 @@ if (!defined("_ADNBP_CLASS_")) {
                         case "production":
                             $include = $this->is("production");
                             break;
+                        case "interminal":
+                            $include = isset($_SERVER['PWD']);
                         case "indomain":
                         case "domain":
                             $domains = explode(",", $tagvalue);
