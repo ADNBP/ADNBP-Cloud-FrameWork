@@ -88,6 +88,7 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
         function createCubeFromQuery($cubeId, $q, $data=null) {return($this->DBquery($cubeId, $q, $data));}
         function createCubeFromDBQuery($cubeId, $q, $data=null) {return($this->DBquery($cubeId, $q, $data));}
         function createCubeFromDSQuery($cubeId, $q, $data=null) {return($this->DSquery($cubeId, $q, $data));}
+        function createCubeFromAPI($cubeId, $url, $data=null) {return($this->APIquery($cubeId, $url, $data));}
         // Alias
         function DBquery($cubeId, $q, $data=null) {
             if($this->error) return false;
@@ -163,6 +164,27 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                 //$this->addError($this->db->getQuery()); //TODO: Securize this output
                 return false;
             }
+        }
+
+        function APIquery($cubeId, $url, $data=null) {
+            if($this->error) return false;
+
+            // Check cache
+            if(!isset($_REQUEST['reload'])) {
+                $this->queryResults[$cubeId]['data'] = $this->super->getCache('Reporting_'.$cubeId.'_'.md5($cubeId.$url.json_encode($data)));
+                if(is_array($this->queryResults[$cubeId]['data'])) {
+                    return true;
+                }
+            }
+
+            $ret = $this->super->getCloudServiceResponse($url,$data);
+            if(false === $ret) {
+                $this->addError($this->super->errorMsg());
+            } else {
+                $this->queryResults[$cubeId]['data'] = json_decode($ret,true)['data'];
+                $this->super->setCache('Reporting_'.$cubeId.'_'.md5($cubeId.$url.json_encode($data)),$this->queryResults[$cubeId]['data']);
+            }
+
         }
 
         /**
