@@ -1676,15 +1676,22 @@ if (!defined("_ADNBP_CLASS_")) {
 
         /**
          * Redirect to other URL
+         * @param string $url
+         * @param string $dest
          */
         function urlRedirect($url, $dest = '')
         {
+            $regUrl = str_replace('{*}', '(.*)', str_replace('/', '\/', $url));
+            preg_match('/^' . $regUrl . '/i', $this->_url, $matches);
             if (!strlen($dest)) {
                 if ($url != $this->_url) {
                     Header("Location: $url");
                     exit;
                 }
-            } else if ($url == $this->_url && $url != $dest) {
+            } else if (count($matches) && $url != $dest) {
+                if (strpos('{*}', $dest) !== false && array_key_exists(1, $matches)) {
+                    $dest = str_replace('{*}', $matches[1], $dest);
+                }
                 if (strlen($this->_urlParams)) {
                     if (strpos($dest, '?') === false)
                         $dest .= "?" . $this->_urlParams;
