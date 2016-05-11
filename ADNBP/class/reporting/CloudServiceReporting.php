@@ -991,6 +991,8 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                     break;
             }
         }
+        function addRow() { $this->add('row');}
+        function addCol($cols='') { $this->add('col',$cols);}
 
         /**
          * return the HTML with the info printed closing opened database connections.
