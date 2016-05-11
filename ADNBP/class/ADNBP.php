@@ -1673,6 +1673,12 @@ if (!defined("_ADNBP_CLASS_")) {
             }
         }
 
+        private function _redirect($url)
+        {
+            Header("Location: $url");
+            exit;
+        }
+
 
         /**
          * Redirect to other URL
@@ -1681,15 +1687,34 @@ if (!defined("_ADNBP_CLASS_")) {
          */
         function urlRedirect($url, $dest = '')
         {
+            if (!strlen($dest)) {
+                if ($url != $this->_url) {
+                    $this->_redirect($url);
+                }
+            } else if ($url == $this->_url && $url != $dest) {
+                if (strlen($this->_urlParams)) {
+                    if (strpos($dest, '?') === false)
+                        $dest .= "?" . $this->_urlParams;
+                    else
+                        $dest .= "&" . $this->_urlParams;
+                }
+                $this->_redirect($dest);
+            }
+        }
+
+        /**
+         * Url replace
+         * @param string $url
+         * @param string $dest
+         */
+        function urlReplace($url, $dest = '')
+        {
             $regUrl = str_replace('{*}', '(.*)', str_replace('/', '\/', $url));
             preg_match('/^' . $regUrl . '/i', $this->_url, $matches);
             if (!strlen($dest)) {
-                if ($url != $this->_url) {
-                    Header("Location: $url");
-                    exit;
-                }
+                $this->urlRedirect($url, $dest);
             } else if (count($matches) && $url != $dest) {
-                if (strpos('{*}', $dest) !== false && array_key_exists(1, $matches)) {
+                if (strpos($dest, '{*}') !== false && array_key_exists(1, $matches)) {
                     $dest = str_replace('{*}', $matches[1], $dest);
                 }
                 if (strlen($this->_urlParams)) {
@@ -1698,10 +1723,8 @@ if (!defined("_ADNBP_CLASS_")) {
                     else
                         $dest .= "&" . $this->_urlParams;
                 }
-                Header("Location: $dest");
-                exit;
+                $this->_redirect($dest);
             }
-
         }
 
         /**
