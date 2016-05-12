@@ -195,6 +195,10 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
 
         }
 
+        function cleanCacheforCube($cubeId, $url, $data=null) {
+            $this->super->deleteCache('Reporting_'.$cubeId.'_'.md5($cubeId.$url.json_encode($data)));
+        }
+
         /**
          * Return a cube optionally reduced with $cond
          * @param $cubeId  string id of of data

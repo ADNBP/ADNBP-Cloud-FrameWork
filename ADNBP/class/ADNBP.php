@@ -1007,6 +1007,7 @@ if (!defined("_ADNBP_CLASS_")) {
                 $ret = @file_get_contents($_url, false, $context);
                 $this->_responseHeaders = $http_response_header;
                 if ($ret === false) $this->addError(error_get_last());
+
             } catch (Exception $e) {
                 $this->addError(error_get_last());
                 $this->addError($e->getMessage());
@@ -1070,6 +1071,7 @@ if (!defined("_ADNBP_CLASS_")) {
                     $options['http']['header'][] = sprintf('Content-Length: %d', strlen($build_data));
                 }
             }
+
 
             $curl_options = [
                 CURLOPT_SSL_VERIFYPEER => false,
