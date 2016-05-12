@@ -58,6 +58,14 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                     case "input":
                         if(isset($_REQUEST['filter_'.$var])) $info['value'] = $_REQUEST['filter_'.$var];
                         break;
+                    case "checkbox":
+                        if(isset($_REQUEST['filter_'.$var])) $info['value'] = $_REQUEST['filter_'.$var];
+                        elseif(isset($info['default'])) {
+                            if(!is_array($info['default'])) $info['default'] =[$info['default']];
+                            $info['value'] = $info['default'];
+                        }
+                        else $info['value'] = [];
+                        break;
                 }
 
                 if($_filterCorrect) {
@@ -727,7 +735,7 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                         $valLinks =  &$propData['linkData']['values'];
                         foreach ($this->matrixReports[$idMatix]['values'] as $valueField=>$valueProps) if($valueField!='_value_') {
                             if (!array_key_exists($valueField,$dataRecord)) $valData = '_nofieldvalue_';
-                            else $valData = (strlen($dataRecord[$valueField])) ? $dataRecord[$valueField] : '_empty_';
+                            else $valData = (is_string($dataRecord[$valueField]) && strlen($dataRecord[$valueField])) ? $dataRecord[$valueField] : '_empty_';
 
                             // Add the last record if we want to use smart-links
                             $valLinks[$lastColName.'|_|'.$lastRowName][$valueField] = json_encode($dataRecord);
@@ -981,6 +989,7 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                     if($info!='') $this->data[] = array('type'=>$type,'data'=> $info);
                     break;
                 case 'pre':
+                case 'js':
                     $this->data[] = array('type'=>$type,'data'=> $info);
                     break;
                 case 'markdown':
@@ -993,6 +1002,14 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
         }
         function addRow() { $this->add('row');}
         function addCol($cols='') { $this->add('col',$cols);}
+        function addSimpleTable($data) { $this->add('simpleTable',$data);}
+        function addTable($data) { $this->add('table',$data);}
+        function addMarkDown($data) { $this->add('markdown',$data);}
+        function addTree($data) { $this->add('tree',$data);}
+        function addForm($data) { $this->add('form',$data);}
+        function addDygraph($data) { $this->add('dygraph',$data);}
+        function addContainer($data) { $this->add('container',$data);}
+        function addJS($file) { $this->add('js',$file);}
 
         /**
          * return the HTML with the info printed closing opened database connections.
@@ -1080,6 +1097,13 @@ if (!defined ("_CloudServiceReporting_CLASS_") ) {
                         } else $this->addError('Wrong dygraph data');
                     }
 
+                }
+                elseif($type=='js') {
+                    if(is_file($data)) {
+                        echo '<script>'.file_get_contents($data).'</script>';
+                    } else {
+                        echo '<pre>JS file not found: '.basename($data).'</pre>';
+                    }
                 }
                 elseif($type=='row') {
                     if($container) include __DIR__.'/templates/container.php';

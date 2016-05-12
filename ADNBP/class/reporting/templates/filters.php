@@ -40,11 +40,11 @@
                 <?php } ?>
                 </select><?php
             } elseif( $filteroptions['type']=="checkbox" ) {
-                ?><select  class="form-control  input-xs" name='filter_<?=htmlentities($filter)?>' onchange='this.form.submit();'>
-                    <?php foreach ($filteroptions['data'] as $key=>$value) {?>
-                        <option value="<?=htmlentities($key)?>" <?=(( $key==$filteroptions['value'])?"selected":"")?>><?=htmlentities($value,ENT_SUBSTITUTE)?></option>
-                    <?php } ?>
-                </select><?php
+                    foreach ($filteroptions['data'] as $key=>$value) {
+                    ?>
+                    <?=htmlentities($value,ENT_SUBSTITUTE)?>
+                    <input type="checkbox" name="filter_<?=htmlentities($filter)?>[]" value="<?=$key?>" <?=((  in_array($key,$filteroptions['value']))?"checked":"")?> >
+                    <?php }
             } elseif( $filteroptions['type']=="input" ) {
                 ?><input type="text"  class="form-control  input-xs"
                    name='filter_<?=htmlentities($filter)?>'
