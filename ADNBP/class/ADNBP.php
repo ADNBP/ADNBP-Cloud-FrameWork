@@ -1275,10 +1275,10 @@ if (!defined("_ADNBP_CLASS_")) {
                 case 'auth':
                     return ($this->isAuth());
                     break;
-                case 'dirReadble':
+                case 'dirreadble':
                     if (strlen($params)) return (is_dir($params));
                     break;
-                case 'dirRewritable':
+                case 'dirwritable':
                     if (strlen($params)) try {
                         if (@mkdir($params . '/__tmp__')) {
                             rmdir($params . '/__tmp__');
