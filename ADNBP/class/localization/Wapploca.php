@@ -45,13 +45,12 @@ define ("_WAPPLOCA_CLASS_", TRUE);
         }
 
         function addLocBulk(&$data) {
-            $this->super->addLog('Adding records: '.count($data));
+
             foreach ($this->langs as $lang) {
-                foreach ($data as $item) {
-                    if(!is_array($item))
-                        $this->addError('AddLocBulk: wrong data. '.$item);
-                    else
-                        $this->addLoc($item[0],$item[1],$item[2],strtoupper($lang));
+                foreach ($data as $dic=>$keys) {
+                    $this->super->addLog('Adding records: '.count($keys));
+                    foreach ($keys as $key=>$tag)
+                        $this->addLoc($dic,$key,$tag,strtoupper($lang));
                 }
             }
             $this->saveLocalFiles();
@@ -111,7 +110,6 @@ define ("_WAPPLOCA_CLASS_", TRUE);
                             die('Error calling service wapploca');
                         }
                     }
-                    _printe($this->data['wapploca']);
 
                     //3. Start the mapping bt. LOCAL DICS && WAPPLOCA
                     $this->data['dics'][$dic][$lang][$key] = (isset($this->data['wapploca']["$org;$app;$cat"][$lang][$wapploca_code]))?$this->data['wapploca']["$org;$app;$cat"][$lang][$wapploca_code]:$wapploca_code;

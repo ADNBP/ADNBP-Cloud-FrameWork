@@ -1285,6 +1285,7 @@ if (!defined("_ADNBP_CLASS_")) {
                             return (true);
                         }
                     } catch (Exception $e) {
+                        $this->addError($e);
                     }
                     break;
                 default:
@@ -1518,6 +1519,51 @@ if (!defined("_ADNBP_CLASS_")) {
             return ($this->_url);
         }
 
+        //WAPPLOCA Methods
+
+        function l($dic, $key = '', $raw = false, $lang = '')
+        {
+
+            // Debug dictionaries
+            if(isset($_GET['debugDics'])) return  $dic . '-' . $key;
+
+            // Lang to read
+            if (!strlen($lang)) $lang = $this->_lang;
+            $lang = strtoupper($lang);
+
+            // Load dictionary repository
+            if (!isset($this->dics[$dic.'_'.$lang])) {
+                if (!isset($this->_dicKeys[$dic.'_'.$lang])) {
+                    $_read = false;
+                    // Cache dics is activated
+                    if ($this->getConf('CacheDics') && !isset($_GET['reloadCache']) && !isset($_GET['reloadDictionaries']))
+                        $this->_dicKeys[$dic.'_'.$lang] = $this->getCache('Dic_' . $dic . '_' . $lang);
+                    // If info does not come from Cache
+                    if (!isset($this->_dicKeys[$dic.'_'.$lang]) || !is_object($this->_dicKeys[$dic.'_'.$lang])) {
+                        $filename = preg_replace('/[^A-z0-9_]/','' ,$dic ).'.json';
+                        if(strlen($this->getConf('LocalizePath'))) {
+                            if(is_file($this->getConf('LocalizePath').'/'.$lang.'_'.$filename)) {
+                                $this->_dicKeys[$dic.'_'.$lang] = json_decode(file_get_contents($this->getConf('LocalizePath').'/'.$lang.'_'.$filename));
+                                $_read = (is_object($this->_dicKeys[$dic.'_'.$lang])) ? true : false;
+                            } elseif($lang != 'EN' && is_file($this->getConf('LocalizePath').'/EN_'.$filename)) {
+                                $this->_dicKeys[$dic.'_'.$lang] = json_decode(file_get_contents($this->getConf('LocalizePath').'/EN_'.$filename));
+                                $_read = (is_object($this->_dicKeys[$dic.'_'.$lang])) ? true : false;
+
+                            }
+                        }
+
+                    }
+                    // Save in Cache if it is neccesary
+                    if ($this->getConf('CacheDics') && $_read)
+                        $this->setCache('Dic_' . $dic . '_' . $lang, $this->_dicKeys[$dic.'_'.$lang]);
+                }
+                $this->dics[$dic.'_'.$lang] = true;
+            }
+            $ret = isset($this->_dicKeys[$dic.'_'.$lang]->$key) ? $this->_dicKeys[$dic.'_'.$lang]->$key : $dic . '-' . $key;
+            return (($raw) ? $ret : str_replace("\n", "<br />", htmlentities($ret, ENT_COMPAT | ENT_HTML401, $this->_charset)));
+        }
+
+
 
         // Dictionaries in method 2
         function sett($data, $dic, $key = '', $convertHtml = false)
@@ -1542,6 +1588,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
             // Debug dictionaries
             if(isset($_GET['debugDics'])) return  $dic . '-' . $key;
+
             // Internal contents
             if (!strlen($key)) return ((isset($this->_dicKeys['__internal__'][$dic])) ? $this->_dicKeys['__internal__'][$dic] : '{' . $dic . '}');
 
