@@ -15,7 +15,7 @@ define ("_WAPPLOCA_CLASS_", TRUE);
         var $data = [];
         var $localizePath ='';
 
-        function __construct(ADNBP &$super,$langs=['ES'],&$data=null)
+        function __construct(ADNBP &$super,$langs=['ES'],&$data=null,$reset=false)
         {
             $this->super = $super;
             if(!strlen($super->getConf('LocalizePath')) || !$this->super->is('dirwritable',$super->getConf('LocalizePath'))) {
@@ -24,7 +24,7 @@ define ("_WAPPLOCA_CLASS_", TRUE);
                 $this->localizePath = $super->getConf('LocalizePath');
                 if(is_array($langs)) $this->langs = $langs;
                 //$this->readApps();
-                if(is_array($data)) $this->addLocBulk($data);
+                if(is_array($data)) $this->addLocBulk($data,$reset);
             }
 
 
@@ -44,13 +44,19 @@ define ("_WAPPLOCA_CLASS_", TRUE);
             }
         }
 
-        function addLocBulk(&$data) {
+        function addLocBulk(&$data,$reset = false) {
 
             foreach ($this->langs as $lang) {
+                $lang = strtoupper($lang);
                 foreach ($data as $dic=>$keys) {
                     $this->super->addLog('Adding records: '.count($keys));
-                    foreach ($keys as $key=>$tag)
-                        $this->addLoc($dic,$key,$tag,strtoupper($lang));
+                    $this->super->deleteCache('Dic_' . $dic . '_' . $lang);
+                    foreach ($keys as $key=>$tag) {
+                        // If the dic has not be loaded, create an empty array to reset the files.
+                        if($reset)
+                            if(!isset($this->data['dics'][$dic][$lang])) $this->data['dics'][$dic][$lang]=[];
+                        $this->addLoc($dic, $key, $tag, $lang);
+                    }
                 }
             }
             $this->saveLocalFiles();
@@ -83,6 +89,8 @@ define ("_WAPPLOCA_CLASS_", TRUE);
                 else {
 
                     //1. Detect if we have loaded the dic
+
+
                     if(!isset($this->data['dics'][$dic][$lang])) {
                         $filename =  "/{$lang}_" . preg_replace('/[^A-z0-9_]/', '', $dic) . '.json';
                         if (is_file($this->localizePath .$filename)) {

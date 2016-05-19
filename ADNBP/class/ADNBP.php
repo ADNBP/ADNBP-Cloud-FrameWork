@@ -1525,7 +1525,7 @@ if (!defined("_ADNBP_CLASS_")) {
         {
 
             // Debug dictionaries
-            if(isset($_GET['debugDics'])) return  $dic . '-' . $key;
+            if(isset($_GET['_debugDics'])) return  $dic . '-' . $key;
 
             // Lang to read
             if (!strlen($lang)) $lang = $this->_lang;
@@ -1536,7 +1536,7 @@ if (!defined("_ADNBP_CLASS_")) {
                 if (!isset($this->_dicKeys[$dic.'_'.$lang])) {
                     $_read = false;
                     // Cache dics is activated
-                    if ($this->getConf('CacheDics') && !isset($_GET['reloadCache']) && !isset($_GET['reloadDictionaries']))
+                    if ($this->getConf('CacheDics') && !isset($_GET['_reloadCacheDics']) )
                         $this->_dicKeys[$dic.'_'.$lang] = $this->getCache('Dic_' . $dic . '_' . $lang);
                     // If info does not come from Cache
                     if (!isset($this->_dicKeys[$dic.'_'.$lang]) || !is_object($this->_dicKeys[$dic.'_'.$lang])) {
