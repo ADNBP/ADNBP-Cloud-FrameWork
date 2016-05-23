@@ -8,7 +8,7 @@ define ("_WAPPLOCA_CLASS_", TRUE);
         private $super;
         var $orgs=[];
         var $langs=['EN'];
-        var $api = 'https://cloud.bloombees.com/h/api/wapploca';
+        var $api = 'https://wapploca.org/h/api/wapploca';
         var $apps = [];
         var $error = false;
         var $errorMsg = [];
