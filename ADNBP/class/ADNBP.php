@@ -2341,7 +2341,9 @@ if (!defined("_ADNBP_CLASS_")) {
                 ));
                 $this->addConfigFunction()
                     ->addAuthCheckFunction()
-                    ->addGetAuthDataFunction();
+                    ->addGetAuthDataFunction()
+                    ->addTranslationsFunction()
+                    ->addLocalizationFunction();
             }
 
             return $this;
@@ -2394,6 +2396,32 @@ if (!defined("_ADNBP_CLASS_")) {
         {
             $function = new \Twig_SimpleFunction('getAuthUserData', function($key) {
                 return $this->getAuthUserData($key);
+            });
+            $this->twig->addFunction($function);
+            return $this;
+        }
+
+        /**
+         * Get Auth info for templates
+         * @return $this
+         */
+        private function addTranslationsFunction()
+        {
+            $function = new \Twig_SimpleFunction('t', function($dic, $key = '', $raw = false, $lang = '') {
+                return $this->t($dic, $key, $raw, $lang);
+            });
+            $this->twig->addFunction($function);
+            return $this;
+        }
+
+        /**
+         * Get Auth info for templates
+         * @return $this
+         */
+        private function addLocalizationFunction()
+        {
+            $function = new \Twig_SimpleFunction('l', function($dic, $key = '', $raw = false, $lang = '') {
+                return $this->l($dic, $key, $raw, $lang);
             });
             $this->twig->addFunction($function);
             return $this;
