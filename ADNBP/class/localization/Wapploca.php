@@ -23,7 +23,6 @@ define ("_WAPPLOCA_CLASS_", TRUE);
             } else {
                 $this->localizePath = $super->getConf('LocalizePath');
                 if(is_array($langs)) $this->langs = $langs;
-                //$this->readApps();
                 if(is_array($data)) $this->addLocBulk($data,$reset);
             }
 
@@ -55,7 +54,7 @@ define ("_WAPPLOCA_CLASS_", TRUE);
                         // If the dic has not be loaded, create an empty array to reset the files.
                         if($reset)
                             if(!isset($this->data['dics'][$dic][$lang])) $this->data['dics'][$dic][$lang]=[];
-                        $this->addLoc($dic, $key, $tag, $lang);
+                        $this->addLoc($dic, $key, $lang);
                     }
                 }
             }
@@ -77,10 +76,10 @@ define ("_WAPPLOCA_CLASS_", TRUE);
             }
         }
 
-        function addLoc($dic,$key,$wapploca_code,$lang) {
+        function addLoc($dic,$wapploca_code,$lang) {
 
-            if(!strlen($dic) || !strlen($key) ||!strlen($wapploca_code) )
-                $this->addError("addLoc: Missing data $dic - $key - $wapploca_code");
+            if(!strlen($dic) || !strlen($wapploca_code) )
+                $this->addError("addLoc: Missing data $dic - $wapploca_code");
             else {
 
                 list($org,$app,$cat,$code) = explode(";",$wapploca_code,4);
@@ -120,7 +119,7 @@ define ("_WAPPLOCA_CLASS_", TRUE);
                     }
 
                     //3. Start the mapping bt. LOCAL DICS && WAPPLOCA
-                    $this->data['dics'][$dic][$lang][$key] = (isset($this->data['wapploca']["$org;$app;$cat"][$lang][$wapploca_code]))?$this->data['wapploca']["$org;$app;$cat"][$lang][$wapploca_code]:$wapploca_code;
+                    $this->data['dics'][$dic][$lang][$wapploca_code] = (isset($this->data['wapploca']["$org;$app;$cat"][$lang][$wapploca_code]))?$this->data['wapploca']["$org;$app;$cat"][$lang][$wapploca_code]:$wapploca_code;
                 }
 
             }
