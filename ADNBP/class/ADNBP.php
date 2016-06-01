@@ -1622,6 +1622,11 @@ if (!defined("_ADNBP_CLASS_")) {
             return (preg_replace('/(\n|\r)/', ' ', $this->t($dic, $key, $raw, $lang)));
         }
 
+        public function l1line($dic, $key, $raw = false, $lang = '')
+        {
+            return (preg_replace('/(\n|\r)/', ' ', $this->l($dic, $key, $raw, $lang)));
+        }
+
         function readDictionaryKeys($cat, $lang = '')
         {
             __p('readDictionaryKeys : ', '', 'note');
