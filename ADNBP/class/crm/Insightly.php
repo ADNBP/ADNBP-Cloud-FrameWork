@@ -412,6 +412,18 @@ class Insightly{
         return $request->body($opportunity)->asJSON();
     }
 
+    public function addOpportunityPipelineStage($opportunity){
+        $url_path = "/v2.2/Opportunities/".$opportunity["OPPORTUNITY_ID"]."/PipelineStage";
+        $request = $this->PUT($url_path);
+        return $request->body($opportunity)->asJSON();
+    }
+
+    public function addOpportunityPipeline($opportunity){
+        $url_path = "/v2.2/Opportunities/".$opportunity["OPPORTUNITY_ID"]."/Pipeline";
+        $request = $this->PUT($url_path);
+        return $request->body($opportunity)->asJSON();
+    }
+
     public function getOpportunitiesCount($options = null){
         $request = $this->GET("/v2.2/Opportunities?brief=true&count_total=true&top=1");
         $ret = $request->asString(true);
@@ -432,7 +444,7 @@ class Insightly{
         return $request->asJSON();
     }
     
-    
+
     
     public function deleteOpportunity($id){
         $this->DELETE("/v2.1/Opportunities/$id")->asString();
