@@ -134,7 +134,7 @@ if (!defined("_ADNBP_CLASS_")) {
             $this->_gzEnabled = (function_exists('gzcompress') && function_exists('gzuncompress'));
 
             // HTTP_REFERER
-            $this->_referer = $_SERVER['HTTP_REFERER'];
+            $this->_referer = array_key_exists('HTTP_REFERRER', $_SERVER) ? $_SERVER['HTTP_REFERRER'] : '';
             if (!strlen($this->_referer)) $this->_referer = $_SERVER['SERVER_NAME'];
 
 
@@ -1624,7 +1624,9 @@ if (!defined("_ADNBP_CLASS_")) {
 
         public function l1line($dic, $key, $raw = false, $lang = '')
         {
-            return (preg_replace('/(\n|\r)/', ' ', $this->l($dic, $key, $raw, $lang)));
+            $value = preg_replace('/(\n|\r)/', ' ', $this->l($dic, $key, $raw, $lang));
+            $value = addslashes($value);
+            return $value;
         }
 
         function readDictionaryKeys($cat, $lang = '')
