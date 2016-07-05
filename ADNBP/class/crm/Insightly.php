@@ -416,7 +416,7 @@ class Insightly{
         $url_path = "/v2.2/Opportunities/".$opportunity["OPPORTUNITY_ID"]."/PipelineStage";
         $request = $this->PUT($url_path);
         return $request->body($opportunity)->asJSON();
-    }/cr
+    }
 
     public function addOpportunityPipeline($opportunity){
         $url_path = "/v2.2/Opportunities/".$opportunity["OPPORTUNITY_ID"]."/Pipeline";
