@@ -88,8 +88,6 @@ define ("_WAPPLOCA_CLASS_", TRUE);
                 else {
 
                     //1. Detect if we have loaded the dic
-
-
                     if(!isset($this->data['dics'][$dic][$lang])) {
                         $filename =  "/{$lang}_" . preg_replace('/[^A-z0-9_]/', '', $dic) . '.json';
                         if (is_file($this->localizePath .$filename)) {
@@ -102,16 +100,16 @@ define ("_WAPPLOCA_CLASS_", TRUE);
                     }
 
                     //2. Detect if we have loaded the wapploca cat
-                    if(!isset($this->data['wapploca']["$org;$app;$cat"][$lang])) {
-                        $this->super->addLog('Connecting with SWAPPLOCA: '."/dics/$org/$app/$cat?export=json&lang=$lang");
-                        $ret =$this->super->getCloudServiceResponseCache($this->api."/dics/$org/$app/$cat?export=json&lang=$lang");
+                    if(!isset($this->data['wapploca']["$org;$app"][$lang])) {
+                        $this->super->addLog('Connecting with WAPPLOCA: '."/dics/$org/$app?export=json&lang=$lang");
+                        $ret =$this->super->getCloudServiceResponse($this->api."/dics/$org/$app?export=json&lang=$lang");
                         if(false !== $ret) {
                             $ret = json_decode($ret,true);
                             if(count($ret)) {
-                                $this->data['wapploca']["$org;$app;$cat"][$lang] = $ret;
+                                $this->data['wapploca']["$org;$app"][$lang] = $ret;
                             } else {
-                                $this->data['wapploca']["$org;$app;$cat"][$lang]['error'] = 'none found';
-                                $this->super->addError("$org;$app;$cat not found");
+                                $this->data['wapploca']["$org;$app"][$lang]['error'] = 'none found';
+                                $this->super->addError("$org;$app not found");
                             }
                         } else {
                             die('Error calling service wapploca');
@@ -119,7 +117,7 @@ define ("_WAPPLOCA_CLASS_", TRUE);
                     }
 
                     //3. Start the mapping bt. LOCAL DICS && WAPPLOCA
-                    $this->data['dics'][$dic][$lang][$wapploca_code] = (isset($this->data['wapploca']["$org;$app;$cat"][$lang][$wapploca_code]))?$this->data['wapploca']["$org;$app;$cat"][$lang][$wapploca_code]:$wapploca_code;
+                    $this->data['dics'][$dic][$lang][$wapploca_code] = (isset($this->data['wapploca']["$org;$app"][$lang][$wapploca_code]))?$this->data['wapploca']["$org;$app"][$lang][$wapploca_code]:$wapploca_code;
                 }
 
             }
