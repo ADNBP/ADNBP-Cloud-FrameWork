@@ -1493,6 +1493,7 @@ if (!defined("_ADNBP_CLASS_")) {
 
         function getSessionVar($var)
         {
+            if(! is_array($_SESSION)) return null;
             if(array_key_exists('adnbpSessionVar_' . $var, $_SESSION)) {
                 if($this->_gzEnabled) {
                     try {
