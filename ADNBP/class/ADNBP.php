@@ -1259,7 +1259,10 @@ if (!defined("_ADNBP_CLASS_")) {
         {
             if (!strlen($namespace)) $namespace = 'CloudUser';
             $this->setConf("activeAuth", $namespace);
-            if (isset($_GET['logout'])) $this->setAuth(false);
+            if (isset($_GET['logout'])) {
+                $this->setAuth(false);
+                session_destroy();
+            }
         }
 
         function is($key, $params = '')
